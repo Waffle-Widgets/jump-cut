@@ -49,3 +49,21 @@ From B1 (`BP_Player`, `BP_EnemyBase`; all graphs as text in `tools/b1_graphs.py`
   `unreal.GameplayStatics.get_all_actors_of_class(world, unreal.load_class(None, '<path>_C'))`, then
   `actor.call_method('PlayerTakeHit', (30.0,))`; a function with one output returns it (`call_method('PlayerGetHealthNow')`
   -> 70.0). `actor.get_editor_property('Health')` reads Blueprint variables. Each step a separate `py` run; wait between.
+
+From B4 (Rewind on `BP_Player`; graphs as text in `tools/b4_graphs.py`, test steps in `JumpCut/Saved/b4_test.py`):
+- **Array node ids:** `(Utilities|Array|Add :TargetArray (Variables|Default|GetTrailPos) :NewItem v)`, `Utilities|Array|Clear`,
+  `Utilities|Array|RemoveIndex :TargetArray a :IndexToRemove 0`, `Utilities|Array|Length`, `Utilities|Array|LastIndex`,
+  read with `(Utilities|Array|Get(acopy) array index)` (positional; its index pin is called "Dimension 1").
+  Maths: `Math|Vector|Lerp(Vector)`, `Math|Vector|Distance(Vector)`, `Math|Float|Floor` (returns int),
+  `Math|Integer|Min(Integer)` (plain `Math|Integer|Min` and `Math|Vector|Lerp` don't exist). Int x float mixes compiled fine.
+- **`write_graph_dsl` did NOT replace one graph:** `PlayerTickTrail` (an `if` with an `else` that holds more statements)
+  got a second full copy appended on each write (61 -> 121 -> 181 nodes; the old copies were unreachable, so it still
+  compiled and read back right). Other graphs replaced fine. After writing, count nodes with `find_nodes`
+  (`title: ""` lists all) and if it grew: `delete_node` every node except `K2Node_FunctionEntry_0`, then write again.
+- `find_nodes` needs `title` (pass `""`). A failed tool call inside `execute_tool_script` aborts the whole script even
+  inside `try`, so write graphs one per call or expect a partial batch.
+- **Timing in Play mode:** Type calls sent in parallel land about 0.02 game s apart; one call per turn is ~1-15 s of real
+  time. Slow the world (`GameplayStatics.set_global_time_dilation(world, 0.2)`) to make a 10 s window and a 6 s
+  cooldown fit between calls, and 0.02 to sample positions during a 0.25-1 s slide.
+- The trail keeps "the newest sample at least 10 s old", so a test that waits too long rewinds to a later spot than
+  expected. Log the game time (`get_time_seconds`) of every teleport and compare with the rewind time minus 10.
