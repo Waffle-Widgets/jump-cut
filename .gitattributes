@@ -27,3 +27,7 @@
 *.h    text
 *.cs   text
 *.uproject text
+*.py   text
+*.ps1  text
+# Shell scripts must keep LF: a Mac runs them, and CRLF makes bash fail with ": command not found".
+*.sh   text eol=lf
