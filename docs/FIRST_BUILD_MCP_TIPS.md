@@ -22,4 +22,30 @@ skill after the run.
   `Saved/` with `AssetTools.write_file` and decode it in PowerShell. Never call the Slate `Screenshot` with ref `""`
   at full size: it returns 7 MB into the chat.
 - **Saving the level and its actors:** `py unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level()`
-  writes the map and every external-actor file.
+  writes the map and every external-actor file. (`SceneTools.save_actor` fails on a never-saved actor:
+  "Asset does not exist: /Game/__ExternalActors__/...".)
+
+From B1 (`BP_Player`, `BP_EnemyBase`; all graphs as text in `tools/b1_graphs.py`):
+- **Variables / functions in one script:** `BlueprintTools.add_variable` (`type_name` `float`/`bool`/`int`/`Vector`,
+  `container_type: "ARRAY"`), `add_object_variable` (`object_class` = `<bp path>.<BP>_C`), `add_function_graph`, then
+  `add_function_param` (`input_param: false` = output). Compile, then set defaults with `ObjectTools.set_properties`
+  (`instance` = `/Game/.../BP_X.Default__BP_X_C`, `values` = JSON string); they survive later compiles.
+- **Inherited components' defaults:** `.../BP_X.Default__BP_X_C:CharacterMesh0` and `:CharMoveComp`. An added
+  component: `ActorTools.add_component` (`owner` = the Blueprint), then `.../BP_X.BP_X_C:<Name>_GEN_VARIABLE`.
+  No collision: `{"BodyInstance":{"CollisionProfileName":"NoCollision","CollisionEnabled":"NoCollision"}}`.
+- **DSL ids that worked:** own function `(CallFunction|Name :Param v)`; another Blueprint's
+  `(Class|BPEnemyBase|EnemyTakeHit :self actor ...)` / `(Class|BPPlayer|PlayerTakeHit :self ref :Damage d)`;
+  `(Actor|GetAllActorsOfClass "/Game/.../BP_EnemyBase.BP_EnemyBase_C")` + `(for foe foes ...)` gives typed elements;
+  keys `(Game|Player|IsInputKeyDown :self (Game|GetPlayerController :PlayerIndex 0) :Key "LeftMouseButton")`;
+  `(Variables|Character|GetCharacterMovement)`, `(Class|CharacterMovementComponent|SetMaxWalkSpeed :self cm :MaxWalkSpeed v)`,
+  `(Pawn|Components|CharacterMovement|SetMovementMode :self cm :NewMovementMode "MOVE_Falling")`,
+  `(Variables|Actor|SetCustomTimeDilation :CustomTimeDilation v)`, `(Character|LaunchCharacter :LaunchVelocity v :bXYOverride true :bZOverride true)`,
+  the IsValid macro `(Utilities|IsValid x (:"Is Valid" ...) (:"Is Not Valid" ...))`. `(if ...)` followed by more
+  statements wires both Branch outputs on (the reader prints it as `elif`/`else _`; check with `get_node_infos`).
+- A new Blueprint's EventGraph keeps empty BeginPlay / ActorBeginOverlap nodes after `write_graph_dsl`. Delete them
+  (`find_nodes` with `entry_points_only`, `delete_node`) where a BeginPlay must not exist (`BP_Player`).
+- **Calling functions on live PIE actors:** a `.py` run through the console box with
+  `world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()`,
+  `unreal.GameplayStatics.get_all_actors_of_class(world, unreal.load_class(None, '<path>_C'))`, then
+  `actor.call_method('PlayerTakeHit', (30.0,))`; a function with one output returns it (`call_method('PlayerGetHealthNow')`
+  -> 70.0). `actor.get_editor_property('Health')` reads Blueprint variables. Each step a separate `py` run; wait between.
