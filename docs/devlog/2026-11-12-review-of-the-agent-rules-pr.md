@@ -1,9 +1,9 @@
-# 2026-11-12 — Claude reviews a teammate's PR, and then fixes it (9:00 – 9:30 AM)
+# 2026-11-12 — Claude reviews a teammate's PR, and then fixes it, and we merge it (9:00 – 9:40 AM)
 
 - **What we asked for:** a review of Justin's agent-rules pull request, the review posted to GitHub so Justin could
-  read it, and then — once he'd read it — the fixes applied.
+  read it, then — once he'd read it — the fixes applied, then the whole episode written up and the PR merged.
 - **Prompt(s) we gave the agent:** "Review Justin's PR for the agent rules" / "add your review comments so Justin can
-  review your review" / "Justin says to fix any issues you found with the PR".
+  review your review" / "Justin says to fix any issues you found with the PR" / "document what you did and merge".
 - **What happened:**
   - **The review checked the claims instead of trusting them.** The PR said three things had been moved "word for
     word". Each was verified rather than taken on faith: the four devlog entries normalised to 78 content lines on
@@ -44,6 +44,20 @@
     read — no BOM, correct filenames, templates resolve.
   - **Everything was done in a throwaway `GIT_LFS_SKIP_SMUDGE=1` worktree**, because Unreal was open on GameStation
     with assets loaded. No branch switch on the working tree.
+  - **Merged at 9:39 AM, by us, not by the author.** Justin read the review and said to fix what it found, so the
+    fixes went onto his branch rather than into a second PR — six findings and three nits, in `9e535bd` (the `main`
+    merge that resolved the devlog conflict) and `7b5629f`. GitHub put the PR back to MERGEABLE/CLEAN and `main` is
+    now `1c22fdd`: 29 files, +731/−205, docs and agent files only, no Unreal assets. We did **not** approve the
+    review on GitHub — it went up as a Comment (review `5878405222`, 8 inline comments), because approving is a way
+    of ending a conversation and the point was to start one. The merge itself waited for the Team Owner's word.
+  - **What is now in force for every agent on this repo**, as of this merge: the reporting rules and the seven-point
+    "done" list in `CLAUDE.md`; `docs/ROADMAP.md` as the shared memory of what is decided, what is waiting for a yes
+    and what is a fallback; one file per devlog entry under `docs/devlog/`, with `docs/DEVLOG.md` left as a pointer
+    so old links still land; and `docs/INITIAL_PROMPT.md` as a **draft**, not a go — it now stops and asks the team
+    if `ROADMAP.md` still lists its scope under *Waiting for a yes*.
+  - **Checked after the merge, logged out:** `docs/devlog/`, `docs/DEVLOG.md`, `docs/ROADMAP.md`, `docs/PREJAM.md`
+    and this entry all return 200 without a GitHub login. That matters because the devlog folder is the §10 link we
+    hand the judges, and until this merged it pointed at a file that was about to become a signpost.
 - **What we learned:** a review is worth more when it verifies the claims it's given, and a pull request is worth
   more when its claims are checkable in the first place — "moved word for word" is a claim you can run `comm` on.
   The other lesson is cheaper to write than to remember: a document that states a rule and then breaks it in its own
