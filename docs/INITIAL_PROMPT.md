@@ -58,11 +58,15 @@ The team's own scope from `docs/PITCH.md`, not the smaller proposal. About **30 
 
 | # | Power | What the player does with it | Its boss |
 |---|---|---|---|
-| 1 | Rewind | Slide back along the last 10 seconds to where you were, health restored | None. The driver in the cafe hands it over |
-| 2 | Freeze Frame | Everything else stops for 10 seconds | Freezes the arena and gets free hits. Counter: Rewind |
-| 3 | Splice | A short teleport. The out-of-combat power: the second half of the city needs it | Blinks around and attacks through portals. Counter: Freeze Frame |
-| 4 | Stunt Double | A copy fights beside you and takes one hit | Makes a double of you plus decoys. Counter: Splice |
-| 5 | Director's Cut | Only at the ending | The Director calls 10-second scenes with one rule each: "No abilities", "The floor is gone", "You can't move left". Counter: Stunt Double |
+| 1 | Freeze Frame | Everything else stops for 10 seconds | None. The dying driver who crashes through the cafe wall hands it over |
+| 2 | Splice | A short teleport. The out-of-combat power: the second half of the city needs it | A Japanese mob boss with a cleaver. Blinks around and attacks through portals. Counter: Freeze Frame |
+| 3 | Stunt Double | A copy fights beside you and takes one hit | Makes a double of you plus decoys. Counter: Splice |
+| 4 | Director's Cut | Only at the ending | The Director calls 10-second scenes with one rule each: "No abilities", "The floor is gone", "You can't move left". Counter: Stunt Double |
+
+**Rewind is not in this table on purpose.** It used to be power 1, until the first boss was changed to give Freeze
+Frame (Nov 12). Whether Rewind survives as the power the worker already has, or is cut, is **open** — it is in
+`docs/ROADMAP.md` under "Still to decide". Do not build it, and do not design around it, until a person settles it.
+The characters these bosses are: [`CHARACTERS.md`](CHARACTERS.md).
 
 **On the fifth power's name:** `docs/PITCH.md` still calls it "Final Cut", which is an Apple trademark, and §15d
 allows no trademarks but the Unreal logo. "Director's Cut" is the proposed replacement and the table above uses it,
@@ -73,7 +77,8 @@ so the swap is a single edit when the call comes.
 **Fighting:** fists. One melee button with a short combo. Three hits, the third knocks back. 100 health.
 **Goons:** one ordinary enemy type that walks up and punches, in groups on the streets between bosses, there to be
 pushed around. One Blueprint, recoloured per district at most.
-**You lose** when health runs out while Rewind is on cooldown. You restart at the last checkpoint you reached.
+**You lose** when health runs out. You restart at the last checkpoint you reached. (The old wording tied losing to
+Rewind's cooldown; Rewind is open, so losing does not depend on it until someone decides.)
 
 **The level: one large city**, `Content/Game/Maps/Lvl_City`, One File Per Actor on, real scale (1.0) for the
 third-person character. Laid out the way the practice city was: a street grid of solid blocks, sidewalks, alleys,
@@ -186,7 +191,8 @@ groups; inside a group, follow "Needs".
 - B1 `BP_Player`: health, fists combo, hit reactions, input by polling. (Unreal)
 - B2 HUD: health, one icon per power with its cooldown. Icons and bars, no sentences. (Unreal)
 - B3 `BP_Goon`: walks up, punches, can be knocked back and beaten; a spawner that places a group. (Unreal)
-- B4 Rewind: design (outside, Fable), then build (Unreal).
+- B4 The first power, Freeze Frame: design (outside, Fable), then build (Unreal). **Not** Rewind — see the note
+  under the power table; Rewind is undecided and must not be built on an inference.
 
 **C. The city**
 - C1 `BP_CityBlock` and the layout script from A2's table. (script: outside; placing: Unreal)

@@ -86,7 +86,7 @@ generator from outside.
 | `tools/package_build.ps1` | One command to package the Windows build and zip it under the jam's 1 GB limit. |
 | `tools/publish_build.ps1` | Publishes a test build as a GitHub Release; refuses to run anywhere but the builder PC. |
 | `tools/make_sfx.py` | Generates sound effects and music loops from pure Python — no samples, nothing to credit. |
-| `tools/gen_images.py` | Generates reference images locally. |
+| `tools/gen_images.py` | Generates reference images locally. The script is pre-jam; every picture it has drawn for this game was drawn during the jam, from jam-written prompts. |
 | `tools/bootstrap/` (10 files) | `new_jam_repo.ps1` and its templates — the script that created *this* repo. |
 | `tools/trellis/` (6 files) | Our patched Windows port of Microsoft's TRELLIS.2 image-to-3D model (MIT), plus its build patches. |
 | `tools/pixal3d/` (4 files) | A second local image-to-3D runner and its patches. |
@@ -154,6 +154,7 @@ declaration that only names the pre-jam side is half an answer.
 | `Art/Blender/anime_repaint.py`, `tools/unreal_make_anime_look.py`, `tools/unreal_make_anime_cafe.py`, `tools/unreal_retarget_mannequin.py` | Thu Nov 12 1:26 AM → 7:34 AM Pacific | Written *during* the jam, so **not** declared as pre-jam scripts, even though they sit in `tools/` and `Art/Blender/` beside ones that are |
 | The team's agent rules and shared plan: `docs/ROADMAP.md`, `docs/INITIAL_PROMPT.md`, the `docs/devlog/` split, and the reporting / "done means" sections **added to the pre-jam `CLAUDE.md`** | Thu Nov 12 morning | Branch `justin/agent-rules`. `CLAUDE.md` and `GEMINI.md` are declared pre-jam above; what they said on Nov 11 is `e9bfc06`, and every change since is jam work, visible in `git log -p CLAUDE.md` |
 | `tools/setup_mcp.ps1`, `tools/setup_mcp.sh` | Thu Nov 12 8:40 AM Pacific | Written *during* the jam. They register each computer's MCP servers; the shared `.mcp.json` was changed the same day to drop the Windows-only Blender path |
+| The first three characters — designs, reference prompts and reference sheets: `docs/CHARACTERS.md`, `docs/prompts.md`, `Art/Refs/*_apose.png` | Thu Nov 12 afternoon Pacific, M Station | Drawn by `tools/gen_images.py`, which **is** a declared pre-jam script, from prompts written **during** the jam. `docs/prompts.md` is jam work and is **not** the pre-jam prompt library declared in section 1 (that is `.claude/skills/`). The difference matters: the pictures these prompts make are art we generated ourselves, and art is scored |
 
 **Where that work was authored.** The anime look, the coffee shop and the hero were built in our practice
 project on GameStation, because the Unreal editor and the MCP were already running against it, and then carried

@@ -28,14 +28,15 @@ into Open or Decisions.
 ## Where we are (Thu Nov 12, morning)
 
 The jam repo exists with the Third Person template, our tools, skills and docs. No gameplay is on `main` yet. Today's
-checkpoint: the core loop (player, Rewind, the Freeze Frame boss) playable start to finish in grey boxes.
+checkpoint: the core loop (player, the first power, the first boss) playable start to finish in grey boxes. Character
+work started on M Station this afternoon: the main character, the crash driver and the mob boss ([`CHARACTERS.md`](CHARACTERS.md)).
 
 ## Open
 
 | Day | Goal |
 |---|---|
-| Thu Nov 12 | Player + Rewind + the Freeze Frame boss, in grey boxes, playable start to finish |
-| Fri Nov 13 | Splice boss, the Director with two rule scenes, win/lose and restart screens, first packaged build. **Feature freeze** |
+| Thu Nov 12 | Player + the first power (Freeze Frame) + the first fight, in grey boxes, playable start to finish |
+| Fri Nov 13 | The Splice boss (the mob boss), the Director with two rule scenes, win/lose and restart screens, first packaged build. **Feature freeze** |
 | Sat Nov 14 | Art, sound, juice, playtests, footage. Stunt Double only if Friday went well |
 | Sun Nov 15 | Bug fixes and submission only |
 
@@ -70,8 +71,12 @@ in case playtesting shows we need it. Still not something to build from: only a 
   level in the practice project. If the team keeps it, it moves here as jam work.
 - The Director's real name and the final names of the powers.
 - Camera: third person behind the player (the template's) unless we choose otherwise.
-- **Rewind's size.** The cut list below says a full rewind of the world is "already cut", but the smaller Rewind is
-  only a fallback. One of the two needs a line in Decisions.
+- **What happens to Rewind.** It was the core mechanic in `PITCH.md` *and* the first boss's gift. The first boss now
+  gives Freeze Frame, so Rewind is either the power the main character already has at the cafe, or it is cut and
+  Freeze Frame becomes the core mechanic. Nobody has said which. Everything else in the chain still works: Splice is
+  countered by Freeze Frame, so the ladder reads Freeze Frame -> Splice -> Stunt Double -> Final Cut.
+- **Rewind's size**, if it stays at all. The cut list below says a full rewind of the world is "already cut", but the
+  smaller Rewind is only a fallback. One of the two needs a line in Decisions.
 
 ## Cut list (in the order we drop things)
 
@@ -88,6 +93,11 @@ _(nothing yet)_
 
 ## Decisions
 
+- **2026-11-12: The first boss gives Freeze Frame**, not Rewind. He is the driver who crashes through the cafe
+  wall in the opening; he still does not fight (Manny).
+- **2026-11-12: The second boss gives Splice and is a Japanese mob boss with a cleaver** (Manny).
+- **2026-11-12: The main character, the crash driver and the mob boss are the first three characters to build**
+  (Manny). Designs and reference pictures: [`CHARACTERS.md`](CHARACTERS.md).
 - **2026-11-12: Scope stays jam-sized.** We build to the jam's rules and `CLAUDE.md`'s guardrail (one small level,
   a few minutes of play), not the one large 30-minute city. If there is time left we look at growing it (Team Owner).
 - **2026-11-12: The anime look is not decided yet.** Its assets stay on the branch `mendezm87/anime-look` in case we

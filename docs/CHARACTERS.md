@@ -1,0 +1,163 @@
+# Characters
+
+The three we are building first, decided Nov 12 (see `ROADMAP.md`, Decisions): the **main character**, the
+**crash driver** who gives Freeze Frame, and the **mob boss** who gives Splice. The story they sit in is in
+[`PITCH.md`](PITCH.md).
+
+The names below are **working asset names**, not the characters' names in the story. Nobody has named them yet;
+that is an open question in `ROADMAP.md`, and an agent does not get to settle it.
+
+## The look, and why
+
+Cel-shaded anime: hard-edged shadows, clean dark outlines, flat colour. That is not a fresh choice — it is the only
+style this team has a tested path for, from the cel-shader demo on `mendezm87/anime-look` and the `CafeWalker`
+model made from a drawing. `ROADMAP.md` still lists the art style under **Still to decide**, so this is the leading
+candidate we are building in, not a settled one.
+
+**Each power owns a colour, and nobody else may use it.** The player has to learn what a colour means in three
+minutes, so a colour that appears twice is worse than a dull character.
+
+| | Colour | Used by |
+|---|---|---|
+| Freeze Frame | pale cyan, almost white, like frost | the crash driver, and the player's Freeze Frame effect |
+| Splice | magenta into violet | the mob boss, his portals, his blade's edge |
+| the main character | warm cream, dark green, charcoal — **no** cyan, **no** magenta | so both power colours read as borrowed, not his |
+
+**Judge every one of these from the game camera, not a close-up.** `CLAUDE.md` records the TRELLIS coupe that
+"looked great close up and like a dark blob from the game camera". That is why each design below leads with its
+silhouette: shape first, detail second.
+
+## The main character — `CafeWalker`
+
+An ordinary coffee shop worker. The whole twist depends on him looking like nobody special at the start, so he gets
+the plainest design of the three: no coat, no weapon, no insignia.
+
+- **Silhouette:** narrow and upright, the apron making a clear rectangle across his hips. The only read from
+  distance is that flat apron line — everything else is a thin standing figure.
+- **Design:** short messy black hair, tired calm face. Cream long-sleeve shirt, sleeves pushed up. Dark green
+  canvas apron. Charcoal trousers, scuffed grey sneakers. A folded cloth at the apron tie — the one piece of
+  silhouette that moves when he does.
+- **Height:** 175 cm. **Triangle budget:** 30,000.
+- **Already exists:** `Art/Refs/cafe_walker_ref.jpg` and `Art/Refs/CafeWalker_tripo_apose.glb` on
+  `mendezm87/anime-look`, made with Tripo on the jam's first night. That model is the starting point, not a
+  throwaway — the question for the team is whether to keep it or re-run it against the new reference sheet.
+
+## The first boss — `CrashDriver`
+
+The man who drives a car through the cafe wall in the opening and dies giving you Freeze Frame. **He does not
+fight** — his body flickers and the power passes. So his whole job is to be read in about four seconds, lying in
+broken masonry, and to make the colour cyan mean *stopped time* before the player ever presses the button.
+
+- **Silhouette:** bulky where the main character is thin. The jacket thickens his chest and shoulders, and the
+  helmet pushed back off his face gives him a lopsided head shape nobody else in the game has.
+- **Design:** lean man in his forties. Cracked open-face motorcycle helmet pushed back, frosted goggles resting on
+  the brim. Battered brown leather racing jacket with **pale frost creeping across one shoulder** — the power
+  leaking out of him, and the only cyan on him. Torn dark scarf, worn driving gloves, heavy boots.
+- **Height:** 180 cm. **Triangle budget:** 30,000.
+- **Note for whoever builds the opening:** he is seen lying down and in one light. If time runs short he is a
+  static mesh with one flicker effect, not a skeletal mesh with animation. That is the cheap version and it is
+  almost as good.
+
+## The second boss — `CleaverBoss`
+
+A Japanese mob boss with a cleaver, who gives Splice. He is the **first real fight in the game** — the first time
+the player has to use a power to win rather than to watch a cutscene — so he must read as dangerous instantly and
+he must read as *magenta* instantly, because magenta is about to become the portal the player steps through.
+
+- **Silhouette:** the widest shape in the game. Square shoulders in a tailored suit, and the cleaver held point
+  down extends his arm into a hard straight line. From the game camera he is a broad dark rectangle with one bright
+  edge — that edge is the thing the player learns to watch.
+- **Design:** broad, heavyset, older. Slicked-back grey hair, hard scarred face. Sharply tailored charcoal
+  double-breasted suit worn open over a **deep magenta shirt**, no tie. Stylised wave tattoos on the backs of his
+  hands. A heavy clean steel cleaver with a violet glow along the edge when Splice is charging.
+- **Height:** 178 cm, but built roughly 1.3x as wide as the main character through the chest.
+- **Triangle budget:** 30,000.
+- **The cleaver is a separate model, not part of him.** Every reference take drew the blade crossing his trouser
+  leg, and image-to-3D fuses whatever overlaps — we would get a man with a cleaver growing out of his thigh. So he
+  is modelled empty-handed from `BOSS2-NOBLADE`, the cleaver is modelled on its own from `CLEAVER-PROP`, and it is
+  attached to a hand socket in Unreal. That is the right answer for the game anyway: a weapon on a socket can be
+  swung, dropped and glowed at the edge when Splice charges. A weapon baked into the body can do none of that.
+- **Two rules constraints, both deliberate:**
+  - **No real crest.** `docs/RULES.md` allows no trademarks or logos. Real crime families have real crests, so his
+    lapel pin is a plain invented diamond, and there is no insignia anywhere else on him.
+  - **13+.** The blade stays clean — no blood, ever, on the model or in the concept art. Tattoos are stylised
+    waves, which is an anime convention rather than a depiction of any real group.
+
+## What we picked, and what is wrong with it
+
+Twelve takes were drawn. The picks, committed next to this file:
+
+| Character | Pick | Why that one |
+|---|---|---|
+| `CafeWalker` | `Art/Refs/CafeWalker_apose.png` (take 3) | The only take with every finger separated on both hands, and the widest gap between arms and torso |
+| `CrashDriver` | `Art/Refs/CrashDriver_apose.png` (take 3) | Clearest gloved hands, and the frost reads as frost on **one** shoulder rather than as white fur on both |
+| `CleaverBoss` | `Art/Refs/CleaverBoss_apose.png` (`BOSS2-NOBLADE` take 2) | Both arms well clear of the torso and both hands open with the fingers spread — the first three takes all had the blade across his leg |
+| the cleaver | `Art/Refs/Cleaver_prop.png` (`CLEAVER-PROP` take 1) | Clean side-on blade filling the frame, nothing else in the picture |
+
+**Two things are wrong with this set, and neither is fixed yet.**
+
+1. **The bosses are drawn in a different style from the main character.** `CafeWalker` came out as clean
+   cel-shaded anime, exactly as asked. Both bosses came out heavier and grittier — closer to a western comic, with
+   painted leather and fabric. The prompts named the same style for all three; the subject matter (worn leather,
+   a tailored suit) pulled the model somewhere else. A cast that does not share a style will cost us on looks,
+   which is our second prize target.
+   **The fix is already in the tool:** `gen_images.py --ref` switches to the Qwen *edit* model and draws in the
+   style of up to three reference pictures. So re-roll the bosses anchored to the main character we picked:
+
+       python tools/gen_images.py BOSS1-APOSE --ref Art/Refs/CafeWalker_apose.png --takes 2 --size 1024x1536
+
+   That is about four minutes per boss. It has **not** been run — flagging it rather than spending the GPU time
+   unasked, because the team has not yet settled the art style at all (`ROADMAP.md`, "Still to decide").
+
+2. **These are reference pictures, not the game's look.** Nothing here has been seen in Unreal, from the game
+   camera, under the cel-shader. Per `CLAUDE.md`, that makes all of it **untested** until the builder imports it.
+
+## How these get built
+
+1. **Reference sheet** — `docs/prompts.md`, codes `MC-APOSE`, `BOSS1-APOSE`, `BOSS2-APOSE`, drawn by
+   `tools/gen_images.py` on M Station's graphics card. Takes land in `Art/Refs/gen/` (git-ignored); the pick is
+   copied to `Art/Refs/<name>_apose.png` and committed, so the picture a model came from sits beside the model.
+2. **3D model — Meshy, in a browser, by a person.** `CLAUDE.md` is explicit: *"retries go through the browser,
+   never the API"*, because every API call costs credits while the website's retries are free. So an agent does not
+   make these. Steps are in the hand-off below.
+3. **Rig, animation and export** — `Art/Blender/meshy_character.py`, which takes Meshy's rigged GLB and writes
+   `SK_<Name>.fbx` plus its base-colour texture into `Art/Blender/export/Characters/<Name>/`, with a Walk and an
+   Idle already on it.
+4. **Import** — on GameStation only. `CLAUDE.md` line 53: a maker computer never saves in Unreal, it hands the
+   files over.
+
+## Hand-off
+
+**For Manny, in Chrome (the one step an agent must not do):** on meshy.ai, upload each picture below to
+**Image to 3D**, press **Retry** until the face and the hands are clean, and download the result. Meshy keeps
+results three days, so download on the day. The website's retries are free; the API's cost credits.
+
+| Upload | Then | Download |
+|---|---|---|
+| `Art/Refs/CafeWalker_apose.png` | **Rig** → Smart Rig | rigged GLB |
+| `Art/Refs/CrashDriver_apose.png` | **Rig** → Smart Rig | rigged GLB |
+| `Art/Refs/CleaverBoss_apose.png` | **Rig** → Smart Rig | rigged GLB |
+| `Art/Refs/Cleaver_prop.png` | **no rig** — it is a prop | plain GLB |
+
+Smart Rig for the three people (they are humans, not the Quadruped Dog rig). The cleaver is not rigged: it goes on
+a hand socket.
+
+**Then, on M Station (I can run this):** the three people,
+
+    blender -b --factory-startup --python Art/Blender/meshy_character.py -- <rigged.glb> CafeWalker smart 175
+    blender -b --factory-startup --python Art/Blender/meshy_character.py -- <rigged.glb> CrashDriver smart 180
+    blender -b --factory-startup --python Art/Blender/meshy_character.py -- <rigged.glb> CleaverBoss smart 178
+
+and the cleaver, which uses the prop script instead (0.35 m across its widest side, 2,000 triangles):
+
+    blender -b --factory-startup --python Art/Blender/meshy_prop_bake.py -- <cleaver.glb> Cleaver 0.35 width 2000
+
+Note the two scripts write to **different places**: `meshy_character.py` to
+`Art/Blender/export/Characters/<Name>/`, `meshy_prop_bake.py` to `Art/Meshy/<Name>/`.
+
+**Then, on GameStation (builder only):** copy each `Art/Blender/export/Characters/<Name>/` folder (and
+`Art/Meshy/Cleaver/` for the blade) into
+`JumpCut/Content/Game/Imported/` with Unreal open and let Interchange auto-import it — mesh, skeleton and both
+animations together. Do **not** use `SkeletalMeshTools.import_file` onto an existing skeleton; `CLAUDE.md` records
+that going wrong twice. Then point the material slot at the character's `MI_`, place it next to a plain copy, and
+look at it **from the game camera** before calling it good.
