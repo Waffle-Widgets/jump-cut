@@ -41,16 +41,17 @@ checkpoint: the core loop (player, Rewind, the Freeze Frame boss) playable start
 
 ## Waiting for a yes
 
-**One large city level** (Justin's proposal, Nov 12: the team still has to say yes)
+_(nothing right now)_
+
+## Fallbacks (turned down, kept in case we need them)
+
+**One large city level** (Justin's proposal, Nov 12. Not taken for now — see Decisions — and kept here as the way
+to grow the game if there is time left. Only a person moves it into Open.)
 
 - The whole game is one city map, laid out like the practice repo's city (a street grid of blocks, sidewalks and
   alleys), rebuilt here from scratch. Cafe start, streets with goons to each boss plaza, a second half that needs
   Splice for platforming, then a climb to the Director's tower. About 30 minutes of play, cut scenes later.
-- **This is far bigger than `CLAUDE.md`'s scope guardrail** ("one level, one core mechanic, 3-5 minutes of play").
-  The guardrail has not been changed. The team needs to pick one.
-- `docs/INITIAL_PROMPT.md` is a draft first prompt for the builder that is written around it.
-
-## Fallbacks (turned down, kept in case we need them)
+- `docs/INITIAL_PROMPT.md` was written around it. Its lead-and-subagents method is in use; its city is not.
 
 **How we keep it buildable** (Claude's proposal, Nov 12. Turned down the same day — see Decisions — and kept here
 in case playtesting shows we need it. Still not something to build from: only a person moves it into Open.)
@@ -87,6 +88,10 @@ _(nothing yet)_
 
 ## Decisions
 
+- **2026-11-12: Scope stays jam-sized.** We build to the jam's rules and `CLAUDE.md`'s guardrail (one small level,
+  a few minutes of play), not the one large 30-minute city. If there is time left we look at growing it (Team Owner).
+- **2026-11-12: The anime look is not decided yet.** Its assets stay on the branch `mendezm87/anime-look` in case we
+  go that way; the first build does not use them (Team Owner).
 - **2026-11-12: Build to the team's own scope in the pitch** (five powers, the bosses as listed), not Claude's smaller
   proposal. Change it later only if playtesting shows the need (Justin).
 - **2026-11-12: Losing restarts at the last checkpoint**, not at the cafe (Justin).
