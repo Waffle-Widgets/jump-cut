@@ -37,33 +37,6 @@ Each boss is beaten with the power taken from the boss before. Boss 1 is already
 **Name to change:** "Final Cut" is an Apple trademark, and the jam allows no trademarks. Suggested: **Director's Cut**,
 which is also the theme.
 
-## How we keep it buildable (Claude's proposal, Nov 12: the team still has to say yes)
-- **Small Rewind:** record the player's position and health for 10 seconds. Rewind slides the player back along that
-  trail in about a second and restores the health. No replay of the whole world.
-- **One boss Blueprint** with a "which power" setting, not five different bosses.
-- **Freeze Frame** shortened to about 3 seconds so fights stay quick.
-- **Splice platforming** is one or two gaps, not half a map.
-- **Stunt Double** as a still decoy that takes one hit. It's the first thing to cut.
-- **Factions** as one grunt enemy recoloured per area, or cut until the bosses work.
-
-## Build order
-| Day | Goal |
-|---|---|
-| Thu Nov 12 | Player + Rewind + the Freeze Frame boss, in grey boxes, playable start to finish |
-| Fri Nov 13 | Splice boss, the Director with two rule scenes, win/lose and restart screens, first packaged build. **Feature freeze** |
-| Sat Nov 14 | Art, sound, juice, playtests, footage. Stunt Double only if Friday went well |
-| Sun Nov 15 | Bug fixes and submission only |
-
-## Cut list (in the order we drop things)
-1. Factions with different behaviour, and factions fighting each other
-2. Stunt Double (power and boss)
-3. Splice platforming section (keep the teleport for the fight)
-4. Dialogue: one line of text per power instead
-5. A full rewind of the world (already cut: only the player rewinds)
-6. More than one level
-
-## Still to decide
-- **Art style.** GameStation is testing an anime look (cel-shaded characters over painted backgrounds) and a cafe
-  level in the practice project. If the team keeps it, it moves here as jam work.
-- The Director's real name and the final names of the powers.
-- Camera: third person behind the player (the template's) unless we choose otherwise.
+## The plan
+The build order, the cut list, proposals waiting for the team's yes, what is still to decide and what has been
+decided are in [`ROADMAP.md`](ROADMAP.md) (moved there word for word on Nov 12). This file is the game itself.

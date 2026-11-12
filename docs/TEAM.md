@@ -62,4 +62,4 @@ the lock) edits its `.uasset` files.
 | UI (title, HUD, end screen) | | `Content/Game/UI/` |
 | Audio | | `Content/Game/Audio/`, `tools/make_sfx.py` |
 | Art made outside Unreal | | `Art/Blender/`, imported by the level owner |
-| Devlog, video, submission | Manuel Mendez | `docs/DEVLOG.md`, the zip |
+| Devlog, video, submission | Manuel Mendez | `docs/devlog/`, the zip |

@@ -50,7 +50,7 @@ GitHub issues as a mailbox and how to split the work, is in [`TEAM_SYNC_BACKUP.m
 - Before working and before every commit: get the latest (`git pull --rebase`).
 - Before changing an Unreal file: lock it (`git lfs lock`). If a teammate holds the lock, wait or make a new file.
 - Commit small, tested changes under **your own name**; Epic may read our Git history. Untested work goes on a branch.
-- Every change gets a devlog entry in [`DEVLOG.md`](DEVLOG.md): we're aiming for the Glass Box prize.
+- Every change gets a devlog entry, a new file in [`devlog/`](devlog/README.md): we're aiming for the Glass Box prize.
 
 ## 5. Rules that matter
 - Before Nov 12 we may only prepare tools, scripts, prompts and settings. Gameplay, levels and art are made Nov 12-15.

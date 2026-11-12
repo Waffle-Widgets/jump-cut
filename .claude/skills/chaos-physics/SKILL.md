@@ -5,7 +5,7 @@ description: Physics with Unreal's Chaos through the MCP - breakable objects (Ge
 
 # Chaos physics (tested Nov 11 2026 on M Station, Unreal 5.8, in a scratch level)
 
-Proof: `docs/media/chaos_test_break.png` (a 2 m block broken into 20 Voronoi chunks by one call from code).
+Proof: `docs/media/chaos_test_break.png` in the repo it was tested in, not copied here (a 2 m block broken into 20 Voronoi chunks by one call from code).
 Test script: `tools/unreal_chaos_test.py` (builds a test level, then `throw` or `blast` during Play).
 **Jam rule:** breakable assets are art: make them during the jam. Bring this skill and the script, not the assets.
 

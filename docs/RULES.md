@@ -18,7 +18,7 @@ Section numbers (§) point to the PDF. The PDF wins if anything here disagrees; 
   WeLoveIndies sounds (non-commercial licence, sourced, so not scored). Meshy's free Pro month needs a *new* account and a card.
 - **More modifier prizes**, still one per entry (§10): Solo Driver, Render Royalty (best visuals), Pocket Powerhouse
   (mobile), Glass Box and Walkie-Talkie (UEFN only), plus an NVIDIA RTX Award (RTX 5090) for a Render Royalty entry that
-  uses NvRTX, DLSS 4.5 or NVIDIA ACE. Best Team and Glass Box are still our targets.
+  uses NvRTX, DLSS 4.5 or NVIDIA ACE. Our targets, in order (decided Nov 11): Glass Box, Render Royalty, Best Team.
 - **Builds:** besides Windows, macOS, Android and iOS development builds are accepted, and web builds are experimental
   (UE 5.9 MegaJam Preview). A desktop zip over 1 GB can be uploaded with butler. We stay with a Windows zip under 1 GB.
 - **An in-person event** at Digital Jungle, San Francisco, on Nov 14–15 (ticket needed). Online entries are judged the same.
@@ -58,7 +58,7 @@ Section numbers (§) point to the PDF. The PDF wins if anything here disagrees; 
 - **Main categories (§9):** up to 5 points each for ambition and innovation, use of theme, fun factor, gameplay, visuals,
   level design, and audio. Ties are re-scored with **fun factor counted double**. How much AI we used is context only; it
   doesn't raise or lower our score.
-- **Modifiers (§10):** one main prize plus one modifier per entry at most. Ours: Best Team ($5,000, teams of 2+) and Glass Box ($2,500).
+- **Modifiers (§10):** one main prize plus one modifier per entry at most. Ours, in order (decided Nov 11): Glass Box ($2,500), Render Royalty ($2,500), Best Team ($5,000, teams of 2+).
 - Winners are notified by email around **Jan 29, 2027** and have **72 hours** to reply (§14), so watch the email used to enter.
 
 ## Full rules text
