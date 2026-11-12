@@ -6,6 +6,11 @@ Claude Code (through Epic's Unreal MCP) and Gemini.
 This repo was created on 2026-11-12 by `tools/bootstrap/new_jam_repo.ps1`, which copies only tools, scripts,
 agent settings and docs from our practice repo, plus Unreal's own Third Person Blueprint template.
 All gameplay, levels and art in this repo were made during the jam; the Git history shows when.
+What we *did* prepare before the jam is declared, file by file, in [`docs/PREJAM.md`](docs/PREJAM.md) —
+jam rule §7h allows it, and the itch.io page asks us to say what it is.
+
+**Our Glass Box devlog is [`docs/DEVLOG.md`](docs/DEVLOG.md)**: what we asked the AI agents for, what they
+actually did, and everything that broke on the way.
 
 ## New to the team? Start here
 
@@ -26,7 +31,8 @@ Almost everything is done by asking Claude in a chat opened on this repo folder.
 | `docs/PITCH.md` | The game we're making |
 | `docs/PLAN.md` | Team plan and schedule |
 | `docs/RULES.md` | The official jam rules we follow |
+| `docs/PREJAM.md` | What we made **before** the jam, declared file by file (rule §7h) |
 | `docs/DEVLOG.md` | Our devlog (Glass Box) |
 | `CREDITS.md` | Every asset we didn't make ourselves |
-| `CLAUDE.md` / `GEMINI.md` | Standing instructions for our AI agents |
-| `tools/`, `Art/Blender/*.py` | Scripts prepared before the jam (sound generator, AI 3D model cleanup, rigging, walk cycles) |
+| `CLAUDE.md` / `GEMINI.md` | Standing instructions for our AI agents — pre-jam, declared in `docs/PREJAM.md` |
+| `tools/`, `Art/Blender/*.py` | Scripts, mostly prepared before the jam (sound generator, AI 3D model cleanup, rigging, walk cycles) — declared in `docs/PREJAM.md`, which also says which ones were written *during* the jam |

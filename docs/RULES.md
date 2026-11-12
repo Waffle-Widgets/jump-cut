@@ -10,7 +10,7 @@ Section numbers (§) point to the PDF. The PDF wins if anything here disagrees; 
   may enter; Brazil gets no cash prizes) and Nov 5 (Italy may enter, with its own terms in §21).
 - **Declare what we made before the jam.** The itch.io page now says to declare anything made before Nov 12, and its FAQ
   names prompts, scripts and assets. At submission, list our pre-jam tools: the setup and packaging scripts, `tools/`,
-  `Art/Blender/*.py`, `CLAUDE.md` and the Claude skills. Bringing them is allowed (§7h); declaring them is now asked for.
+  `Art/Blender/*.py`, `CLAUDE.md` and the Claude skills. Bringing them is allowed (§7h); declaring them is now asked for. **Done: `docs/PREJAM.md` is that list, with a paste-ready paragraph for the form.**
 - **The submission form has a "Tools you used" field.** It's optional but needed for partner prizes, such as Hyper3D's
   cash pool for winners who used Rodin and the NVIDIA RTX Award. List every AI tool we used (Claude, Meshy, TRELLIS.2 and so on).
 - **Partner credits were emailed on Nov 10** to everyone who pressed "Join jam" on itch.io (check spam). Useful for us:

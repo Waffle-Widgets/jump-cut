@@ -14,3 +14,8 @@ Every asset we did not create ourselves goes here, added the moment it enters th
 - Claude Code (Anthropic) — implementation in Unreal via MCP
 - Gemini (Google) — art and second opinions
 - TRELLIS.2 (Microsoft, MIT) — image-to-3D models, run locally
+
+## Made before the jam
+This file covers assets. Our **tools, scripts, agent instructions and prompt library** were prepared before the
+jam opened, which rule §7h allows and the itch.io page asks us to declare. They are listed file by file in
+[`docs/PREJAM.md`](docs/PREJAM.md) — read that alongside this file at submission time.
