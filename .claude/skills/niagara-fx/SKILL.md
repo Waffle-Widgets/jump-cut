@@ -1,0 +1,102 @@
+---
+name: niagara-fx
+description: Make attack and impact effects with real Niagara particles through the Unreal MCP (beams, trails, sparks, flares, fades), judge them from the game camera and tune them with the owner. Use when an effect looks flat or weak, or the user asks for particles, a new attack, a hit effect or a fade-out.
+---
+
+# Particle effects with Niagara (learned on the Deep Archive Mega Beam, Nov 10 2026)
+
+The worked example is the Mega Beam in the Deep Archive HD-2D repo (`Waffle-Widgets/deep-archive-hd2d`):
+`Game/FX/NS_MegaBeam3D`, `BP_MegaBeam3D`, `tools/fx3d_graphs.py` (graph text), `tools/unreal_make_beam_particle_mat.py`,
+`tools/unreal_capture_megabeam.py`, and the story with pictures in `docs/realistic-3d-test.md` (`docs/captures/21_*`-`30_*`).
+**Jam rule:** effects are art, so they're made during the jam. Bring this skill and scripts, not the assets.
+
+## What looks good (the owner's taste)
+- **Shape and contrast read; texture detail doesn't.** At the game camera a beam is 30-40 px wide. Noise painted on
+  tubes smeared into one yellow cloud, and brighter colours made it worse. Solid shapes, a bright core, a contrasting
+  colour and dark outlines read instantly.
+- **Show mock-ups before building.** Render 2-3 options in Blender from the game camera, at the capture's scale, laid
+  over a real capture (`Art/Blender/beam_mockup.py` + a System.Drawing composite). The owner picked one in a single
+  round; blind colour tweaks in Unreal had been rejected.
+- **Solid colours, not "adds light".** Niagara's default sprite and ribbon materials add light: red over white turns
+  white. Use an unlit **Masked** material that outputs the particle colour, with cartoon bands by how the surface faces
+  the camera (dark outline at the silhouette, lighter band in the middle). The owner likes attacks crisp, no bloom haze.
+  Keep the default see-through material only for soft glows.
+- **Round, not flat.** Ribbons default to flat strips that turn to face the camera: fine from above, flat from the side.
+  Set the ribbon renderer `Shape` to `Tube` (`TubeSubdivisions` 8-10) for anything a camera can orbit.
+- **Taper the ends** into the muzzle flare and the impact, and give the fade-out its own beat (the Mega Beam breaks into
+  thin strands that peel away over 0.8 s). The owner tuned fade length in 0.1 s steps: make it one number in the Blueprint.
+- Tonemapping washes bright orange to yellow/cream: for red-orange keep emissive near 1-2 and push the red channel.
+
+## How to build it (MCP NiagaraToolsets)
+- **The Blueprint passes a few numbers; Niagara draws.** User parameters (`User.BeamLength`, `User.Thick`, `User.Hitting`,
+  `User.Dissolve`), set every tick with `(Niagara|SetNiagaraVariable(Float) :self comp :InVariableName "BeamLength" :InValue len)`
+  (name without `User.`). Positions and widths are HLSL expressions on SetParameters modules
+  (`AddSetParametersModule` + `SetStackInputData` with an `HlslExpression`), e.g. a helix:
+  `float3(r*cos(a), r*sin(a), Particles.U*User.BeamLength)`. Use local space and place the component at the mouth,
+  rotated so local Z points along the beam (`MakeRotFromZ`).
+- **Ribbons that fill a length:** `SpawnBurst_Instantaneous` N points, lifetime 100, `Particles.U = ExecIndex() / (N-1)`,
+  `Particles.RibbonLinkOrder` = the same, then set `Particles.Position` from U every frame. Random U made the ribbon join
+  points out of order and its curve smoothing swung them into huge loops: number them, and set `TessellationMode` Disabled.
+- **One ribbon per emitter** (separate ribbons in one emitter need a NiagaraID RibbonID): copy a small builder function.
+- Sprites (flares, sparks): `SpawnRate` + `AddVelocity` with a `RandomRangeVector` dynamic input (`['Velocity','Minimum']`
+  sets its sub-input) + `GravityForce` + `SolveForcesAndVelocity`. Sparks: renderer `Alignment` `VelocityAligned`.
+- Turn emitters on and off from numbers (`SpawnRate = 45 * step(0.01, User.Thick)`), not by deactivating early: a
+  deactivated system stops everything, including a fade you still want to see.
+
+## Traps that each cost us a round
+- A ribbon renderer added by the toolset has **no material** and draws nothing. Set `Material` with `SetRendererData`.
+- New systems from the `DirectionalBurst` template run **once for 1 s** (System State). Continuous emitters stopped
+  before the beam even fired. Keep `Loop Behavior` **Once** and set `Loop Duration` longer than the effect lives (5 s for
+  a fireball). Setting it to Infinite *before* adding the emitters made every SpawnRate emitter spawn nothing (bursts
+  still worked) with no error anywhere (Fire Blast drill, Nov 11). Infinite set *after* the emitters worked on the beam.
+- **A freshly made system can stay silent** (SpawnRate emitters spawn nothing, no error), even with Once set and spawn
+  modules toggled. What reliably worked: **duplicate a system that works** (`AssetTools.duplicate`) and re-tune the copy.
+- Realistic (not cartoon) fire: see-through (Translucent) soft noisy wisps with a heat ramp beat Additive on a bright
+  daylit floor (additive washed to cream). Keep ramp colours near 1-3. Truly photo-real fire needs flipbook textures.
+- For realistic fire, smoke or explosions load the **`niagara-fluids`** skill (simulation, tuning through Slate, baking).
+- **Make the flipbook from our own Niagara Fluids sim** (no downloads): Niagara editor > Baker, Source Binding
+  "SceneColor (HDR) in RGB, Inv Opacity in A", camera Front + Ortho Width with a margin (too tight cuts the fire into
+  squares), 8x8 frames of 256 px. Play it with `tools/unreal_make_fire_flipbook_mat.py`. The saved alpha is *opacity*
+  (1 - A drew black squares). Best on many small long-lived puffs (a trail); a big short-lived sprite flashes through
+  the smoke frames too. A moving fluid grid can't follow a fast projectile (it smears or stays a faint puff).
+- **Is it the system or the Blueprint?** `tools/unreal_fx_spawn_test.py <system>` (in Play) spawns the system on its own
+  beside the player and takes a frozen picture. Then swap one thing at a time (default material, emitters off) to corner it.
+- Minimal emitters use the system's life cycle, so their own `Inactive Response` is hidden and can't be set.
+- `ObjectTools.set_properties` returned false on a Blueprint's Niagara component template. Use
+  `tools/unreal_fx_component_setup.py <BP> <component> <system> <auto 0|1>` (editor Python on
+  `.../BP_X.BP_X_C:Comp_GEN_VARIABLE`; compiles and saves). Add the component with `ActorTools.add_component` first.
+- The editor may open on the template's default map: load the game's level (`SceneTools.load_level`) before Play tests.
+- Round sprite flames: `M_FlameParticle3D` (`tools/unreal_make_flame_particle_mat.py`): masked circle, 4 cartoon bands
+  from the particle colour. Keep the light centre small: a big white one made the blobs look like coins.
+- **Drill result (Nov 11):** Fire Blast flight + explosion rebuilt as particles in about 10 minutes of building with
+  these scripts: the copied builder functions do most of the work. Trails need time to build up; picture them later in the flight.
+- `get_node_type_pins` can leave stray nodes in the graph; the next `write_graph_dsl` replaces them.
+- `GetModuleInputValues` input names are the display names (`Lifetime`, `Spawn Count`, `Particles.Color` for a
+  SetParameters entry). Inputs hidden by a static switch refuse to be set: change the switch first.
+- An actor that removes itself (DestroyActor) cuts its effects off. If a fade needs more time, keep the actor alive
+  longer but stop driving shared things (night sky, lights) at the old time, so a second shot isn't overwritten.
+
+- **Per-particle randomness in an HLSL expression:** hash the spawn time, `frac(sin(Engine.Time * 12.9898) * 43758.5453)`,
+  in a spawn-script Set Variables (one value per particle when fewer than one spawns a frame). `Particles.UniqueID` gave
+  the same value to every particle on an emitter without persistent IDs. **Never toggle `bRequiresPersistentIDs`** with
+  `SetEmitterData`: turning it on and off again crashed the editor on the next spawn (VectorVM `OldNumFreeIDs`
+  assertion), even after a restart. Restore the `.uasset` from Git with the editor closed.
+- **Don't set InitializeParticle's Sprite UV Mode to Random X** on an emitter whose material reads TexCoord (our
+  flipbooks): the sprites disappeared, and setting it back to Unset didn't bring them back (the head drew as solid
+  yellow boxes once `Particles.UVScale` was forced to 1). Fix: `git checkout` the asset and reload it
+  (`EditorLoadingAndSavingUtils.reload_packages([pkg], ReloadPackagesInteractionMode.ASSUME_POSITIVE)`, no prompt).
+- `GetSystemCompileState` waits for the compile on the game thread. Right after an editor start the compile can't finish
+  while it waits, so it times out after 120 s. Skip it then: save, wait outside, and capture.
+
+## Judging it (the owner plays it last)
+- **Freeze-frame captures** (`tools/unreal_capture_megabeam.py <seconds> [game|side] [attack event]`, e.g.
+  `... 0.75 game FireFireBlast`; the beam by default; typed into the console box in
+  Play): it fires the attack, waits in game time with a Slate tick callback (never `sleep`), freezes time
+  (`set_global_time_dilation` 0.0001) and takes `HighResShot 1920x1080`. Take shots at several moments: mid-fire, the
+  hit, partway through the fade.
+- **Check another angle**, not only the game camera: the flat strips only showed from the side. Python can't spawn into
+  the Play world, so the script borrows the **smallest** prop, sets it Movable (Static props silently don't move), hides
+  it and looks through it with `SetViewTargetWithBlend`.
+- A tick callback that throws repeats every frame. Wrap its work in try/except. To stop a runaway one, find the
+  function with `gc.get_objects()` (dicts of plain values aren't tracked) and unregister its handle.
+- Stop Play before every edit; save; `git status` to confirm the asset changed; lock new assets after their first commit.
