@@ -7,7 +7,7 @@ Claude reads this file to know who owns what. Update it whenever ownership chang
 
 | Name | GitHub | Epic account email registered? | PC(s) | Role |
 |---|---|---|---|---|
-| **Manny Mendez** — **Team Owner** (submits the entry, §1c/§13) | mendezm87 | **confirmed** — held outside this public repo, see note below | GameStation (Unreal), M Station (Blender, TRELLIS) | builder, maker, devlog + submission |
+| **Manuel Mendez** (goes by Manny) — **Team Owner** (submits the entry, §1c/§13) | mendezm87 | **confirmed** — held outside this public repo, see note below | GameStation (Unreal), M Station (Blender, TRELLIS) | builder, maker, devlog + submission |
 | Justin — _full legal name still needed_ | allbarkdev (joined Waffle-Widgets and Jam Team Nov 8) | **not yet given** | Justins-Mac-mini | tester, maker |
 | | | | | |
 | | | | | |
@@ -33,9 +33,9 @@ table, commits and pushes. A computer can have more than one role (`tester, make
 
 | Computer (`hostname`) | Person | OS | Role | Notes |
 |---|---|---|---|---|
-| Gamestation | Manny Mendez | Windows | builder | Unreal edits, packaging, fixes playtest issues |
-| M_Station | Manny Mendez | Windows | maker | TRELLIS, Blender, Meshy, sounds |
-| _(Manny's Mac: hostname to add)_ | Manny Mendez | macOS | tester | |
+| Gamestation | Manuel Mendez | Windows | builder | Unreal edits, packaging, fixes playtest issues |
+| M_Station | Manuel Mendez | Windows | maker | TRELLIS, Blender, Meshy, sounds |
+| _(Manny's Mac: hostname to add)_ | Manuel Mendez | macOS | tester | |
 | Justins-Mac-mini | Justin | macOS | tester, maker | Mac mini, Apple silicon. git-lfs, gh, uv and the Blender MCP set up Nov 9; Blender is 5.1.2 (team uses 5.2) |
 
 **Roles**
@@ -62,4 +62,4 @@ the lock) edits its `.uasset` files.
 | UI (title, HUD, end screen) | | `Content/Game/UI/` |
 | Audio | | `Content/Game/Audio/`, `tools/make_sfx.py` |
 | Art made outside Unreal | | `Art/Blender/`, imported by the level owner |
-| Devlog, video, submission | Manny Mendez | `docs/DEVLOG.md`, the zip |
+| Devlog, video, submission | Manuel Mendez | `docs/DEVLOG.md`, the zip |

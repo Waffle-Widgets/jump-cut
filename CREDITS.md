@@ -7,7 +7,7 @@ Every asset we did not create ourselves goes here, added the moment it enters th
 | Third Person template content (mannequin, level prototyping meshes, input actions) | Starting point of the project | Unreal Engine 5.8 Third Person Blueprint template | Epic Games | Unreal Engine EULA | bootstrap script, 2026-11-12 |
 
 ## Team
-- **Manny Mendez** — Team Owner (submits the entry). Driver: Unreal implementation on GameStation, art pipeline on M Station, devlog and video.
+- **Manuel Mendez** — Team Owner (submits the entry). Driver: Unreal implementation on GameStation, art pipeline on M Station, devlog and video.
 - **Justin** (GitHub `allbarkdev`) — Director: playtesting and review on his Mac mini, making art outside Unreal. _Full legal name to be added before submission._
 
 Full names and the email on each member's Epic account go on the itch.io entry form (§1c, §2, §13), not in this
