@@ -50,3 +50,7 @@ Art/Reference/
 
 # local image generator output (tools/gen_images.py)
 Art/Refs/gen/
+
+# Python bytecode from running the tools/ scripts
+__pycache__/
+*.pyc
