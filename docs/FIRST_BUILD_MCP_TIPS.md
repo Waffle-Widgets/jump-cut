@@ -86,3 +86,13 @@ From B3 (`BP_Goon`, `BP_GoonSpawner`; graphs as text in `tools/b3_graphs.py`, te
   the level then reports no dirty map packages.
 - The goons hurt the player fast (8 every ~1.85 s each): with three goons a test player is lost in ~7 s. Order tests so
   health doesn't matter, or restart PIE. `set_global_time_dilation 0.25` gives ~1 game second per Type call.
+
+From C1 (`BP_PlazaGate`, `BP_Checkpoint`, `BP_SceneMarker`, the level; graphs `tools/c1_graphs.py`, level `tools/c1_layout.py`):
+- **Console box textbox ref:** `Snapshot` ref `m2` (the menu next to "Cmd") lists `textbox [ref=tb2]`; `Type` needs that ref. `py <path> args` passes `sys.argv`.
+- **`set_variable_instance_editable`** takes `variable_name`, `instance_editable`. `ActorTools.add_component` takes `owner`, `component_type`, `name`; `ObjectTools.get_properties` takes `properties` (a list). `AssetTools.save_assets` takes `asset_paths`.
+- **Component node ids:** `(Variables|Default|GetTriggerSphere)`, `Transformation|GetWorldLocation :self c`, `Components|Sphere|GetScaledSphereRadius :self c`,
+  `Class|SceneComponent|GetRelativeLocation :self c`, `Transformation|SetRelativeLocation :self c :NewLocation v`, `Math|Interpolation|FInterptoConstant :Current :Target :DeltaTime :InterpSpeed`,
+  `Rendering|SetVisibility :self c :bNewVisibility true`. A new Actor Blueprint's EventGraph has a stray empty `ActorBeginOverlap` event: `find_nodes` title `ActorBeginOverlap`, `delete_node`.
+- **Python in the editor:** `eas.spawn_actor_from_class(unreal.StaticMeshActor, ...)`, `a.static_mesh_component.set_static_mesh/set_material/set_mobility`; tag actors (`set_editor_property('tags', [unreal.Name('C1_Layout')])`) to delete only your own on a re-run; Blueprint variables via `a.set_editor_property('GoonCount', 3)` work on placed copies (instance-editable ones). `GameplayStatics.get_time_seconds(world)`; `SystemLibrary.line_trace_single(world, a, b, TraceTypeQuery.TRACE_TYPE_QUERY1, False, [], DrawDebugTrace.NONE, True)` works in the editor world and in PIE.
+- **`CaptureViewport` during PIE draws the editor scene, not the game** (a gate that Tick had raised still showed closed). Use `CaptureEditorImage` with the player teleported in front of the thing. Calls right after a `py` Type arrive before the py runs: capture in the next call.
+- `Floor_Base` is a 200 m square (x/y +-10000): anything beyond needs its own floor slab. `PlayerReachWin` does nothing if the player `IsLost` (a test player the goons killed needs a PIE restart).
