@@ -21,7 +21,7 @@ him hands over Freeze Frame, opens the far gate and shows the win screen a few s
 
 | ID | Packet | Kind | Model | Needs | Done means | Status | Notes |
 |---|---|---|---|---|---|---|---|
-| A1 | Folders, `Lvl_JumpCut` (lit, floor, One File Per Actor), `BP_JumpCutGameMode` | Unreal | Opus | - | (1) `/Game/Game/Maps/Lvl_JumpCut` exists and loads; (2) World Settings: Use External Actors on, game mode override = `BP_JumpCutGameMode`; (3) a capture shows a lit floor and sky, not black; (4) `git status` shows the new files | todo | |
+| A1 | Folders, `Lvl_JumpCut` (lit, floor, One File Per Actor), `BP_JumpCutGameMode` | Unreal | Opus | - | (1) `/Game/Game/Maps/Lvl_JumpCut` exists and loads; (2) World Settings: Use External Actors on, game mode override = `BP_JumpCutGameMode`; (3) a capture shows a lit floor and sky, not black; (4) `git status` shows the new files | verified | Built by an Opus builder, checked by a Fable checker (all four pass; pawn stands on the floor in Play mode). Extra: a `VolumetricCloud_Main` actor. The floor has no material yet. Switching on Use External Actors opened a modal window that froze the MCP for 300 s; closed from PowerShell. |
 | B1 | `BP_EnemyBase` (health, takes hits, knockback, dies) and `BP_Player` (health 100, three-hit fist combo, hit reaction, keys polled) | Unreal | Opus | A1 | (1) both compile; (2) in Play mode `PlayerTakeHit 30` on the live player leaves health 70; (3) `PlayerPunch` called three times within the combo window next to a placed `BP_EnemyBase` lowers its health three times and the third moves it at least 150 cm away; (4) an enemy at 0 health is destroyed; (5) every tuning number is a named variable | todo | |
 | B2 | `WBP_HUD`: health bar, one icon per power with its cooldown | Unreal | Sonnet | B1 | (1) compiles; (2) a game-camera capture in Play mode shows the health bar and the Rewind icon; (3) after `PlayerTakeHit 30` a second capture shows a shorter bar; (4) no sentences on screen | todo | |
 | B3 | `BP_Goon` (walks up, punches, can be knocked back and beaten) and `BP_GoonSpawner` (places a group) | Unreal | Opus | B1 | (1) both compile; (2) in Play mode a goon 800 cm from the player is within 200 cm of it a few seconds later; (3) left alone next to the player it lowers the player's health; (4) a spawner set to 3 gives 3 live goons; (5) three `PlayerPunch` hits remove a goon | todo | |
@@ -32,6 +32,17 @@ him hands over Freeze Frame, opens the far gate and shows the win screen a few s
 | E1 | `WBP_Title`, `WBP_Win`, `WBP_Lose`; you lose at 0 health with Rewind on cooldown; restart at the last checkpoint; input mode back to "game only"; the game starts in `Lvl_JumpCut` | Unreal | Sonnet | D2 | (1) all compile; (2) health 0 with Rewind on cooldown shows the lose screen (capture); (3) restart puts the player at the stored checkpoint with full health; (4) beating the boss and reaching the end shows the win screen (capture); (5) `GameDefaultMap` and `EditorStartupMap` point at `Lvl_JumpCut` | todo | |
 | E2 | Run-through: cafe to win screen by calling the player's functions and moving it marker to marker | Unreal | Fable | E1 | (1) every step in play order works without a person; (2) both gates behave; (3) the list of what a person must still play is written | todo | |
 | F | Final audit by a fresh subagent: this ledger and the scope above, line by line, against what is in the project | outside | Fable | E2 | Every line of the scope has a verified packet behind it, or is listed as missing | todo | |
+
+## Notes for checkers (from the design note, [`FIRST_BUILD_DESIGN.md`](FIRST_BUILD_DESIGN.md))
+- `PlayerPunch` only hits what is in front: face the player at the enemy first (`PlayerDebugTeleport` takes a yaw).
+- A beaten enemy is destroyed 0.6 s later, not at once, so the knockback can be seen.
+- Measure Rewind only after `IsRewinding` is false again. Hits are ignored during the slide and for 0.5 s after.
+- Gates report open at once but the mesh takes about half a second to slide: capture after that.
+- At 0 health with Rewind ready there is a 1.5 s grace window before the lose screen. That is the design, not a bug.
+- "The player can / can't move" can't be proven without keys. Check the variables; a person plays the rest.
+- The win marker is only guarded by the exit gate: the run-through (E2) must go through the boss, not teleport past him.
+- There must be exactly one live `BP_Player_C`, placed in the level with auto-possess, and the game mode must keep
+  the template's player controller.
 
 ## Cut order if we fall behind
 From the bottom up: the title screen (keep win and lose), the player's own Freeze Frame (D2; keep the boss), the
