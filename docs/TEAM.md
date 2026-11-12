@@ -8,7 +8,7 @@ Claude reads this file to know who owns what. Update it whenever ownership chang
 | Name | GitHub | Epic account email registered? | PC(s) | Role |
 |---|---|---|---|---|
 | **Manuel Mendez** (goes by Manny) — **Team Owner** (submits the entry, §1c/§13) | mendezm87 | **confirmed** — held outside this public repo, see note below | GameStation (Unreal), M Station (Blender, TRELLIS) | builder, maker, devlog + submission |
-| Justin — _full legal name still needed_ | allbarkdev (joined Waffle-Widgets and Jam Team Nov 8) | **not yet given** | Justins-Mac-mini | tester, maker |
+| **Justin Catrambone** | allbarkdev (joined Waffle-Widgets and Jam Team Nov 8) | **given, provisional** — held outside this public repo; Justin has not yet confirmed it is the address on his Epic account | Justins-Mac-mini | tester, maker |
 | | | | | |
 | | | | | |
 | | | | | |
@@ -36,7 +36,7 @@ table, commits and pushes. A computer can have more than one role (`tester, make
 | Gamestation | Manuel Mendez | Windows | builder | Unreal edits, packaging, fixes playtest issues |
 | M_Station | Manuel Mendez | Windows | maker | TRELLIS, Blender, Meshy, sounds |
 | _(Manny's Mac: hostname to add)_ | Manuel Mendez | macOS | tester | |
-| Justins-Mac-mini | Justin | macOS | tester, maker | Mac mini, Apple silicon. git-lfs, gh, uv and the Blender MCP set up Nov 9; Blender is 5.1.2 (team uses 5.2) |
+| Justins-Mac-mini | Justin Catrambone | macOS | tester, maker | Mac mini, Apple silicon. git-lfs, gh, uv and the Blender MCP set up Nov 9; Blender is 5.1.2 (team uses 5.2) |
 
 **Roles**
 - **builder:** the only computer that changes Unreal files (`.uasset`, `.umap`) and commits them. It packages and publishes

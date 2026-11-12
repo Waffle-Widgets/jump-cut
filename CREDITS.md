@@ -8,7 +8,7 @@ Every asset we did not create ourselves goes here, added the moment it enters th
 
 ## Team
 - **Manuel Mendez** — Team Owner (submits the entry). Driver: Unreal implementation on GameStation, art pipeline on M Station, devlog and video.
-- **Justin** (GitHub `allbarkdev`) — Director: playtesting and review on his Mac mini, making art outside Unreal. _Full legal name to be added before submission._
+- **Justin Catrambone** (GitHub `allbarkdev`) — Director: playtesting and review on his Mac mini, making art outside Unreal.
 
 Full names and the email on each member's Epic account go on the itch.io entry form (§1c, §2, §13), not in this
 public repo — `docs/TEAM.md` records only whether we have each person's address.
