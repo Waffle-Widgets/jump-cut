@@ -96,3 +96,25 @@ From C1 (`BP_PlazaGate`, `BP_Checkpoint`, `BP_SceneMarker`, the level; graphs `t
 - **Python in the editor:** `eas.spawn_actor_from_class(unreal.StaticMeshActor, ...)`, `a.static_mesh_component.set_static_mesh/set_material/set_mobility`; tag actors (`set_editor_property('tags', [unreal.Name('C1_Layout')])`) to delete only your own on a re-run; Blueprint variables via `a.set_editor_property('GoonCount', 3)` work on placed copies (instance-editable ones). `GameplayStatics.get_time_seconds(world)`; `SystemLibrary.line_trace_single(world, a, b, TraceTypeQuery.TRACE_TYPE_QUERY1, False, [], DrawDebugTrace.NONE, True)` works in the editor world and in PIE.
 - **`CaptureViewport` during PIE draws the editor scene, not the game** (a gate that Tick had raised still showed closed). Use `CaptureEditorImage` with the player teleported in front of the thing. Calls right after a `py` Type arrive before the py runs: capture in the next call.
 - `Floor_Base` is a 200 m square (x/y +-10000): anything beyond needs its own floor slab. `PlayerReachWin` does nothing if the player `IsLost` (a test player the goons killed needs a PIE restart).
+
+From D1 (`BP_BossFreeze`, boss-freeze functions on `BP_Player`, C1b fixes; graphs `tools/d1_graphs.py`, Play-mode steps `JumpCut/Saved/d1_pie.py`):
+- **The `IsValid` macro ends the exec flow like a cast:** anything written after `(Utilities|IsValid ...)` in the same
+  body is rejected ("Unreachable code after branch/return"). Two IsValid checks in one event: put the second part in its
+  own small function and call it from both the `Is Valid` and `Is Not Valid` branches.
+- **Hook events with parameters:** after `add_event(bp, 'EnemyThink')` the reader prints `(event EventEnemyThink (DeltaSeconds))`;
+  write it exactly like that. A child made with `BlueprintTools.create` still gets the BeginPlay/Tick/Overlap nodes: delete them.
+- **Another Blueprint's variable:** `(Class|BPPlayer|GetIsFrozenbyBoss :self ref)` (find exact ids with `find_node_types`,
+  filter = the variable name). Component scale: `Transformation|SetRelativeScale3D :self c :NewScale3D v`.
+- `SetVisibility` with `:bNewVisibility false` reads back without the pin (false is the default): check with `get_node_infos`.
+- **Component template visibility:** `ObjectTools.set_properties` on `<BP>_C:<Comp>_GEN_VARIABLE` takes `{"bVisible": false}`
+  (keeps a big warning mesh out of the editor view). Inherited native components (`:CollisionCylinder`, `:CharacterMesh0`)
+  take `CapsuleHalfHeight` / `RelativeScale3D` / `OverrideMaterials` on the child's CDO.
+- **A placed actor's material/radius that doesn't reach disk:** `comp.modify()`, change it, then
+  `actor.modify()` + `set_actor_transform(<its own full transform>)` and `save_current_level()`; `git status` then shows the
+  actor file. (Floor_Base and the checkpoint's `TriggerSphere` radius were fixed this way.)
+- **Scripted fights:** a `register_slate_post_tick_callback` "bot" (walk with `add_movement_input`, `set_actor_rotation` +
+  `PlayerPunch` when in reach, `RewindStart` when frozen) plays the whole loop at full speed and logs every state change;
+  far more reliable than one Type call per step (each call is 1-20 s of real time). `d1_pie.py bot rewind|norewind`.
+- **Waiting from Bash:** plain `sleep N` longer than a few seconds is blocked; use `until grep -q <marker> <log>; do sleep 3; done`.
+- A capture "freeze" for `CaptureEditorImage`: set global dilation 0.0001, call the function that shows the warning
+  (`BossStartFreezeWindup`), capture in the next call, then restore dilation.
