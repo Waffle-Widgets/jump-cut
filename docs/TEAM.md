@@ -7,11 +7,16 @@ Claude reads this file to know who owns what. Update it whenever ownership chang
 
 | Name | GitHub | Epic account email registered? | PC(s) | Role |
 |---|---|---|---|---|
-| _(Team Owner: submits the entry)_ | mendezm87 | | GameStation (Unreal), M Station (Blender, TRELLIS) | |
-| Justin | allbarkdev (joined Waffle-Widgets and Jam Team Nov 8) | | | |
+| **Manny Mendez** — **Team Owner** (submits the entry, §1c/§13) | mendezm87 | given to the team, held outside this public repo — see note below | GameStation (Unreal), M Station (Blender, TRELLIS) | builder, maker, devlog + submission |
+| Justin — _full legal name still needed_ | allbarkdev (joined Waffle-Widgets and Jam Team Nov 8) | **not yet given** | Justins-Mac-mini | tester, maker |
 | | | | | |
 | | | | | |
 | | | | | |
+
+**Emails are not written in this repo.** The entry needs every member's full name and the email on their Epic account
+(§1c, §2, §13), and the repo is public, so the addresses are kept with the submission notes off GitHub and typed
+straight into the itch.io form. This table only records *whether* we have each person's address. Everyone must also
+be 18+ with an active Epic account, and a human — the Team Owner — presses submit (§17).
 
 **GitHub access:** every teammate joins the Waffle-Widgets team **Jam Team**, which has write access (needed to push
 and to lock files). The org's base permission is "No permission" (since Nov 8), so members see only the repos their
@@ -28,9 +33,9 @@ table, commits and pushes. A computer can have more than one role (`tester, make
 
 | Computer (`hostname`) | Person | OS | Role | Notes |
 |---|---|---|---|---|
-| Gamestation | Team Owner | Windows | builder | Unreal edits, packaging, fixes playtest issues |
-| M_Station | Team Owner | Windows | maker | TRELLIS, Blender, Meshy, sounds |
-| _(Owner's Mac: hostname to add)_ | Team Owner | macOS | tester | |
+| Gamestation | Manny Mendez | Windows | builder | Unreal edits, packaging, fixes playtest issues |
+| M_Station | Manny Mendez | Windows | maker | TRELLIS, Blender, Meshy, sounds |
+| _(Manny's Mac: hostname to add)_ | Manny Mendez | macOS | tester | |
 | Justins-Mac-mini | Justin | macOS | tester, maker | Mac mini, Apple silicon. git-lfs, gh, uv and the Blender MCP set up Nov 9; Blender is 5.1.2 (team uses 5.2) |
 
 **Roles**
@@ -57,4 +62,4 @@ the lock) edits its `.uasset` files.
 | UI (title, HUD, end screen) | | `Content/Game/UI/` |
 | Audio | | `Content/Game/Audio/`, `tools/make_sfx.py` |
 | Art made outside Unreal | | `Art/Blender/`, imported by the level owner |
-| Devlog, video, submission | Team Owner | `docs/DEVLOG.md`, the zip |
+| Devlog, video, submission | Manny Mendez | `docs/DEVLOG.md`, the zip |
