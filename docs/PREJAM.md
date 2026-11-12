@@ -143,6 +143,7 @@ declaration that only names the pre-jam side is half an answer.
 | The hero: Gemini drawing → Tripo model → Blender rig → Unreal (`SK_CafeWalker_Walk`, `BP_CafeWalker`, `T_CafeWalker_BaseColor`) | Thu Nov 12 1:10 AM → 7:34 AM Pacific | `Art/Blender/anime_repaint.py`, `tools/unreal_retarget_mannequin.py`, `CREDITS.md` |
 | Mannequin animations retargeted onto the hero | Thu Nov 12 morning | `CREDITS.md` — Epic's, under the EULA, sourced and **not scored** |
 | `Art/Blender/anime_repaint.py`, `tools/unreal_make_anime_look.py`, `tools/unreal_make_anime_cafe.py`, `tools/unreal_retarget_mannequin.py` | Thu Nov 12 1:26 AM → 7:34 AM Pacific | Written *during* the jam, so **not** declared as pre-jam scripts, even though they sit in `tools/` and `Art/Blender/` beside ones that are |
+| `tools/setup_mcp.ps1`, `tools/setup_mcp.sh` | Thu Nov 12 8:40 AM Pacific | Written *during* the jam. They register each computer's MCP servers; the shared `.mcp.json` was changed the same day to drop the Windows-only Blender path |
 
 **Where that work was authored.** The anime look, the coffee shop and the hero were built in our practice
 project on GameStation, because the Unreal editor and the MCP were already running against it, and then carried
