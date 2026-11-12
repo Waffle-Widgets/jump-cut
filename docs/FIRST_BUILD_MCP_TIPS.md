@@ -118,3 +118,20 @@ From D1 (`BP_BossFreeze`, boss-freeze functions on `BP_Player`, C1b fixes; graph
 - **Waiting from Bash:** plain `sleep N` longer than a few seconds is blocked; use `until grep -q <marker> <log>; do sleep 3; done`.
 - A capture "freeze" for `CaptureEditorImage`: set global dilation 0.0001, call the function that shows the warning
   (`BossStartFreezeWindup`), capture in the next call, then restore dilation.
+
+From C1c / D2 (gate close-behind fix, wake-on-hit, the player's Freeze Frame; graphs `tools/d2_graphs.py`, Play-mode
+scenarios `JumpCut/Saved/d2_pie.py`):
+- **The duplicate-graph trap hit again** on `EnemyTakeHit` (an `if` followed by more statements inside an `if`): 44 -> 91
+  nodes after one write. Count before and after every write; if it grew, `delete_node` all but `K2Node_FunctionEntry_0`
+  (keep `K2Node_FunctionResult_0` too in a function with outputs) and write again (it came back at 48).
+- **Scenario generators beat one Type call per step:** `d2_pie.py` runs each test as a Python generator driven by a
+  slate post-tick callback; it yields `('t', secs)` or `('until', fn, timeout)` and logs with game times. A whole
+  10 s Freeze Frame test runs in one call. Wait from Bash with `for i in $(seq 1 40); do grep -q "=== x done" log && break; sleep 3; done`.
+- **Order of a test reset:** teleport the player out of the plaza *before* `PlazaGateResetToStart` / boss reset, or the
+  re-armed gate sees the player inside and shuts again on the next tick. An awake boss left in the plaza between runs
+  kills an idle player within ~15 s, and then every enemy is stopped (lose state): restart PIE between groups.
+- Freeze Frame's 20 s cooldown means one freeze per PIE session in a test; restart PIE (about 5 s) rather than wait.
+- `SystemLibrary.line_trace_single` returns `None` (not a hit result) when nothing is hit.
+- A scene component's location from Python: `c.get_editor_property('relative_location')` (no `get_relative_location`).
+- `sys.argv` read inside a tick-driven generator is whatever the *latest* `py` run set: capture arguments when the
+  scenario starts, not later.

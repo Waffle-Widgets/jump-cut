@@ -494,6 +494,10 @@ until time resumes, then flies back and disappears. Gates, the checkpoint and ma
 `...SetTimeStopped` function that `PlayerStopAllEnemies` is extended to call. Drive everything from Tick's
 `DeltaSeconds`; a Delay, timer or Timeline ignores `CustomTimeDilation` and will keep running through a freeze.
 Anything spawned mid-freeze must be stopped by whoever spawns it (today nothing spawns mid-freeze).
+**As built (D2):** `PlayerTickFreezeFrame` re-applies `PlayerStopAllEnemies true` every tick while the freeze lasts, so
+anything spawned mid-freeze (e.g. `GoonSpawnerRespawn`) is stopped within a frame. `PlayerFreezeFrameEnd` also zeroes
+`FreezeFrameTimeLeft` and only un-stops enemies when neither `IsLost` nor `HasWon` is set (the lose screen's world stays
+still). `FreezeFrameStart` needs `PlayerCanAct`, so it does nothing while frozen by the boss; it works during his warning.
 
 ---
 
@@ -557,6 +561,11 @@ Tick: (a) move `GateMesh`'s relative Z toward `GateOpenHeight` (open) or 0 (clos
 `GateMoveSpeed`. (b) If `GateClosesBehindPlayer` and `GateTriggerArmed` and `GateIsOpen` and `GateEnemyToWake` is
 valid and the player is inside the trigger: `PlazaGateClose`, `GateTriggerArmed` false, `GateEnemyToWake.EnemyWake`.
 (No living boss means it doesn't shut.)
+**C1c:** "inside" for the close-behind check is the trigger circle **or** more than `GatePastDepth` (float, 120, T) cm
+past the gate line on the trigger's side (`GateIsPastGateway`, a flat dot product, so no way round the circle along the
+wall; 120 = half the slab + the capsule + spare, so the slab never lands on the player). When it shuts it also calls
+`GateSendGoonsHome`: every `BP_Goon` gets `EnemyResetToStart` (home, asleep, full health), so none can punch through.
+`EnemyTakeHit` on a sleeping enemy now wakes it first.
 
 In the level: **entry gate** (`Gate_PlazaEntry`): starts open, closes behind the player, wakes the boss.
 **Exit gate** (`Gate_PlazaExit`): starts closed; the boss's `BossExitGate` points at it. Keep each opening 5 m wide
