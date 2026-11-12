@@ -1,6 +1,9 @@
 # MegaJam 2026 Game Plan
 
-_Last updated: Nov 1, 2026_
+_Last updated: Nov 1, 2026 (deadline and a roles note corrected Nov 12)_
+
+> This plan was written before the jam for a two-person team. Where it disagrees with them, these win: `CLAUDE.md`
+> (deadline and checkpoints), `docs/TEAM.md` (who and which computer does what) and `docs/ROADMAP.md` (what we're building).
 
 ## Overview
 
@@ -10,7 +13,7 @@ We're a beginner team (up to 5 people) building a small, polished Unreal Engine 
 | --- | --- |
 | Theme reveal livestream | Wed Nov 11, 11:00 AM |
 | Jam runs | Thu Nov 12 – Sun Nov 15 |
-| Submission deadline | Confirm on itch.io |
+| Submission deadline | Sun Nov 15, 5:59 PM Pacific (`docs/RULES.md`, §4) |
 
 **Prize targets.** Each entry can win one main category and one modifier. Main: Best Overall in Unreal Engine ($7,500 / $5,000 / $2,500), plus up to $50,000 continuation grants for standout entries. Modifiers we're aiming at, in order (Nov 11): **Glass Box** ($2,500, best devlog showing how we built the game), **Render Royalty** ($2,500, best visuals; our TRELLIS, Meshy and Blender art is a real strength), then **Best Team** ($5,000, but every team of 2+ competes for it). Glass Box is our most realistic win: gamers with no dev experience shipping an Unreal game is exactly its story, and our devlog already has 40+ honest entries. Only one modifier per entry. Schedule checkpoints and how Claude keeps us on track: `CLAUDE.md`, "Goals, and keeping us on track".
 
@@ -19,6 +22,8 @@ We're a beginner team (up to 5 people) building a small, polished Unreal Engine 
 ## Team roles and machines
 
 One person drives the editor; the other owns everything outside it. That splits the work with no file conflicts.
+(Since Nov 9 the roles are **builder**, **maker** and **tester**, set per computer in `docs/TEAM.md`. The Driver below is
+the builder; the Director is a maker and tester.)
 
 | Role | Owns | Machine |
 | --- | --- | --- |

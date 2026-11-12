@@ -42,8 +42,9 @@ JumpCut/Content/Game/Imported/**/*.Fbx
 # Blender auto-backups, script outputs and caches (rebuilt by running the scripts)
 *.blend1
 Art/Blender/textures/
-Art/Blender/export/
 Art/Blender/cache/
+# Art/Blender/export/ is NOT ignored: makers commit FBX and textures there for the builder to import
+# (CLAUDE.md, "Working as a team"). It was ignored until Nov 12, which meant hand-offs never reached the builder.
 # Personal reference photos (may show number plates or people)
 Art/Reference/
 

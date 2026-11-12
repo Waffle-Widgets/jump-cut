@@ -121,7 +121,7 @@ these rules, and teammate setup. Process, not game.
 
 Two files in `docs/` arrived as *templates* in `e9bfc06` and were filled in during the jam, so their
 **contents are jam work**: `docs/PITCH.md` (written after the Nov 11, 11:00 AM theme reveal) and
-`docs/DEVLOG.md`. `docs/media/` shipped as a single `.gitkeep`.
+`docs/DEVLOG.md` (since Nov 12 the entries are one file each in `docs/devlog/`). `docs/media/` shipped as a single `.gitkeep`.
 
 ## 5. Not ours and not pre-jam: Epic's template
 
@@ -161,7 +161,7 @@ at it than have §7h's "Epic may ask for your Git history" meet one squashed com
   (108 commits by the time the jam opened; worked on Nov 1–11).
 - File timestamps for the jam work: practice-repo commit `c86ddd6`.
 - Every asset we didn't make ourselves, with source and licence: `CREDITS.md`.
-- The devlog, which narrates all of it: `docs/DEVLOG.md`.
+- The devlog, which narrates all of it: `docs/devlog/`.
 
 ## Before we submit, re-check
 

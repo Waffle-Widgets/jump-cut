@@ -4,6 +4,8 @@
 - `docs/HOW_WE_WORK.md` — the team's workflow for newcomers (roles per computer, playtest loop); keep it current
 - `docs/PLAN.md` — the team plan, schedule, and rules of thumb
 - `docs/PITCH.md` — the game we're making (filled in after the theme reveal)
+- `docs/ROADMAP.md` — what is open, what is waiting for the team's yes, the cut list and what was decided. Read it
+  before any feature or scope discussion
 - `docs/RULES.md` — the official jam rules we must follow
 - `CREDITS.md` — every asset we didn't make ourselves
 
@@ -65,6 +67,37 @@ moves). If no row matches `hostname`, ask which computer this is and fix its nam
 - We often prompt you remotely from another machine, so send screenshots of the editor or results when they help us follow along.
 - Keep the project tidy: put our content under `Content/Game/` in folders by type (Blueprints, Maps, Materials, Audio, UI).
 - Use clear names: `BP_` for Blueprints, `M_` for materials, `MI_` for material instances, `WBP_` for widgets, `SFX_` for sounds.
+
+## Reporting and what "done" means (from Justin's Cerberus project, Nov 12)
+**Reporting**
+- Every "done" says what was asked, what was done and what was left out, with a number where one exists (issues
+  fixed, files changed, triangle count, zip size).
+- If you make a task smaller than what was asked, say so when you decide it, not in the wrap-up. A smaller task is
+  never reported as the original one done.
+- Say what you checked yourself (it compiled, the graph read back right, it spawned, a capture from the game camera)
+  and what still needs a person in Play mode. Feel is never yours to call verified.
+- On a maker or tester computer, a change you couldn't see running in the game is untested. Say that plainly and
+  name who has to check it.
+- Label anything you inferred rather than checked as inferred.
+
+**A change is done when** all of these are true, and the report says which are not:
+1. A person confirmed it in Play mode or in a test build (maker work: the builder imported it and it was looked at
+   from the game camera).
+2. Saved, then committed and pushed under the teammate's own Git name, after `git pull --rebase`.
+3. Its devlog entry is in the same commit (`devlog-entry` skill).
+4. `CREDITS.md` lists anything we didn't make.
+5. LFS locks we no longer need are released.
+6. `docs/ROADMAP.md` still tells the truth (its top says how it is organized): a shipped item moved from Open into
+   its devlog entry, a settled question moved to Decisions with the date and who decided, and a proposal stays under
+   "Waiting for a yes" until a person on the team agrees. An idea that isn't for now is a GitHub issue labelled
+   `idea`, not a quiet edit to a doc.
+7. A hand-off to another computer names the files and what to do with them.
+
+**Fixing things**
+- When you fix a problem, look for the siblings that share its Blueprint, function or script and fix them in the
+  same pass. Say which ones you checked.
+- A fix that needs another computer or a second player to check goes on a `<name>/<topic>` branch with the untested
+  part named at the top of the hand-off. It doesn't reach `main` on an inference.
 
 ## Skills (`.claude/skills/`)
 Step-by-step checklists Claude loads when a task matches (or type `/<name>`). Use them; update the skill when we
@@ -358,9 +391,11 @@ Only one machine should have a given person's working copy of the project open a
 - Prioritize game feel (responsive controls, feedback, sound, juice) over feature count.
 
 ## Devlog (Glass Box)
-- We're aiming for the Glass Box prize (best devlog showing how we built the game), so keep `docs/DEVLOG.md` going without being asked.
-- After each change we test and you commit, add an entry using the template in `DEVLOG.md`: what we asked for, the actual prompt,
-  what happened (including failures, retries and dead ends), and what we learned. Commit it with the change.
+- We're aiming for the Glass Box prize (best devlog showing how we built the game), so keep `docs/devlog/` going without being asked.
+- **One file per entry** (`docs/devlog/YYYY-MM-DD-what-happened.md`, rules in `docs/devlog/README.md`). Never append to
+  another entry: two people writing at once must never collide on one file.
+- After each change we test and you commit, add an entry using the template in `docs/devlog/README.md`: what we asked for,
+  the actual prompt, what happened (including failures, retries and dead ends), and what we learned. Commit it with the change.
 - Log setup problems and things that broke too, not just successes. Those are the most useful parts.
 - When the editor is open, save a screenshot to `docs/media/` and link it from the entry.
 
@@ -377,4 +412,4 @@ Full summary in `docs/RULES.md`. Warn us if a request would break one of these:
 - The game must use the theme and go well beyond the Third Person template.
 
 ## The current game
-**Jump Cut** (theme: "Directors Cut"). See `docs/PITCH.md` for the pitch, the powers, the build order and the cut list.
+**Jump Cut** (theme: "Directors Cut"). See `docs/PITCH.md` for the pitch, the story and the powers, and `docs/ROADMAP.md` for the build order, the cut list and the decisions.

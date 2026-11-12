@@ -9,7 +9,7 @@ All gameplay, levels and art in this repo were made during the jam; the Git hist
 What we *did* prepare before the jam is declared, file by file, in [`docs/PREJAM.md`](docs/PREJAM.md) —
 jam rule §7h allows it, and the itch.io page asks us to say what it is.
 
-**Our Glass Box devlog is [`docs/DEVLOG.md`](docs/DEVLOG.md)**: what we asked the AI agents for, what they
+**Our Glass Box devlog is [`docs/devlog/`](docs/devlog/README.md)** (one file per entry): what we asked the AI agents for, what they
 actually did, and everything that broke on the way.
 
 ## New to the team? Start here
@@ -29,10 +29,11 @@ Almost everything is done by asking Claude in a chat opened on this repo folder.
 | `docs/TEAM.md` | Who's on the team, what each computer does, who owns what |
 | `docs/PLAYTEST.md` | Test builds and reporting problems as GitHub issues |
 | `docs/PITCH.md` | The game we're making |
+| `docs/ROADMAP.md` | What's open, the cut list, what we decided |
 | `docs/PLAN.md` | Team plan and schedule |
 | `docs/RULES.md` | The official jam rules we follow |
 | `docs/PREJAM.md` | What we made **before** the jam, declared file by file (rule §7h) |
-| `docs/DEVLOG.md` | Our devlog (Glass Box) |
+| `docs/devlog/` | Our devlog (Glass Box), one file per entry |
 | `CREDITS.md` | Every asset we didn't make ourselves |
 | `CLAUDE.md` / `GEMINI.md` | Standing instructions for our AI agents — pre-jam, declared in `docs/PREJAM.md` |
 | `tools/`, `Art/Blender/*.py` | Scripts, mostly prepared before the jam (sound generator, AI 3D model cleanup, rigging, walk cycles) — declared in `docs/PREJAM.md`, which also says which ones were written *during* the jam |
