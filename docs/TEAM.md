@@ -7,7 +7,7 @@ Claude reads this file to know who owns what. Update it whenever ownership chang
 
 | Name | GitHub | Epic account email registered? | PC(s) | Role |
 |---|---|---|---|---|
-| **Manny Mendez** — **Team Owner** (submits the entry, §1c/§13) | mendezm87 | given to the team, held outside this public repo — see note below | GameStation (Unreal), M Station (Blender, TRELLIS) | builder, maker, devlog + submission |
+| **Manny Mendez** — **Team Owner** (submits the entry, §1c/§13) | mendezm87 | **confirmed** — held outside this public repo, see note below | GameStation (Unreal), M Station (Blender, TRELLIS) | builder, maker, devlog + submission |
 | Justin — _full legal name still needed_ | allbarkdev (joined Waffle-Widgets and Jam Team Nov 8) | **not yet given** | Justins-Mac-mini | tester, maker |
 | | | | | |
 | | | | | |
