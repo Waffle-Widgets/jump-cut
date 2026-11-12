@@ -10,11 +10,15 @@
 - **Open:** what is left to build, by day. When an item ships, it **moves** into its devlog entry. Don't tick it and
   don't just delete it.
 - **Waiting for a yes:** proposals nobody has agreed to yet. Never build from these as if they were agreed.
+- **Fallbacks:** proposals the team turned *down* but wants kept, in case a playtest changes its mind. They are
+  settled, so their line is already in Decisions; this is the one section a settled proposal is allowed to stay
+  written down in, and it is not "Waiting for a yes".
 - **Still to decide:** open questions for the team.
 - **Cut list:** what we drop, in order, when we fall behind.
 - **Later:** ideas that are not for this jam. New ideas arrive as GitHub issues labelled `idea`.
 - **Decisions:** what the team settled, newest first, one dated line each with who decided. When a proposal or an open
-  question is settled, it moves here and leaves its old section, so nothing is ever in two places.
+  question is settled, it moves here and leaves its old section, so nothing is ever in two places — the single
+  exception being a turned-down proposal the team wants kept, which moves to Fallbacks.
 
 Only a person on the team decides. An agent may propose (in "Waiting for a yes") but never writes its own suggestion
 into Open or Decisions.
@@ -37,17 +41,6 @@ checkpoint: the core loop (player, Rewind, the Freeze Frame boss) playable start
 
 ## Waiting for a yes
 
-**How we keep it buildable** (Claude's proposal, Nov 12. Not taken up: see Decisions, Nov 12. It stays here as the
-fallback if playtesting shows we need it)
-
-- **Small Rewind:** record the player's position and health for 10 seconds. Rewind slides the player back along that
-  trail in about a second and restores the health. No replay of the whole world.
-- **One boss Blueprint** with a "which power" setting, not five different bosses.
-- **Freeze Frame** shortened to about 3 seconds so fights stay quick.
-- **Splice platforming** is one or two gaps, not half a map.
-- **Stunt Double** as a still decoy that takes one hit. It's the first thing to cut.
-- **Factions** as one grunt enemy recoloured per area, or cut until the bosses work.
-
 **One large city level** (Justin's proposal, Nov 12: the team still has to say yes)
 
 - The whole game is one city map, laid out like the practice repo's city (a street grid of blocks, sidewalks and
@@ -57,6 +50,19 @@ fallback if playtesting shows we need it)
   The guardrail has not been changed. The team needs to pick one.
 - `docs/INITIAL_PROMPT.md` is a draft first prompt for the builder that is written around it.
 
+## Fallbacks (turned down, kept in case we need them)
+
+**How we keep it buildable** (Claude's proposal, Nov 12. Turned down the same day — see Decisions — and kept here
+in case playtesting shows we need it. Still not something to build from: only a person moves it into Open.)
+
+- **Small Rewind:** record the player's position and health for 10 seconds. Rewind slides the player back along that
+  trail in about a second and restores the health. No replay of the whole world.
+- **One boss Blueprint** with a "which power" setting, not five different bosses.
+- **Freeze Frame** shortened to about 3 seconds so fights stay quick.
+- **Splice platforming** is one or two gaps, not half a map.
+- **Stunt Double** as a still decoy that takes one hit. It's the first thing to cut.
+- **Factions** as one grunt enemy recoloured per area, or cut until the bosses work.
+
 ## Still to decide
 
 - **Art style.** GameStation is testing an anime look (cel-shaded characters over painted backgrounds) and a cafe
@@ -64,7 +70,7 @@ fallback if playtesting shows we need it)
 - The Director's real name and the final names of the powers.
 - Camera: third person behind the player (the template's) unless we choose otherwise.
 - **Rewind's size.** The cut list below says a full rewind of the world is "already cut", but the smaller Rewind is
-  still only a proposal above. One of the two needs to move to Decisions.
+  only a fallback. One of the two needs a line in Decisions.
 
 ## Cut list (in the order we drop things)
 

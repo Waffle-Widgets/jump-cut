@@ -40,7 +40,9 @@ rather than only asserted here:
 | `e9bfc06` — *"Jump Cut: jam repo from the bootstrap"* | **Everything prepared before the jam.** 346 files, written out by `tools/bootstrap/new_jam_repo.ps1`. Nothing in it is gameplay, art or a level, except Epic's own template content. |
 | `c19e0ad` and later | **Everything made during the jam.** |
 
-If a file is in `e9bfc06`, we are declaring it as pre-jam material. If it arrived after, it is jam work.
+If a file is in `e9bfc06`, we are declaring it as pre-jam material. If it arrived after, it is jam work — with one
+declared exception, `docs/TEAM_SYNC_BACKUP.md`, which is pre-jam content that reached this repo late. It is named
+and dated in section 4 rather than left for someone to notice.
 
 ## 1. Prepared before the jam — AI agent configuration and prompts (§7h)
 
@@ -119,6 +121,13 @@ are our own earlier work, moved — not new work disguised as old.
 `docs/SETUP_TEAMMATE.md` — how the team works, which computer does what, the playtest loop, our reading of
 these rules, and teammate setup. Process, not game.
 
+**`docs/TEAM_SYNC_BACKUP.md` is pre-jam too, and it is the exception to the split above.** Its own first line says
+*"Saved 2026-11-09"* — written during practice week, before the 9:00 PM Nov 11 open — but it was only copied into
+this repo on Nov 12, so it arrives in a commit that is otherwise jam work. It is a backup plan for splitting the
+team's work across two Claude plans and syncing through GitHub: process, not game, and allowed under §7h. The copy
+here is byte-for-byte identical to `megajam-2026-practice/docs/TEAM_SYNC_BACKUP.md`, which is public, so the Nov 9
+date can be checked in that repo's history rather than taken on our word.
+
 Two files in `docs/` arrived as *templates* in `e9bfc06` and were filled in during the jam, so their
 **contents are jam work**: `docs/PITCH.md` (written after the Nov 11, 11:00 AM theme reveal) and
 `docs/DEVLOG.md` (since Nov 12 the entries are one file each in `docs/devlog/`). `docs/media/` shipped as a single `.gitkeep`.
@@ -143,6 +152,7 @@ declaration that only names the pre-jam side is half an answer.
 | The hero: Gemini drawing → Tripo model → Blender rig → Unreal (`SK_CafeWalker_Walk`, `BP_CafeWalker`, `T_CafeWalker_BaseColor`) | Thu Nov 12 1:10 AM → 7:34 AM Pacific | `Art/Blender/anime_repaint.py`, `tools/unreal_retarget_mannequin.py`, `CREDITS.md` |
 | Mannequin animations retargeted onto the hero | Thu Nov 12 morning | `CREDITS.md` — Epic's, under the EULA, sourced and **not scored** |
 | `Art/Blender/anime_repaint.py`, `tools/unreal_make_anime_look.py`, `tools/unreal_make_anime_cafe.py`, `tools/unreal_retarget_mannequin.py` | Thu Nov 12 1:26 AM → 7:34 AM Pacific | Written *during* the jam, so **not** declared as pre-jam scripts, even though they sit in `tools/` and `Art/Blender/` beside ones that are |
+| The team's agent rules and shared plan: `docs/ROADMAP.md`, `docs/INITIAL_PROMPT.md`, the `docs/devlog/` split, and the reporting / "done means" sections **added to the pre-jam `CLAUDE.md`** | Thu Nov 12 morning | Branch `justin/agent-rules`. `CLAUDE.md` and `GEMINI.md` are declared pre-jam above; what they said on Nov 11 is `e9bfc06`, and every change since is jam work, visible in `git log -p CLAUDE.md` |
 | `tools/setup_mcp.ps1`, `tools/setup_mcp.sh` | Thu Nov 12 8:40 AM Pacific | Written *during* the jam. They register each computer's MCP servers; the shared `.mcp.json` was changed the same day to drop the Windows-only Blender path |
 
 **Where that work was authored.** The anime look, the coffee shop and the hero were built in our practice
@@ -157,7 +167,8 @@ at it than have §7h's "Epic may ask for your Git history" meet one squashed com
 
 ## How to check any of this
 
-- This repo's history: `git log --name-status` — `e9bfc06` is the pre-jam set, everything after it is jam work.
+- This repo's history: `git log --name-status` — `e9bfc06` is the pre-jam set, everything after it is jam work
+  (the one declared exception, `docs/TEAM_SYNC_BACKUP.md`, is in section 4).
 - The practice repo it came from, with its own full history: `github.com/Waffle-Widgets/megajam-2026-practice`
   (108 commits by the time the jam opened; worked on Nov 1–11).
 - File timestamps for the jam work: practice-repo commit `c86ddd6`.

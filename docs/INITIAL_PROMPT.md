@@ -1,6 +1,9 @@
 # Initial build prompt: one big sweep
 
-**Status: ready for the team to read, Nov 12.** Written from Justin's answers that morning. It has not been run.
+**Status: draft, not agreed (Nov 12).** Written from Justin's answers that morning. It has not been run, and it
+must not be run yet: the scope it builds — one large city, about 30 minutes — is still under **Waiting for a yes**
+in [`docs/ROADMAP.md`](ROADMAP.md), which says in its own header *"Never build from these as if they were agreed"*.
+When the team settles the scope, that decision goes in ROADMAP's Decisions and this line changes to point at it.
 
 **How to use it:** open a Claude chat on the repo on the **builder** computer (Computers table in `docs/TEAM.md`),
 on the Fable model, with Unreal open and the MCP answering, and paste everything below the line. It can't run on a
@@ -23,14 +26,20 @@ keep the books. You do not build the pieces yourself.
 3. Write the ledger (section 5), show us the plan in fifteen lines or fewer, then start. Don't wait for an answer.
 
 ## 2. What this prompt changes, and what it doesn't
-- **This prompt is the team's "go"** for everything in section 6. For this run only, don't stop after each change.
-  Keep going until the ledger is finished or section 8 tells you to stop.
+- **Once the team has agreed the scope, this prompt is the "go"** for everything in section 6: for this run only,
+  don't stop after each change, and keep going until the ledger is finished or section 8 tells you to stop. Until
+  then it is a draft. If you are reading this and `docs/ROADMAP.md` still lists "One large city level" under
+  *Waiting for a yes*, stop and ask the team — the agreement is recorded in ROADMAP's Decisions, never here.
 - **Everything else in `CLAUDE.md` still applies**, to you and to every subagent: stop Play mode before every edit,
   save after every batch, pull and lock before touching a committed asset, compile and read each graph back,
   Blueprints only (no C++), unique function names, and the "wait for go" list for anything that can't be undone
   or costs credits.
-- **Branch:** `<this computer>/first-build`, started from `mendezm87/anime-look` (it has the cafe scene and the cel
-  shader). If that branch's `docs/DEVLOG.md` holds an entry that isn't in `docs/devlog/` yet, move it into its own file first.
+- **Branch:** `<this computer>/first-build`, started from **`main`** — then merge `mendezm87/anime-look` into it for
+  the cafe scene and the cel shader. **Don't branch from `anime-look` directly.** It was last pushed before these
+  rules existed, so it has none of `docs/ROADMAP.md`, `docs/PREJAM.md`, `docs/devlog/` or the `CLAUDE.md` sections
+  that section 1 sends you to read — you would be told to read files that aren't there. Check both directions
+  first (`git log --oneline main..mendezm87/anime-look` and `...anime-look..main`) and say what you found. If the
+  merge brings a `docs/DEVLOG.md` entry that isn't in `docs/devlog/` yet, move it into its own file before you build.
   This is untested work: it does not reach `playtest` or `main` until a person has played it. Every commit message
   starts `Untested:`.
 - **Nothing comes from the practice repo except scripts** (jam rule §7h). Its city, cars and maps are pre-jam work.
@@ -51,7 +60,11 @@ The team's own scope from `docs/PITCH.md`, not the smaller proposal. About **30 
 | 4 | Stunt Double | A copy fights beside you and takes one hit | Makes a double of you plus decoys. Counter: Splice |
 | 5 | Director's Cut | Only at the ending | The Director calls 10-second scenes with one rule each: "No abilities", "The floor is gone", "You can't move left". Counter: Stunt Double |
 
-"Director's Cut" replaces the pitch's "Final Cut", which is a trademark the jam doesn't allow.
+**On the fifth power's name:** `docs/PITCH.md` still calls it "Final Cut", which is an Apple trademark, and §15d
+allows no trademarks but the Unreal logo. "Director's Cut" is the proposed replacement and the table above uses it,
+so the two files disagree on purpose: **the Team Owner is holding the rename**, so don't rename it in `PITCH.md` or
+anywhere else yourself, and don't put "Final Cut" into anything a judge sees. Hold the name in one named variable
+so the swap is a single edit when the call comes.
 
 **Fighting:** fists. One melee button with a short combo. Three hits, the third knocks back. 100 health.
 **Goons:** one ordinary enemy type that walks up and punches, in groups on the streets between bosses, there to be

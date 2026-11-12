@@ -26,7 +26,7 @@ third, Best Overall as a stretch. Don't spend jam time chasing other prizes (NVI
 
 | When (Pacific) | Checkpoint |
 |---|---|
-| Wed Nov 11, 11 AM | Theme reveal. Pick a one-sentence pitch within about an hour; write `docs/PITCH.md`, including a cut list |
+| Wed Nov 11, 11 AM | Theme reveal. Pick a one-sentence pitch within about an hour; write `docs/PITCH.md`; the cut list lives in `docs/ROADMAP.md` |
 | Wed Nov 11, 9 PM | Jam starts. Nothing for the game is made before this |
 | Thu Nov 12 | Core loop playable start to finish, grey boxes, no art |
 | Fri Nov 13 | Level, win/lose, start/restart; first packaged build tested. **Feature freeze at the end of the day** |
