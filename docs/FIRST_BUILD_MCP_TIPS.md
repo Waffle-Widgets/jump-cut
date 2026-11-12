@@ -67,3 +67,22 @@ From B4 (Rewind on `BP_Player`; graphs as text in `tools/b4_graphs.py`, test ste
   cooldown fit between calls, and 0.02 to sample positions during a 0.25-1 s slide.
 - The trail keeps "the newest sample at least 10 s old", so a test that waits too long rewinds to a later spot than
   expected. Log the game time (`get_time_seconds`) of every teleport and compare with the rewind time minus 10.
+
+From B3 (`BP_Goon`, `BP_GoonSpawner`; graphs as text in `tools/b3_graphs.py`, test steps in `JumpCut/Saved/b3_test.py`):
+- **A child Blueprint made with `BlueprintTools.create` gets real BeginPlay / Tick events that call `Parent:`**, plus an
+  empty ActorBeginOverlap. For a child with "no graph at all" delete all five nodes (`find_nodes` title `""`,
+  `delete_node`); the parent's BeginPlay and Tick still run (checked in Play mode).
+- **Making a new Scene component the root:** `add_component` (owner = the Blueprint), then
+  `set_parent_component` with `component` = `<BP>_C:DefaultSceneRoot_GEN_VARIABLE` and `parent` = the new
+  component. That promotes it and removes DefaultSceneRoot. Passing only the new component fails ("cannot be parented
+  to the world"). Further components: `add_component` with `owner` = the root's `_GEN_VARIABLE` path.
+- **Int and float in one maths chain:** `(* (- GoonCount 1) 0.5)` was built as int-int and a float*float whose
+  output pin is Integer (0.5 lost). Convert first: `(Math|Conversions|ToFloat(Integer) x)`. Check pin types with
+  `get_node_infos`. `(for i (range n) ...)` makes a ForLoop 0 .. n-1.
+- `(Game|SpawnActorfromClass "<path>_C" (Math|Transform|MakeTransform :Location at :Rotation rot) "AlwaysSpawn" "MultiplyWithRoot")`
+  gives a typed `BP_Goon` output that `Utilities|Array|Add` takes straight into a `BP_Goon` array.
+- **Python can't spawn into the PIE world** (`GameplayStatics` has no `begin_deferred_actor_spawn_from_class`). Place
+  temporary actors in the editor level before `StartPIE` (labels `TEMP_<packet>_*`), destroy them after `StopPIE`;
+  the level then reports no dirty map packages.
+- The goons hurt the player fast (8 every ~1.85 s each): with three goons a test player is lost in ~7 s. Order tests so
+  health doesn't matter, or restart PIE. `set_global_time_dilation 0.25` gives ~1 game second per Type call.
