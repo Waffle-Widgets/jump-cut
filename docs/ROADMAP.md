@@ -56,6 +56,18 @@ reading back which montage was playing, not by eye, and not by a person playing 
 the player and the goons: swapping `CafeWalker` onto `BP_Player` needs this same montage set retargeted onto his
 skeleton, and is the next job.
 
+**And the boss still was not walking** (Fri Nov 13, 4:20 AM Pacific, GameStation, on `playtest`). The Team Owner
+played it again and reported the same fault. The cause was one wire in `ABP_CleaverBoss`: `BS_Idle_Walk_Run_CB`
+is a two-axis blend space, **X = Direction, Y = Speed**, and `BossAnimSpeed` was plugged into **X** while **Y**
+sat at its literal `0`. His speed was being read as a heading, and his speed was always zero - which samples the
+idle row, where every cell is `MM_Idle_CB`. His montages were never affected, because the Slot node is
+downstream of the blend space: the cleave, the hit react and the death worked all along. `BossAnimSpeed` now
+drives **Y**, with **X** pinned to `0.0` (he faces the player every frame before he moves, so he always walks
+forward). **Measured, not read back:** the largest per-frame bone movement across all 83 bones is 0.03-0.06 cm
+standing, **2-6 cm walking** and 6-15 cm mid-cleave. The previous fix was signed off by reading back which
+montage was playing, which is a check that cannot see a blend space at all - see
+[the devlog entry](devlog/2026-11-13-the-boss-was-walking-on-the-wrong-axis.md). Still not played by a person.
+
 **Beat 1 has its lesson now** (Fri Nov 13, 1:15 AM Pacific, GameStation, on `playtest`). The demo's opening beat
 asked the player to save a coworker from shrapnel using Freeze Frame, and none of it existed - no coworker
 anywhere in the project, no shrapnel, and no action button on the player at all. `BP_Coworker` and `BP_Shrapnel`
@@ -220,6 +232,26 @@ They are beats 5 and 4 of the demo now (Decisions), so they are off this list.
 _(nothing yet)_
 
 ## Decisions
+
+- **2026-11-13 (4:20 AM Pacific): Boss 3 is in only if everything else is finished** (Manny, the Team Owner).
+  "Boss 3 will only be in if we can finish everything else." This **narrows the six-beat demo plan** approved on
+  Nov 12 (below), which had made the Stunt Double boss a required beat 5; he is conditional again. The fight
+  itself is already built on `playtest` - `BP_StuntDouble`, his diving stand-ins and the Freeze Frame counter -
+  so what is left for him is art and an arena, not mechanics. Nothing else waits on him, and no Meshy credits
+  go on him until beats 1 to 4 play through.
+- **2026-11-13 (4:20 AM Pacific): Meshy makes the models; TRELLIS is the credit backup** (Manny, the Team
+  Owner). "We should use meshy where we can, Trellis can be a backup if we run out of credits." This settles the
+  TRELLIS-vs-Meshy question raised on Nov 12: **`SK_CrashDriver` (Meshy) stays the canonical crash driver** and
+  `SK_CrashDriverTrellis` stays on disk as the fallback. The local TRELLIS.2 path on GameStation's 5090 costs
+  **0 credits** and names bones the way Epic's mannequin does (so Unreal retargets onto it without the nine
+  hand-mapped chains a Meshy skeleton needs) - but Meshy's output was measured cleaner, and credits are not
+  short (about 8,400 left, 35 per character). Reach for TRELLIS when the credits run low, not before.
+- **2026-11-13 (4:20 AM Pacific): `playtest` is merged into `main`** (Manny, the Team Owner). "Go ahead and
+  merge to main." `main` was fast-forwarded to `playtest` - 19 commits, no merge commit and no conflict, because
+  `main` was a strict ancestor. It carries the Unreal imports, the Splice hand-over, the fight animation, beat 1's
+  quick time event and the boss 3 fight shell. **The Team Owner has played the plaza fight**; the rest of that
+  list has been checked in the editor only, and the 12-step play list in
+  [`FIRST_BUILD_LEDGER.md`](FIRST_BUILD_LEDGER.md) is still not ticked off step by step.
 
 - **2026-11-13 (2:55 AM Pacific): The explosion opens a bullet-time window; the player presses Freeze Frame
   themselves** (Manny, the Team Owner). The explosion goes off **2 seconds** after the power is picked up (was
