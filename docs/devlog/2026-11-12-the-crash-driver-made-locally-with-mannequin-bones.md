@@ -69,6 +69,21 @@
   Unreal editor was open on this machine with another agent working in it — an auto-import there pops a modal
   that freezes the MCP.
 
+  **Is it worse than the Meshy one? No — it is different, and the honest answer needed a render, not an
+  opinion.** Both FBX files were loaded fresh, normalised to 1.8 m and lit identically (second picture below).
+  They are the same size: 30,000 tris (Meshy) against 29,459 (TRELLIS).
+
+  - **Meshy is cleaner.** Smoother panels, crisper lapel and zip edges, and noticeably **better hands** — its
+    fingers are modelled apart, ours are chunky and half-mittened. Its ice shard is a crisp white crystal; ours
+    is a fluffy ruff that reads more like fur than frost. Its wider A-pose is also the easier thing to rig.
+  - **TRELLIS is more faithful.** More leather grain, wear and creasing, real folds in the jeans, better boots,
+    and a weathered, stubbled face — the reference is a grizzled older man, and Meshy smoothed him into someone
+    younger and more generic. Ours looks like the drawing.
+
+  For the cel-shaded look the team picked, Meshy's smoother read may well suit better, and `CLAUDE.md` already
+  says Tripo beats TRELLIS for stylised people. But "visibly worse" is not what happened here, and only one of
+  the two arrives with a skeleton Unreal can characterise by itself.
+
 - **What we learned:**
 
   - **A local model can be the better model, not just the cheaper one.** Side by side with the reference, this is
@@ -76,6 +91,9 @@
     `CLAUDE.md` says Tripo beats TRELLIS for stylised people, and that may still hold for the cel-shaded cast —
     but for this leather-and-grime character TRELLIS.2 did not come out visibly worse than the Meshy model, and it
     came with a skeleton Unreal can read.
+  - **The narrow A-pose cost us the shoulders.** Meshy's model holds its arms further from the body; ours came
+    from a reference where they nearly touch, and that is the same crowding that the weighting then got wrong.
+    Next reference sheet for a TRELLIS character: ask for a wider A-pose.
   - **41.8 seconds on the 5090.** The skill warns TRELLIS peaks near 17 GB VRAM; measured peak was **14,144 MiB of
     32,607 total card**, against a 9,439 MiB baseline from the open Unreal editor and browsers — so TRELLIS itself
     took about 4.7 GB at `DEC=30000 TEX=2048`. It shares the card with a running editor comfortably.
@@ -90,3 +108,5 @@
   weighting should be looked at before this model takes a punch animation.
 
 - **Media:** ![Reference sheet, the TRELLIS.2 model in four views, the walk cycle, and the colour audit](../media/2026-11-12-crashdriver-trellis.jpg)
+
+  ![The Meshy crash driver and the TRELLIS.2 one, same size and same light: Meshy smoother with better hands, TRELLIS more weathered and closer to the drawing](../media/2026-11-12-crashdriver-meshy-vs-trellis.png)
