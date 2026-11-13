@@ -25,33 +25,46 @@ into Open or Decisions.
 
 ---
 
-## Where we are (Thu Nov 12, morning)
+## Where we are (Thu Nov 12, evening)
 
-The jam repo exists with the Third Person template, our tools, skills and docs. No gameplay is on `main` yet. Today's
-checkpoint: the core loop (player, the first power, the first boss) playable start to finish in grey boxes. Character
-work started on M Station this afternoon: the main character, the crash driver and the mob boss ([`CHARACTERS.md`](CHARACTERS.md)).
+The first build is **merged into `main`** (Thu Nov 12 evening, from M Station) so the two PCs stop drifting apart;
+`playtest` has not been updated yet. **It is still untested** - see the warning below. It is a grey-box game in
+one level, `Lvl_JumpCut`, built packet by packet by subagents and checked by other subagents
+([`FIRST_BUILD_LEDGER.md`](FIRST_BUILD_LEDGER.md)): a title screen; the cafe, where the dying driver hands over
+Freeze Frame (a second hand-over spot covers the cafe door); a street with a group of goons and the player's fists; a
+checkpoint; a walled plaza whose entry gate closes behind you, with a boss (a big bruiser; his own freeze attack is
+switched off) and an exit gate; a HUD; win and lose screens with restart at the checkpoint; the cel-shaded anime
+shader on the level; and Rewind, built and then parked (kept, switched off). A scripted run goes from title to win in
+25 to 27 s. **No person has played any of it yet** - `main` now carries untested Unreal work, which is a
+deliberate call by the Team Owner to stop the two PCs drifting (`CLAUDE.md` would otherwise have it played
+first). The first thing Friday is a person playing it: the play list is in
+[`FIRST_BUILD_LEDGER.md`](FIRST_BUILD_LEDGER.md). M Station made the three rigged characters (main character, crash driver, mob boss) and a cleaver as FBX
+under `Art/Blender/export/Characters/` and `Art/Meshy/` (not yet in Unreal), redrew the cast in the chosen anime
+style ([`CHARACTERS.md`](CHARACTERS.md)), and that work is merged into the branch. What the final audit found:
+[`FIRST_BUILD_AUDIT.md`](FIRST_BUILD_AUDIT.md).
 
 ## Open
 
 | Day | Goal |
 |---|---|
 | Thu Nov 12 | Player + the first power (Freeze Frame) + the first fight, in grey boxes, playable start to finish |
-| Fri Nov 13 | The Splice boss (the mob boss), the Director with two rule scenes, win/lose and restart screens, first packaged build. **Feature freeze** |
+| Fri Nov 13 | A person plays Thursday's build (the play list in [`FIRST_BUILD_LEDGER.md`](FIRST_BUILD_LEDGER.md)); the Splice boss (the mob boss); the Director with two rule scenes; making the run 3 to 5 minutes and tuning it (it is 25 to 27 s today); first packaged build. Win/lose and restart screens are built (not yet played). **Feature freeze** |
 | Sat Nov 14 | Art, sound, juice, playtests, footage. Stunt Double only if Friday went well |
 | Sun Nov 15 | Bug fixes and submission only |
 
 ## Waiting for a yes
 
-**One large city level** (Justin's proposal, Nov 12: the team still has to say yes)
+_(nothing right now)_
+
+## Fallbacks (turned down, kept in case we need them)
+
+**One large city level** (Justin's proposal, Nov 12. Not taken for now — see Decisions — and kept here as the way
+to grow the game if there is time left. Only a person moves it into Open.)
 
 - The whole game is one city map, laid out like the practice repo's city (a street grid of blocks, sidewalks and
   alleys), rebuilt here from scratch. Cafe start, streets with goons to each boss plaza, a second half that needs
   Splice for platforming, then a climb to the Director's tower. About 30 minutes of play, cut scenes later.
-- **This is far bigger than `CLAUDE.md`'s scope guardrail** ("one level, one core mechanic, 3-5 minutes of play").
-  The guardrail has not been changed. The team needs to pick one.
-- `docs/INITIAL_PROMPT.md` is a draft first prompt for the builder that is written around it.
-
-## Fallbacks (turned down, kept in case we need them)
+- `docs/INITIAL_PROMPT.md` was written around it. Its lead-and-subagents method is in use; its city is not.
 
 **How we keep it buildable** (Claude's proposal, Nov 12. Turned down the same day — see Decisions — and kept here
 in case playtesting shows we need it. Still not something to build from: only a person moves it into Open.)
@@ -68,12 +81,14 @@ in case playtesting shows we need it. Still not something to build from: only a 
 
 - The Director's real name and the final names of the powers.
 - Camera: third person behind the player (the template's) unless we choose otherwise.
-- **What happens to Rewind.** It was the core mechanic in `PITCH.md` *and* the first boss's gift. The first boss now
-  gives Freeze Frame, so Rewind is either the power the main character already has at the cafe, or it is cut and
-  Freeze Frame becomes the core mechanic. Nobody has said which. Everything else in the chain still works: Splice is
-  countered by Freeze Frame, so the ladder reads Freeze Frame -> Splice -> Stunt Double -> Final Cut.
-- **Rewind's size**, if it stays at all. The cut list below says a full rewind of the world is "already cut", but the
-  smaller Rewind is only a fallback. One of the two needs a line in Decisions.
+- **Which later boss gives Rewind**, and where it sits in the ladder (Freeze Frame -> Splice -> Stunt Double ->
+  Final Cut today). The small Rewind (only the player slides back, health restored) is what is built and parked.
+- **What the plaza boss is now.** The pitch's first fighting boss is the Splice mob boss, but the built plaza boss
+  (`BP_BossFreeze`) is a plain bruiser with his freeze switched off. Keep him, turn him into the mob boss, or drop him?
+- **Where Freeze Frame is handed over:** only at the driver, or also at the cafe door (as built, so nobody leaves
+  the cafe without it)?
+- **How long and how hard the game is at default numbers.** A scripted run takes 25 to 27 s against the 3 to 5
+  minutes we want, and the fights are easy. Only people playing it can say what to change.
 
 ## Cut list (in the order we drop things)
 
@@ -81,7 +96,7 @@ in case playtesting shows we need it. Still not something to build from: only a 
 2. Stunt Double (power and boss)
 3. Splice platforming section (keep the teleport for the fight)
 4. Dialogue: one line of text per power instead
-5. A full rewind of the world (already cut: only the player rewinds)
+5. A full rewind of the world (already cut: the parked Rewind only moves the player back)
 6. More than one level
 
 ## Later
@@ -98,21 +113,31 @@ _(nothing yet)_
 - **2026-11-12: GameStation's RTX 5090 is the machine for image generation when speed matters** (Manny).
   M Station's 3090 runs Qwen-Image at about 2 minutes a picture; the 5090 is there when a batch needs to be
   faster. `tools/gen_images.py` is machine-independent, so this is a choice of where to run it, not a code change.
+- **2026-11-12: The "Final Cut" rename is held for now** (Manny, the Team Owner). "Final Cut" is an Apple
+  trademark and the jam allows none (§15d), so the name stays **only** in `docs/PITCH.md` as a design note. It
+  must be renamed - "Director's Cut" is the proposal - before it appears in any in-game text, on the itch.io
+  page, or in the video. Nothing player-facing may carry it.
+- **2026-11-12: Rewind moves to a later boss.** The jam game is one level of 3 to 5 minutes, so the most fun powers
+  come first: Freeze Frame is the first power the player gets. The Rewind work already built stays in the project,
+  switched off, for that later boss (Team Owner).
+- **2026-11-12: The art style is cel-shaded anime** (Manny, the Team Owner; recorded from both PCs). It was the
+  leading candidate all along (the `mendezm87/anime-look` demo, the `CafeWalker` model); it is now the chosen look
+  and everything we draw or model matches it. Its work on `mendezm87/anime-look` comes into the build so it is ready
+  when the 3D assets from M Station arrive. The cast was redrawn in it through Gemini the same evening:
+  [`CHARACTERS.md`](CHARACTERS.md#gemini-pass-2026-11-12).
 - **2026-11-12: The first boss gives Freeze Frame**, not Rewind. He is the driver who crashes through the cafe
   wall in the opening; he still does not fight (Manny).
 - **2026-11-12: The second boss gives Splice and is a Japanese mob boss with a cleaver** (Manny).
 - **2026-11-12: The main character, the crash driver and the mob boss are the first three characters to build**
   (Manny). Designs and reference pictures: [`CHARACTERS.md`](CHARACTERS.md).
+- **2026-11-12: Scope stays jam-sized.** We build to the jam's rules and `CLAUDE.md`'s guardrail (one small level,
+  a few minutes of play), not the one large 30-minute city. If there is time left we look at growing it (Team Owner).
 - **2026-11-12: Build to the team's own scope in the pitch** (five powers, the bosses as listed), not Claude's smaller
   proposal. Change it later only if playtesting shows the need (Justin).
 - **2026-11-12: Losing restarts at the last checkpoint**, not at the cafe (Justin).
 - **2026-11-12: The player fights with fists** for now, and there are ordinary goons between bosses (Justin).
 - **2026-11-12: The Splice gap comes after the Splice boss** (Justin).
 - **2026-11-12: The devlog is one file per entry** in `docs/devlog/`, so teammates never collide on one file (Justin).
-- **2026-11-12: The art style is cel-shaded anime** (Manny). It was the leading candidate all along (the
-  `mendezm87/anime-look` demo, the `CafeWalker` model); it is now the chosen look and everything we draw or model
-  matches it. The cast was redrawn in it through Gemini the same evening:
-  [`CHARACTERS.md`](CHARACTERS.md#gemini-pass-2026-11-12).
 - **2026-11-12: The game is called Jump Cut** (the team; the story is in the devlog entry for Nov 11 to 12).
 - **2026-11-11: Prize focus is Glass Box first, Render Royalty second, Best Team third**, Best Overall as a stretch
   (the team; `CLAUDE.md`, "Goals, and keeping us on track").

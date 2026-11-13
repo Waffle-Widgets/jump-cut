@@ -1,6 +1,15 @@
 # Initial build prompt: one big sweep
 
-**Status: draft, not agreed (Nov 12).** Written from Justin's answers that morning. It has not been run, and it
+**Status (Nov 12, 10:45 AM): the city in this prompt was not taken.** The Team Owner kept the scope jam-sized
+(`docs/ROADMAP.md`, Decisions). GameStation ran this prompt's method (a lead, builders, checkers, a ledger) for
+Thursday's slice only: see `docs/FIRST_BUILD_LEDGER.md`. The text below is kept as written.
+
+**Later status (Nov 12, afternoon): the powers changed.** Freeze Frame became the first power and Rewind moved to a
+later boss (`docs/ROADMAP.md`, Decisions), so the powers table and the "Rewind is not in this table" note below are
+superseded by those Decisions. The run's result is in `docs/FIRST_BUILD_LEDGER.md`, and its audit in
+`docs/FIRST_BUILD_AUDIT.md`.
+
+**Earlier status: draft, not agreed (Nov 12).** Written from Justin's answers that morning. It has not been run, and it
 must not be run yet: the scope it builds — one large city, about 30 minutes — is still under **Waiting for a yes**
 in [`docs/ROADMAP.md`](ROADMAP.md), which says in its own header *"Never build from these as if they were agreed"*.
 When the team settles the scope, that decision goes in ROADMAP's Decisions and this line changes to point at it.

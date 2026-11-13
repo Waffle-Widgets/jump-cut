@@ -10,9 +10,9 @@ that is an open question in `ROADMAP.md`, and an agent does not get to settle it
 ## The look, and why
 
 Cel-shaded anime: hard-edged shadows, clean dark outlines, flat colour. That is not a fresh choice — it is the only
-style this team has a tested path for, from the cel-shader demo on `mendezm87/anime-look` and the `CafeWalker`
-model made from a drawing. `ROADMAP.md` still lists the art style under **Still to decide**, so this is the leading
-candidate we are building in, not a settled one.
+style this team has a tested path for, from the cel-shader demo (first made on `mendezm87/anime-look`, now merged
+into `Gamestation/first-build`, not yet on `main`) and the `CafeWalker` model made from a drawing. It is decided:
+`ROADMAP.md`, Decisions, Nov 12.
 
 **Each power owns a colour, and nobody else may use it.** The player has to learn what a colour means in three
 minutes, so a colour that appears twice is worse than a dull character.
@@ -38,8 +38,9 @@ the plainest design of the three: no coat, no weapon, no insignia.
   canvas apron. Charcoal trousers, scuffed grey sneakers. A folded cloth at the apron tie — the one piece of
   silhouette that moves when he does.
 - **Height:** 175 cm. **Triangle budget:** 30,000.
-- **Already exists:** `Art/Refs/cafe_walker_ref.jpg` and `Art/Refs/CafeWalker_tripo_apose.glb` on
-  `mendezm87/anime-look`, made with Tripo on the jam's first night. That model is the starting point, not a
+- **Already exists:** `Art/Refs/cafe_walker_ref.jpg` and `Art/Refs/CafeWalker_tripo_apose.glb`, first on
+  `mendezm87/anime-look` and now merged into `Gamestation/first-build` (not yet on `main`), made with Tripo on the
+  jam's first night. That model is the starting point, not a
   throwaway — the question for the team is whether to keep it or re-run it against the new reference sheet.
 
 ## The first boss — `CrashDriver`

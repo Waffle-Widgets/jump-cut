@@ -6,9 +6,8 @@
 "editing" powers from the bosses who guard them, and learns too late that someone has been directing every scene.
 
 **Core mechanic (the one thing that has to feel great):** an editing trick you press in a fight, and every later power
-is another one. **Which trick is the core is open:** the first boss now gives Freeze Frame instead of Rewind
-(Nov 12), so either Rewind is the power the worker already has at the cafe, or Freeze Frame is the core and Rewind is
-cut. See "Still to decide" in [`ROADMAP.md`](ROADMAP.md).
+is another one. **Freeze Frame is the first power and the core** (Nov 12): the dying driver hands it over in the
+cafe. Rewind moves to a later boss; which one is still open, see "Still to decide" in [`ROADMAP.md`](ROADMAP.md).
 
 **How you win / how you lose:** Beat each boss with the power you took from the one before, then survive the
 Director's scenes. You lose when your health runs out.
@@ -34,9 +33,9 @@ Each boss is beaten with the power taken from the boss before. Boss 1 is already
 | 3 | Stunt Double | A copy fights beside you and takes one hit | Makes a double of you plus decoys | Splice |
 | 4 | Final Cut | "Your will becomes reality"; the full version only at the ending | Calls 10-second "scenes" with one rule each ("No abilities", "The floor is gone", "You can't move left") | Stunt Double |
 
-**Rewind** is no longer a boss's gift and has no row yet. It is the open question in [`ROADMAP.md`](ROADMAP.md): the
-worker's own power from the start, or cut. The rest of the ladder is unchanged, because each boss is still countered
-by the power before it.
+**Rewind** moves to a later boss (Nov 12, see Decisions in [`ROADMAP.md`](ROADMAP.md)) and has no row yet: which
+boss gives it, and where it sits in the ladder, is still open there. The rest of the ladder is unchanged, because each
+boss is still countered by the power before it.
 
 **Who the characters are** — the worker, the crash driver and the mob boss: [`CHARACTERS.md`](CHARACTERS.md).
 
