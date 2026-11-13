@@ -62,10 +62,35 @@ anywhere in the project, no shrapnel, and no action button on the player at all.
 are built and `Coworker_Cafe` is placed in `Lvl_JumpCut` at (300, -250), between the counter and the door.
 Picking up Freeze Frame is what starts the danger; while time is stopped the shrapnel does not move or age; **F**
 (or the gamepad's top face button) pulls her clear, and it only works while time is stopped, so the beat cannot
-be passed without using the power it teaches. Failing it is a 2.5 s loop, not a death. **Verified in
-Play-In-Editor by reading live actor positions and state, not by eye - and the F key itself has not been pressed
-by a person.** She is still a green box: her design and prompt are in [`CHARACTERS.md`](CHARACTERS.md), her model
-is not made.
+be passed without using the power it teaches. **Verified in Play-In-Editor by reading live actor positions and
+state, not by eye - and the F key itself has not been pressed by a person.** She is still a green box: her design
+and prompt are in [`CHARACTERS.md`](CHARACTERS.md), her model is not made.
+
+**Beat 1 now plays the scene the Team Owner described** (Fri Nov 13, 2:35 AM Pacific, GameStation, on
+`playtest`). He wrote the beat out in full - day job, latte art, the crash, touching the dead driver, the
+explosion, the quick time event, and both endings - and three things in the build did not match it, so they were
+changed:
+
+1. **The power comes from touching the driver.** It used to be handed over by walking near a marker.
+   `BP_CrashDriver` is a real actor on our own `SK_CrashDriver` model, lying beside the car at (-380, 220), and
+   **F** on his body is what grants Freeze Frame. Both markers that used to give the power away for free
+   (`Marker_FreezeFrameGiven`, `Marker_FreezeFrameDoor`) are switched off, and the grey placeholder box that
+   stood in for his body is deleted.
+2. **Time freezes by itself when the explosion goes off**, 1.2 s after the power lands - the player is *put*
+   into the quick time event rather than being expected to guess the button. `AutoFreezeOnExplosion` and
+   `ExplosionDelay` on `BP_Coworker` are the dials.
+3. **Failing kills her.** The old behaviour stood her back up after 2.5 s and let the player try again. It is now
+   one attempt: she dies, the scene disarms, and the level carries on - which is what the Team Owner asked for.
+
+What is still **not** built from his description: the day job (taking orders), the **latte art minigame**, and
+delivering the drink. The beat currently starts at the crash. See "Still to decide".
+
+**Verified in Play-In-Editor through the real `PlayerInteract` path**, by reading live actor state: touching the
+driver sets `HasFreezeFrame`; 1.2 s later the explosion fires, the shrapnel spawns at the car and
+`FreezeFrameActive` goes true on its own with 7.65 s of its 10 s left; the rescue moves her (300, -250) ->
+(300, 70) with `RescueTriesUsed` still 0; and when the freeze is allowed to run out instead, she ends
+`CoworkerDead` with `RescueTriesUsed` 1 and nothing restarts. **The F key itself still has not been pressed by a
+person.**
 
 ## Open
 
@@ -109,7 +134,7 @@ The queue the work-order decision creates. Take the top unfinished line.
 
 | Beat | What is missing |
 |---|---|
-| 1. Cafe | **Done** - crash, Freeze Frame hand-over, coworker rescue. Her model is not made (art, not code) |
+| 1. Cafe | Crash, Freeze Frame hand-over (touch the driver), auto-freeze and the coworker rescue all work. **Missing from the Team Owner's scene: the day job, the latte art minigame, delivering the drink.** Her model is not made (art, not code) |
 | 2. Street | **Done** - goons, fists, animation. Tuning only: one combo clears all three in about 1.0 s |
 | 3. Splice boss | Fight works. He hands over `HasSplice`, which still gates nothing |
 | 4. Destroyed buildings | **Nothing built.** The Splice power itself, and the platforming section that needs it |
@@ -168,8 +193,14 @@ in case playtesting shows we need it. Still not something to build from: only a 
 - **Who builds which beat, and on which computer.** `TEAM.md` lists no owners, and GameStation is the only builder.
 - **What the "continue" after the last fight is** (beat 6): a screen, a card, a cut to the title?
 - **Does the player get Stunt Double in the demo**, or does it end when its boss falls?
-- **Where Freeze Frame is handed over:** only at the driver, or also at the cafe door (as built, so nobody leaves
-  the cafe without it)?
+- ~~**Where Freeze Frame is handed over:** only at the driver, or also at the cafe door?~~ **Settled Fri Nov 13,
+  2:35 AM Pacific** by the Team Owner's scene: only at the driver, and only by touching him. Both markers are off.
+- **What sets off the explosion.** The Team Owner said "we can play with what sets it off". It is a 1.2 s timer
+  after the power lands, which nothing in the fiction explains. A leaking fuel tank, a spark, the driver's body
+  flickering as the power leaves him - any of these is a small change to `ExplosionDelay` plus an effect.
+- **Is the cafe day job in the demo?** The scene opens with taking orders and a **latte art minigame** before the
+  crash. None of it is built, and it is the only part of beat 1 that is not a few hours' work. If it is cut, the
+  demo opens on the crash; if it is kept, it needs a design and a day it does not have.
 - **How long and how hard the game is at default numbers.** A scripted run takes 25 to 27 s against the 3 to 5
   minutes we want, and the fights are easy. Only people playing it can say what to change.
 

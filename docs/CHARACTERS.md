@@ -106,9 +106,17 @@ and model-swappable on Saturday, exactly as `BP_StuntDouble` was.
 - **Placed as** `Coworker_Cafe` in `Lvl_JumpCut` at (300, -250, 0), yaw 180, with `ShrapnelSpawnLocation`
   (-470, 0, 185) — the crashed car's cab — and `CoworkerSafeOffset` (0, 320, 0).
 - **Verified in Play-In-Editor** by reading live actor state, not by eye: shrapnel spawns at the car and travels;
-  left alone it hits her twice and the retry loop recovers both times; with the freeze on it sits at exactly
-  (-470, 0, 185) with its life timer untouched; the rescue moves her (300, -250) → (300, 70) and the shrapnel
-  then finishes its flight into empty space. **Nobody has pressed F** — the key binding itself is unplayed.
+  with the freeze on it sits at exactly (-470, 0, 185) with its life timer untouched; the rescue moves her
+  (300, -250) → (300, 70) and the shrapnel then finishes its flight into empty space. **Nobody has pressed F**
+  — the key binding itself is unplayed.
+- **Changed Fri Nov 13, 2:35 AM Pacific** to match the Team Owner's written scene. Failing is no longer a 2.5 s
+  retry loop: `CoworkerDead` latches, the prompt stays dark, and the level carries on without her. The explosion
+  is now a timed step she owns (`ExplosionDelay` 1.2 s after the power lands), and `AutoFreezeOnExplosion` stops
+  time *for* the player when it goes off, so the quick time event starts on its own.
+- **A trap worth writing down:** her placed actor `Coworker_Cafe` was carrying `AutoFreezeOnExplosion = false` and
+  `ExplosionDelay = 0` — zero-initialised instance overrides left behind because the actor was placed *before*
+  those variables existed. The class defaults were right and the beat still did nothing. If a new variable on a
+  Blueprint seems to be ignored, check the placed instance before you check the graph.
 
 ## The first boss — `CrashDriver`
 
@@ -125,6 +133,29 @@ broken masonry, and to make the colour cyan mean *stopped time* before the playe
 - **Note for whoever builds the opening:** he is seen lying down and in one light. If time runs short he is a
   static mesh with one flicker effect, not a skeletal mesh with animation. That is the cheap version and it is
   almost as good.
+
+### Built in Unreal: `BP_CrashDriver` (Fri Nov 13, 2:35 AM Pacific, GameStation)
+
+The Team Owner's scene says the player *touches* the driver to get the power. That is now literally what happens,
+and it is the first time one of our own generated characters is the thing a mechanic runs through.
+
+- **`BP_CrashDriver`** is an `Actor` with a `SkeletalMeshComponent` on our own `SK_CrashDriver` wearing
+  `MI_CrashDriver`, pitched −78° and lifted so he lies beside the car rather than standing in it. He has no
+  AnimBlueprint and no death clip — he is a body on the floor, which is exactly the cheap version this file
+  already recommends for him.
+- **`DriverCanTouch`** is the whole gate: not already touched, the player does **not** already have Freeze Frame,
+  and the player is inside `TouchRange` (220 cm, instance-editable). `DriverTickStep` lights a blue sphere
+  (`M_PropBlue`) exactly when a touch would land, so the prompt never lies.
+- **`DriverTryTouch`** calls `BP_Player.PlayerGrantFreezeFrame` and latches `DriverTouched`. It is reached from
+  `BP_Player.PlayerInteract`, which now walks every `BP_CrashDriver` **and** every `BP_Coworker` behind the same
+  `PlayerCanAct` check — so **F** is one button that means "the thing in front of me".
+- **Placed as** `C1_Cafe_CrashDriver` in `Lvl_JumpCut` at (-380, 220, 0), yaw 140. The grey box `C1_Cafe_Driver`
+  that used to stand there is deleted. `Marker_FreezeFrameGiven` and `Marker_FreezeFrameDoor` both had
+  `MarkerGrantsFreezeFrame` turned **off**: the body is the only source of the power now.
+- **Verified in Play-In-Editor through the real `PlayerInteract` path:** out of range the prompt stays dark and
+  nothing is granted; in range it lights; one call grants `HasFreezeFrame` and latches `DriverTouched`; the
+  explosion, the auto-freeze and the rescue all follow from it. The **F** key itself is still unpressed by a
+  person.
 
 ## The second boss — `CleaverBoss`
 
