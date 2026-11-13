@@ -197,3 +197,28 @@ Play-mode scenarios `JumpCut/Saved/e1_pie.py`):
   Bash with `base64`: no picture through the chat.
 - Defeated goons stay standing until a Freeze Frame ends (by design), and probably block the player's capsule: the
   scripted walk from the goons to the checkpoint (21 m) took 12 s instead of about 4 (inferred, not measured).
+
+From A3 (the anime look on `Lvl_JumpCut`; editor steps `JumpCut/Saved/a3_editor.py`, Play-mode steps `JumpCut/Saved/a3_pie.py`):
+- **Render CustomDepth on characters:** `ObjectTools.set_properties` on `.../BP_X.Default__BP_X_C:CharacterMesh0` with
+  `{"bRenderCustomDepth": true}`. Setting it on the parent (`BP_EnemyBase`) did NOT reach the children's CDOs in the
+  running editor, even after `BlueprintEditorLibrary.compile_blueprint` on all four: set it on `BP_Goon` and
+  `BP_BossFreeze` too. Placed copies (`Player_Main`, `Boss_Freeze`) also kept false until set per instance
+  (`mesh.modify()`, `set_render_custom_depth(True)`, re-set the transform, `save_current_level()`). Goons spawned at
+  runtime by the spawner come out right once `BP_Goon`'s CDO is set. Check live actors in PIE: `a.mesh.get_editor_property('render_custom_depth')`.
+- `r.CustomDepth` is 1 ("enabled on demand", the engine default) with nothing in `DefaultEngine.ini`; that is enough for
+  the look (it reads custom depth, not stencil). Stencil values need `r.CustomDepth=3`.
+- **Opening another level from Python** (`LevelEditorSubsystem.load_level`) with dirty *content* packages but no dirty
+  map opened without a Save window (Nov 12, twice).
+- **Tuning a post-process material live in PIE without touching assets:** `unreal.MaterialLibrary.create_dynamic_material_instance(world, mi)`
+  (not `KismetMaterialLibrary`), put it in the PIE volume's `weighted_blendables`, `set_scalar_parameter_value`; copy the
+  keepers into the MI after `StopPIE`. Toggle a placed volume's `enabled` on the PIE copy for before/after captures.
+- `CaptureEditorImage` crops: `JumpCut/Saved/a3_crop.ps1 -In x.txt -Out x.png [-X -Y -W -H -Scale]` decodes the base64
+  and crops/zooms with System.Drawing (no PIL on this PC). Give it names, not paths: .NET resolves relative paths
+  against the process folder, not PowerShell's.
+- `startfpschart` / `stopfpschart` typed into the console box during PIE; the result is in the log under
+  `LogChartCreation` (`GetLogEntries` pattern `frames collected|Average (GPU|RenderThread|GameThread)`), file under
+  `Saved/Profiling/FPSChartStats/`. The editor is capped at 120 fps here, so compare GPU ms, not fps.
+- An awake boss takes an idle player from 100 to 0 in about 10 s; refill (`PlayerTakeHit(h - 100)`) before each 10 s
+  measurement.
+- `Lvl_Cafe` loads with a `LoadErrors` list: `BS_Idle_Walk_Run_CW` points at `MF_*_CW1` / `MM_*_CW1` packages, but the
+  files are named `*_CW` (no `1`). Pre-existing in the merged CafeWalker import; not fixed in A3.
