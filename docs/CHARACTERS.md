@@ -142,6 +142,48 @@ geometric edges, not soft, not fluffy, not feathery"*. He is still the darkest a
 from the **ComfyUI** pictures, so the cast in the repo is still the drifted set until they are rebuilt. Rebuilding
 all four costs 140 Meshy credits and the two-press rig flow again.
 
+## Text-only Gemini pass (2026-11-12, evening)
+
+The pass above uploaded the ComfyUI pick with each prompt. That carries the costume across, but it also hands the
+model the drifted rendering, and an image model copies what it is **shown** more faithfully than what it is
+**told**. So the cast was drawn a third time, in a **new Gemini chat with nothing uploaded at all** — only
+prompts we wrote, in [`prompts-gemini.md`](prompts-gemini.md).
+
+The real benefit is not the pictures. It is that the design now exists as **text**: if the whole cast has to be
+redrawn again, in any tool, the prompt file is the source and nothing depends on a picture that happens to still
+be on M Station.
+
+| Character | File | Takes | Verdict |
+|---|---|---|---|
+| `CafeWalker` | `GEM2-MC-1.png` | take 1 | Design correct. **Legs close together** — a fusion risk for image-to-3D |
+| `CafeWalker` | `GEM2-MC-2.png` | take 2 | Wide stance, Meshy-safe. **But the design drifted**: brown hair not black, smiling not tired, collared shirt, brown leather shoes not grey sneakers, folded cloth gone |
+| `CrashDriver` | `GEM2-BOSS1-1.png` | take 1 | Style and leather both right. **Ice spikes protrude past his silhouette** |
+| `CrashDriver` | `GEM2-BOSS1-2.png` | take 2 | **The pick.** Ice lies flat on the shoulder, inside the silhouette |
+| `CleaverBoss` | `GEM2-BOSS2-1.png` | take 1 | **The pick.** Hands empty, invented diamond pin, wave tattoos, no blade |
+| the cleaver | `GEM2-CLEAVER-1.png` | take 1 | **The pick.** Side-on, clean, nothing else in frame |
+
+All in `Art/Refs/gen/gemini2/`, **which git ignores**, with two contact sheets: `TEXT-ONLY-COMPARISON.jpg` (the
+uploaded-reference pass above the text-only pass) and `MC-STANCE-COMPARISON.jpg` (the main character's two takes).
+
+**Three things this pass established, which are the reusable part:**
+
+1. **The driver's frost is fixed, and it took two tries across three tools to learn how.** Describing the
+   *material* gives fur. Describing the *shape* — "sharp angular pale cyan crystals with crisp geometric edges"
+   — gives ice. But take 1 then drew those crystals as spikes **sticking out past his shoulder**, and
+   image-to-3D turns a thin protruding spike into a fused blob or a shard floating off the mesh. The fix was
+   asking for the ice as flat angular plates lying **on the surface** of the jacket, with nothing crossing the
+   silhouette. That rule — *nothing protrudes from the outline* — belongs in every A-pose prompt from now on.
+2. **Never write "reference sheet" in an image prompt.** It produces a multi-view page with labels and colour
+   swatches, and image-to-3D bakes the labels into the mesh as surface detail. Every prompt in
+   `prompts-gemini.md` rules it out by name.
+3. **An edit request costs design fidelity.** Asking for one change to an existing character ("wider legs")
+   re-rolls everything else too — `GEM2-MC-2` silently changed his hair colour, his expression, his shirt and his
+   shoes. For a *costume* change, edit the prompt and draw fresh rather than asking for a tweak.
+
+**Still open:** which `CafeWalker` take to use, and whether the cast gets rebuilt in Meshy from this pass. The
+three rigged models on `main` are still built from the **ComfyUI** pictures. Rebuilding all four is 140 Meshy
+credits and the two-press rig flow again.
+
 ## How these get built
 
 1. **Reference sheet** — `docs/prompts.md`, codes `MC-APOSE`, `BOSS1-APOSE`, `BOSS2-APOSE`, drawn by
