@@ -169,6 +169,77 @@ Aspect ratio **3:4**. **Empty-handed on purpose** — the cleaver is a separate 
 > The background is flat pure white and completely empty. Even flat lighting from the front. No shadow on the
 > ground beneath him.
 
+### GEM2-BOSS3 — the stunt double, `StuntDouble` (PROPOSED character)
+
+Aspect ratio **3:4**. **The character himself is a proposal** — boss 3 is conditional in `ROADMAP.md` and nobody
+has agreed to this design, so read [`CHARACTERS.md`](CHARACTERS.md#the-third-boss--stuntdouble-proposed) before
+spending a take on him. The prompt is finished and self-contained either way.
+
+Two things in it are different from the three above, both on purpose. **The arms are wider** — about fifty-five
+degrees rather than forty-five — because he has shoulder pads, and `trellis_character.py`'s automatic weighting
+gave `clavicle_r` 16% of the verts on `SK_CrashDriverTrellis`'s shoulder accessory and flattened the sleeve when
+the shoulder swung. **And the pads are pinned down hard**, because a pad drawn floating above the sleeve with a gap
+under it comes back from image-to-3D as a loose shell. He is **empty-handed and has no prop at all**, so unlike the
+mob boss he needs no second prompt.
+
+> A single anime character illustration of one slim athletic man in his mid-thirties, drawn in a clean cel-shaded
+> anime style: flat areas of solid colour, hard-edged shadows, only two or three large simple shadow shapes per
+> garment, a clean dark outline around every form, and a face drawn with a few confident clean lines. Bright
+> overall, light and airy, nothing dark or heavy or gritty.
+>
+> He stands facing the viewer in a wide relaxed A-pose, his whole body from the top of his head to the soles of his
+> boots inside the frame. Both arms are angled down and away from his sides at about fifty-five degrees, wider than
+> a normal A-pose, with a large empty gap of white background clearly visible between each arm and his torso and
+> his shoulders completely clear of his chest. Both hands are open with the palms toward the viewer and the fingers
+> spread wide apart and clearly separated from one another. His legs are well apart, with a wide clear gap of white
+> background between his thighs, between his knees and between his ankles. He stands straight and symmetrical.
+>
+> He is slim and athletic with a narrow waist and an upright, easy posture, about average height. Very short dark
+> buzz-cut hair, close to the scalp. A cheerful, friendly, relaxed face with laugh lines at the corners of the
+> eyes, clean-shaven, with one short thin pale scar on his chin. He looks completely untroubled and faintly
+> amused.
+>
+> He wears a bright safety-orange one-piece coverall, zipped all the way up to a flat stand-up collar that covers
+> his neck. Sewn onto the coverall are protective pads in dark navy blue: one rounded pad over each shoulder, one
+> over each elbow, one over each hip, one over each knee and one down each shin. Every pad is a flat smooth panel
+> lying flush against the coverall, drawn as a flat navy shape with a clean dark outline, level with the surface of
+> the cloth, with no gap underneath it, no shadow underneath it and no thick bulging foam. Around each upper arm
+> are two flat pale grey bands, and one more flat pale grey band runs straight across his chest. Across his chest
+> and over both shoulders he wears flat dark navy harness webbing: plain flat straps lying flush against the
+> coverall, with one plain flat rectangular metal plate at the centre of his chest. He wears a flat dark navy belt,
+> dark navy boots, and his hands are bare.
+>
+> Nothing on him sticks out past the edge of his body. The pads lie flat, the straps lie flat, and nothing hangs,
+> dangles or trails from the harness: no rope, no cable, no wire, no hook, no carabiner, no ring, no loose strap
+> end, no protruding buckle, no cape, no scarf, no helmet and no hat. His outline is the clean simple silhouette of
+> a standing man.
+>
+> His hands are completely empty. He is holding no weapon, no chair, no pole, no rope, no tool and no object of any
+> kind. There is nothing in the picture except the man.
+>
+> His colours are only safety orange, dark navy blue, pale grey and his own skin tone. There is no cyan, no pale
+> blue, no magenta, no purple and no pink anywhere in the picture. There are no letters, numbers, logos, badges,
+> patches or printed markings of any kind on the coverall.
+>
+> One single figure, one single front view, alone in the picture. This is not a reference sheet and not a character
+> model sheet: no text, no letters, no words, no labels, no arrows, no measurements, no colour swatches, no grid,
+> no panels, no second view of him, no turnaround, no border or frame.
+>
+> No photographic texture of any kind: no fabric weave, no quilted stitching, no stitching detail, no scuff marks,
+> no scratches, no wear, no dirt, no soot, no burn marks, no scorch marks, no cross-hatching, no stippling, no
+> visible brush strokes, no gradient or airbrushed shading, no film grain, no painterly rendering, no comic-book
+> inking texture, no 3D render look. No blood, no wounds and no bandages anywhere.
+>
+> The background is flat pure white and completely empty. Even flat lighting from the front. No shadow on the
+> ground beneath him.
+
+**Judge a take on four things, in this order.** Is there white background visible between each arm and the torso
+and between the thighs; do the pads lie flat with no gap or bulge under them; is the coverall one flat orange with
+two or three shadow shapes rather than a scuffed sooty garment; are his hands empty with the fingers separated.
+Everything else is a costume detail a redraw can fix — those four decide whether the mesh survives. And per the
+lesson in `CHARACTERS.md`, **do not ask Gemini to tweak a take**: an edit request re-rolls the rest of the design.
+Change the words here and draw fresh.
+
 ### GEM2-CLEAVER — the cleaver prop
 
 Aspect ratio **4:3**, because a cleaver seen side-on is a landscape shape and a 3:4 frame wastes half the pixels.

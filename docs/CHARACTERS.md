@@ -4,6 +4,10 @@ The three we are building first, decided Nov 12 (see `ROADMAP.md`, Decisions): t
 **crash driver** who gives Freeze Frame, and the **mob boss** who gives Splice. The story they sit in is in
 [`PITCH.md`](PITCH.md).
 
+A fourth entry, the **stunt double** who would give Stunt Double, is below as a **proposal**. He is boss 3, which
+`ROADMAP.md` makes conditional ("only if there is time") and keeps at number 2 on the cut list, and no person has
+agreed to his design yet — see [The third boss](#the-third-boss--stuntdouble-proposed).
+
 The names below are **working asset names**, not the characters' names in the story. Nobody has named them yet;
 that is an open question in `ROADMAP.md`, and an agent does not get to settle it.
 
@@ -21,6 +25,7 @@ minutes, so a colour that appears twice is worse than a dull character.
 |---|---|---|
 | Freeze Frame | pale cyan, almost white, like frost | the crash driver, and the player's Freeze Frame effect |
 | Splice | magenta into violet | the mob boss, his portals, his blade's edge |
+| Stunt Double | safety orange `#E8601D` — **proposed**, see the third boss below | the stunt double, and the player's decoy. Hue 20°, so it collides with neither cyan (192°) nor magenta (331°) |
 | the main character | warm cream, dark green, charcoal — **no** cyan, **no** magenta | so both power colours read as borrowed, not his |
 
 **Judge every one of these from the game camera, not a close-up.** `CLAUDE.md` records the TRELLIS coupe that
@@ -83,6 +88,150 @@ he must read as *magenta* instantly, because magenta is about to become the port
     lapel pin is a plain invented diamond, and there is no insignia anywhere else on him.
   - **13+.** The blade stays clean — no blood, ever, on the model or in the concept art. Tattoos are stylised
     waves, which is an anime convention rather than a depiction of any real group.
+
+## The third boss — `StuntDouble` (PROPOSED)
+
+> **This whole section is a proposal, written by Claude on GameStation on Thu Nov 12, 2026, 11:15 PM Pacific.**
+> Nobody on the team has agreed to it. `ROADMAP.md` says an agent may propose but never writes its own suggestion
+> into Decisions, so the proposal line for it belongs in that file's **Waiting for a yes** section and nothing here
+> is settled — not the look, not the colour, not the name. The reason it is written at all is that boss 3 had no
+> design and no artwork of any kind, so if Friday goes well there was nothing to start from. Now there is, and
+> reading it costs a minute instead of an evening.
+
+He is the man who has taken every hit in this film so far, and the only one of the four nobody has ever seen. He
+gives **Stunt Double** (`PITCH.md`, power 3: *a copy fights beside you and takes one hit*), and he is countered by
+Splice, which is the power the mob boss hands over — so the ladder stays "beat each boss with the power you took
+from the one before".
+
+- **What his power does, mechanically.** He spawns two or three doubles **wearing the player's own face**, and
+  every hit that lands on him is transferred to the nearest double instead, so he cannot be damaged at all until
+  his stand-ins are gone. Splice is the counter because teleporting puts you behind the screen of doubles, which is
+  the one place his trick does not reach.
+- **Why that is the Stunt Double power and not a generic clone fight.** A stunt double's whole job is that the
+  damage happens to the wrong person on purpose. The boss is not copying himself for company; he is doing to the
+  player what has been done to him for twenty years, and the doubles wear *your* face because a double is always
+  cast to look like the star.
+- **Personality: he is the only boss who is not angry.** Cheerful, professional, completely unbothered — he has
+  been set on fire two hundred times and it is a Tuesday. He treats the fight as a shoot: he hits his marks, he
+  takes it again from the top, he is pleasant about it. That is more unsettling than another snarl, and it is free
+  — it lives in his face and his posture and costs no extra geometry.
+
+### Silhouette and design
+
+- **Silhouette:** the only **segmented** figure in the game. Flat pads sit flush over his shoulders, elbows, hips,
+  knees and shins, and between them he has the narrowest waist and chest in the cast, so at 64 px he reads as a
+  jointed action figure — bright blocks joined by thin links. He is also the only **bright** body: value 0.91
+  against a cast that is cream-and-green, dark brown and charcoal. The other three read pale, dark and dark. He
+  reads hot. No helmet and no hat — the crash driver owns the lopsided-head read, so this one gets the smallest
+  head shape in the game, a buzz cut, with a flat stand-up collar that takes his neck away.
+- **Design:** slim, athletic, mid-thirties, upright and easy. Very short dark buzz-cut hair. A cheerful relaxed
+  face with laugh lines, clean-shaven, one short pale scar on the chin. A bright **safety-orange one-piece
+  coverall** zipped to a flat stand-up collar. **Dark navy pads sewn flat** over shoulders, elbows, hips, knees and
+  shins. Two flat pale-grey hi-vis bands around each upper arm and one across the chest. Flat dark navy
+  **wire-work harness webbing** across the chest and over both shoulders, lying flush, with a plain flat
+  rectangular plate at the sternum and **nothing hanging off it**. Flat navy belt, navy boots, bare hands.
+- **Height: 176 cm, and that is a design beat, not a coincidence.** The main character is 175 cm. The stunt double
+  was *cast* to double for the star, so he is built to match him — which is also why the doubles he makes are
+  believable. Their skin tones land dE 11.9 apart, and for once that closeness is the point.
+- **Triangle budget:** 30,000, the same as the other three.
+
+### Palette, with the numbers
+
+The standing rule from the Team Owner is no skin-coloured hair or clothing and no hair- or clothing-coloured skin,
+and `tools/color_audit.py` flags anything within **dE76 14** of the face skin. This palette was checked against
+that threshold before it was written down, not after:
+
+| Part | Hex | Hue / sat / val | dE76 from his face skin |
+|---|---|---|---|
+| face and hands (skin) | `#F0C49A` | 29° / 0.36 / 0.94 | — |
+| hair | `#241A15` | 20° / 0.42 / 0.14 | **75.1** |
+| coverall | `#E8601D` | 20° / 0.88 / 0.91 | **57.1** |
+| pads, harness, belt, boots | `#232A38` | 220° / 0.37 / 0.22 | **75.3** |
+| hi-vis bands | `#C9CFD6` | 212° / 0.06 / 0.84 | **33.0** |
+
+**His worst skin separation is 33.0.** `CafeWalker`'s cream shirt against his face is **14.4** and that is the one
+real finding in the colour audit below, so this palette has more than twice the clearance on the cast's known
+failure. The closest pair anywhere on him is hair against the navy pads at **17.0**, which still clears the
+threshold, and the pale bands sit 66.2 from the navy and 85.4 from the orange, so the hi-vis reads as hi-vis rather
+than as a wash.
+
+**The orange does not collide with anything already in the game.** It is dE **98.4** from Freeze Frame's pale cyan
+and **74.0** from the measured magenta of the mob boss's shirt (`#611339`), with hues 172° and 48° away
+respectively. The nearest thing to it on the existing cast is the crash driver's leather, and that was *measured*
+rather than guessed: sampling `Art/Blender/export/Characters/CrashDriver/T_CrashDriver_BaseColor.png` directly, its
+two biggest non-background clusters are `#584848` and `#483838` — very dark, nearly desaturated browns at value
+0.28–0.35 — which are dE **76.1** and **78.4** from this orange. Nothing on the cast is within 57 of it.
+
+**Why orange, beyond the numbers.** Crash mats, fire-gag coveralls and hi-vis are what stunt work actually looks
+like, so the colour does a second job: it says *this man expects to be hit* before he opens his mouth. It is also
+the one warm saturated hue the two reserved power colours leave free.
+
+### Meshy and TRELLIS safety notes
+
+Every item here is a failure this repo has already paid for once.
+
+- **He is empty-handed, and he does not get a prop at all.** The mob boss needed the two-prompt split
+  (`BOSS2-NOBLADE` for the body, `CLEAVER-PROP` for the blade) because a drawn blade crossing his leg fused into
+  the trousers. The right answer for *this* boss is simpler: his weapon is the doubles, so there is no prop to
+  split out, no hand socket to solve and no second 3D asset to make. That matters for a boss who is number 2 on the
+  cut list — he is the cheapest of the four to build. **If the team later wants him holding something**, follow the
+  mob boss's pattern exactly (a `NOBLADE`-style body prompt plus a standalone prop prompt, attached to a hand
+  socket in Unreal) and pick a **thick single-slab object**. Do not pick the obvious stunt prop, a breakaway chair:
+  four thin spindly legs is precisely the geometry image-to-3D either fuses into a block or shatters, and the
+  cleaver only survived because it is one flat slab.
+- **Nothing protrudes past his outline.** The pads are flat panels sewn flush, the harness is flat webbing lying
+  against the coverall, and the buckle is a flat plate. No rope, cable, hook, carabiner, D-ring, loose strap end,
+  cape, scarf or hat. This is the crash driver's lesson: his shoulder ice came back as spikes crossing the
+  silhouette in the first text-only Gemini take and had to be redrawn as flat plates lying on the jacket.
+- **The pads are a new risk, so the prompt names it.** A pad drawn as a separate shape floating above the sleeve
+  with a gap under it comes back from image-to-3D as a loose shell or a detached shard. The prompt asks for them as
+  flat panels **level with the surface, flush, no gap underneath, no bulging foam**.
+- **His A-pose is deliberately wider than the other three: arms about 55° from the body, not 45°.** The reason is
+  measured. On `SK_CrashDriverTrellis`, `Art/Blender/trellis_character.py`'s automatic weighting mis-assigned a
+  shoulder accessory — `clavicle_r` top-owns 2,234 of 14,140 verts (16%) against `upperarm_r`'s 348 — so a 50°
+  shoulder swing flattens the sleeve into a plate. **This character's shoulder pads are exactly that kind of
+  accessory**, so the fix that finding asked for — a wider A-pose in the reference sheet — is built into his prompt
+  from the start. Legs well apart too, with a visible gap at thigh, knee and ankle: `GEM2-MC` take 1 was rejected
+  for an inner-thigh fusion risk.
+- **If he goes through Meshy: remesh first, every time.** Two presses — the first **Rig** press only remeshes
+  (image-to-3D returns 600–950k triangles and rigging refuses over 300k), then press **Rig** again on the remeshed
+  asset for the real dialog, 30K + Quad. Download the **animate-phase** asset, `..._character.glb`. Both traps are
+  written up in `CLAUDE.md`'s Meshy section, and `CleaverBossGemText` nearly shipped broken for skipping the first.
+- **If he goes through TRELLIS instead he is free.** `SK_CrashDriverTrellis` was generated locally on GameStation's
+  RTX 5090 in 41.8 s for 0 credits from a committed reference sheet. That is the cheap path for a cut-list boss,
+  with the shoulder-weighting caveat above as the thing to check on the result.
+
+### Two rules constraints, both deliberate
+
+- **No printed markings anywhere on him.** `docs/RULES.md` allows no trademarks or logos, and real stunt coveralls
+  carry production names, crew numbers and union patches. His coverall is blank: no letters, no numbers, no badge,
+  no logo. That doubles as an image-generation safeguard, because baked-in text becomes surface detail on the mesh.
+- **13+.** He is the character most likely to drift gory, because his job is injury. So: no blood, no burns, no
+  soot, no scorch marks, no bandages and no visible wounds, on the model or in the concept art. The one scar on his
+  chin is a thin clean line. He is cheerful and unhurt, which is the whole joke.
+
+### What a person has to decide before anyone draws him
+
+1. **Whether boss 3 is in the game at all.** He is number 2 on the cut list, and `ROADMAP.md` makes Saturday's
+   "Stunt Double only if Friday went well" the gate. Nothing here changes that.
+2. **Safety orange as the Stunt Double colour.** The numbers are above; the choice is not an agent's.
+3. **Whether the doubles wear the player's face.** It is the best part of the design and the most expensive part to
+   build, and it is a gameplay decision, not an art one.
+
+### How to draw him, with nothing else to work out
+
+The prompt is written and self-contained. Gemini, text only: **`GEM2-BOSS3`** in
+[`prompts-gemini.md`](prompts-gemini.md), `Create image` on, model **4 Hydrogen**, aspect ratio **3:4**, and
+download with *"Download full size image"*. Local ComfyUI, for whichever machine has it: **`BOSS3-APOSE`** in
+[`prompts.md`](prompts.md), `python tools/gen_images.py BOSS3-APOSE --takes 3 --size 1024x1536`. Takes land in the
+ignored `Art/Refs/gen/` folders; the pick is copied to `Art/Refs/StuntDouble_apose.png` and committed, so the
+picture a model came from sits beside the model.
+
+**Judge a take on four things, in this order:** is there white background visible between each arm and the torso and
+between the thighs; do the pads lie flat against the coverall with no gap or bulge under them; is the coverall one
+flat orange with two or three shadow shapes rather than a textured, scuffed, sooty garment; and are his hands empty
+with the fingers separated. Everything else is a costume detail a redraw can fix — those four decide whether the
+mesh survives.
 
 ## What we picked, and what is wrong with it
 
