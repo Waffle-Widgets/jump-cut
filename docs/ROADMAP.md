@@ -179,35 +179,53 @@ The queue the work-order decision creates. Take the top unfinished line.
 | 1. Cafe | Crash, Freeze Frame hand-over (touch the driver), auto-freeze and the coworker rescue all work. **Missing from the Team Owner's scene: the day job, the latte art minigame, delivering the drink.** Her model is not made (art, not code) |
 | 2. Street | **Done** - goons, fists, animation. Tuning only: one combo clears all three in about 1.0 s |
 | 3. Splice boss | Fight works. He hands over `HasSplice`, which **now opens the Splice blink** (below) |
-| 4. Destroyed buildings | **Half built.** The **Splice power is built and verified** (600 cm blink, Left Shift / gamepad B) but is **not saved to disk** - see the warning below. The **platforming section is still nothing**: Splice is the power the gaps are for and there are no gaps yet |
+| 4. Destroyed buildings | **Half built.** The **Splice power is built, verified and now on disk** (600 cm blink, Left Shift / gamepad B) - rebuilt on Justin's Mac mini, see below. The **platforming section is still nothing**: Splice is the power the gaps are for and there are no gaps yet |
 | 5. Stunt Double boss | Fight and doubles built. **Splice past the attack stand-in now works** - the blink ignores pawns, so it needed no code in the fight at all. Still unbuilt: the attack stand-in's despawn timer |
 | 6. Fade to "continue" | **Nothing built**, and what it even is has not been decided (Still to decide, below) |
 
-**Beat 4 is the earliest unfinished one**, and it is where Splice has to exist, so it is also what unblocks
-beat 5's Splice decision.
+**Beat 4's power now exists.** Splice is built, committed and on disk. What is still missing from beat 4 is the
+other half: the destroyed-building gaps for it to cross. Beat 5's Splice decision is no longer blocked.
 
-### Splice is built and verified, and it is NOT on disk (Fri Nov 13, 17:44 UTC, GameStation)
+### Splice is on disk (Fri Nov 13, 18:20 UTC, Justin's Mac mini)
 
-The blink works. Measured in Play-In-Editor: **600.0 cm** on open ground, **0 cm** without the power and
-**0 cm** on cooldown, **455.0 cm** when a wall face stood 500 cm away (it stops short rather than clipping),
-and the full **600.0 cm straight through a goon and through the cleaver boss** without shoving either. Passing
-through people is the whole design - the trace runs on the **Visibility** channel, which the Pawn collision
-preset ignores - and it is what delivers the Team Owner's beat-5 decision ("Splice lets the user get past the
-attack Stunt Double") with no code in the stunt-double fight at all.
+The blink that was built and measured on GameStation was lost before saving - the editor quit with
+`BP_Player` and `WBP_HUD` dirty. **It has been rebuilt on Justin's Mac mini and committed.**
 
-**None of it reached disk.** The editor's "Save Content" dialog was clicked through and Unreal quit
-(`QUIT_EDITOR`, 17:44:13 UTC) with `BP_Player` and `WBP_HUD` still dirty - most likely so the renders could
-have the 5090 back, which the editor was holding ~29 GB of. So the committed `.uasset` files still have no
-Splice in them. Two ways back, both cheap:
+The route was `tools/splice_graphs.py`, the recipe's own known-good path. It was the only route available
+here: the GameStation autosaves in `JumpCut/Saved/jcpy/recovered/` are on that machine and are not in git, so
+they do not exist on the Mac. That settles the open question - re-run the recipe - without anyone having to
+answer it.
 
-- **`tools/splice_graphs.py`** holds the entire recipe - every variable, all four graphs verbatim, the
-  defaults, the HUD widgets and the two traps that cost time. This is the known-good path.
-- The compiled autosaves are copied out of Unreal's rotation to `JumpCut/Saved/jcpy/recovered/`
-  (`BP_Player_Auto2.uasset`, `WBP_HUD_Auto2.uasset`, both 17:37:17 UTC, outside git). The `BP_Player` one has
-  everything; the `WBP_HUD` one has the four new widgets but pre-dates the `HudRefresh` edit by six seconds.
+**What was checked rather than assumed.** The DSL printer collapses two things in a way that can hide a wrong
+graph, so both were read at the pin level instead:
 
-**Reopening Unreal takes the GPU back from ComfyUI**, so whoever picks this up should decide which of the two
-matters more at that moment rather than just launching the editor.
+- The stop-short vector is fed from `BreakHitResult` **output 5, `ImpactPoint`** - not the struct's first pin
+  (`bBlockingHit`), which is what the printer's collapsed `(Collision|BreakHitResult _outhit)` form could
+  equally have meant.
+- The trace is `TraceChannel = TraceTypeQuery1` (Visibility), `bIgnoreSelf = true`, `bTraceComplex = false`.
+  Visibility is the whole design: the Pawn collision preset ignores it, so the blink passes through people and
+  stops only on world geometry - which is what delivers the Team Owner's beat-5 call ("Splice lets the user get
+  past the attack Stunt Double") with no code in the stunt-double fight at all.
+
+All nine defaults read back exact (600 cm, 1.2 s cooldown, 30 cm trace radius, 45 cm wall back-off). `BP_Player`
+compiled with warnings as errors. In Play-In-Editor the live pawn carries every Splice value correctly, map
+check is clean and there were **no Blueprint runtime errors**.
+
+**The HUD box is new work, not a restore.** The GameStation autosave pre-dated the `HudRefresh` edit, so those
+lines had never been saved anywhere. `SpliceBox` / `SpliceIcon` / `SpliceKey` / `SpliceBar` now sit third along
+the bottom-left row (violet, `SHIFT`), and all **11** `HudShowIf` `Target` pins were audited after the
+whole-function rewrite to confirm none lost its widget.
+
+**Still not verified: nobody has pressed Left Shift.** The blink distances above (600 / 0 / 455 / through a
+goon / through the boss) are GameStation's measurements, not re-measured here. Re-measuring needs the temporary
+debug hook again, because the Splice variables are not instance-editable and the editor's script sandbox has no
+`unreal` module, so the function cannot be driven from outside.
+
+**Two traps worth keeping.** `HudShowIf` is printed positionally but takes a `Target` parameter, so writing the
+function back as printed is rejected outright ("Could not connect pin ... to self") - every call needs the
+`:Target` / `:Show` keyword form, not just the new ones. And the reader attributes the player's `GetHealth` /
+`GetMaxHealth` to `Class|AbilitySystemTestAttributeSet`, a colliding engine class; they must be written back as
+`Class|BPPlayer|`.
 
 
 ## Stretch (only if the critical path is finished)
