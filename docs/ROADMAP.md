@@ -175,13 +175,36 @@ The queue the work-order decision creates. Take the top unfinished line.
 |---|---|
 | 1. Cafe | Crash, Freeze Frame hand-over (touch the driver), auto-freeze and the coworker rescue all work. **Missing from the Team Owner's scene: the day job, the latte art minigame, delivering the drink.** Her model is not made (art, not code) |
 | 2. Street | **Done** - goons, fists, animation. Tuning only: one combo clears all three in about 1.0 s |
-| 3. Splice boss | Fight works. He hands over `HasSplice`, which still gates nothing |
-| 4. Destroyed buildings | **Nothing built.** The Splice power itself, and the platforming section that needs it |
-| 5. Stunt Double boss | Fight and doubles built. Two decisions from Nov 13 are unbuilt: Splice past the attack stand-in, and the attack stand-in's despawn timer |
+| 3. Splice boss | Fight works. He hands over `HasSplice`, which **now opens the Splice blink** (below) |
+| 4. Destroyed buildings | **Half built.** The **Splice power is built and verified** (600 cm blink, Left Shift / gamepad B) but is **not saved to disk** - see the warning below. The **platforming section is still nothing**: Splice is the power the gaps are for and there are no gaps yet |
+| 5. Stunt Double boss | Fight and doubles built. **Splice past the attack stand-in now works** - the blink ignores pawns, so it needed no code in the fight at all. Still unbuilt: the attack stand-in's despawn timer |
 | 6. Fade to "continue" | **Nothing built**, and what it even is has not been decided (Still to decide, below) |
 
 **Beat 4 is the earliest unfinished one**, and it is where Splice has to exist, so it is also what unblocks
 beat 5's Splice decision.
+
+### Splice is built and verified, and it is NOT on disk (Fri Nov 13, 17:44 UTC, GameStation)
+
+The blink works. Measured in Play-In-Editor: **600.0 cm** on open ground, **0 cm** without the power and
+**0 cm** on cooldown, **455.0 cm** when a wall face stood 500 cm away (it stops short rather than clipping),
+and the full **600.0 cm straight through a goon and through the cleaver boss** without shoving either. Passing
+through people is the whole design - the trace runs on the **Visibility** channel, which the Pawn collision
+preset ignores - and it is what delivers the Team Owner's beat-5 decision ("Splice lets the user get past the
+attack Stunt Double") with no code in the stunt-double fight at all.
+
+**None of it reached disk.** The editor's "Save Content" dialog was clicked through and Unreal quit
+(`QUIT_EDITOR`, 17:44:13 UTC) with `BP_Player` and `WBP_HUD` still dirty - most likely so the renders could
+have the 5090 back, which the editor was holding ~29 GB of. So the committed `.uasset` files still have no
+Splice in them. Two ways back, both cheap:
+
+- **`tools/splice_graphs.py`** holds the entire recipe - every variable, all four graphs verbatim, the
+  defaults, the HUD widgets and the two traps that cost time. This is the known-good path.
+- The compiled autosaves are copied out of Unreal's rotation to `JumpCut/Saved/jcpy/recovered/`
+  (`BP_Player_Auto2.uasset`, `WBP_HUD_Auto2.uasset`, both 17:37:17 UTC, outside git). The `BP_Player` one has
+  everything; the `WBP_HUD` one has the four new widgets but pre-dates the `HudRefresh` edit by six seconds.
+
+**Reopening Unreal takes the GPU back from ComfyUI**, so whoever picks this up should decide which of the two
+matters more at that moment rather than just launching the editor.
 
 
 ## Stretch (only if the critical path is finished)
