@@ -323,6 +323,15 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   a new model-phase asset. Press **Rig** again on **that** asset to get the real *Rig Model* dialog (Humanoid /
   Quadruped Dog / Smart Rig). Use **30K + Quad** so the mesh matches `meshy_character.py`'s 30,000-triangle target.
   The two "Rigging failed" assets from 2026-11-09 are this trap, not bad art.
+- **Always remesh to 30K Quad before rigging - do not trust Meshy's 300K gate to make you.** It only offers the
+  remesh when it feels like it: on 2026-11-12 a 300,892-face model skipped the dialog entirely and went straight
+  to *Rig Model*, while a 477,752-face one was stopped. Smart Rig on that un-remeshed mesh returned a **degenerate
+  60-bone skeleton with a one-bone spine**, and `meshy_character.py` then classified the **legs as the arms**
+  (`"legs": []`) - so the walk swung the legs as arms and never moved the arms, which still *looks* like walking
+  in a contact sheet. Remeshing the same model to 28,025 Quad and rigging that gave a clean 31-bone rig with two
+  legs and two arms. If the first Rig press does not offer the remesh, use the mesh-ops button in the viewer bottom
+  bar -> **Remesh** -> 30K + Quad; that standalone remesh is **also 0 credits**. The script now prints
+  `MESHYCHAR-BAD-RIG` when a "smart" rig has no leg chains, so this cannot ship silently again.
 - **Only the animate-phase asset carries the skeleton.** Downloading the remeshed model gives a bare mesh in
   **both** glb and fbx - no armature, no vertex groups - and `meshy_character.py` then dies with `IndexError` on
   `[o for o in sc.objects if o.type == 'ARMATURE'][0]`. The rigged one is the running-man filter in the asset
