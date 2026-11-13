@@ -297,6 +297,29 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
     template mannequin's idle, walk and jog onto it. No hand-keyed walk needed for humans.
   - **One post-process, two looks:** switch on Render CustomDepth for characters, and a single post-process material
     can cel-shade them and treat the background differently (it reads the custom depth as a mask).
+- **Fight animation is montages, and the project had none** (GameStation, Nov 12). Combat code that only does damage
+  looks broken to a player even when every number is right. `tools/unreal_fight_anims.py` makes the montage assets;
+  `ACharacter::PlayAnimMontage` is null-safe, so one `AnimMontage` variable per class and one call site serves
+  player, goons and boss.
+  - **Epic's `ABP_Unarmed` already carries a `Slot 'DefaultSlot'` node**, so montages play on anything using it with
+    no change to the anim blueprint. `BlueprintTools.list_graphs` lists only sub-graphs and hides it; use
+    `find_nodes` on `<ABP>:AnimGraph`.
+  - **`AnimationSingleNode` mode cannot play a montage**, and a blend space in it has nothing driving its axis, so the
+    character stands at the idle corner forever. A character that needs to attack needs an anim blueprint. A minimal
+    one is three nodes — blend space -> `Slot 'DefaultSlot'` -> Output Pose — with the blend space X wired to a float
+    the event graph sets from `TryGetPawnOwner` -> `GetVelocity` -> `VectorLengthXY`. `AnimBlueprintFactory` takes
+    `target_skeleton` through `set_editor_property` even though it is not in `dir()`.
+  - **A new variable's default does not reach an existing child Blueprint**, even after recompiling the child: set the
+    child's class defaults too. A **placed actor** is worse — it keeps its own serialized value, and when the level
+    uses one-file-per-actor, `AssetTools.save_assets` on the `.umap` will not save it. Save the actor's own package
+    with `EditorLoadingAndSavingUtils.save_packages([actor.get_outermost()], False)`.
+  - Give a death montage `bEnableAutoBlendOut = false` so the body stays down, and make sure the actor lingers at
+    least as long as the clip (ours removed the body at 0.6 s into a 1.1 s death).
+  - **`unreal.Rotator` is `(roll, pitch, yaw)` positionally.** `Rotator(0, 180, 0)` stands a character on his head.
+- **The graph DSL reader does not round-trip into the writer.** It prints `Math|Vector|vector-vector` (writer wants `-`),
+  `(bind _x 1.0)` (fold the literal in) and `(Character|LaunchCharacter v true true)` (the first positional lands in the
+  `self` pin — name the pins: `:LaunchVelocity`, `:bXYOverride`, `:bZOverride`). Read the graph out as a backup first,
+  rewrite, then read it back and compare.
 - **Player-facing text is American English** (color, defense). Docs can stay as they are.
 - **Grid games: put decoration (posts, lamps, props) on tile corners, never tile centres.** The frog lands on centres and
   hops along the lines between them; a corner is 50 cm from every path. Street lamps on tile centres had the frog jumping through them.

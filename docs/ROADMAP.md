@@ -46,6 +46,16 @@ GameStation on Thu Nov 12 evening (the main character was already in) — redrew
 style ([`CHARACTERS.md`](CHARACTERS.md)), and that work is merged into the branch. What the final audit found:
 [`FIRST_BUILD_AUDIT.md`](FIRST_BUILD_AUDIT.md).
 
+**The fight has animation now** (Thu Nov 12, 11:45 PM Pacific, GameStation, on `playtest`). The playtest found
+that nobody swung at anybody: the combat code did damage and never played a clip, and the mob boss's mesh was in
+single-node mode, which cannot play a montage at all. The player now throws punch 1, 2 and a finisher by combo
+step, goons and the boss swing, react to hits and fall over, and the boss walks from an `ABP_CleaverBoss` anim
+blueprint driven by his own speed. The motion is Epic's mannequin capture, retargeted. `EnemyDefeatLinger` went
+0.6 s -> 1.2 s so the death animation finishes before the body is removed. **Verified in Play-In-Editor by
+reading back which montage was playing, not by eye, and not by a person playing it.** Still Epic's mannequin on
+the player and the goons: swapping `CafeWalker` onto `BP_Player` needs this same montage set retargeted onto his
+skeleton, and is the next job.
+
 ## Open
 
 | Day | Goal |
