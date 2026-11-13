@@ -166,7 +166,8 @@ _(nothing yet)_
   Double as "boss 3, only if there is time" (it is the demo's final fight); Stunt Double and the Splice
   platforming section on the cut list (both removed); and the Director with two rule scenes on Friday's list (the
   demo ends before him). It also confirms the ladder: the dead crash driver gives Freeze Frame, the Splice boss
-  gives Splice. **Recorded from Justin's project chat; the Team Owner had not yet seen it when this was written.**
+  gives Splice. Recorded from Justin's project chat, and **approved by Manny, the Team Owner, on Thu Nov 12,
+  11:45 PM Pacific** (in his chat: "Plan is approved").
 - **2026-11-12: The boss ladder is settled - Freeze Frame, then Splice, then Stunt Double** (Manny, the Team
   Owner). **Boss 1 is the car crash** through the cafe wall and it gives **Freeze Frame**. **Boss 2 is the mob
   boss with the cleaver** and he gives **Splice**. **Boss 3, only if there is time**, gives **Stunt Double** -
