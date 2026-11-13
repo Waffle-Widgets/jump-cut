@@ -199,7 +199,7 @@ The queue the work-order decision creates. Take the top unfinished line.
 
 | Beat | What is missing |
 |---|---|
-| 1. Cafe | Crash, Freeze Frame hand-over (touch the driver), auto-freeze and the coworker rescue all work. **Missing from the Team Owner's scene: the day job, the latte art minigame, delivering the drink.** Her model is not made (art, not code) |
+| 1. Cafe | Crash, Freeze Frame hand-over (touch the driver), auto-freeze and the coworker rescue all work. **Missing from the Team Owner's scene: the day job, the latte art minigame, delivering the drink.** **Her model is made but not imported** (art, not code): `SK_CafeCoworker.fbx` is committed, but `BP_Coworker` is still a green box until the builder imports her |
 | 2. Street | **Done** - goons, fists, animation. Tuning only: one combo clears all three in about 1.0 s. **Their model is made but not imported** (art, not code): `SK_StreetGoon.fbx` is committed, but `BP_Goon` still wears Epic's mannequin until the builder imports him, and they are the enemy in beats 2 to 5. Designed, drawn and modelled Nov 13, see `StreetGoon` in [`CHARACTERS.md`](CHARACTERS.md#the-goons--streetgoon-beats-2-to-5) |
 | 3. Splice boss | Fight works. He hands over `HasSplice`, which still gates nothing |
 | 4. Destroyed buildings | **Nothing built.** The Splice power itself, and the platforming section that needs it |
