@@ -123,7 +123,8 @@ and the door marker's (200).
   set-up scripts that lived only in the ignored `Saved/` folder were copied into `tools/`; a devlog entry corrects the
   earlier "the anime look is ready".
 - Not fixed, because they need people: play it; make it 3 to 5 minutes; decide the plaza boss, the cafe-door pick-up,
-  the "Final Cut" rename and which boss gives Rewind; say whether to push.
+  the "Final Cut" rename and which boss gives Rewind.
+- Pushed to GitHub on the Team Owner's word ("Yes, push it"), about 9 PM; the two LFS locks were released then.
 - Not fixed, and known: only ever seen at 2.25:1, not 16:9; holding R through the win reload may skip the title
   (read from the graph, not tested); the look was never tried on a character that uses the anime materials; the
   retarget script's fix is unrun; no packaged build exists.

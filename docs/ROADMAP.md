@@ -34,8 +34,8 @@ Freeze Frame (a second hand-over spot covers the cafe door); a street with a gro
 checkpoint; a walled plaza whose entry gate closes behind you, with a boss (a big bruiser; his own freeze attack is
 switched off) and an exit gate; a HUD; win and lose screens with restart at the checkpoint; the cel-shaded anime
 shader on the level; and Rewind, built and then parked (kept, switched off). A scripted run goes from title to win in
-25 to 27 s. **No person has played any of it yet.** The branch is **not pushed yet** as of this writing: ask the Team
-Owner. M Station made the three rigged characters (main character, crash driver, mob boss) and a cleaver as FBX
+25 to 27 s. **No person has played any of it yet.** The branch **is pushed** to GitHub (Thu Nov 12,
+about 9 PM) so every PC can see it; it is still untested and is not a pull request yet. M Station made the three rigged characters (main character, crash driver, mob boss) and a cleaver as FBX
 under `Art/Blender/export/Characters/` and `Art/Meshy/` (not yet in Unreal), redrew the cast in the chosen anime
 style ([`CHARACTERS.md`](CHARACTERS.md)), and that work is merged into the branch. What the final audit found:
 [`FIRST_BUILD_AUDIT.md`](FIRST_BUILD_AUDIT.md).
