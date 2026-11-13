@@ -48,7 +48,7 @@ the plainest design of the three: no coat, no weapon, no insignia.
   jam's first night. That model is the starting point, not a
   throwaway — the question for the team is whether to keep it or re-run it against the new reference sheet.
 
-## The coworker — `CafeCoworker` (beat 1; built in Unreal as a box, not yet drawn)
+## The coworker — `CafeCoworker` (beat 1; reference sheet drawn Nov 13, still a box in Unreal)
 
 The person the player saves in the demo's first beat. She exists because the beat's *lesson* needs a subject:
 the roadmap's beat 1 ends with an explosion sending shrapnel at a coworker, and the action button teaching the
@@ -379,6 +379,7 @@ Twelve takes were drawn. The picks, committed next to this file:
 
 | Character | Pick | Why that one |
 |---|---|---|
+| `CafeCoworker` | `Art/Refs/CafeCoworker_apose.png` (`COWORKER-APOSE` take 1) | The only take whose apron stops at mid-thigh, so the gap between the legs stays open - takes 2 and 3 hang it past the knee and close that gap, which is what image-to-3D fuses. Take 3 also came back framed in black bars, breaking the "no border, no panels" rule. Drawn on GameStation's 5090 with ComfyUI + Qwen-Image, 0 Meshy credits. |
 | `CafeWalker` | `Art/Refs/CafeWalker_apose.png` (take 3) | The only take with every finger separated on both hands, and the widest gap between arms and torso |
 | `CrashDriver` | `Art/Refs/CrashDriver_apose.png` (take 3) | Clearest gloved hands, and the frost reads as frost on **one** shoulder rather than as white fur on both |
 | `CleaverBoss` | `Art/Refs/CleaverBoss_apose.png` (`BOSS2-NOBLADE` take 2) | Both arms well clear of the torso and both hands open with the fingers spread — the first three takes all had the blade across his leg |
@@ -655,7 +656,7 @@ was kept and dressed as him rather than replaced, so nothing the playtest settle
 | mesh | `SK_CleaverBoss` on `BP_BossFreeze`'s Character mesh, scale **1.2921**, offset `z = -115`, yaw **270** |
 | why that scale | the capsule is 115 cm half-height; the model is 178.0 cm, so 230/178 fills the capsule exactly - the same silhouette size the mannequin boss had at 1.3 |
 | material | `MI_CleaverBoss` (our `M_AnimeChar` instance), one slot |
-| animation | `BS_Idle_Walk_Run_CB`, played in **single-node** mode and driven each think by `BossDriveAnim` |
+| animation | `ABP_CleaverBoss` (AnimationBlueprint mode, verified on both the class default and the placed actor, Nov 13). Its AnimGraph is `BS_Idle_Walk_Run_CB` -> Slot `DefaultSlot` -> Output Pose, with the blend space driven by a `BossAnimSpeed` float. The earlier single-node + `BossDriveAnim` note was superseded by `5920c65` |
 | cleaver | `SM_Cleaver` as a component, attached in the Construction Script to socket **`cleaver_r`** on bone `Bone_019` |
 
 **The skeleton has no names.** Meshy's Smart Rig calls every bone `Bone_000`...`Bone_082`, so Unreal's automatic
@@ -679,3 +680,52 @@ point in the fist with the blade pointing forward and down.
 
 **The same chain map works for any Meshy character we make**, because `Art/Blender/meshy_character.py` numbers
 bones the same way every time. `CafeWalker` and `CrashDriver` are not wired into Blueprints yet.
+
+### OPEN DEFECT - he floats about a metre whenever he animates (found Nov 13, not fixed)
+
+The Team Owner reported after a playtest that the mob boss "sometimes floats in the air". He does, and the
+"sometimes" is the clue: **standing still he is correct, and the moment any clip plays he rises ~107-113 cm.**
+
+Measured in PIE by reading the world Z of all 83 bones each frame (`JumpCut/Saved/jcpy/boss_feet.py`), floor at
+`z = 2.0`:
+
+| State | lowest bone in the skeleton | height above the floor |
+|---|---|---|
+| idle, standing | `z = 2.00` | **0 cm** - correct, feet planted |
+| walking (380 cm/s) | `z = 108.8 - 114.8` | **107 - 113 cm** |
+| cleaving | `z = 95.7 - 114.8` | **94 - 113 cm** |
+| back to idle | `z = 2.00` | 0 cm |
+
+**It is not the Blueprint and it is not physics.** The class default and the placed actor agree exactly (capsule
+half-height 115, mesh `z = -115`, scale 1.2921, `AnimationBlueprint` + `ABP_CleaverBoss`) - there is no stale
+instance override this time. The capsule stays on the ground: `MOVE_WALKING` on all 1,910 sampled frames, actor
+`Z = 117.00` throughout. **Only the mesh leaves the floor**, so it is baked into the retargeted clips.
+
+**The cause is the retarget root.** `IK_SK_CleaverBoss`'s retarget root is `Bone_001` and `IK_Mannequin_Src`'s is
+`pelvis`. In this rig `bone_000` is the real root and sits on the floor (`z = 2.00` in the idle pose), while
+`Bone_001` sits **117.6 cm above it** - and 117.6 cm is the lift we measure. The retarget writes the mannequin's
+pelvis height into `Bone_001`'s *local* transform, whose parent is already the floor-level `bone_000`, so the
+offset is applied twice and the whole skeleton rides a pelvis-height too high. The idle escapes it because
+`MM_Idle_CB` has no root translation at all (measured delta `(0,0,0)`); every clip that *does* have one is lifted.
+
+**The repair** is to re-do the retarget with the roots at matching heights - target root `bone_000` against the
+mannequin's `root` - and re-bake the locomotion clips (`MF_*_CB`) and the four `MM_*_CB` montage sources. Do not
+try to cancel it with a mesh `z` offset: that would sink him into the floor whenever he is idle.
+
+**Two related things found at the same time, both left alone deliberately:**
+
+- `MM_Attack_01_CB` / `MM_Attack_03_CB` carry `bEnableRootMotion = true` with `bForceRootLock = false` (the walk
+  and jog clips have the lock *on*), and `ABP_CleaverBoss` runs `RootMotionFromMontagesOnly`, so on paper a punch
+  should drag the capsule `+145.8 cm` and a cleave `+209.1 cm` (measured on the assets; Z is zero in both, so this
+  is never what lifts him). **In PIE the capsule does not jump by anything like that**, so the motion is evidently
+  not reaching the movement component - consistent with it living on `Bone_001` rather than the skeleton root.
+  Setting `bForceRootLock = true` on both was tried and **reverted**: it changed nothing measurable, and an
+  unproven edit to an LFS binary is not worth committing. Re-test this after the retarget is redone.
+- During a Freeze Frame the boss holds whatever pose he is in, including mid-air (`CustomTimeDilation = 0` freezes
+  his animation as designed). Measured: he hung with his lowest bone 72.9 cm up for the whole 4.6 s freeze. That
+  is correct time-stop behaviour, but it compounds the float and will read as the same bug to a playtester.
+
+**How to re-check it in one command:** `py "<repo>/JumpCut/Saved/jcpy/boss_feet.py"` in the editor console during
+PIE. It wakes the boss, puts the player in front of him, and writes a per-frame table of the lowest bone's Z. A
+fixed boss reads `LIFT` near 0 while walking. Judge it by that number, not by a montage name: a montage reports
+itself as playing whether or not the pose is anywhere near the floor.
