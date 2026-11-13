@@ -55,6 +55,19 @@ style ([`CHARACTERS.md`](CHARACTERS.md)), and that work is merged into the branc
 | Sat Nov 14 | Art, sound, juice, playtests, footage. Stunt Double only if Friday went well |
 | Sun Nov 15 | Bug fixes and submission only |
 
+## Stretch (only if the critical path is finished)
+
+**The cafe minigame** (Manny, the Team Owner, Nov 12. Only a person moves it into Open.) Before the car comes
+through the wall, the player works a shift in the cafe: taking orders and pouring latte art. It is the game's
+opening beat and the reason the cafe is the first room.
+
+- It is a **new feature**, and Friday Nov 13 is feature freeze (Open, above). It either lands on Friday or it
+  breaks the freeze.
+- It shares no work with anything else: ordering and pouring need input and UI that no fight uses, so building
+  it buys nothing for the rest of the game.
+- It lengthens a run, which is the thing the build is worst at today (25 to 27 s against 3 to 5 minutes) - but
+  so does tuning the fights, and that costs nothing new.
+
 ## Waiting for a yes
 
 _(nothing right now)_
@@ -111,6 +124,9 @@ _(nothing yet)_
 
 ## Decisions
 
+- **2026-11-12: The cafe minigame is a stretch goal, not a Friday feature** (Manny, the Team Owner). Taking
+  orders and pouring latte art in the cafe before the crash, to be built "if there is time left over". It sits
+  under Stretch above, below everything in Open, and nobody starts it until the critical path is done.
 - **2026-11-12: The plaza boss is the Splice mob boss** (Manny, the Team Owner, answering "Mob boss"). The
   built plaza boss is kept and turned into him rather than dropped, so every number the playtest settled -
   240 health, 15 damage, 380 move speed, his capsule and his warning sign - survives. `BP_BossFreeze` now
