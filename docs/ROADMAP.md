@@ -66,8 +66,6 @@ in case playtesting shows we need it. Still not something to build from: only a 
 
 ## Still to decide
 
-- **Art style.** GameStation is testing an anime look (cel-shaded characters over painted backgrounds) and a cafe
-  level in the practice project. If the team keeps it, it moves here as jam work.
 - The Director's real name and the final names of the powers.
 - Camera: third person behind the player (the template's) unless we choose otherwise.
 - **What happens to Rewind.** It was the core mechanic in `PITCH.md` *and* the first boss's gift. The first boss now
@@ -103,6 +101,10 @@ _(nothing yet)_
 - **2026-11-12: The player fights with fists** for now, and there are ordinary goons between bosses (Justin).
 - **2026-11-12: The Splice gap comes after the Splice boss** (Justin).
 - **2026-11-12: The devlog is one file per entry** in `docs/devlog/`, so teammates never collide on one file (Justin).
+- **2026-11-12: The art style is cel-shaded anime** (Manny). It was the leading candidate all along (the
+  `mendezm87/anime-look` demo, the `CafeWalker` model); it is now the chosen look and everything we draw or model
+  matches it. The cast was redrawn in it through Gemini the same evening:
+  [`CHARACTERS.md`](CHARACTERS.md#gemini-pass-2026-11-12).
 - **2026-11-12: The game is called Jump Cut** (the team; the story is in the devlog entry for Nov 11 to 12).
 - **2026-11-11: Prize focus is Glass Box first, Render Royalty second, Best Team third**, Best Overall as a stretch
   (the team; `CLAUDE.md`, "Goals, and keeping us on track").
