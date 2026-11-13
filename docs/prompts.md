@@ -22,12 +22,45 @@ invented crest or none at all, never a real family crest, and a clean blade — 
 ---
 
 ### MC-APOSE
-> anime character reference sheet, cel shaded with hard-edged shadows and clean dark line art, full body, a young
-> adult man standing straight in an A-pose, arms angled down and away from his sides with clear empty space between
-> each arm and his torso, palms open, legs apart, facing the viewer, short messy black hair, calm tired face, a
-> cream long-sleeve shirt with the sleeves pushed up, a dark green canvas apron tied at the waist, charcoal work
-> trousers, scuffed grey sneakers, a folded cloth hanging from the apron tie, flat plain white background, even
-> front lighting, no ground shadow
+The player. **Rewritten Fri Nov 13**, for two reasons.
+
+**The shirt colour was a real defect.** Cream measured **dE76 8.8** from his own face tone `#FDD9BF` (dominant
+texels as close as **6.0**) against a threshold of 14, so his torso and arms merged at distance - the fault
+`COWORKER-APOSE` below already names as "the one failure this cast already has". It is now **medium
+khaki-brown**, measured at **dE 34.8** from his skin and at least **33** from every other cast and power
+colour (apron green 38.6, trousers 33.9, goon graphite 47.5, Freeze Frame cyan 50.9, Splice magenta 80.2,
+StuntDouble orange 57.0). The colour word is deliberately a strong, concrete one, and the whole cream family
+is pushed into the negative prompt as well: ask for "oatmeal" or "tan" and the model has an easy path back
+to cream, because a barista in a cream shirt is a very strong prior.
+
+**The pose language was the old short kind.** It predates what `GOON-APOSE` and `COWORKER-APOSE` learned, and
+image-to-3D depends almost entirely on it: wide arm gaps, separated fingers, gaps between thighs, knees and
+ankles. It now matches theirs. Sleeves stay **pushed up** - unlike the goon, his bare forearms sat inside the
+audit's hand allowance and measured clean, so there is no reason to redesign them away.
+
+> anime character illustration, single front view of one man alone, cel shaded with hard-edged shadows and clean
+> dark line art, flat areas of solid colour, two or three large simple shadow shapes per garment, full body from
+> the top of his head to the soles of his shoes, a slim upright young adult man standing straight and symmetrical
+> in a wide A-pose, both arms angled down and away from his sides at about fifty degrees with a large empty gap
+> of white background between each arm and his torso, both hands empty and open with the palms toward the viewer
+> and the fingers spread wide apart and clearly separated, legs well apart with a wide gap of white background
+> between the thighs and between the knees and between the ankles, facing the viewer, pale skin, short messy
+> black hair, a calm tired expression, a medium khaki brown long-sleeve shirt in a solid earthy brown clearly
+> several shades darker than his face and his hands, the sleeves pushed up to below the elbow, a dark green
+> canvas apron with a flat bib lying flush against his chest and flat ties at the waist, charcoal grey work
+> trousers, scuffed grey canvas shoes, a small folded cloth tucked flat at the apron tie lying against the apron,
+> bare hands, holding nothing, carrying nothing, no tray, no cup, no bag, no strap, no jewellery, no hat,
+> nothing hanging or dangling, nothing protruding past his silhouette, no cream and no ivory and no off-white and
+> no beige and no pale yellow and no white anywhere on the shirt, the shirt must not be close in colour to his
+> skin, no letters or numbers or logos or badges, no text, no labels, no colour swatches, no second view, no
+> panels, no border, no fabric weave, no stitching detail, no stains, no dirt, no blood, no gradient shading,
+> flat plain white background, even front lighting, no ground shadow
+
+Draw it **portrait**. `gen_images.py` defaults to `1664x928`, which puts a standing figure in a small
+part of a wide frame and throws away most of the resolution Meshy gets to work from. The rest of the cast
+was drawn at `1024x1536` and this must match:
+
+    py -3 -I tools/gen_images.py MC-APOSE --takes 3 --size 1024x1536 --neg "cream shirt, ivory shirt, off-white shirt, white shirt, beige shirt, pale shirt"
 
 ### BOSS1-APOSE
 > anime character reference sheet, cel shaded with hard-edged shadows and clean dark line art, full body, a lean

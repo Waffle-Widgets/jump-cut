@@ -104,6 +104,34 @@ driver sets `HasFreezeFrame`; 1.2 s later the explosion fires, the shrapnel spaw
 `CoworkerDead` with `RescueTriesUsed` 1 and nothing restarts. **The F key itself still has not been pressed by a
 person.**
 
+**The game has a city to stand in** (Fri Nov 13, 11:20 AM -> 1:50 PM Pacific, M Station, on `main`). The
+level has been a grey corridor since the first build: two 60 m boxes for the street and five more for the
+cafe. There are now **44 models and 216 worked-out placements** for it — the coffee shop as a real room,
+nine building types, five ruin pieces for beat 4 and twenty pieces of street clutter — in
+[`CITY.md`](CITY.md). **It is all procedural geometry from our own Blender script, 0 Meshy credits, and
+nothing was uploaded anywhere**; the whole city is 20,615 triangles, fewer than the single goon model. The
+cast is untouched and still comes from ComfyUI and Meshy, so the Nov 13 pipeline decision stands.
+Tokyo and New York are blended by **zoning**: the 10 m lane the player walks is Tokyo, the 42-62 m towers
+above and behind it are New York, and a New York avenue at x = -1900 is what the car came down before it
+hit the cafe's west wall. **Verified by measurement, not by eye**: the kit writes its own footprints and
+[`tools/jumpcut_city_layout.py`](../tools/jumpcut_city_layout.py) checks all 216 placements against them —
+it found 17 real collisions on its first run and now reports none. **Nothing has been seen in Unreal.**
+`tools/jumpcut_city_place.py` was written on M Station, which is a maker with no editor, so it has never
+been run; expect to fix a line, not a layout. See
+[the devlog entry](devlog/2026-11-13-the-city-gets-built.md).
+
+**The player stopped wearing his own skin** (Fri Nov 13, 12:00 -> 1:35 PM Pacific, M Station, on `main`). The
+first full-cast colour audit ranked all ten models side by side and put **the player worst**, on the one rule
+the Team Owner set: his cream shirt measured **dE76 8.8** from his own face tone against a threshold of 14, so
+his torso and arms merged at distance. The repo had already written this down in `prompts.md` and never fixed
+it. `SK_CafeWalker.fbx` is now re-made from a redrawn sheet with a **khaki-brown** shirt measured at **dE
+40.3**; skin leak went **6.13% -> 1.03%** front and **3.94% -> 0.44%** back, and what is left is only the bare
+forearm the audit miscounts on anyone in short or rolled sleeves. **35 credits**, nothing else about him
+changed, verified by re-importing the FBX: 69 bones, 175.01 cm, 30,000 tris, 0 unweighted vertices, Walk +
+Idle. The old model is superseded and lives in git history, not beside it. **He is still not in Unreal** -
+`BP_Player` wears Epic's mannequin until the builder imports him, which is why this was the cheapest possible
+moment to redo him. See [the devlog entry](devlog/2026-11-13-the-player-stops-wearing-his-own-skin.md).
+
 ## Open
 
 | Day | Goal |
@@ -140,13 +168,17 @@ generating characters belongs on M Station.
    repo said what a goon looks like** - no design, no colour, no prompt. They have more screen time than any
    boss. Designed and drawn Fri Nov 13 morning on M Station:
    [`CHARACTERS.md`](CHARACTERS.md#the-goons--streetgoon-beats-2-to-5), with `GOON-APOSE` in
-   [`prompts.md`](prompts.md) and `GEM2-GOON` in [`prompts-gemini.md`](prompts-gemini.md). **Modelled the same
-   morning with TRELLIS, 0 credits** - `Art/Blender/export/Characters/StreetGoon/SK_StreetGoon.fbx`, 23
-   mannequin-named bones, 17,999 tris, 180.0 cm, Walk + Idle, colour audit clean. **Not canonical and not in
-   Unreal:** Meshy was used for every other character and its session here has lapsed to logged-out, and the
-   TRELLIS bake loses 53% of the head-to-body lightness contrast the design depends on. See
-   [the devlog entry](devlog/2026-11-13-the-goons-get-a-design.md). **A person decides** whether to spend 35
-   credits on a Meshy version once somebody logs in, or to keep this one.
+   [`prompts.md`](prompts.md) and `GEM2-GOON` in [`prompts-gemini.md`](prompts-gemini.md). **Modelled twice the
+   same day.** First with TRELLIS for 0 credits while the meshy.ai session was logged out; then, after the Team
+   Owner said **"spend them"** and logged back in, with **Meshy for 35 credits**. The Meshy build is canonical:
+   `Art/Blender/export/Characters/StreetGoon/SK_StreetGoon.fbx`, Smart Rig **76 bones**, 18,000 tris, 180.0 cm,
+   Walk + Idle, colour audit clean with **0.00%** skin leak. The TRELLIS build is kept beside it as the free
+   fallback, `StreetGoonTrellis`. **The credits bought a measured thing:** Meshy keeps **89%** of the reference
+   sheet's head-to-body lightness contrast (42.3 L points) where TRELLIS kept 47% (22.5), and TRELLIS had
+   invented a mauve patch on his back. **The cost:** Smart Rig names bones `Bone_000...`, so his three
+   mannequin-authored montages will need chains hand-mapped in Unreal the way `SK_CleaverBoss` needed nine.
+   See [the devlog entry](devlog/2026-11-13-the-goons-get-a-body.md). **He is not in Unreal** - importing him is
+   the builder's job, below.
 3. **The Director** - **no beat in the demo.** No design, no colour, no prompt: the write-up has to come before
    any picture, and he is the one genuinely missing model in the *full game's* cast. But the six-beat decision
    below **supersedes** his two rule scenes and ends the demo at the Stunt Double, so no credits and no
@@ -155,7 +187,9 @@ generating characters belongs on M Station.
 4. **Not boss 3.** The Stunt Double is conditional again (Decisions, above). His fight is built and plays on a
    mannequin; no credits go on his art until beats 1 to 4 play through.
 
-**What stays on GameStation:** importing `SK_CafeCoworker.fbx` (and `SK_StreetGoon.fbx`, if he is kept) and pointing `BP_Coworker` at it (the asset is
+**What stays on GameStation:** importing the city (`Art/Blender/export/City/` -> `Content/Game/Imported/City/`, then `py tools/jumpcut_city_place.py hide`; see [`CITY.md`](CITY.md)), importing `SK_CafeCoworker.fbx` and `SK_StreetGoon.fbx` (both committed and
+canonical; the goon also needs his retarget chains mapped by hand, since Smart Rig does not use mannequin bone
+names) and pointing `BP_Coworker` at it (the asset is
 committed and waiting; she is a green box in beat 1 until someone does), putting `CafeWalker` on `BP_Player` with
 `ABP_Unarmed` retargeted onto his skeleton (the player and the goons are still Epic's mannequin, and that is the
 most visible thing left in a judging video), building Splice for beat 4, and laying out beats 4 to 6.
@@ -193,10 +227,10 @@ The queue the work-order decision creates. Take the top unfinished line.
 
 | Beat | What is missing |
 |---|---|
-| 1. Cafe | Crash, Freeze Frame hand-over (touch the driver), auto-freeze and the coworker rescue all work. **Missing from the Team Owner's scene: the day job, the latte art minigame, delivering the drink.** Her model is not made (art, not code) |
-| 2. Street | **Done** - goons, fists, animation. Tuning only: one combo clears all three in about 1.0 s. **Their model is not made** (art, not code): the goons are Epic's mannequin, and they are the enemy in beats 2 to 5. Designed and drawn Nov 13, see `StreetGoon` in [`CHARACTERS.md`](CHARACTERS.md#the-goons--streetgoon-beats-2-to-5) |
+| 1. Cafe | Crash, Freeze Frame hand-over (touch the driver), auto-freeze and the coworker rescue all work. **Missing from the Team Owner's scene: the day job, the latte art minigame, delivering the drink.** **Her model is made but not imported** (art, not code): `SK_CafeCoworker.fbx` is committed, but `BP_Coworker` is still a green box until the builder imports her |
+| 2. Street | **Done** - goons, fists, animation. Tuning only: one combo clears all three in about 1.0 s. **Their model is made but not imported** (art, not code): `SK_StreetGoon.fbx` is committed, but `BP_Goon` still wears Epic's mannequin until the builder imports him, and they are the enemy in beats 2 to 5. Designed, drawn and modelled Nov 13, see `StreetGoon` in [`CHARACTERS.md`](CHARACTERS.md#the-goons--streetgoon-beats-2-to-5) |
 | 3. Splice boss | Fight works. He hands over `HasSplice`, which **now opens the Splice blink** (below) |
-| 4. Destroyed buildings | **Half built.** The **Splice power is built, measured and on disk** (600 cm blink, Left Shift / gamepad B) - rebuilt on Justin's Mac mini and re-measured there, see below. The **platforming section is still nothing**: Splice is the power the gaps are for and there are no gaps yet |
+| 4. Destroyed buildings | **Half built.** The **Splice power is built, measured and on disk** (600 cm blink, Left Shift / gamepad B) - rebuilt on Justin's Mac mini and re-measured there, see below. The **platforming section is still nothing in the level**: Splice is the power the gaps are for and no gaps are placed yet. The five ruin pieces it needs are modelled and committed (above), not imported |
 | 5. Stunt Double boss | Fight and doubles built. **Splice past the attack stand-in is now measured, not just argued** - 600.0 cm straight through `BP_StuntStandIn` with the stand-in not shoved, and its capsule and mesh both ignore the Visibility channel the blink traces, so it needed no code in the fight at all. Still unbuilt: the attack stand-in's despawn timer |
 | 6. Fade to "continue" | **Nothing built**, and what it even is has not been decided (Still to decide, below) |
 
@@ -320,7 +354,13 @@ opening beat and the reason the cafe is the first room.
 
 ## Waiting for a yes
 
-_(nothing right now)_
+**A crowd on the street** (M Station, Nov 13). The city is dressed but has no people in it. The cheap route
+is `BP_Civilian` walking instances of the two bodies we already own (`SK_StreetGoon`, `SK_CafeCoworker`)
+in six recoloured material instances — **0 credits, no new rig** — but it needs Blueprint work on the
+builder, and it is unverified whether `M_AnimeChar` exposes a tint parameter to drive. Reasoning in
+[`CHARACTERS.md`](CHARACTERS.md#crowds--making-the-street-feel-populated-fri-nov-13-m-station), including
+why generating clothing separately from bodies is **not** worth it here.
+
 
 ## Fallbacks (turned down, kept in case we need them)
 
@@ -396,6 +436,17 @@ _(nothing yet)_
 
 ## Decisions
 
+- **2026-11-13 (11:00 AM Pacific): spend the credits on the goons, and keep ComfyUI + Meshy as the pair**
+  (Manny, the Team Owner). "spend them", and then "Remember to use ComfyUI and Meshy for consistency." This
+  **confirms the Nov 13 4:20 AM decision above rather than changing it**, and closes the deviation reported that
+  morning: the goon had been built with TRELLIS only because the meshy.ai session had lapsed to logged-out, not
+  because credits were short. The Team Owner logged the browser profile back in, 35 credits were spent, and the
+  **Meshy build is canonical** (`SK_StreetGoon.fbx`, Smart Rig, 76 bones) with `StreetGoonTrellis` kept beside it
+  as the free fallback. The pipeline is now settled in both halves: **reference sheets are drawn locally with
+  ComfyUI + Qwen-Image for 0 credits, models are made on Meshy for 35** - so the whole cast is drawn in one hand
+  and modelled by one generator. It was measured before being recorded: the Meshy bake keeps **89%** of the
+  reference sheet's head-to-body lightness contrast against TRELLIS's 47%. The cost accepted with it is that
+  Smart Rig's `Bone_000...` names need retarget chains mapped by hand in Unreal.
 - **2026-11-13 (4:20 AM Pacific): Boss 3 is in only if everything else is finished** (Manny, the Team Owner).
   "Boss 3 will only be in if we can finish everything else." This **narrows the six-beat demo plan** approved on
   Nov 12 (below), which had made the Stunt Double boss a required beat 5; he is conditional again. The fight

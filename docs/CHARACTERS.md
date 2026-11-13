@@ -40,9 +40,13 @@ the plainest design of the three: no coat, no weapon, no insignia.
 
 - **Silhouette:** narrow and upright, the apron making a clear rectangle across his hips. The only read from
   distance is that flat apron line — everything else is a thin standing figure.
-- **Design:** short messy black hair, tired calm face. Cream long-sleeve shirt, sleeves pushed up. Dark green
-  canvas apron. Charcoal trousers, scuffed grey sneakers. A folded cloth at the apron tie — the one piece of
-  silhouette that moves when he does.
+- **Design:** short messy black hair, tired calm face. **Khaki-brown** long-sleeve shirt, sleeves pushed up.
+  Dark green canvas apron. Charcoal trousers, scuffed grey sneakers. A folded cloth at the apron tie — the one
+  piece of silhouette that moves when he does.
+  **The shirt was cream until Fri Nov 13** and that was a measured defect, not a taste call: cream sat
+  **dE76 8.8** from his own face tone, under the threshold of 14, so his torso and arms merged at distance.
+  Khaki measures **dE 40.3**. Everything else about him is unchanged. See the colour audit at the end of this
+  file.
 - **Height:** 175 cm. **Triangle budget:** 30,000.
 - **Already exists:** `Art/Refs/cafe_walker_ref.jpg` and `Art/Refs/CafeWalker_tripo_apose.glb`, first on
   `mendezm87/anime-look` and now merged into `Gamestation/first-build` (not yet on `main`), made with Tripo on the
@@ -572,7 +576,7 @@ people and off for the prop. 35 credits each; the remesh and the rig were free.
 
 | Reference | Meshy named it | Result |
 |---|---|---|
-| `Art/Refs/CafeWalker_apose.png` | `Meshy_AI_The_Weary_Apron` | Smart Rig, 69 bones -> `SK_CafeWalker.fbx` |
+| `Art/Refs/CafeWalker_apose.png` | `Meshy_AI_The_Weary_Apron` (Nov 12, cream shirt - **superseded**), `Meshy-AI-The-Reluctant-Barista` (Nov 13, khaki shirt - **canonical**) | Smart Rig, 69 bones -> `SK_CafeWalker.fbx` |
 | `Art/Refs/CrashDriver_apose.png` | `Meshy_AI_Frostbound_Rider` | Smart Rig, 45 bones -> `SK_CrashDriver.fbx` |
 | `Art/Refs/CleaverBoss_apose.png` | `Meshy_AI_The_Obsidian_Enforcer` | Smart Rig, 83 bones -> `SK_CleaverBoss.fbx` |
 | `Art/Refs/Cleaver_prop.png` | `Meshy_AI_Steel_Butcher_Cleaver` | no rig, it is a prop -> `SM_Cleaver.fbx` |
@@ -663,7 +667,78 @@ animations together. Do **not** use `SkeletalMeshTools.import_file` onto an exis
 that going wrong twice. Then point the material slot at the character's `MI_`, place it next to a plain copy, and
 look at it **from the game camera** before calling it good.
 
-### The goons' model — 2026-11-13, made locally on M Station with TRELLIS (no credits)
+### The goons' model — 2026-11-13, Meshy, 35 credits (canonical)
+
+The Team Owner's answer to the choice below was **"spend them"**, and the meshy.ai session in the dedicated
+Chrome profile was logged back in by hand: account `theclassyhobo`, **8,322 credits** before this run. Same
+recipe as the five characters before him - High Detail (Meshy 7.1), Texture on, Ultra 2K, texture 2K, License
+Private, Pose -> A-Pose **on**.
+
+| Reference | Meshy named it | Result |
+|---|---|---|
+| `Art/Refs/StreetGoon_apose.png` | `Meshy_AI_Crimson_Enforcer` | Smart Rig, **76 bones** -> `SK_StreetGoon.fbx` |
+
+    blender -b --factory-startup --python Art/Blender/meshy_character.py -- <rigged.glb> StreetGoon smart 180 18000
+
+**180.0 cm exactly**, **18,000 triangles**, Walk + Idle, bake fit **0.145 cm**. Image-to-3D returned 411,898
+faces, which is over the 300K rig gate, so it was remeshed to **Fixed 30K / Quad** first - 27,829 faces - and
+only then rigged. Both remeshes and the rig were free; the 35 credits are the generation alone.
+
+**Verified by re-importing the exported FBX**, not by reading the generator's log: 76 bones, 18,000 triangles,
+15,417 vertices, **0 unweighted vertices**, and both actions (`Walk`, `Idle`) present. The weighting is also
+better spread than the TRELLIS characters - the heaviest top-owner is `Bone_014` at **10.1%** of the mesh,
+against `SK_CrashDriverTrellis`'s `clavicle_r` at 16%, which is the bone that flattens that model's sleeve on a
+50-degree shoulder swing.
+
+**Two traps fired on the way, both recorded because both are silent.** The **Pose switch read off** when the
+upload panel opened, even though the previous character was generated with it on - it does not persist, and
+A-Pose off on a character that will be rigged is the mistake that is only visible once the rig is wrong. And the
+Remesh dialog defaulted to **10K / Triangle** this time rather than the 30K / Quad it offered for the coworker,
+so the documented values have to be *set and read back*, never assumed. Picking the textured asset out of the two
+that one run leaves behind was done by querying the DOM for mean saturation (**0.19 textured vs 0.03
+untextured**, 220,082 verts vs 205,951), which is the reliable tell - the thumbnails do not distinguish them.
+
+**What the 35 credits actually bought, measured.** The design's whole silhouette rule is that the head is a
+bright dot above dark shoulders, so three goons standing 150 cm apart read as three figures rather than one
+mass. On the reference sheet, skin sits **47.6 L points** above the graphite. In the two bakes:
+
+| | sampled skin | sampled chest | head-to-body lightness | share of the sheet's contrast kept |
+|---|---|---|---|---|
+| **Meshy `StreetGoon`** | `#C78E79` (L 64.1) | `#2A363A` (L 21.7) | **42.3 L** | **89%** |
+| TRELLIS `StreetGoonTrellis` | `#56523E` (L 34.7) | `#202020` (L 12.3) | 22.5 L | 47% |
+
+TRELLIS bakes the reference sheet's cel shading into the base colour, so its "skin" is a shadow tone; Meshy's
+reads as lit skin. That one number is the reason to have spent the credits, and it is a thing the colour audit
+cannot see - **both** models pass it with no flags.
+
+**His colour audit is clean, and this time for a real reason.** `color_audit.py` returns no flags and a skin
+leak of **0.00% front / 0.00% back**, the cleanest in the cast. The long sleeves with cuffs at the wrists are
+why there is nothing to miscount - that detail was put in the prompt specifically because `CafeCoworker`'s
+rolled sleeves are what make her read FLAG - and the sampled skin reference `#C78E79` is a genuine lit tone
+rather than the shadow one TRELLIS gave the audit to compare against.
+
+**The back is clean, which is the defect the free model has.** TRELLIS invented a dusty mauve patch on the left
+shoulder blade; Meshy's back view is the waistcoat, belt and pockets the design asks for, with the buzzed scalp
+intact. Measured on the baked texture: the nearest texel to Splice's reserved magenta is **dE76 45.4** away
+(TRELLIS's was 33.4) and **zero** texels sit within 25 of it.
+
+![Meshy vs TRELLIS, the same goon](media/2026-11-13-streetgoon-meshy-vs-trellis.jpg)
+
+**One thing flagged and deliberately not changed.** The whole garment carries a blue-slate cast - the sampled
+chest, waist, thigh and shin all land at hue **195 to 210 degrees**, within a few degrees of the **192 degrees**
+this file reserves for Freeze Frame. By the measure that decides whether a player confuses two colours it is
+clear: those zones are value 0.22 to 0.29 against frost's near-white, 65 to 80 dE apart, and only 0.003% of the
+texture comes within dE 14 of frost at all (specular highlight). It is the same shape as `CafeCoworker`'s apron
+at hue 189.9 - recorded so nobody is surprised by it, not acted on.
+
+**The cost of choosing Meshy, stated plainly.** Smart Rig names bones `Bone_000...`, so this model gives up the
+one advantage the TRELLIS build had: the goon's three animations (`AM_Human_Punch_02`, `AM_Human_HitReact`,
+`AM_Human_Death`) are authored on Epic's mannequin skeleton, and a mannequin-named rig should retarget them
+without hand-mapping. This rig will need chains mapped by hand in Unreal the way `SK_CleaverBoss` needed nine.
+That work has not been done and **neither model has been imported into Unreal at all**, so the retarget claim on
+either side is still untested.
+
+### The goons' model, the TRELLIS trial — 2026-11-13 morning, 0 credits (superseded the same day)
 
 `StreetGoon` is the first character in this cast built **without Meshy**. The Team Owner's Nov 13 decision is
 "Meshy where we can, TRELLIS as the backup", and Meshy was unreachable: the dedicated Chrome profile's meshy.ai
@@ -673,10 +748,10 @@ password is not something an agent may ask for or type. TRELLIS.2 is installed o
 
 | Reference | Pipeline | Result |
 |---|---|---|
-| `Art/Refs/StreetGoon_apose.png` | TRELLIS.2-4B `1024_cascade`, `DEC=30000 TEX=2048` | 23 mannequin-named bones -> `SK_StreetGoon.fbx` |
+| `Art/Refs/StreetGoon_apose.png` | TRELLIS.2-4B `1024_cascade`, `DEC=30000 TEX=2048` | 23 mannequin-named bones -> `SK_StreetGoonTrellis.fbx` |
 
     D:/AI/TRELLIS2/venv/Scripts/python.exe run_image_to_3d.py in/StreetGoon_rgba.png out/StreetGoon 1024_cascade
-    blender -b --factory-startup --python Art/Blender/trellis_character.py -- out/StreetGoon.glb StreetGoon human 1.8 18000
+    blender -b --factory-startup --python Art/Blender/trellis_character.py -- out/StreetGoon.glb StreetGoonTrellis human 1.8 18000
 
 **There is a second reason beyond the lapsed login, and for this character it is the stronger one.**
 `trellis_character.py` names its bones the way Epic's mannequin does; Meshy's Smart Rig names them
@@ -716,9 +791,12 @@ apart**. The bake keeps the hues but throws away **53% of the head-to-body light
 characteristic already recorded for `SK_CrashDriverTrellis`, whose leather measured value 0.28-0.35 and "is why
 the model reads dark". It is the strongest argument for spending the 35 credits on him once Meshy is reachable.
 
-**Nothing about this makes him canonical.** He is committed as the free option, in the same way
-`SK_CrashDriverTrellis` sits beside the Meshy `SK_CrashDriver`. One Meshy login restores the 35-credit path, and
-the choice between them belongs to a person.
+**He is not canonical, and the question was settled a few hours later.** The Team Owner said "spend them",
+the meshy.ai session was logged back in, and 35 credits produced the model in the section above. This build keeps
+the name `StreetGoonTrellis` and stays on disk as the free fallback, exactly as `SK_CrashDriverTrellis` sits beside
+the Meshy `SK_CrashDriver`. It keeps one genuine advantage the paid model gives up - its 23 bones carry Epic's
+mannequin names - so if the hand-mapped retarget chains the Meshy rig needs turn out to be a problem in Unreal,
+this is the model to try instead.
 
 ### Imported — Thu Nov 12, evening (GameStation)
 
@@ -895,3 +973,105 @@ try to cancel it with a mesh `z` offset: that would sink him into the floor when
 PIE. It wakes the boss, puts the player in front of him, and writes a per-frame table of the lowest bone's Z. A
 fixed boss reads `LIFT` near 0 while walking. Judge it by that number, not by a montage name: a montage reports
 itself as playing whether or not the pose is anywhere near the floor.
+
+## Crowds — making the street feel populated (Fri Nov 13, M Station)
+
+The city brief asked whether **generating clothing and humans separately** would make more sense than how
+we have been working. It would not, and the reason is specific rather than general:
+
+1. **Separate clothing needs a shared base body, and we do not have one.** Every model in this cast comes
+   back from Meshy's Smart Rig with its own `Bone_000...` skeleton and its own topology — `SK_StreetGoon`
+   has 76 bones, `SK_CafeCoworker` 68. A shirt authored for one of them does not fit the other, and there
+   is no neutral body to author against.
+2. **A garment then has to be skinned to that body**, with either per-garment weights or cloth, before it
+   can move with a walk cycle. That is days, on a jam with two left.
+3. **The payoff is variety across many NPCs** — and we can buy that variety far more cheaply.
+
+So: **keep making characters in one piece, drawn in ComfyUI and modelled on Meshy**, exactly as the Nov 13
+decision says.
+
+### The cheap crowd, and what it needs
+
+We already own two civilian-shaped bodies with Walk and Idle on them: `SK_StreetGoon` and
+`SK_CafeCoworker`. A crowd is those two meshes placed repeatedly, each instance wearing a different
+**material instance** — a tint on the existing `M_AnimeChar` — so six recoloured instances of two meshes
+read as a dozen different people at the distances a pedestrian is ever seen from. **0 credits, no new rig,
+no new model.**
+
+**This is a proposal, not built, and it is the builder's job, not a maker's**, because it needs:
+
+- a `BP_Civilian` that walks a spline or between two points and gets out of the way of a fight;
+- six `MI_Crowd_*` instances — **unverified**: nobody has checked whether `M_AnimeChar` exposes a tint or
+  hue parameter to drive from an instance. If it does not, it needs one parameter added to the parent, or
+  six small texture variants instead;
+- a decision about whether a goon-shaped body in a different colour reads as a civilian or just as a goon
+  who is not attacking. That one is a judgement call and it is the Team Owner's.
+
+Until that exists, the street is dressed but empty of people. `docs/CITY.md` lists it under *Known gaps*.
+
+## Colour audit — Fri Nov 13, after the city pass (M Station)
+
+Full `tools/color_audit.py` run over all ten models, to answer "do any characters need remaking for
+consistency". **One real defect, two already-explained false positives, seven clean.**
+
+| Model | front leak | back leak | skin ref | verdict |
+|---|---|---|---|---|
+| `CafeWalker` (the player) | **6.13%** | **3.94%** | `#FDD9BF` | **REAL — the cream shirt. Fixed, see below** |
+| `CafeCoworker` | 4.46% | 5.27% | `#DC8754` | false positive: bare forearms, [already explained above](#the-coworker--cafecoworker-beat-1-modelled-and-rigged-nov-13-not-yet-imported-into-unreal) |
+| `CrashDriverTrellis` | 2.84% | 0.91% | `#8E6D58` | false positive: brown-leather specular; and this is the non-canonical fallback |
+| `CleaverBossGemText` | 0.28% | 0.00% | `#FDDFCB` | clean |
+| `CleaverBoss` | 0.18% | 0.00% | `#E3B5A4` | clean |
+| `CleaverBossGemRef` | 0.14% | 0.00% | `#FCD9C8` | clean |
+| `StreetGoonTrellis` | 0.11% | 0.01% | `#56523E` | clean |
+| `CrashDriver` | 0.00% | 0.00% | `#D6A993` | clean |
+| `StreetGoon` | 0.00% | 0.00% | `#C78E79` | clean |
+
+This is the first time the whole cast has been measured side by side, and the ranking is the useful part: the
+**player is the worst model in the game** on the one rule the Team Owner set, and he is on screen for every
+second of the demo.
+
+### The player's shirt was a real defect — found, fixed, and measured both ways
+
+The leak map put his red on the shoulders, the upper arms and the sleeve down to the elbow — all shirt, no bare
+skin. Measured off that map, the offending colour was **`#F3E3CF`, dE76 8.8 from his face tone `#FDD9BF`**,
+with dominant texels as close as **dE 6.0**, against a threshold of 14.
+
+**The repo already knew.** `COWORKER-APOSE` in [`prompts.md`](prompts.md) calls it out by name — "the one
+failure this cast already has (`CafeWalker`'s cream shirt, dE76 14.4 from his face)" — and her design was
+written to avoid repeating it. It was recorded, it was never fixed, and the baked model measured worse than the
+14.4 written down at the time.
+
+**Fixed the same day**, by changing one thing: the shirt colour. Khaki-brown was picked by measurement before
+anything was drawn, against every cast and power colour at once.
+
+| | old (cream) | new (khaki) |
+|---|---|---|
+| shirt on the baked model | `#F3E3CF` | **`#847755`** |
+| dE76 from his own face | **8.8** (threshold 14) | **40.3** |
+| skin leak, front | **6.13%** | **1.03%** |
+| skin leak, back | **3.94%** | **0.44%** |
+| what the red covers | shoulders, upper arms, sleeves | two small bands at the wrists |
+
+**He still reads FLAG, and that one is a false positive too.** All that is left is the band of bare forearm
+between the hand allowance and his pushed-up cuff — the identical artefact `CafeCoworker` carries. The sleeves
+stayed pushed up on purpose: the leak map showed they were never the fault, and changing two things at once
+would have made it impossible to say which one fixed it.
+
+Everything else about the model is unchanged and was verified by **re-importing the exported FBX**, not by
+reading the generator's log: **69 bones** (same as before), **175.01 cm**, **30,000 triangles**, **0 unweighted
+vertices**, Walk and Idle both present, bake fit 0.077 cm. The walk was checked by eye — legs alternate, knees
+bend, feet plant, and the apron does not drag with `Bone_010`, which top-owns 18% of the mesh.
+
+**One artefact worth knowing:** the remesh smeared a little shirt colour onto the top of the apron bib. It is
+small, it is the same khaki that is meant to be above it, and it is not a colour-rule problem — but it is there.
+
+### What the audit still cannot do
+
+Three of its findings have now been overturned by looking: brown-leather specular read as skin
+(`CrashDriverTrellis`), a 53% head-to-body contrast loss it passed without comment (`StreetGoonTrellis`), and a
+**bare forearm counted as a defect** (`CafeCoworker`, and it would do the same to anyone in short sleeves). Its
+only allowance for legitimate skin below the head is a small disc at each hand.
+
+It is still worth running — it is what found the player's shirt. But **a flag is a reason to open the leak map,
+not a verdict**, and nobody should spend credits on one without looking first.
+
