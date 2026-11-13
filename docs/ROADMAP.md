@@ -25,11 +25,15 @@ into Open or Decisions.
 
 ---
 
-## Where we are (Thu Nov 12, morning)
+## Where we are (Thu Nov 12, late afternoon)
 
-The jam repo exists with the Third Person template, our tools, skills and docs. No gameplay is on `main` yet. Today's
-checkpoint: the core loop (player, the first power, the first boss) playable start to finish in grey boxes. Character
-work started on M Station this afternoon: the main character, the crash driver and the mob boss ([`CHARACTERS.md`](CHARACTERS.md)).
+No gameplay is on `main` yet. GameStation's branch `Gamestation/first-build` holds a grey-box game built packet by
+packet by subagents and checked by other subagents ([`FIRST_BUILD_LEDGER.md`](FIRST_BUILD_LEDGER.md)): the player
+with fists, goons, a cafe-street-plaza level with gates and a checkpoint, a plaza boss, Freeze Frame, Rewind (built
+before it was moved to a later boss; now parked) and a HUD. **No person has played any of it yet**, so it is not on
+`playtest` or `main`. Still to come on that branch today: Freeze Frame handed over in the cafe, win/lose screens and
+restart, the cel shader on the level, and a start-to-finish run-through. Character work started on M Station this
+afternoon: the main character, the crash driver and the mob boss ([`CHARACTERS.md`](CHARACTERS.md)).
 
 ## Open
 
@@ -67,16 +71,10 @@ in case playtesting shows we need it. Still not something to build from: only a 
 
 ## Still to decide
 
-- **Art style.** GameStation is testing an anime look (cel-shaded characters over painted backgrounds) and a cafe
-  level in the practice project. If the team keeps it, it moves here as jam work.
 - The Director's real name and the final names of the powers.
 - Camera: third person behind the player (the template's) unless we choose otherwise.
-- **What happens to Rewind.** It was the core mechanic in `PITCH.md` *and* the first boss's gift. The first boss now
-  gives Freeze Frame, so Rewind is either the power the main character already has at the cafe, or it is cut and
-  Freeze Frame becomes the core mechanic. Nobody has said which. Everything else in the chain still works: Splice is
-  countered by Freeze Frame, so the ladder reads Freeze Frame -> Splice -> Stunt Double -> Final Cut.
-- **Rewind's size**, if it stays at all. The cut list below says a full rewind of the world is "already cut", but the
-  smaller Rewind is only a fallback. One of the two needs a line in Decisions.
+- **Which later boss gives Rewind**, and where it sits in the ladder (Freeze Frame -> Splice -> Stunt Double ->
+  Final Cut today). The small Rewind (only the player slides back, health restored) is what is built and parked.
 
 ## Cut list (in the order we drop things)
 
@@ -93,6 +91,11 @@ _(nothing yet)_
 
 ## Decisions
 
+- **2026-11-12: Rewind moves to a later boss.** The jam game is one level of 3 to 5 minutes, so the most fun powers
+  come first: Freeze Frame is the first power the player gets. The Rewind work already built stays in the project,
+  switched off, for that later boss (Team Owner).
+- **2026-11-12: We are going with the cel-shaded anime look.** Its work on `mendezm87/anime-look` comes into the
+  build so it is ready when the 3D assets from M Station arrive (Team Owner).
 - **2026-11-12: The first boss gives Freeze Frame**, not Rewind. He is the driver who crashes through the cafe
   wall in the opening; he still does not fight (Manny).
 - **2026-11-12: The second boss gives Splice and is a Japanese mob boss with a cleaver** (Manny).
@@ -100,8 +103,6 @@ _(nothing yet)_
   (Manny). Designs and reference pictures: [`CHARACTERS.md`](CHARACTERS.md).
 - **2026-11-12: Scope stays jam-sized.** We build to the jam's rules and `CLAUDE.md`'s guardrail (one small level,
   a few minutes of play), not the one large 30-minute city. If there is time left we look at growing it (Team Owner).
-- **2026-11-12: The anime look is not decided yet.** Its assets stay on the branch `mendezm87/anime-look` in case we
-  go that way; the first build does not use them (Team Owner).
 - **2026-11-12: Build to the team's own scope in the pitch** (five powers, the bosses as listed), not Claude's smaller
   proposal. Change it later only if playtesting shows the need (Justin).
 - **2026-11-12: Losing restarts at the last checkpoint**, not at the cafe (Justin).
