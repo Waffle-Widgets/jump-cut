@@ -51,9 +51,34 @@ style ([`CHARACTERS.md`](CHARACTERS.md)), and that work is merged into the branc
 | Day | Goal |
 |---|---|
 | Thu Nov 12 | Player + the first power (Freeze Frame) + the first fight, in grey boxes, playable start to finish |
-| Fri Nov 13 | A person plays Thursday's build (the play list in [`FIRST_BUILD_LEDGER.md`](FIRST_BUILD_LEDGER.md)); the Splice boss (the mob boss); the Director with two rule scenes; making the run 3 to 5 minutes and tuning it (it is 25 to 27 s today); first packaged build. Win/lose and restart screens are built (not yet played). **Feature freeze** |
-| Sat Nov 14 | Art, sound, juice, playtests, footage. Stunt Double only if Friday went well |
+| Fri Nov 13 | A person plays Thursday's build (the play list in [`FIRST_BUILD_LEDGER.md`](FIRST_BUILD_LEDGER.md)). Then **everything under "Before people playtest" below**, for all six beats of the demo; making the run 3 to 5 minutes and tuning it (it is 25 to 27 s today); first packaged build. Win/lose and restart screens are built (not yet played). **Feature freeze** |
+| Sat Nov 14 | Playtests by people and iterating on what they find; model swaps; art, sound, juice (the flashy combat effects); footage |
 | Sun Nov 15 | Bug fixes and submission only |
+
+### The demo: six story beats (Justin, Nov 12, late evening)
+
+The jam entry is **a demo, not the completed game**. It ends after the last boss below.
+
+1. **Cafe.** A peaceful intro at the cafe, interrupted by the car crash. The first boss was driving and is already
+   dead. Our protagonist, trying to help, gets his first power, **Freeze Frame**. Then an explosion sends shrapnel
+   at a coworker. The action button teaches the player to use Freeze Frame to save the coworker.
+2. **Street.** Wander out to the street. Thugs to fight using the new power.
+3. **The Splice boss.** The next boss approaches, with the Splice power. Battle him and gain the new ability.
+4. **Destroyed buildings.** Platforming across destroyed buildings to get to the final boss, fighting more goons
+   along the way.
+5. **The last boss has Stunt Double.** He makes a copy of himself and the player must fight both.
+6. **Fade to a "continue"** of some type after that battle.
+
+### Before people playtest (Justin, Nov 12, late evening)
+
+1. **Enemy types and basic battle mechanics completely set up**, ready for model swapping after the playtest:
+   basic boxing animations for combat, walk and run animations, controls.
+2. **Buildings and basic assets laid out to follow the story beats.** Where we have basic assets, use them; no grey
+   boxes unless needed.
+3. **The look and the combat.** The story is inspired by anime and we want that artsy style. Combat on its own will
+   be boring, so it needs flashy effects as well.
+
+Once all of this is in, we playtest and iterate.
 
 ## Stretch (only if the critical path is finished)
 
@@ -100,6 +125,9 @@ in case playtesting shows we need it. Still not something to build from: only a 
 - **Which later boss gives Rewind.** The ladder itself is now settled (Decisions below): Freeze Frame -> Splice ->
   Stunt Double -> Director's Cut. Rewind is the one power with no boss. The small Rewind (only the player slides
   back, health restored) is what is built and parked.
+- **Who builds which beat, and on which computer.** `TEAM.md` lists no owners, and GameStation is the only builder.
+- **What the "continue" after the last fight is** (beat 6): a screen, a card, a cut to the title?
+- **Does the player get Stunt Double in the demo**, or does it end when its boss falls?
 - **Where Freeze Frame is handed over:** only at the driver, or also at the cafe door (as built, so nobody leaves
   the cafe without it)?
 - **How long and how hard the game is at default numbers.** A scripted run takes 25 to 27 s against the 3 to 5
@@ -107,12 +135,13 @@ in case playtesting shows we need it. Still not something to build from: only a 
 
 ## Cut list (in the order we drop things)
 
+The Stunt Double boss and the Splice platforming section were numbers 2 and 3 here until Nov 12, late evening.
+They are beats 5 and 4 of the demo now (Decisions), so they are off this list.
+
 1. Factions with different behaviour, and factions fighting each other
-2. Stunt Double (power and boss)
-3. Splice platforming section (keep the teleport for the fight)
-4. Dialogue: one line of text per power instead
-5. A full rewind of the world (already cut: the parked Rewind only moves the player back)
-6. More than one level
+2. Dialogue: one line of text per power instead
+3. A full rewind of the world (already cut: the parked Rewind only moves the player back)
+4. More than one level
 
 ## Later
 
@@ -120,6 +149,14 @@ _(nothing yet)_
 
 ## Decisions
 
+- **2026-11-12 (late evening): The jam entry is a demo in six story beats** (Justin). Cafe, crash and Freeze
+  Frame with the coworker rescue as its lesson; street thugs; the Splice boss; platforming across destroyed
+  buildings with goons; the Stunt Double boss, who copies himself; a fade to a "continue". The beats and what must
+  be in before people playtest are under Open. This **supersedes** three things from earlier the same day: Stunt
+  Double as "boss 3, only if there is time" (it is the demo's final fight); Stunt Double and the Splice
+  platforming section on the cut list (both removed); and the Director with two rule scenes on Friday's list (the
+  demo ends before him). It also confirms the ladder: the dead crash driver gives Freeze Frame, the Splice boss
+  gives Splice. **Recorded from Justin's project chat; the Team Owner had not yet seen it when this was written.**
 - **2026-11-12: The boss ladder is settled - Freeze Frame, then Splice, then Stunt Double** (Manny, the Team
   Owner). **Boss 1 is the car crash** through the cafe wall and it gives **Freeze Frame**. **Boss 2 is the mob
   boss with the cleaver** and he gives **Splice**. **Boss 3, only if there is time**, gives **Stunt Double** -
