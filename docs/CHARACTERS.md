@@ -264,6 +264,38 @@ animations together. Do **not** use `SkeletalMeshTools.import_file` onto an exis
 that going wrong twice. Then point the material slot at the character's `MI_`, place it next to a plain copy, and
 look at it **from the game camera** before calling it good.
 
+### Imported — Thu Nov 12, evening (GameStation)
+
+Done, by Claude driving the Unreal MCP on GameStation with the editor open. The main character was already in
+(`SK_CafeWalker_Walk`, with the mannequin retarget); these are the three that were missing.
+
+| FBX | Unreal asset | Height in Unreal | Material |
+|---|---|---|---|
+| `SK_CrashDriver.fbx` | `/Game/Game/Imported/CrashDriver/SK/SK_CrashDriver` + `_Skeleton`, `_PhysicsAsset`, `SK_CrashDriverArmature_Walk`, `SK_CrashDriverArmature_Idle` | **180.0 cm**, feet on the origin | `MI_CrashDriver` |
+| `SK_CleaverBoss.fbx` | `/Game/Game/Imported/CleaverBoss/SK/SK_CleaverBoss` + `_Skeleton`, `_PhysicsAsset`, `SK_CleaverBossArmature_Walk`, `SK_CleaverBossArmature_Idle` | **178.0 cm**, 142 cm arm span (vs the driver's 126) | `MI_CleaverBoss` |
+| `SM_Cleaver.fbx` | `/Game/Game/Imported/Cleaver/SM_Cleaver` | 35.0 × 11.3 × **0.85 cm**, 954 triangles, Nanite off | `MI_Cleaver` |
+
+Each `MI_` is a new instance of **`M_AnimeChar`** with its one parameter, `Tex`, pointed at the character's own
+base-colour texture — the same shape as `MI_CafeWalker`. The FBX was dropped into its own folder under
+`Content/Game/Imported/` and Interchange auto-imported mesh, skeleton, **both** animations and the texture
+together; no import window ever opened and `SkeletalMeshTools.import_file` was not used.
+
+**Two things to know before anyone trusts this.**
+
+1. **Nothing has been seen from the game camera, or in the level at all.** The models are assets; they are not
+   placed, not on a Blueprint, and not playable. Which boss is the plaza boss is still an open question in
+   `ROADMAP.md`, and only a person decides that — so no Blueprint was re-pointed.
+2. **The asset thumbnails are cached from import time and show Interchange's own material, not `MI_`.** Captured
+   twice, before and after the material was assigned, and the two files were byte-identical. The assignment was
+   checked with `get_material` instead, which returns the `MI_`. The sheet below is therefore a picture of the
+   geometry and the baked texture, not of the cel-shader.
+
+![The crash driver, the mob boss and the cleaver as Unreal assets](media/MODELS-IN-UNREAL.png)
+
+The cleaver's **0.85 cm** depth is worth a note: it is nearly flat, which is what image-to-3D does with a
+side-on reference drawing. The blade is right; the handle is thinner than a real grip. From the game camera, in
+a hand, that will not show — seen edge-on it will.
+
 
 ## Colour audit — Thu Nov 12 evening
 

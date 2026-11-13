@@ -41,7 +41,8 @@ merging it before a playtest was a deliberate call by the Team Owner to stop the
 playtest has now happened. **Per-step results were not reported**, so the play list in
 [`FIRST_BUILD_LEDGER.md`](FIRST_BUILD_LEDGER.md) is not ticked off and the length and difficulty problems below
 still stand as written. M Station made the three rigged characters (main character, crash driver, mob boss) and a cleaver as FBX
-under `Art/Blender/export/Characters/` and `Art/Meshy/` (not yet in Unreal), redrew the cast in the chosen anime
+under `Art/Blender/export/Characters/` and `Art/Meshy/` — all of which are now **in Unreal**, imported on
+GameStation on Thu Nov 12 evening (the main character was already in) — redrew the cast in the chosen anime
 style ([`CHARACTERS.md`](CHARACTERS.md)), and that work is merged into the branch. What the final audit found:
 [`FIRST_BUILD_AUDIT.md`](FIRST_BUILD_AUDIT.md).
 
