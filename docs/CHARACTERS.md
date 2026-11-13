@@ -663,6 +663,63 @@ animations together. Do **not** use `SkeletalMeshTools.import_file` onto an exis
 that going wrong twice. Then point the material slot at the character's `MI_`, place it next to a plain copy, and
 look at it **from the game camera** before calling it good.
 
+### The goons' model — 2026-11-13, made locally on M Station with TRELLIS (no credits)
+
+`StreetGoon` is the first character in this cast built **without Meshy**. The Team Owner's Nov 13 decision is
+"Meshy where we can, TRELLIS as the backup", and Meshy was unreachable: the dedicated Chrome profile's meshy.ai
+session had **lapsed to logged-out** (the workspace served "Log In / Sign Up Free" with no credits line), and a
+password is not something an agent may ask for or type. TRELLIS.2 is installed on this machine at
+`D:\AI\TRELLIS2` with its weights already cached, so the model was generated locally instead.
+
+| Reference | Pipeline | Result |
+|---|---|---|
+| `Art/Refs/StreetGoon_apose.png` | TRELLIS.2-4B `1024_cascade`, `DEC=30000 TEX=2048` | 23 mannequin-named bones -> `SK_StreetGoon.fbx` |
+
+    D:/AI/TRELLIS2/venv/Scripts/python.exe run_image_to_3d.py in/StreetGoon_rgba.png out/StreetGoon 1024_cascade
+    blender -b --factory-startup --python Art/Blender/trellis_character.py -- out/StreetGoon.glb StreetGoon human 1.8 18000
+
+**There is a second reason beyond the lapsed login, and for this character it is the stronger one.**
+`trellis_character.py` names its bones the way Epic's mannequin does; Meshy's Smart Rig names them
+`Bone_000...`, which is why the cleaver boss needed nine chains mapped by hand. The goon's three animations —
+`AM_Human_Punch_02`, `AM_Human_HitReact`, `AM_Human_Death` — are **authored on the mannequin skeleton**, so a
+mannequin-named rig is the one that should retarget them without hand-mapping. **That is reasoning from bone
+names and is not yet demonstrated in Unreal**, exactly as the `CrashDriverTrellis` write-up says of the same
+claim.
+
+**What the run measured.** 1,024 px cascade: dual contouring gave 2,903,648 verts / 5,811,524 faces, simplified
+to 237,711 / 477,743, then decimated at export to **17,999 triangles** against the 18,000 budget. The rig took
+18.3 s and reports **23 bones, 0 unweighted vertices**, direct weights, UV extent 0.997 x 0.997, and a height of
+exactly **1.800 m** with a half-chest of 0.404 m. Three specks totalling 229 vertices were removed. Peak VRAM on
+the 3090 was about **8.6 GB of 24**, so it never came close to the card's limit.
+
+**The defect, and it is on his back.** The reference sheet is a single front view, so TRELLIS invented the back —
+and it put a **dusty mauve patch on his left shoulder blade** that is in no part of the design. It looked at
+first like a collision with Splice's reserved magenta, so it was measured rather than argued: across 2,002,160
+non-background texels, **zero** sit within dE76 25 of `#C0279B`, and the closest texel in the whole texture is
+`#9B4B76` at dE **35.0**. It is not a power-colour collision. It is still invented colour on an achromatic
+character, and it is the thing to fix or paint out if he is kept. The same single-view limitation gave the back of
+his head a soft shape rather than the buzzed scalp the front view has, and widened the oxblood arm band well past
+the flush band the prompt asked for.
+
+**The colour audit passes him, and the bigger finding is the one the audit cannot see.** `color_audit.py`
+returns **no flags** for him — 0.11% front / 0.01% back within dE76 14 of the sampled face tone, the cleanest
+numbers of any character in the cast, and the long sleeves are why: there are no bare forearms to count, which is
+the false positive `CafeCoworker` and `CrashDriverTrellis` both carry. Read that pass with one caveat, though —
+the audit sampled his skin reference as `#56523E`, value 0.34, because TRELLIS bakes the reference sheet's cel
+shading into the base colour, so it compared garments against a shadow tone rather than lit skin.
+
+Measuring the baked texture directly says what that costs, and it lands on **exactly the one read this design
+depends on**. On the sheet, skin `#C08E5E` sits **47.6 L points** above the graphite `#23262E`, which is what
+makes the head a bright dot above dark shoulders so three goons 150 cm apart read as three figures. In the baked
+texture the dominant skin cluster is `#6E4632` and the dominant body cluster `#1E1E1E` — **22.6 L points
+apart**. The bake keeps the hues but throws away **53% of the head-to-body lightness contrast**. This is the same
+characteristic already recorded for `SK_CrashDriverTrellis`, whose leather measured value 0.28-0.35 and "is why
+the model reads dark". It is the strongest argument for spending the 35 credits on him once Meshy is reachable.
+
+**Nothing about this makes him canonical.** He is committed as the free option, in the same way
+`SK_CrashDriverTrellis` sits beside the Meshy `SK_CrashDriver`. One Meshy login restores the 35-credit path, and
+the choice between them belongs to a person.
+
 ### Imported — Thu Nov 12, evening (GameStation)
 
 Done, by Claude driving the Unreal MCP on GameStation with the editor open. The main character was already in
