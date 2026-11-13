@@ -8,7 +8,7 @@ Claude reads this file to know who owns what. Update it whenever ownership chang
 | Name | GitHub | Epic account email registered? | PC(s) | Role |
 |---|---|---|---|---|
 | **Manuel Mendez** (goes by Manny) — **Team Owner** (submits the entry, §1c/§13) | mendezm87 | **confirmed** — held outside this public repo, see note below | GameStation (Unreal), M Station (Blender, TRELLIS) | builder, maker, devlog + submission |
-| **Justin Catrambone** | allbarkdev (joined Waffle-Widgets and Jam Team Nov 8) | **given, provisional** — held outside this public repo; Justin has not yet confirmed it is the address on his Epic account | Justins-Mac-mini | tester, maker |
+| **Justin Catrambone** | allbarkdev (joined Waffle-Widgets and Jam Team Nov 8) | **given, provisional** — held outside this public repo; the confirmation request (Epic-account address + 18+) was sent to Justin on Nov 12 and his reply is outstanding, so this is not yet confirmed | Justins-Mac-mini | tester, maker |
 | | | | | |
 | | | | | |
 | | | | | |

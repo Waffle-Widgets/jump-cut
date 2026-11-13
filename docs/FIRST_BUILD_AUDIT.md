@@ -143,7 +143,7 @@ Read-only audit: nothing was edited, no Unreal MCP calls, no state-changing git.
 8. **`PREJAM.md`.** The new `tools/b1…e1_graphs.py` and `c1_*.py` are correctly not listed as pre-jam. They are also missing from the "Made during the jam" table, which the file's own checklist asks for, along with the ledger, design note and tips file.
 
 9. **Jam rules.**
-   - "Final Cut" appears only in docs: `PITCH.md:16,35,43`, `ROADMAP.md:77`, `INITIAL_PROMPT.md:71,74` and three devlog entries. It is in no asset name and no graph text.
+   - "Final Cut" appears only in docs: `PITCH.md:16,35,43`, `ROADMAP.md:77`, `INITIAL_PROMPT.md:71,74` and three devlog entries. It is in no asset name and no graph text. (Settled Nov 12: renamed to "Director's Cut" in the three design docs; the devlog keeps the old name as record.)
    - Player-facing text is "JUMP CUT", "CUT!", "THAT'S A WRAP", "R / (A)", "Q", "E": English, no trademark (widget contents are editor only).
    - The devlog folder is public and is the Glass Box submission, so the trademark name is visible to judges there as discussion, not as game content.
    - No pre-jam gameplay was brought in by this run.
@@ -186,7 +186,7 @@ Read-only audit: nothing was edited, no Unreal MCP calls, no state-changing git.
 11. The 12-step play list (`FIRST_BUILD_LEDGER.md:57-69`).
 12. The game is 25-27 s against a 3-5 minute target: one combo clears all three goons, the boss falls in 6.3 s, and a 10 s Freeze Frame trivialises both fights. This is the biggest design gap and needs people.
 13. Decide what the plaza boss is.
-14. Decide the "Final Cut" rename and which later boss gives Rewind.
+14. Decide which later boss gives Rewind. (The "Final Cut" rename is settled - Nov 12, it is "Director's Cut".)
 15. Say whether to push the branch.
 
 **Paperwork**

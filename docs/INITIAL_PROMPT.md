@@ -73,11 +73,11 @@ Frame (Nov 12). Whether Rewind survives as the power the worker already has, or 
 `docs/ROADMAP.md` under "Still to decide". Do not build it, and do not design around it, until a person settles it.
 The characters these bosses are: [`CHARACTERS.md`](CHARACTERS.md).
 
-**On the fifth power's name:** `docs/PITCH.md` still calls it "Final Cut", which is an Apple trademark, and §15d
-allows no trademarks but the Unreal logo. "Director's Cut" is the proposed replacement and the table above uses it,
-so the two files disagree on purpose: **the Team Owner is holding the rename**, so don't rename it in `PITCH.md` or
-anywhere else yourself, and don't put "Final Cut" into anything a judge sees. Hold the name in one named variable
-so the swap is a single edit when the call comes.
+**On the fourth power's name:** it is **Director's Cut**, and that is settled - the Team Owner called the rename on
+Nov 12 and `PITCH.md` and `ROADMAP.md` now agree with the table above. The name it replaced is an Apple trademark
+and §15d allows no trademarks but the Unreal logo, so the old name must not appear in in-game text, on the itch.io
+page, or in the video. Still hold the power's name in one named variable rather than typing it into widgets, so a
+future change stays a single edit.
 
 **Fighting:** fists. One melee button with a short combo. Three hits, the third knocks back. 100 health.
 **Goons:** one ordinary enemy type that walks up and punches, in groups on the streets between bosses, there to be

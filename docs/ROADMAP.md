@@ -82,7 +82,7 @@ in case playtesting shows we need it. Still not something to build from: only a 
 - The Director's real name and the final names of the powers.
 - Camera: third person behind the player (the template's) unless we choose otherwise.
 - **Which later boss gives Rewind**, and where it sits in the ladder (Freeze Frame -> Splice -> Stunt Double ->
-  Final Cut today). The small Rewind (only the player slides back, health restored) is what is built and parked.
+  Director's Cut today). The small Rewind (only the player slides back, health restored) is what is built and parked.
 - **What the plaza boss is now.** The pitch's first fighting boss is the Splice mob boss, but the built plaza boss
   (`BP_BossFreeze`) is a plain bruiser with his freeze switched off. Keep him, turn him into the mob boss, or drop him?
 - **Where Freeze Frame is handed over:** only at the driver, or also at the cafe door (as built, so nobody leaves
@@ -113,10 +113,11 @@ _(nothing yet)_
 - **2026-11-12: GameStation's RTX 5090 is the machine for image generation when speed matters** (Manny).
   M Station's 3090 runs Qwen-Image at about 2 minutes a picture; the 5090 is there when a batch needs to be
   faster. `tools/gen_images.py` is machine-independent, so this is a choice of where to run it, not a code change.
-- **2026-11-12: The "Final Cut" rename is held for now** (Manny, the Team Owner). "Final Cut" is an Apple
-  trademark and the jam allows none (§15d), so the name stays **only** in `docs/PITCH.md` as a design note. It
-  must be renamed - "Director's Cut" is the proposal - before it appears in any in-game text, on the itch.io
-  page, or in the video. Nothing player-facing may carry it.
+- **2026-11-12: Power 4 is "Director's Cut", renamed from "Final Cut"** (Manny, the Team Owner, by form answer:
+  "Now - do it today"). "Final Cut" is an Apple trademark and the jam allows none (§15d). This **supersedes the
+  hold** recorded earlier the same day: the rename is done, in `PITCH.md`, `ROADMAP.md` and `INITIAL_PROMPT.md`.
+  "Final Cut" now survives only in `docs/devlog/`, where it is discussion of the decision and not game content.
+  Nothing player-facing may carry the old name.
 - **2026-11-12: Rewind moves to a later boss.** The jam game is one level of 3 to 5 minutes, so the most fun powers
   come first: Freeze Frame is the first power the player gets. The Rewind work already built stays in the project,
   switched off, for that later boss (Team Owner).

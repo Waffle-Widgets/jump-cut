@@ -12,7 +12,7 @@ cafe. Rewind moves to a later boss; which one is still open, see "Still to decid
 **How you win / how you lose:** Beat each boss with the power you took from the one before, then survive the
 Director's scenes. You lose when your health runs out.
 
-**How it uses the theme:** Every power is an editing cut (freeze frame, splice, stunt double, the final cut), the villain is
+**How it uses the theme:** Every power is an editing cut (freeze frame, splice, stunt double, the director's cut), the villain is
 the Director, and the ending is his cut of the story: the player was following his script all along.
 
 ## Story (the team's outline, Nov 11)
@@ -31,7 +31,7 @@ Each boss is beaten with the power taken from the boss before. Boss 1 is already
 | 1 | Freeze Frame | Everything pauses for 10 s | No fight: the dying driver who crashes through the cafe wall | - |
 | 2 | Splice | Teleport; used for platforming in the second half of the map | Blinks around and attacks through portals. A Japanese mob boss with a cleaver | Freeze Frame |
 | 3 | Stunt Double | A copy fights beside you and takes one hit | Makes a double of you plus decoys | Splice |
-| 4 | Final Cut | "Your will becomes reality"; the full version only at the ending | Calls 10-second "scenes" with one rule each ("No abilities", "The floor is gone", "You can't move left") | Stunt Double |
+| 4 | Director's Cut | "Your will becomes reality"; the full version only at the ending | Calls 10-second "scenes" with one rule each ("No abilities", "The floor is gone", "You can't move left") | Stunt Double |
 
 **Rewind** moves to a later boss (Nov 12, see Decisions in [`ROADMAP.md`](ROADMAP.md)) and has no row yet: which
 boss gives it, and where it sits in the ladder, is still open there. The rest of the ladder is unchanged, because each
@@ -39,8 +39,9 @@ boss is still countered by the power before it.
 
 **Who the characters are** — the worker, the crash driver and the mob boss: [`CHARACTERS.md`](CHARACTERS.md).
 
-**Name to change:** "Final Cut" is an Apple trademark, and the jam allows no trademarks. Suggested: **Director's Cut**,
-which is also the theme.
+**Renamed, Nov 12:** power 4 was called "Final Cut" until the Team Owner called the rename. "Final Cut" is an
+Apple trademark and the jam allows none (§15d), so the power is **Director's Cut** everywhere now - which is also
+the theme. The old name is kept only in `docs/devlog/`, as the record of the decision.
 
 ## The plan
 The build order, the cut list, proposals waiting for the team's yes, what is still to decide and what has been
