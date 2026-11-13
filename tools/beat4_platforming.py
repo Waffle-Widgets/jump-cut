@@ -85,10 +85,17 @@ COLOURS = {
     'MS_CityRoof': (0.23, 0.23, 0.25), 'MS_CityCloth': (0.80, 0.74, 0.62),
 }
 
-# Heights of each ruin piece above its own origin (from Art/Blender/export/City/city_models.json). A platform
-# is placed at z = -height so its top lands at Z = 0, level with the floor the player walks out of.
+# Bounding-box heights above each piece's own origin, from Art/Blender/export/City/city_models.json.
 H = {'SM_RuinSlab_A': 119.0, 'SM_RuinSlab_B': 135.0, 'SM_RuinBeam': 50.0,
      'SM_RuinWall': 478.7, 'SM_Rubble': 71.5}
+
+# DO NOT place a platform at z = -H. The bounding box is not the walking surface: SM_RuinSlab_A is a
+# BROKEN slab, and its box reaches 119 only because of chunks standing up near the edges. Traced straight
+# down the centre line, the surface the player actually stands on is 45 above the mesh origin. Placing at
+# -119 put every platform 74 cm BELOW the street, which quietly turned the head room under the 215 ceiling
+# from 39 cm into 113 cm - enough that a jump carries ~559 cm and clears both 400 cm "must-blink" gaps.
+# That defeats the whole section, and nothing about it is visible: the slabs still look right.
+WALK_TOP = {'SM_RuinSlab_A': 45.0}    # measured by line trace in the editor, not read off the box
 
 FLOOR_EDGE = 11200.0          # Floor_RunExtra: centre 10600, 1200 long -> the last solid ground
 CEILING_UNDER = 215.0         # underside of the collapsed slabs: head room 35 cm, jump cut to ~206 cm
@@ -96,25 +103,25 @@ CEILING_UNDER = 215.0         # underside of the collapsed slabs: head room 35 c
 # (label, model, x, y, z, yaw)
 PIECES = [
     # --- gap 1: a 250 cm hop from the floor edge (11200) to P1 (11450)
-    ('B4_P1',          'SM_RuinSlab_A', 11700.0,    0.0, -119.0,  0.0),
+    ('B4_P1',          'SM_RuinSlab_A', 11700.0,    0.0, -45.0,  0.0),
 
     # --- gap 2: 400 cm from P1 (11950) to P2 (12350), roofed
     ('B4_Ceil1_S',     'SM_RuinSlab_B', 12150.0, -150.0,  215.0,  0.0),
     ('B4_Ceil1_N',     'SM_RuinSlab_B', 12150.0,  150.0,  215.0,  0.0),
-    ('B4_P2_W',        'SM_RuinSlab_A', 12600.0,    0.0, -119.0,  0.0),
-    ('B4_P2_E',        'SM_RuinSlab_A', 13100.0,    0.0, -119.0,  0.0),
+    ('B4_P2_W',        'SM_RuinSlab_A', 12600.0,    0.0, -45.0,  0.0),
+    ('B4_P2_E',        'SM_RuinSlab_A', 13100.0,    0.0, -45.0,  0.0),
 
     # --- gap 3: 400 cm from P2 (13350) to the landing pad (13750), roofed
     ('B4_Ceil2_S',     'SM_RuinSlab_B', 13550.0, -150.0,  215.0,  0.0),
     ('B4_Ceil2_N',     'SM_RuinSlab_B', 13550.0,  150.0,  215.0,  0.0),
 
     # --- the landing pad: 10 x 15 m, where beat 5's boss goes
-    ('B4_Pad_WS',      'SM_RuinSlab_A', 14000.0, -500.0, -119.0,  0.0),
-    ('B4_Pad_WC',      'SM_RuinSlab_A', 14000.0,    0.0, -119.0,  0.0),
-    ('B4_Pad_WN',      'SM_RuinSlab_A', 14000.0,  500.0, -119.0,  0.0),
-    ('B4_Pad_ES',      'SM_RuinSlab_A', 14500.0, -500.0, -119.0,  0.0),
-    ('B4_Pad_EC',      'SM_RuinSlab_A', 14500.0,    0.0, -119.0,  0.0),
-    ('B4_Pad_EN',      'SM_RuinSlab_A', 14500.0,  500.0, -119.0,  0.0),
+    ('B4_Pad_WS',      'SM_RuinSlab_A', 14000.0, -500.0, -45.0,  0.0),
+    ('B4_Pad_WC',      'SM_RuinSlab_A', 14000.0,    0.0, -45.0,  0.0),
+    ('B4_Pad_WN',      'SM_RuinSlab_A', 14000.0,  500.0, -45.0,  0.0),
+    ('B4_Pad_ES',      'SM_RuinSlab_A', 14500.0, -500.0, -45.0,  0.0),
+    ('B4_Pad_EC',      'SM_RuinSlab_A', 14500.0,    0.0, -45.0,  0.0),
+    ('B4_Pad_EN',      'SM_RuinSlab_A', 14500.0,  500.0, -45.0,  0.0),
 
     # --- dressing. Nothing goes across the route at chest height: a wall there would stop the Splice trace,
     #     and a beam laid across a gap would let the player walk over it and skip the power entirely.
@@ -191,15 +198,19 @@ def ensure_ruins():
             say('Nanite off on %s' % n)
         unreal.EditorAssetLibrary.save_asset(MESHES + n, only_if_is_dirty=False)
         tris = '?'
-        for fn in ('get_triangle_count', 'get_number_triangles'):      # the name differs between versions
-            if hasattr(smes, fn):
+        # The subsystem spells this differently between versions and on 5.8/Mac has neither
+        # get_triangle_count nor get_number_triangles, so ask the mesh itself first.
+        for owner, fn in ((mesh, 'get_num_triangles'), (smes, 'get_triangle_count'),
+                          (smes, 'get_number_triangles')):
+            if not hasattr(owner, fn):
+                continue
+            for args in ((0,), ()):
                 try:
-                    tris = getattr(smes, fn)(mesh, 0)
+                    tris = getattr(owner, fn)(*args)
+                    break
                 except Exception:                                      # noqa: BLE001
-                    try:
-                        tris = getattr(smes, fn)(mesh)
-                    except Exception:                                  # noqa: BLE001
-                        pass
+                    continue
+            if tris != '?':
                 break
         say('%s: %s triangles, saved' % (n, tris))
 
@@ -332,11 +343,31 @@ def report(eas):
             gaps.append((run, x, x - run))
             run = None
     say('ground along y=0, x %.0f..15200 (10 cm steps, down from z=200): %d gaps' % (FLOOR_EDGE - 400.0, len(gaps)))
+    # The walking height is the number that silently breaks this section, so it is reported every run.
+    heights = []
+    for px in (11700.0, 12850.0, 14250.0):
+        hit = unreal.SystemLibrary.line_trace_single(
+            world, unreal.Vector(px, 0.0, 200.0), unreal.Vector(px, 0.0, -600.0),
+            unreal.TraceTypeQuery.TRACE_TYPE_QUERY1, False, [], unreal.DrawDebugTrace.NONE, True)
+        heights.append('%.0f: %s' % (px, 'NO GROUND' if hit is None else 'hit'))
+    say('   walking surface probes (expect ground on all three): %s' % ', '.join(heights))
     for a, b, w in gaps:
         head = unreal.SystemLibrary.line_trace_single(
             world, unreal.Vector((a + b) / 2.0, 0.0, 10.0), unreal.Vector((a + b) / 2.0, 0.0, 900.0),
             unreal.TraceTypeQuery.TRACE_TYPE_QUERY1, False, [], unreal.DrawDebugTrace.NONE, True)
-        hz = ('%.0f' % head.distance) if head is not None else 'open sky'
+        # unreal.HitResult in 5.8 is opaque: every property is 'protected and cannot be read', there is
+        # no `.distance`, and SystemLibrary has no break_hit_result. Only to_tuple/to_dict get inside it,
+        # and which one works has moved between versions - so try both and still answer if neither does.
+        if head is None:
+            hz = 'open sky'
+        else:
+            hz = 'ceiling present (height unreadable from HitResult)'
+            for getter in (lambda h: h.to_tuple()[3], lambda h: h.to_dict()['distance']):
+                try:
+                    hz = '%.0f' % getter(head)
+                    break
+                except Exception:                                  # noqa: BLE001
+                    continue
         say('   gap x %.0f -> %.0f = %.0f cm wide, ceiling above the middle: %s' % (a, b, w, hz))
     return gaps
 
