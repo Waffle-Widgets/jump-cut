@@ -332,7 +332,10 @@ def skyline():
     # along 60 m of street; putting one tall tower on that line gives him something to walk towards, which
     # is the cheapest piece of level signposting there is - and it is where the skyline finally reads from
     # inside the lane, because it is the one direction that is not blocked by a shopfront.
-    put('City_Landmark', 'SM_CurtainTower', 12600.0, 0.0, 0, 0)
+    # Originally 12600, which put its 14 m footprint across gap 2, B4_P2 and gap 3 - beat 4 did not
+    # exist when this line was written. 16200 keeps it on the same view axis (still dead ahead from
+    # the cafe door, and 62 m tall so it still reads from the lane) but behind the landing pad.
+    put('City_Landmark', 'SM_CurtainTower', 16200.0, 0.0, 0, 0)
     put('City_LandmarkB', 'SM_SetbackTower', 11900.0, -2200.0, 0, 0)
     for k, (rx, ry) in enumerate([(1800.0, -2500.0), (4200.0, 2600.0), (7900.0, -3000.0), (-800.0, 3100.0)]):
         put('City_SkyTank_%d' % k, 'SM_RoofTank', rx, ry, 1900.0, 0)
@@ -351,6 +354,12 @@ NO_GO = [
     ('entry gate', 6500.0, 6760.0, -GATE_HALF, GATE_HALF, 'the plaza entry gate opening'),
     ('exit gate', 9500.0, 9760.0, -GATE_HALF, GATE_HALF, 'the plaza exit gate opening'),
     ('exit run', RUN_X0, RUN_X1, -240.0, 240.0, 'the corridor past the exit gate'),
+    # Beat 4 was placed in the level on Fri Nov 13 (23:20 UTC), AFTER this layout was first generated,
+    # so the checker had no idea it existed and passed a 62 m tower standing in the middle of it.
+    # x 11200..14750 is the whole destroyed-building run: B4_P1, both must-blink gaps, B4_P2 and the
+    # 10 x 15 m beat-5 landing pad. See tools/beat4_platforming.py.
+    ('beat 4 run', 11200.0, 14750.0, -300.0, 300.0,
+     'the destroyed-building platforming and the beat-5 landing pad'),
 ]
 # Props that are SUPPOSED to stand in a no-go box (cafe furniture, plaza dressing, road fittings).
 ALLOWED_PREFIX = ('City_Cafe', 'City_PlazaProp', 'City_PlazaLamp', 'City_Manhole', 'City_Barrier',

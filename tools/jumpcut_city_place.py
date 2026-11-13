@@ -52,6 +52,14 @@ COLOURS = {
 }
 EMISSIVE = ('MS_CitySignA', 'MS_CitySignB')
 
+# Pieces the player is supposed to pass THROUGH. Measured, not guessed: with collision set
+# complex-as-simple (which is right for the rest of the kit) the cafe's noren became a solid 150 x 100 cm
+# wall at (648, 0) - a cloth door curtain standing across the only exit from the cafe, which blocks the
+# demo between beat 1 and beat 2. It renders correctly, so nothing about it looks wrong.
+# Collision is switched off on the ACTOR, not on the shared mesh asset: bActorEnableCollision is an actor
+# property and serializes, where the component-level flag silently came back after a reload in beat 4.
+WALK_THROUGH = {'SM_Noren', 'SM_CableSpan'}
+
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LAYOUT = os.path.join(REPO, 'Art', 'Blender', 'export', 'City', 'city_layout.json')
 
@@ -129,11 +137,70 @@ def set_greybox(eas, hidden, labels):
     n = 0
     for a in list(eas.get_all_level_actors()):
         if a.get_actor_label() in labels:
-            a.set_editor_property('hidden_in_game', hidden)
+            # NOT set_editor_property('hidden_in_game', ...): AActor exposes no property of that name
+            # to Python, and it raises. This is the one line the author predicted would need fixing.
+            # The setter is the actor-level one, and it serializes - the same distinction beat 4 hit
+            # when a component-level collision flag came back after a reload.
+            a.set_actor_hidden_in_game(hidden)
             a.set_is_temporarily_hidden_in_editor(hidden)
             n += 1
     say('%s %d grey-box actors' % ('hid' if hidden else 'un-hid', n))
+    # Hiding an actor does NOT mark its package dirty, and this map is one-file-per-actor - so without
+    # the two lines below the hide lives only in memory and the grey boxes come back on the next load,
+    # standing inside the city. Measured: after the first run all 224 new actor packages were dirty and
+    # not one of the 8 grey-box packages was. Re-setting the full transform is what dirties it (the same
+    # trick the project already uses after ObjectTools.set_properties on a placed actor), and the package
+    # then has to be saved on its own because save_dirty_packages never saw it.
+    pkgs = []
+    for a in list(eas.get_all_level_actors()):
+        if a.get_actor_label() in labels:
+            a.set_actor_transform(a.get_actor_transform(), False, False)
+            pkgs.append(a.get_outermost())
+    if pkgs:
+        unreal.EditorLoadingAndSavingUtils.save_packages(pkgs, False)
+        say('saved %d grey-box actor packages so the hide survives a reload' % len(pkgs))
     return n
+
+
+def prepare_meshes(models):
+    """Interchange turns Nanite ON and builds an auto convex hull. Both are wrong for this kit.
+
+    Nanite: the whole city is 20,615 triangles, so Nanite buys nothing, and its simplified fallback drops
+    thin parts - which here is the signage, the cables, the fire escapes, the noren and the bicycles, i.e.
+    most of what makes the street read as Tokyo. Same reason the characters have it off.
+    Collision: an auto convex hull does not match an L-shaped shophouse or a cafe interior, so the player
+    collides with a box that is not the shape they can see. CTF_USE_COMPLEX_AS_SIMPLE is right for static
+    level geometry and is what beat 4 settled on for the ruin slabs for exactly this reason.
+
+    Idempotent: it reads before it writes and only saves a mesh it actually changed.
+    """
+    smes = unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem)
+    nanite_off, collision_fixed = [], []
+    for n in sorted(models):
+        path = MESHES + n
+        mesh = unreal.load_asset(path + '.' + n)
+        if mesh is None:
+            raise RuntimeError('mesh not imported: %s - copy Art/Blender/export/City/*.fbx into '
+                               'JumpCut/Content/Game/Imported/City/ with Unreal open first' % n)
+        changed = False
+        st = smes.get_nanite_settings(mesh)
+        if st.enabled:
+            st.enabled = False
+            smes.set_nanite_settings(mesh, st, apply_changes=True)
+            nanite_off.append(n)
+            changed = True
+        bs = mesh.get_editor_property('body_setup')
+        if bs is not None:
+            flag = unreal.CollisionTraceFlag.CTF_USE_COMPLEX_AS_SIMPLE
+            if bs.get_editor_property('collision_trace_flag') != flag:
+                bs.set_editor_property('collision_trace_flag', flag)
+                collision_fixed.append(n)
+                changed = True
+        if changed:
+            unreal.EditorAssetLibrary.save_asset(path, only_if_is_dirty=False)
+    say('meshes prepared: Nanite off on %d, collision set complex-as-simple on %d, of %d'
+        % (len(nanite_off), len(collision_fixed), len(models)))
+    return nanite_off, collision_fixed
 
 
 def main():
@@ -156,6 +223,7 @@ def main():
         return
 
     clear(eas)
+    prepare_meshes({a['model'] for a in doc['actors']})
     mats = ensure_materials()
 
     placed, missing, by_model = 0, {}, {}
@@ -179,6 +247,8 @@ def main():
             m = mats.get(nm)
             if m is not None:
                 comp.set_material(i, m)
+        if a['model'] in WALK_THROUGH:
+            act.set_actor_enable_collision(False)
         act.set_actor_label(a['label'])
         act.set_editor_property('tags', [unreal.Name(TAG)])
         placed += 1

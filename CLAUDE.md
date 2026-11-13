@@ -223,6 +223,24 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   survived a reload; `static_mesh_component.set_collision_enabled(NO_COLLISION)` did NOT, leaving an invisible
   wall across the route (`C1_Run_End` blocked all of beat 4). Use the actor property `set_actor_enable_collision(False)`,
   then re-set the full transform to dirty the package, then save it. Trace from **before** the obstacle to check.
+- **Hiding a placed actor does not DIRTY its package.** `set_actor_hidden_in_game(True)` reads back as set and
+  survives a reload *only if the package was actually written*. In a one-file-per-actor map it is not: after
+  hiding 8 grey boxes, 224 newly spawned actor packages were dirty and **not one of the 8 was**, so the hide
+  lived in memory and the grey walls would have come back standing inside the city. Re-set the full transform to
+  dirty it, then `EditorLoadingAndSavingUtils.save_packages([a.get_outermost()], False)` - and `git lfs lock`
+  them first, because a committed actor package is read-only and the save fails **silently**.
+- **`CTF_USE_COMPLEX_AS_SIMPLE` is right for level geometry and wrong for cloth.** Setting it across the city kit
+  turned the cafe's noren - a hanging door curtain - into a solid 150 x 100 cm wall across the cafe's only exit.
+  It renders perfectly and nothing looks wrong; only a chest-height trace along the route finds it. Keep a
+  per-model walk-through list (noren, cables, drapes) and switch collision off on the **actor**.
+- **A generated file drifts from its generator, silently.** `city_layout.json` was committed with 216 actors while
+  the committed generator produced **224**: the script had gained the New York avenue - the road the car crashes
+  in from - after the JSON was last written, so that road existed in code and nowhere else. Before building on any
+  generated artefact, re-run its generator and diff the result against what is committed.
+- **A keep-clear / no-go table only knows about level geometry that existed when it was written.** The city
+  layout's checker passed a 62 m tower standing in the middle of beat 4, because beat 4 was placed hours after
+  the checker was authored. When new geometry lands, add its box in the same session - and prove the new entry
+  catches something by putting the offender back and watching it fail.
 - **An orphaned actor package is not orphaned.** If the editor dies with placed actors dirty, it restores their
   packages to `__ExternalActors__` on the next start. They are not in the loaded level, so they look like junk -
   but World Partition loads every package in that folder, so the next map load gives you **two of everything**
