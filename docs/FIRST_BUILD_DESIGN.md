@@ -299,6 +299,14 @@ Variable: `HudPlayerRef` (BP_Player ref). No property bindings: the widget's **E
 - B2 must confirm the game mode's Tick really fires in Play mode (the HUD doesn't depend on it, E1 does). If it
   doesn't, switch on "Start with Tick Enabled" in its class defaults and report.
 
+**As built (B2):** the game mode's Tick fires in Play mode with no setting changed (a temporary counter matched game
+time; removed again). Additions, all named here so E1 and checkers can use them: `RewindBox` (canvas holding
+`RewindIcon`, `RewindKey`, `RewindBar`; it is what collapses when `HasRewind` is false), `DownedTint` (dark red, while
+`IsDowned`), `FreezeFrameTint` (grey 0.35) and `FreezeFrameEdges` (four cyan bars round the screen edge) while
+`FreezeFrameActive`, `RewindTint` (amber 0.3, while `IsRewinding`), and a helper `HudShowIf(Target, Show)` that sets
+HitTestInvisible or Collapsed. The Rewind icon also blinks while `IsFrozenByBoss` when Rewind is ready (the way out).
+`FreezeBox` sits at the same place whether or not the player has Rewind.
+
 ---
 
 ## 3. Packet B3: `BP_Goon` and `BP_GoonSpawner`
@@ -566,6 +574,12 @@ past the gate line on the trigger's side (`GateIsPastGateway`, a flat dot produc
 wall; 120 = half the slab + the capsule + spare, so the slab never lands on the player). When it shuts it also calls
 `GateSendGoonsHome`: every `BP_Goon` gets `EnemyResetToStart` (home, asleep, full health), so none can punch through.
 `EnemyTakeHit` on a sleeping enemy now wakes it first.
+**C1d:** from the moment the close-behind branch fires until the slab reaches the bottom (`GateGuardingClose`), a player
+less than `GateSafeDepth` (120) inside the gate line, no more than `GateRescueReach` (400) outside it and within
+`GateRescueHalfWidth` (600) sideways is moved along the gate's forward axis to `GateSafeDepth` inside (sideways
+position and height kept; teleport, no sweep), once in the close branch and every tick after (`GateKeepPlayerInside`
+from `GateTickStep`, `GatePushPlayerInside`). So the slab never lands on the player and they can't be left outside.
+Only the entry gate ever sets the guard.
 
 In the level: **entry gate** (`Gate_PlazaEntry`): starts open, closes behind the player, wakes the boss.
 **Exit gate** (`Gate_PlazaExit`): starts closed; the boss's `BossExitGate` points at it. Keep each opening 5 m wide

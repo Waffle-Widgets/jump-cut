@@ -135,3 +135,42 @@ scenarios `JumpCut/Saved/d2_pie.py`):
 - A scene component's location from Python: `c.get_editor_property('relative_location')` (no `get_relative_location`).
 - `sys.argv` read inside a tick-driven generator is whatever the *latest* `py` run set: capture arguments when the
   scenario starts, not later.
+
+From B2 / C1d (`WBP_HUD`, the game mode frame, the gate fix; graphs `tools/b2_graphs.py`, Play-mode steps
+`JumpCut/Saved/b2_pie.py`):
+- **Creating a widget:** `UMGToolSet.CreateWidgetBlueprint` (`folderPath` `/Game/Game/UI`, `assetName`, `parentClass`
+  `{"refPath":"/Script/UMG.UserWidget"}`), then `AddWidget` with `widgetClass` `/Script/UMG.CanvasPanel` and no
+  `parentWidget` (it becomes the root), then `AddWidget` per child with `parentWidget` = the panel's `refPath`
+  (`<WBP>:WidgetTree.<Name>`). Images, progress bars and canvases come back `bIsVariable` true, a TextBlock false:
+  call `ToggleWidgetAsVariable` on every one. `MoveWidget` with `childIndex -1` changes draw order (later = on top);
+  `AddWidget` takes a `childIndex` to insert.
+- **Property names that worked** (after `list_properties`): canvas slot `layoutData` = `{offsets:{left,top,right,bottom},
+  anchors:{minimum:{x,y},maximum:{x,y}},alignment:{x,y}}` (non-stretched axis: right/bottom are width/height;
+  full screen = anchors 0,0..1,1 and offsets all 0); Image `colorAndOpacity` `{r,g,b,a}` (no texture needed for a flat
+  square), `visibility` `"Collapsed"`/`"HitTestInvisible"`; ProgressBar `percent`, `fillColorAndOpacity`; TextBlock
+  `text`, `justification` `"Center"`, `colorAndOpacity` `{specifiedColor:{...},colorUseRule:"UseColor_Specified"}`,
+  `font` `{fontObject:{refPath:"/Engine/EngineFonts/Roboto.Roboto"},typefaceFontName:"Bold",size:26}`. One
+  `execute_tool_script` built the whole tree. `GetWidgetDescription` (`maxDepth -1`) reads it all back in one call.
+- **Widget graph ids:** the EventGraph's tick is `(event UserInterface|EventTick (MyGeometry InDeltaTime) ...)`;
+  `(Progress|SetPercent :self bar :InPercent v)` (NOT `Class|ProgressBar|SetPercent`: that is a property setter),
+  `(Widget|SetRenderOpacity :self w :InOpacity v)`, `(Widget|SetVisibility :self w :InVisibility "Collapsed")`, a
+  widget variable `(Variables|WBP_HUD|GetHealthBar)`, the player's variables `(Class|BPPlayer|GetHealth :self ref)`,
+  `Utilities|Time|GetGameTimeinSeconds`. A helper function with an object input: `add_object_function_param`
+  (`object_class` `/Script/UMG.Widget`). Game mode: `(UserInterface|CreateWidget "/Game/Game/UI/WBP_HUD.WBP_HUD_C"
+  :OwningPlayer (Game|GetPlayerController :PlayerIndex 0))` gives a typed output; `(UserInterface|Viewport|AddtoViewport :self w)`.
+- **The reader lies about some class names:** `read_graph_dsl` printed `Class|AbilitySystemTestAttributeSet|GetHealth`
+  for what `get_node_infos` shows is BP_Player's `Health` getter (self pin "BP Player Object Reference"). Check with
+  `get_node_infos` before "fixing" it. It also prints a float-minus-float feeding a vector multiply as `vector-vector`.
+- `get_node_type_pins` on a function graph leaves probe nodes in it; `write_graph_dsl` of an empty body
+  `(fn X (DeltaSeconds))` over a graph with nodes left one orphan pure node behind. Count with `find_nodes` and
+  `delete_node` leftovers.
+- **Captures with the HUD:** `CaptureEditorImage` in PIE DOES include UMG widgets (it is the whole editor window,
+  1280 x 517; the game view is the left ~1020 px). Freeze a moment with `set_global_time_dilation 0.0001` from the
+  scenario step, capture in the next call. Read widget state objectively from Python: `unreal.ObjectIterator(<WBP_HUD_C>)`
+  filtered by `get_world() == game world` (there is no `unreal.WidgetBlueprintLibrary` in this editor's Python), then
+  `get_editor_property('HealthBar').get_editor_property('percent')`, `.get_render_opacity()`, `.get_visibility()`.
+- **Blueprint variables that aren't instance-editable can't be set on a live actor** (Python `set_editor_property`
+  and `ObjectTools.set_properties` both refuse `HasRewind`). To test "player without Rewind", set the CDO
+  (`Default__BP_Player_C`) in memory with `ObjectTools.set_properties` before `StartPIE`, and set it back after
+  (never save `BP_Player` for it). Health can be refilled with a negative `PlayerTakeHit(h - 100)`.
+- An awake boss kills an idle test player between scripted runs; send him home (`EnemyResetToStart`) at the end of each run.
