@@ -117,6 +117,9 @@ def run(target_path, folder):
     for ad in res:
         log('made', ad.asset_class_path.asset_name, ad.package_name)
     unreal.EditorLoadingAndSavingUtils.save_dirty_packages(False, True)
+    # On a re-run the batch makes <name>_CW1 copies, saves the blend space, THEN renames each anim to _CW: the saved
+    # blend space kept the _CW1 names (A3b). Re-saving every result after the renames writes the final names.
+    [eal.save_asset(str(ad.package_name), only_if_is_dirty=False) for ad in res]
 
 
 try:

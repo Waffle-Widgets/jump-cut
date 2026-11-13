@@ -222,3 +222,18 @@ From A3 (the anime look on `Lvl_JumpCut`; editor steps `JumpCut/Saved/a3_editor.
   measurement.
 - `Lvl_Cafe` loads with a `LoadErrors` list: `BS_Idle_Walk_Run_CW` points at `MF_*_CW1` / `MM_*_CW1` packages, but the
   files are named `*_CW` (no `1`). Pre-existing in the merged CafeWalker import; not fixed in A3.
+
+From A3b (the CafeWalker blend space; editor step `JumpCut/Saved/a3b_bs.py inspect|fix`, disk check `JumpCut/Saved/a3b_check.py`):
+- **Cause of the `_CW1` names:** `tools/unreal_retarget_mannequin.py` run a second time over its own output. With
+  overwrite on, `IKRetargetBatchOperation.duplicate_and_retarget` makes `<name>_CW1` copies (the `_CW` names are taken),
+  then per asset force-deletes the old `_CW` package, renames the copy to `_CW` and saves it. The blend space came first
+  and was saved while its samples still pointed at `*_CW1`; the anims were renamed after, so only memory followed them.
+  The script now re-saves every result at the end. Fix of the existing file: in the same session the samples already
+  resolved to `*_CW`, so `bs.modify()` + `EditorAssetLibrary.save_asset(path, only_if_is_dirty=False)` wrote the right
+  names. (`Package` has no `mark_package_dirty` / `is_dirty` in this Python.)
+- **Checking an asset's real on-disk references:** (1) bytes: `python -c "import re;d=open(f,'rb').read();print(sorted(set(re.findall(rb'/Game/[ -~]+',d))))"`
+  lists the name table's package paths; (2) a separate headless process that saves nothing:
+  `"C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" <uproject> -run=pythonscript -script=<file.py> -unattended -nosplash -nullrhi -nop4 -nosourcecontrol -abslog=<own .log>`
+  (works with the editor open; ~6 s; `-abslog` keeps it out of the editor's `JumpCut.log`), then grep that log for
+  `LoadErrors|was not available`. The open editor answers from memory and can hide a broken file.
+- `BlendSpace.get_editor_property('sample_data')` lists samples (`animation`, `sample_value`) from Python.
