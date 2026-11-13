@@ -8,7 +8,7 @@ Claude reads this file to know who owns what. Update it whenever ownership chang
 | Name | GitHub | Epic account email registered? | PC(s) | Role |
 |---|---|---|---|---|
 | **Manuel Mendez** (goes by Manny) — **Team Owner** (submits the entry, §1c/§13) | mendezm87 | **confirmed** — held outside this public repo, see note below | GameStation (Unreal), M Station (Blender, TRELLIS) | builder, maker, devlog + submission |
-| **Justin Catrambone** | allbarkdev (joined Waffle-Widgets and Jam Team Nov 8) | **given, provisional** — held outside this public repo; the confirmation request (Epic-account address + 18+) was sent to Justin on Nov 12 and his reply is outstanding, so this is not yet confirmed | Justins-Mac-mini | tester, maker |
+| **Justin Catrambone** | allbarkdev (joined Waffle-Widgets and Jam Team Nov 8) | **confirmed** — held outside this public repo, see note below | Justins-Mac-mini | tester, maker |
 | | | | | |
 | | | | | |
 | | | | | |
@@ -17,6 +17,10 @@ Claude reads this file to know who owns what. Update it whenever ownership chang
 (§1c, §2, §13), and the repo is public, so the addresses are kept with the submission notes off GitHub and typed
 straight into the itch.io form. This table only records *whether* we have each person's address. Everyone must also
 be 18+ with an active Epic account, and a human — the Team Owner — presses submit (§17).
+
+**Both members are confirmed for §1c/§2/§13 as of Thu Nov 12, evening.** Justin confirmed the address on his Epic
+account and that he is over 18; the Team Owner relayed that confirmation. The address itself is with the submission
+notes off GitHub, not here. Nothing on the entry is waiting on a teammate now.
 
 **GitHub access:** every teammate joins the Waffle-Widgets team **Jam Team**, which has write access (needed to push
 and to lock files). The org's base permission is "No permission" (since Nov 8), so members see only the repos their

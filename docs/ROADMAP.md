@@ -28,17 +28,19 @@ into Open or Decisions.
 ## Where we are (Thu Nov 12, evening)
 
 The first build is **merged into `main`** (Thu Nov 12 evening, from M Station) so the two PCs stop drifting apart;
-`playtest` has not been updated yet. **It is still untested** - see the warning below. It is a grey-box game in
+`playtest` was fast-forwarded to match it. It is a grey-box game in
 one level, `Lvl_JumpCut`, built packet by packet by subagents and checked by other subagents
 ([`FIRST_BUILD_LEDGER.md`](FIRST_BUILD_LEDGER.md)): a title screen; the cafe, where the dying driver hands over
 Freeze Frame (a second hand-over spot covers the cafe door); a street with a group of goons and the player's fists; a
 checkpoint; a walled plaza whose entry gate closes behind you, with a boss (a big bruiser; his own freeze attack is
 switched off) and an exit gate; a HUD; win and lose screens with restart at the checkpoint; the cel-shaded anime
 shader on the level; and Rewind, built and then parked (kept, switched off). A scripted run goes from title to win in
-25 to 27 s. **No person has played any of it yet** - `main` now carries untested Unreal work, which is a
-deliberate call by the Team Owner to stop the two PCs drifting (`CLAUDE.md` would otherwise have it played
-first). The first thing Friday is a person playing it: the play list is in
-[`FIRST_BUILD_LEDGER.md`](FIRST_BUILD_LEDGER.md). M Station made the three rigged characters (main character, crash driver, mob boss) and a cleaver as FBX
+25 to 27 s. **The Team Owner played it on GameStation on Thu Nov 12, evening** and called it ready for the
+characters to go in. That clears the standing warning that `main` carried Unreal work no person had ever run -
+merging it before a playtest was a deliberate call by the Team Owner to stop the two PCs drifting, and the
+playtest has now happened. **Per-step results were not reported**, so the play list in
+[`FIRST_BUILD_LEDGER.md`](FIRST_BUILD_LEDGER.md) is not ticked off and the length and difficulty problems below
+still stand as written. M Station made the three rigged characters (main character, crash driver, mob boss) and a cleaver as FBX
 under `Art/Blender/export/Characters/` and `Art/Meshy/` (not yet in Unreal), redrew the cast in the chosen anime
 style ([`CHARACTERS.md`](CHARACTERS.md)), and that work is merged into the branch. What the final audit found:
 [`FIRST_BUILD_AUDIT.md`](FIRST_BUILD_AUDIT.md).
