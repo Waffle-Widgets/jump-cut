@@ -132,6 +132,32 @@ Idle. The old model is superseded and lives in git history, not beside it. **He 
 `BP_Player` wears Epic's mannequin until the builder imports him, which is why this was the cheapest possible
 moment to redo him. See [the devlog entry](devlog/2026-11-13-the-player-stops-wearing-his-own-skin.md).
 
+**`playtest` is merged into `main`** (Fri Nov 13, 12:57 PM Pacific, from M Station - PR #3, merge commit
+`f9f05c0`). The Team Owner called it with one word, "merge", on feature-freeze day, so the two branches stop
+drifting: `main` and `playtest` now hold the same thing. Thirteen files crossed - `BP_Player.uasset` and
+`WBP_HUD.uasset` carrying the **Splice** blink and its violet SHIFT box, `tools/splice_graphs.py` and the two test
+harnesses, the devlog entry, the PREJAM Splice row and the `INITIAL_PROMPT.md` banner. Everything `main` already
+had - the 44-model city kit, the coffee shop, the re-made `CafeWalker`, the goon models - is untouched by the
+merge; `playtest` had taken them in at `58e3deb`, so every FBX in it is `main`'s own blob and no LFS object was
+duplicated.
+
+**What `main` now carries that no person has played**, so nobody reads this branch as tested:
+
+- **Nobody has pressed Left Shift.** Every Splice number (0 cm with no power, 600 open, 455 against a wall whose
+  trace reads 500, 600 straight through `BP_StuntStandIn` and the cleaver boss) comes from driving `SpliceStart`
+  through a temporary `DebugSplice` hook in PIE, first on GameStation and then on the Mac.
+- **None of the city has been seen in Unreal.** `tools/jumpcut_city_place.py` has never been run on any machine,
+  and the 44 FBX have never been imported.
+- **`BP_Player` and `BP_Goon` still wear Epic's mannequin.** The re-made `CafeWalker` and the street goon are
+  committed FBX, not imported assets.
+- **There is still no packaged build**, which Friday's checkpoint asks for.
+
+`CLAUDE.md` says the builder merges `playtest` into `main` "when testers confirm". Testers did not confirm this
+content. The merge was the Team Owner's deliberate call to stop the branches drifting on freeze day, and the four
+lines above are the record of what it brought with it. Every other branch (`Gamestation/first-build`,
+`claude/project-thread-8yvb6s`, `justin/agent-rules`, `mendezm87/anime-look`) is now behind `main` and has nothing
+`main` lacks: anyone resuming one of them merges `main` in first.
+
 ## Open
 
 | Day | Goal |
@@ -436,6 +462,12 @@ _(nothing yet)_
 
 ## Decisions
 
+- **2026-11-13 (12:57 PM Pacific): merge `playtest` into `main` on feature-freeze day, before any tester
+  confirmed it** (Manny, the Team Owner). "merge". `CLAUDE.md` says the builder merges when testers confirm;
+  nobody had played the Splice blink, none of the city had been imported, and there was no packaged build. The
+  call was made anyway so the two branches stop drifting with eleven hours of freeze day left, which is the same
+  reasoning as the Nov 12 evening merge below. PR #3 went in as `f9f05c0` and `playtest` was fast-forwarded to
+  match. What is untested is listed in "Where we are" above rather than left for someone to discover.
 - **2026-11-13 (11:00 AM Pacific): spend the credits on the goons, and keep ComfyUI + Meshy as the pair**
   (Manny, the Team Owner). "spend them", and then "Remember to use ComfyUI and Meshy for consistency." This
   **confirms the Nov 13 4:20 AM decision above rather than changing it**, and closes the deviation reported that
