@@ -27,6 +27,7 @@ minutes, so a colour that appears twice is worse than a dull character.
 | Splice | magenta into violet | the mob boss, his portals, his blade's edge |
 | Stunt Double | safety orange `#E8601D` — **proposed**, see the third boss below | the stunt double, and the player's decoy. Hue 20°, so it collides with neither cyan (192°) nor magenta (331°) |
 | the main character | warm cream, dark green, charcoal — **no** cyan, **no** magenta | so both power colours read as borrowed, not his |
+| the goons — **no colour at all** | graphite, medium grey, black, one oxblood band | `StreetGoon`, the crew the player fights for most of the demo. Achromatic on purpose, so every colour on screen belongs to a power. Nothing white or pale: see the goons below for why |
 
 **Judge every one of these from the game camera, not a close-up.** `CLAUDE.md` records the TRELLIS coupe that
 "looked great close up and like a dark blob from the game camera". That is why each design below leads with its
@@ -184,6 +185,76 @@ he must read as *magenta* instantly, because magenta is about to become the port
     lapel pin is a plain invented diamond, and there is no insignia anywhere else on him.
   - **13+.** The blade stays clean — no blood, ever, on the model or in the concept art. Tattoos are stylised
     waves, which is an anime convention rather than a depiction of any real group.
+
+## The goons — `StreetGoon` (beats 2 to 5)
+
+The crew the player actually fights. Written on M Station on Fri Nov 13, 2026, because `BP_Goon` has existed
+since the first build and **nobody had ever written down what a goon looks like** — they are Epic's mannequin in
+four of the demo's six beats (street thugs in 2, the plaza in 3, the destroyed buildings in 4, and beside the
+Stunt Double in 5), which is more screen time than any boss gets.
+
+- **Silhouette:** the only **inverted triangle** in the cast. Heavy square shoulders, narrow waist, straight thin
+  legs, and a small round buzzed head sitting clear of the shoulder line. The others are narrow-and-upright
+  (`CafeWalker`), short-and-compact (`CafeCoworker`), lopsided-headed (`CrashDriver`), a broad rectangle with one
+  bright edge (`CleaverBoss`) and segmented (`StuntDouble`) — a wedge was free.
+- **The head is load-bearing.** `BP_GoonSpawner` puts three of them on screen 150 cm apart
+  (`FIRST_BUILD_DESIGN.md`), and a dark head above dark shoulders turns a group into one blob at the game camera.
+  His hair is buzzed almost to the scalp so the head reads as a skin-tone dot, which is what separates three
+  figures into three.
+- **Design:** a tall, heavily built young man with a hard flat expression. Dark graphite waistcoat buttoned flat
+  over a medium grey long-sleeve shirt, a dark red necktie tucked flat underneath, a plain dark red cloth band
+  around the left upper arm as the crew mark, graphite trousers, flat black boots. Bare hands, empty.
+- **No jacket, deliberately.** An open suit jacket is what a mob foot soldier should wear, and its lapels are a
+  loose shell standing off the chest — the exact shape image-to-3D returns as a floating sheet, the failure the
+  `StuntDouble` write-up already warns about for floating pads. The buttoned waistcoat gives the same chest panel
+  lying flush against the body.
+- **Long sleeves, deliberately.** The coworker's rolled sleeves put her bare forearms outside the colour audit's
+  head-and-hands whitelist, so she reads FLAG at 4.46% / 5.27% as a false positive. Cuffs at the wrist mean this
+  one measures clean instead of needing the same explanation twice.
+- **No weapon.** `BP_Goon` is defaults-only on `BP_EnemyBase` with no graph of its own, and it punches. A prop
+  would need a socket, a second asset and a reason.
+- **Height:** 180 cm — taller than the 175 cm hero so a group of three is intimidating, while `CleaverBoss` still
+  outranks him on width (1.3x through the chest) rather than on height.
+- **Triangle budget: 18,000, not 30,000.** Three on screen at once is 54,000 — nearly two heroes' worth for the
+  cast's least important body. Meshy's remesh step stays at the documented fixed 30K quad; the budget is applied
+  at FBX export by `meshy_character.py`'s `tris` argument.
+- **One model, used three times.** Every goon is the same skeletal mesh, so variety — if anyone ever wants it —
+  is a material swap, not a second character.
+
+### Palette, with the numbers
+
+| Part | Hex | dE76 from his skin |
+|---|---|---|
+| face and hands | `#C08E5E` | — |
+| hair, buzzed | `#15131A` | **68.5** |
+| waistcoat and trousers | `#23262E` | **62.5** |
+| shirt | `#8A8F99` | **41.1** |
+| necktie and arm band | `#6B2430` | **48.2** |
+| boots and belt | `#141519` | **67.6** |
+
+His **worst** skin separation is 41.1 against `color_audit.py`'s threshold of 14 — nearly three times the
+clearance, and well clear of `CafeWalker`'s known failure at 14.4.
+
+**He owns no colour, and that is the point.** Every colour on screen is supposed to mean a power, so the crew the
+player fights for most of the demo is deliberately achromatic: graphite, grey and black. The one chroma on him is
+the oxblood band, which measures dE76 **54.9** from Splice's magenta, **80.0** from Freeze Frame's cyan and
+**62.3** from the proposed safety orange, so it dilutes nothing.
+
+**Nothing on him is white or pale, and this is the finding worth keeping.** This file records the Freeze Frame
+colour in words only — "pale cyan, almost white, like frost" — with no hex anywhere, so it was measured against a
+representative pale cyan, `#DCF2F5`. Against that, **pure white is dE76 9.7 away and every off-white tested is
+8.5 to 9.8** — all of them *under* the audit's threshold of 14. With three goons on screen in the beats that
+teach Freeze Frame, a white shirt on the crew is the one colour collision in this cast that would actually cost
+the player something, so the shirt is a medium grey at dE 35.4 from that cyan.
+
+That number also applies to the coworker's pure white shirt, and **it is not a reason to re-make her**: she is one
+small figure against a full-screen effect, her deep teal apron carries her read, and her 35 credits are spent.
+It is written down here so the next white garment in this cast is a choice rather than an accident.
+
+### How to draw him, with nothing else to work out
+
+`GOON-APOSE` in [`prompts.md`](prompts.md) for the ComfyUI/Qwen path on either card, and `GEM2-GOON` in
+[`prompts-gemini.md`](prompts-gemini.md) as the self-contained version.
 
 ## The third boss — `StuntDouble` (power SETTLED, look still PROPOSED)
 
@@ -591,6 +662,63 @@ Note the two scripts write to **different places**: `meshy_character.py` to
 animations together. Do **not** use `SkeletalMeshTools.import_file` onto an existing skeleton; `CLAUDE.md` records
 that going wrong twice. Then point the material slot at the character's `MI_`, place it next to a plain copy, and
 look at it **from the game camera** before calling it good.
+
+### The goons' model — 2026-11-13, made locally on M Station with TRELLIS (no credits)
+
+`StreetGoon` is the first character in this cast built **without Meshy**. The Team Owner's Nov 13 decision is
+"Meshy where we can, TRELLIS as the backup", and Meshy was unreachable: the dedicated Chrome profile's meshy.ai
+session had **lapsed to logged-out** (the workspace served "Log In / Sign Up Free" with no credits line), and a
+password is not something an agent may ask for or type. TRELLIS.2 is installed on this machine at
+`D:\AI\TRELLIS2` with its weights already cached, so the model was generated locally instead.
+
+| Reference | Pipeline | Result |
+|---|---|---|
+| `Art/Refs/StreetGoon_apose.png` | TRELLIS.2-4B `1024_cascade`, `DEC=30000 TEX=2048` | 23 mannequin-named bones -> `SK_StreetGoon.fbx` |
+
+    D:/AI/TRELLIS2/venv/Scripts/python.exe run_image_to_3d.py in/StreetGoon_rgba.png out/StreetGoon 1024_cascade
+    blender -b --factory-startup --python Art/Blender/trellis_character.py -- out/StreetGoon.glb StreetGoon human 1.8 18000
+
+**There is a second reason beyond the lapsed login, and for this character it is the stronger one.**
+`trellis_character.py` names its bones the way Epic's mannequin does; Meshy's Smart Rig names them
+`Bone_000...`, which is why the cleaver boss needed nine chains mapped by hand. The goon's three animations —
+`AM_Human_Punch_02`, `AM_Human_HitReact`, `AM_Human_Death` — are **authored on the mannequin skeleton**, so a
+mannequin-named rig is the one that should retarget them without hand-mapping. **That is reasoning from bone
+names and is not yet demonstrated in Unreal**, exactly as the `CrashDriverTrellis` write-up says of the same
+claim.
+
+**What the run measured.** 1,024 px cascade: dual contouring gave 2,903,648 verts / 5,811,524 faces, simplified
+to 237,711 / 477,743, then decimated at export to **17,999 triangles** against the 18,000 budget. The rig took
+18.3 s and reports **23 bones, 0 unweighted vertices**, direct weights, UV extent 0.997 x 0.997, and a height of
+exactly **1.800 m** with a half-chest of 0.404 m. Three specks totalling 229 vertices were removed. Peak VRAM on
+the 3090 was about **8.6 GB of 24**, so it never came close to the card's limit.
+
+**The defect, and it is on his back.** The reference sheet is a single front view, so TRELLIS invented the back —
+and it put a **dusty mauve patch on his left shoulder blade** that is in no part of the design. It looked at
+first like a collision with Splice's reserved magenta, so it was measured rather than argued: across 2,002,160
+non-background texels, **zero** sit within dE76 25 of `#C0279B`, and the closest texel in the whole texture is
+`#9B4B76` at dE **35.0**. It is not a power-colour collision. It is still invented colour on an achromatic
+character, and it is the thing to fix or paint out if he is kept. The same single-view limitation gave the back of
+his head a soft shape rather than the buzzed scalp the front view has, and widened the oxblood arm band well past
+the flush band the prompt asked for.
+
+**The colour audit passes him, and the bigger finding is the one the audit cannot see.** `color_audit.py`
+returns **no flags** for him — 0.11% front / 0.01% back within dE76 14 of the sampled face tone, the cleanest
+numbers of any character in the cast, and the long sleeves are why: there are no bare forearms to count, which is
+the false positive `CafeCoworker` and `CrashDriverTrellis` both carry. Read that pass with one caveat, though —
+the audit sampled his skin reference as `#56523E`, value 0.34, because TRELLIS bakes the reference sheet's cel
+shading into the base colour, so it compared garments against a shadow tone rather than lit skin.
+
+Measuring the baked texture directly says what that costs, and it lands on **exactly the one read this design
+depends on**. On the sheet, skin `#C08E5E` sits **47.6 L points** above the graphite `#23262E`, which is what
+makes the head a bright dot above dark shoulders so three goons 150 cm apart read as three figures. In the baked
+texture the dominant skin cluster is `#6E4632` and the dominant body cluster `#1E1E1E` — **22.6 L points
+apart**. The bake keeps the hues but throws away **53% of the head-to-body lightness contrast**. This is the same
+characteristic already recorded for `SK_CrashDriverTrellis`, whose leather measured value 0.28-0.35 and "is why
+the model reads dark". It is the strongest argument for spending the 35 credits on him once Meshy is reachable.
+
+**Nothing about this makes him canonical.** He is committed as the free option, in the same way
+`SK_CrashDriverTrellis` sits beside the Meshy `SK_CrashDriver`. One Meshy login restores the 35-credit path, and
+the choice between them belongs to a person.
 
 ### Imported — Thu Nov 12, evening (GameStation)
 

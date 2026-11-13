@@ -133,12 +133,29 @@ generating characters belongs on M Station.
    162.0 cm with Walk and Idle: see
    [the devlog entry](devlog/2026-11-13-the-coworker-gets-a-body.md). **She is not in Unreal** - importing her is
    the builder's job, so it has moved to the GameStation list below, and `BP_Coworker` still shows a green box.
-2. **The Director** - beat 6. No design, no colour, no prompt: the write-up has to come before any picture. He
-   is the one genuinely missing model in the cast.
-3. **Not boss 3.** The Stunt Double is conditional again (Decisions, above). His fight is built and plays on a
+2. **The goons, `StreetGoon`** - beats 2, 3, 4 and 5. **Moved above the Director on Fri Nov 13 morning by the
+   work-order rule in Decisions** ("the earliest unfinished beat wins"): the player fights goons from beat 2
+   onward, and the six-beat decision below ends the demo *before* the Director in as many words. `BP_Goon` has
+   been playable since the first build wearing Epic's mannequin, and until this morning **no document in this
+   repo said what a goon looks like** - no design, no colour, no prompt. They have more screen time than any
+   boss. Designed and drawn Fri Nov 13 morning on M Station:
+   [`CHARACTERS.md`](CHARACTERS.md#the-goons--streetgoon-beats-2-to-5), with `GOON-APOSE` in
+   [`prompts.md`](prompts.md) and `GEM2-GOON` in [`prompts-gemini.md`](prompts-gemini.md). **Modelled the same
+   morning with TRELLIS, 0 credits** - `Art/Blender/export/Characters/StreetGoon/SK_StreetGoon.fbx`, 23
+   mannequin-named bones, 17,999 tris, 180.0 cm, Walk + Idle, colour audit clean. **Not canonical and not in
+   Unreal:** Meshy was used for every other character and its session here has lapsed to logged-out, and the
+   TRELLIS bake loses 53% of the head-to-body lightness contrast the design depends on. See
+   [the devlog entry](devlog/2026-11-13-the-goons-get-a-design.md). **A person decides** whether to spend 35
+   credits on a Meshy version once somebody logs in, or to keep this one.
+3. **The Director** - **no beat in the demo.** No design, no colour, no prompt: the write-up has to come before
+   any picture, and he is the one genuinely missing model in the *full game's* cast. But the six-beat decision
+   below **supersedes** his two rule scenes and ends the demo at the Stunt Double, so no credits and no
+   drawing time go on him until the demo plays through. The queue entry that called him "beat 6" was wrong:
+   beat 6 is a fade to a "continue", which is a screen and not a character.
+4. **Not boss 3.** The Stunt Double is conditional again (Decisions, above). His fight is built and plays on a
    mannequin; no credits go on his art until beats 1 to 4 play through.
 
-**What stays on GameStation:** importing `SK_CafeCoworker.fbx` and pointing `BP_Coworker` at it (the asset is
+**What stays on GameStation:** importing `SK_CafeCoworker.fbx` (and `SK_StreetGoon.fbx`, if he is kept) and pointing `BP_Coworker` at it (the asset is
 committed and waiting; she is a green box in beat 1 until someone does), putting `CafeWalker` on `BP_Player` with
 `ABP_Unarmed` retargeted onto his skeleton (the player and the goons are still Epic's mannequin, and that is the
 most visible thing left in a judging video), building Splice for beat 4, and laying out beats 4 to 6.
@@ -177,9 +194,9 @@ The queue the work-order decision creates. Take the top unfinished line.
 | Beat | What is missing |
 |---|---|
 | 1. Cafe | Crash, Freeze Frame hand-over (touch the driver), auto-freeze and the coworker rescue all work. **Missing from the Team Owner's scene: the day job, the latte art minigame, delivering the drink.** Her model is not made (art, not code) |
-| 2. Street | **Done** - goons, fists, animation. Tuning only: one combo clears all three in about 1.0 s |
+| 2. Street | **Done** - goons, fists, animation. Tuning only: one combo clears all three in about 1.0 s. **Their model is not made** (art, not code): the goons are Epic's mannequin, and they are the enemy in beats 2 to 5. Designed and drawn Nov 13, see `StreetGoon` in [`CHARACTERS.md`](CHARACTERS.md#the-goons--streetgoon-beats-2-to-5) |
 | 3. Splice boss | Fight works. He hands over `HasSplice`, which **now opens the Splice blink** (below) |
-| 4. Destroyed buildings | **Half built.** The **Splice power is built, verified and now on disk** (600 cm blink, Left Shift / gamepad B) - rebuilt on Justin's Mac mini, see below. The **platforming section is still nothing**: Splice is the power the gaps are for and there are no gaps yet |
+| 4. Destroyed buildings | **Half built.** The **Splice power is built, measured and on disk** (600 cm blink, Left Shift / gamepad B) - rebuilt on Justin's Mac mini and re-measured there, see below. The **platforming section is still nothing**: Splice is the power the gaps are for and there are no gaps yet |
 | 5. Stunt Double boss | Fight and doubles built. **Splice past the attack stand-in is now measured, not just argued** - 600.0 cm straight through `BP_StuntStandIn` with the stand-in not shoved, and its capsule and mesh both ignore the Visibility channel the blink traces, so it needed no code in the fight at all. Still unbuilt: the attack stand-in's despawn timer |
 | 6. Fade to "continue" | **Nothing built**, and what it even is has not been decided (Still to decide, below) |
 
