@@ -25,22 +25,27 @@ into Open or Decisions.
 
 ---
 
-## Where we are (Thu Nov 12, late afternoon)
+## Where we are (Thu Nov 12, evening)
 
-No gameplay is on `main` yet. GameStation's branch `Gamestation/first-build` holds a grey-box game built packet by
-packet by subagents and checked by other subagents ([`FIRST_BUILD_LEDGER.md`](FIRST_BUILD_LEDGER.md)): the player
-with fists, goons, a cafe-street-plaza level with gates and a checkpoint, a plaza boss, Freeze Frame, Rewind (built
-before it was moved to a later boss; now parked) and a HUD. **No person has played any of it yet**, so it is not on
-`playtest` or `main`. Still to come on that branch today: Freeze Frame handed over in the cafe, win/lose screens and
-restart, the cel shader on the level, and a start-to-finish run-through. Character work started on M Station this
-afternoon: the main character, the crash driver and the mob boss ([`CHARACTERS.md`](CHARACTERS.md)).
+No gameplay is on `main` or `playtest` yet. GameStation's branch `Gamestation/first-build` holds a grey-box game in
+one level, `Lvl_JumpCut`, built packet by packet by subagents and checked by other subagents
+([`FIRST_BUILD_LEDGER.md`](FIRST_BUILD_LEDGER.md)): a title screen; the cafe, where the dying driver hands over
+Freeze Frame (a second hand-over spot covers the cafe door); a street with a group of goons and the player's fists; a
+checkpoint; a walled plaza whose entry gate closes behind you, with a boss (a big bruiser; his own freeze attack is
+switched off) and an exit gate; a HUD; win and lose screens with restart at the checkpoint; the cel-shaded anime
+shader on the level; and Rewind, built and then parked (kept, switched off). A scripted run goes from title to win in
+25 to 27 s. **No person has played any of it yet.** The branch is **not pushed yet** as of this writing: ask the Team
+Owner. M Station made the three rigged characters (main character, crash driver, mob boss) and a cleaver as FBX
+under `Art/Blender/export/Characters/` and `Art/Meshy/` (not yet in Unreal), redrew the cast in the chosen anime
+style ([`CHARACTERS.md`](CHARACTERS.md)), and that work is merged into the branch. What the final audit found:
+[`FIRST_BUILD_AUDIT.md`](FIRST_BUILD_AUDIT.md).
 
 ## Open
 
 | Day | Goal |
 |---|---|
 | Thu Nov 12 | Player + the first power (Freeze Frame) + the first fight, in grey boxes, playable start to finish |
-| Fri Nov 13 | The Splice boss (the mob boss), the Director with two rule scenes, win/lose and restart screens, first packaged build. **Feature freeze** |
+| Fri Nov 13 | A person plays Thursday's build (the play list in [`FIRST_BUILD_LEDGER.md`](FIRST_BUILD_LEDGER.md)); the Splice boss (the mob boss); the Director with two rule scenes; making the run 3 to 5 minutes and tuning it (it is 25 to 27 s today); first packaged build. Win/lose and restart screens are built (not yet played). **Feature freeze** |
 | Sat Nov 14 | Art, sound, juice, playtests, footage. Stunt Double only if Friday went well |
 | Sun Nov 15 | Bug fixes and submission only |
 
@@ -75,6 +80,13 @@ in case playtesting shows we need it. Still not something to build from: only a 
 - Camera: third person behind the player (the template's) unless we choose otherwise.
 - **Which later boss gives Rewind**, and where it sits in the ladder (Freeze Frame -> Splice -> Stunt Double ->
   Final Cut today). The small Rewind (only the player slides back, health restored) is what is built and parked.
+- **What the plaza boss is now.** The pitch's first fighting boss is the Splice mob boss, but the built plaza boss
+  (`BP_BossFreeze`) is a plain bruiser with his freeze switched off. Keep him, turn him into the mob boss, or drop him?
+- **The "Final Cut" rename.** It is an Apple trademark; "Director's Cut" is proposed. The Team Owner is holding it.
+- **Where Freeze Frame is handed over:** only at the driver, or also at the cafe door (as built, so nobody leaves
+  the cafe without it)?
+- **How long and how hard the game is at default numbers.** A scripted run takes 25 to 27 s against the 3 to 5
+  minutes we want, and the fights are easy. Only people playing it can say what to change.
 
 ## Cut list (in the order we drop things)
 
@@ -82,7 +94,7 @@ in case playtesting shows we need it. Still not something to build from: only a 
 2. Stunt Double (power and boss)
 3. Splice platforming section (keep the teleport for the fight)
 4. Dialogue: one line of text per power instead
-5. A full rewind of the world (already cut: only the player rewinds)
+5. A full rewind of the world (already cut: the parked Rewind only moves the player back)
 6. More than one level
 
 ## Later
@@ -94,8 +106,11 @@ _(nothing yet)_
 - **2026-11-12: Rewind moves to a later boss.** The jam game is one level of 3 to 5 minutes, so the most fun powers
   come first: Freeze Frame is the first power the player gets. The Rewind work already built stays in the project,
   switched off, for that later boss (Team Owner).
-- **2026-11-12: We are going with the cel-shaded anime look.** Its work on `mendezm87/anime-look` comes into the
-  build so it is ready when the 3D assets from M Station arrive (Team Owner).
+- **2026-11-12: The art style is cel-shaded anime** (Manny, the Team Owner; recorded from both PCs). It was the
+  leading candidate all along (the `mendezm87/anime-look` demo, the `CafeWalker` model); it is now the chosen look
+  and everything we draw or model matches it. Its work on `mendezm87/anime-look` comes into the build so it is ready
+  when the 3D assets from M Station arrive. The cast was redrawn in it through Gemini the same evening:
+  [`CHARACTERS.md`](CHARACTERS.md#gemini-pass-2026-11-12).
 - **2026-11-12: The first boss gives Freeze Frame**, not Rewind. He is the driver who crashes through the cafe
   wall in the opening; he still does not fight (Manny).
 - **2026-11-12: The second boss gives Splice and is a Japanese mob boss with a cleaver** (Manny).
@@ -109,10 +124,6 @@ _(nothing yet)_
 - **2026-11-12: The player fights with fists** for now, and there are ordinary goons between bosses (Justin).
 - **2026-11-12: The Splice gap comes after the Splice boss** (Justin).
 - **2026-11-12: The devlog is one file per entry** in `docs/devlog/`, so teammates never collide on one file (Justin).
-- **2026-11-12: The art style is cel-shaded anime** (Manny). It was the leading candidate all along (the
-  `mendezm87/anime-look` demo, the `CafeWalker` model); it is now the chosen look and everything we draw or model
-  matches it. The cast was redrawn in it through Gemini the same evening:
-  [`CHARACTERS.md`](CHARACTERS.md#gemini-pass-2026-11-12).
 - **2026-11-12: The game is called Jump Cut** (the team; the story is in the devlog entry for Nov 11 to 12).
 - **2026-11-11: Prize focus is Glass Box first, Render Royalty second, Best Team third**, Best Overall as a stretch
   (the team; `CLAUDE.md`, "Goals, and keeping us on track").

@@ -1,5 +1,45 @@
 # First build design (Thursday's slice)
 
+> **Read this first: what changed after this note was written** (added Thu Nov 12 evening, after the final audit,
+> [`FIRST_BUILD_AUDIT.md`](FIRST_BUILD_AUDIT.md)). The body below is the contract the builders worked from and is
+> kept as written; where it disagrees with this box, this box is true. The design change (Team Owner, Nov 12
+> afternoon) is in [`ROADMAP.md`](ROADMAP.md), Decisions: Freeze Frame is the first power, Rewind is parked.
+>
+> - **Rewind is parked.** `BP_Player`'s `HasRewind` default is **false**, not true (section 1.2's table). Every Rewind
+>   function and variable is still there, unchanged; with it off, Q does nothing and the HUD's `RewindBox` stays
+>   collapsed. Section 4 describes the parked Rewind.
+> - **The lose rule is "health 0 = lost".** While Rewind is off there is no downed window: `PlayerHealthHitZero` goes
+>   straight to `PlayerLose`. Section 6's "downed" rule, `DownedGraceTime` and the blinking Rewind icon only apply
+>   again if a later boss sets `HasRewind`.
+> - **The boss's freeze is off.** `BP_BossFreeze.BossUsesFreeze` is false, so he never starts the freeze wind-up; he
+>   is a big bruiser who punches with a red warning. Section 5.1's "the answer is Rewind" and "Rewind is the only thing
+>   that works" no longer describe the game. Whether this boss stays, and what he becomes, is open (ROADMAP, "Still to
+>   decide").
+> - **Freeze Frame comes from the driver, not the boss.** `BP_SceneMarker` grants it (`MarkerGrantsFreezeFrame`) at
+>   `Marker_FreezeFrameGiven` by the driver, and at a second marker at the cafe door, `Marker_FreezeFrameDoor`, so
+>   nobody leaves the cafe without it. The boss's defeat (section 5.1, `EnemyDefeatedHook`) still grants it again,
+>   harmlessly, and still opens the exit gate.
+> - **Markers renamed** (section 7's list is old): `Marker_RewindGiven` -> `Marker_FreezeFrameGiven` (by the driver);
+>   the plaza's old `Marker_FreezeFrameGiven` -> `Marker_BossDefeated`; new `Marker_FreezeFrameDoor`.
+> - **Trigger radii on placed copies differ from the class default (250).** The placed checkpoint,
+>   `Checkpoint_StreetEnd`, has radius **550** (as wide as the street, C1b); `Marker_FreezeFrameDoor` has **200**.
+>   These are instance values in the level, set by `tools/d1_editor.py` and `tools/e1_editor.py`, not class defaults.
+> - **The entry gate does more than section 7's first paragraph says** (its C1c and C1d paragraphs are right, and G1
+>   finished them): the close-behind check also fires once the player is more than `GatePastDepth` past the gate line
+>   (no way round the circle along the wall); while the slab drops, a guard keeps the player `GateSafeDepth` inside so
+>   it never lands on them or leaves them outside, and switches itself off once the slab is down; when it shuts,
+>   every goon is sent home asleep at full health; and the player's Rewind trail is reset, so a parked-then-revived
+>   Rewind can't carry the player back out (C1b).
+> - **The anime look is on the level** (packet A3; not in the body at all). An unbound post-process volume
+>   `PP_AnimeLook` in `Lvl_JumpCut` uses `MI_AnimeLook_JumpCut` (a child of `M_AnimeLook`), and the character meshes
+>   of `BP_Player`, `BP_EnemyBase`, `BP_Goon` and `BP_BossFreeze` (and the placed characters) have Render CustomDepth
+>   on, which is how the shader tells characters from the background. Its three changed numbers are in section 12.
+> - **Checks and questions that are now moot:** section 10's E1 (2) check through `RewindStart` (G1's check replaced
+>   it: health 0 goes straight to lost); section 11's questions 2 to 5 (Rewind's cooldown, the grace window, the
+>   boss's freeze reach, the slide), until Rewind comes back. Questions 1 and 6 are still open, and the bigger one is
+>   now the game's length: a scripted run takes 25 to 27 s.
+> - **Section 12** is completed below with the numbers it lacked; rows marked "off" belong to switched-off features.
+
 The contract between the builder packets in [`FIRST_BUILD_LEDGER.md`](FIRST_BUILD_LEDGER.md). Builders share nothing
 but this note: **use every name exactly as written**. If a name here turns out to clash with an engine node, pick a
 new one, write it into this file, and say so in your report.
@@ -748,15 +788,16 @@ E1 also fills `PlayerRespawnAtCheckpoint` on `BP_Player` (section 6, step 1) and
 | `HitStunLight` | 0.25 s | BP_Player |
 | `HitStunFinisher` | 0.8 s | BP_Player |
 | `HitFlashTime` | 0.2 s | BP_Player |
-| `DownedGraceTime` | 1.5 s | BP_Player |
+| `DownedGraceTime` | 1.5 s (**off**: only used with Rewind) | BP_Player |
 | `FallLoseZ` | -1000 cm | BP_Player |
-| `TrailSeconds` | 10 s | BP_Player |
-| `TrailSampleInterval` | 0.1 s | BP_Player |
-| `TrailMinMove` | 5 cm | BP_Player |
-| `RewindSlideTime` | 1.0 s | BP_Player |
-| `RewindSlideMin` | 0.25 s | BP_Player |
-| `RewindCooldown` | 6 s | BP_Player |
-| `RewindSafeTime` | 0.5 s | BP_Player |
+| `HasRewind` | false (**Rewind parked**; was true in this note) | BP_Player |
+| `TrailSeconds` | 10 s (**off**: Rewind) | BP_Player |
+| `TrailSampleInterval` | 0.1 s (**off**: Rewind) | BP_Player |
+| `TrailMinMove` | 5 cm (**off**: Rewind) | BP_Player |
+| `RewindSlideTime` | 1.0 s (**off**: Rewind) | BP_Player |
+| `RewindSlideMin` | 0.25 s (**off**: Rewind) | BP_Player |
+| `RewindCooldown` | 6 s (**off**: Rewind) | BP_Player |
+| `RewindSafeTime` | 0.5 s (**off**: Rewind) | BP_Player |
 | `FreezeFrameDuration` | 10 s | BP_Player |
 | `FreezeFrameCooldown` | 20 s | BP_Player |
 | `EnemyMaxHealth` | 100 (goon 40, boss 240) | BP_EnemyBase |
@@ -773,15 +814,28 @@ E1 also fills `PlayerRespawnAtCheckpoint` on `BP_Player` (section 6, step 1) and
 | `EnemyDefeatLinger` | 0.6 s | BP_EnemyBase |
 | `GoonCount` | 3 | BP_GoonSpawner |
 | `GoonSpacing` | 150 cm | BP_GoonSpawner |
-| `BossFreezeRadius` | 1200 cm | BP_BossFreeze |
-| `BossFreezeWindup` | 1.2 s | BP_BossFreeze |
-| `BossFreezeDuration` | 3.0 s | BP_BossFreeze |
-| `BossFreezeCooldown` | 9 s | BP_BossFreeze |
-| `BossFirstFreezeDelay` | 4 s | BP_BossFreeze |
-| `BossFreeHitDamage` | 12 | BP_BossFreeze |
-| `BossFreeHitInterval` | 0.8 s | BP_BossFreeze |
-| `BossBrokenStun` | 1.5 s | BP_BossFreeze |
+| `BossUsesFreeze` | false (the switch for the six rows below) | BP_BossFreeze |
+| `BossFreezeRadius` | 1200 cm (**off**: boss freeze) | BP_BossFreeze |
+| `BossFreezeWindup` | 1.2 s (**off**: boss freeze) | BP_BossFreeze |
+| `BossFreezeDuration` | 3.0 s (**off**: boss freeze) | BP_BossFreeze |
+| `BossFreezeCooldown` | 9 s (**off**: boss freeze) | BP_BossFreeze |
+| `BossFirstFreezeDelay` | 4 s (**off**: boss freeze) | BP_BossFreeze |
+| `BossFreeHitDamage` | 12 (**off**: boss freeze) | BP_BossFreeze |
+| `BossFreeHitInterval` | 0.8 s (**off**: boss freeze) | BP_BossFreeze |
+| `BossBrokenStun` | 1.5 s (**off**: only when Rewind breaks his freeze) | BP_BossFreeze |
 | `GateOpenHeight` | 450 cm | BP_PlazaGate |
 | `GateMoveSpeed` | 900 cm/s | BP_PlazaGate |
-| `TriggerSphere` radius | 300 / 250 / 250 cm | BP_PlazaGate / BP_Checkpoint / BP_SceneMarker |
+| `GatePastDepth` | 120 cm (how far past the gate line counts as "in", C1c) | BP_PlazaGate |
+| `GateSafeDepth` | 120 cm (where the guard holds a player who turns back, C1d) | BP_PlazaGate |
+| `GateRescueReach` | 400 cm (how far outside the gate line a player is still pulled in, C1d) | BP_PlazaGate |
+| `GateRescueHalfWidth` | 600 cm (how far sideways from the gate's centre, C1d) | BP_PlazaGate |
+| `MarkerGrantsFreezeFrame` | false (true on the placed `Marker_FreezeFrameGiven` and `Marker_FreezeFrameDoor`) | BP_SceneMarker |
+| `TriggerSphere` radius | 300 / 250 / 250 cm | BP_PlazaGate / BP_Checkpoint / BP_SceneMarker (class defaults) |
+| `TriggerSphere` radius, placed copies | `Checkpoint_StreetEnd` 550 cm; `Marker_FreezeFrameDoor` 200 cm; `Marker_FreezeFrameGiven` 250 cm | instances in `Lvl_JumpCut` (set by `tools/d1_editor.py`, `tools/e1_editor.py`) |
 | `ShowTitleOnStart` | true | BP_JumpCutGameMode |
+| `CharLevel` | 0.95 (the cafe script sets 0.55) | `MI_AnimeLook_JumpCut` (post-process on `PP_AnimeLook`) |
+| `LineWidth` | 2.0 (the cafe script sets 1.5) | `MI_AnimeLook_JumpCut` |
+| `KeyDir` | (-0.579, 0.406, 0.957), towards this level's sun (`Sun_Main`, pitch -45, yaw -35) | `MI_AnimeLook_JumpCut` |
+
+`MI_AnimeLook_JumpCut`'s other parameters were copied from `MI_AnimeLook_Cafe` by `tools/a3_editor.py` (see asset;
+the numbers the cafe was built with are in `tools/unreal_make_anime_cafe.py`, the cafe script above).

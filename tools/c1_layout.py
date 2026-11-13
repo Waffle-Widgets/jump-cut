@@ -1,3 +1,9 @@
+# WARNING (Nov 12, after the final audit): DO NOT RE-RUN THIS ON THE REAL LEVEL. It deletes and re-creates the two
+# gates, the checkpoint, the goon spawner and every marker at their class defaults plus the few values in ACTORS below.
+# That loses: the boss/gate links (Gate_PlazaEntry.GateEnemyToWake, Boss_Freeze.BossExitGate: tools/d1_editor.py place),
+# Checkpoint_StreetEnd's trigger radius 550 (tools/d1_editor.py c1b), Marker_FreezeFrameDoor's place and radius 200
+# and the gift markers' GiftMesh settings (tools/e1_editor.py "markers door 560 200", then gifts, gifts2). If it is ever re-run,
+# redo those steps after it, then save the level (d1_editor.py save / e1_editor.py save) and check git status.
 """C1: places the grey-box level in Lvl_JumpCut from the tables below. Run in the editor (Play mode stopped):
     py C:/Users/thecl/code/jump-cut/tools/c1_layout.py
 It first deletes every actor it placed before (tag 'C1_Layout' only), then places everything again. It never touches
