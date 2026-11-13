@@ -76,7 +76,9 @@ The jam entry is **a demo, not the completed game**. It ends after the last boss
 3. **The Splice boss.** The next boss approaches, with the Splice power. Battle him and gain the new ability.
 4. **Destroyed buildings.** Platforming across destroyed buildings to get to the final boss, fighting more goons
    along the way.
-5. **The last boss has Stunt Double.** He makes a copy of himself and the player must fight both.
+5. **The last boss has Stunt Double.** He spawns stunt doubles of himself that throw themselves in front of
+   your attacks, so you have to Freeze Frame to land a hit on him at all, and he can tag in a double that
+   fights. Settled Fri Nov 13, 12:30 AM Pacific; built and verified the same hour (see Decisions).
 6. **Fade to a "continue"** of some type after that battle.
 
 ### Before people playtest (Justin, Nov 12, late evening)
@@ -159,6 +161,19 @@ _(nothing yet)_
 
 ## Decisions
 
+- **2026-11-13 (12:30 AM Pacific): How the Stunt Double boss fights** (Manny, the Team Owner). His doubles are
+  copies of **himself**, not of the player. They soak damage the way a stunt double does - they jump into the
+  path of the blow - so while any of them is standing, every hit meant for the boss lands on one of them
+  instead. **The counter is Freeze Frame**: with time stopped nobody can dive, so the hit reaches him. He can
+  also **tag in** a double that actually fights, played for the film trick it is. This settles the three-way
+  disagreement between this file, `PITCH.md` and the boss 3 proposal in `CHARACTERS.md`, and it drops the
+  "doubles wear the player's face" idea, which was the expensive half. Built on `playtest` the same hour:
+  `BP_StuntStandIn`, a stand-in redirect in `BP_EnemyBase.EnemyTakeHit`, and the spawn logic on
+  `BP_StuntDouble`. Verified in Play-In-Editor, not yet by a person.
+- **2026-11-13 (12:30 AM Pacific): "Boss 1" means the head of his organisation, not the first fight** (Manny,
+  the Team Owner). The crash driver is boss 1 because he is the boss of his faction; he is never fought. The
+  **first boss the player actually fights is the cleaver boss**, who gives Splice. Wording only - no change to
+  the ladder.
 - **2026-11-12 (late evening): The jam entry is a demo in six story beats** (Justin). Cafe, crash and Freeze
   Frame with the coworker rescue as its lesson; street thugs; the Splice boss; platforming across destroyed
   buildings with goons; the Stunt Double boss, who copies himself; a fade to a "continue". The beats and what must

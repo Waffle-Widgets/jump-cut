@@ -89,10 +89,12 @@ he must read as *magenta* instantly, because magenta is about to become the port
   - **13+.** The blade stays clean — no blood, ever, on the model or in the concept art. Tattoos are stylised
     waves, which is an anime convention rather than a depiction of any real group.
 
-## The third boss — `StuntDouble` (PROPOSED)
+## The third boss — `StuntDouble` (power SETTLED, look still PROPOSED)
 
-> **This whole section is a proposal, written by Claude on GameStation on Thu Nov 12, 2026, 11:15 PM Pacific.**
-> Nobody on the team has agreed to it. `ROADMAP.md` says an agent may propose but never writes its own suggestion
+> **His power is settled** by the Team Owner on Fri Nov 13, 2026, 12:30 AM Pacific, and built — see
+> *What his power does* below and *His power is built* further down. **Everything about how he looks is still a
+> proposal**, written by Claude on GameStation on Thu Nov 12, 2026, 11:15 PM Pacific.
+> Nobody on the team has agreed to the look. `ROADMAP.md` says an agent may propose but never writes its own suggestion
 > into Decisions, so the proposal line for it belongs in that file's **Waiting for a yes** section and nothing here
 > is settled — not the look, not the colour, not the name. The reason it is written at all is that boss 3 had no
 > design and no artwork of any kind, so if Friday goes well there was nothing to start from. Now there is, and
@@ -100,13 +102,18 @@ he must read as *magenta* instantly, because magenta is about to become the port
 
 He is the man who has taken every hit in this film so far, and the only one of the four nobody has ever seen. He
 gives **Stunt Double** (`PITCH.md`, power 3: *a copy fights beside you and takes one hit*), and he is countered by
-Splice, which is the power the mob boss hands over — so the ladder stays "beat each boss with the power you took
-from the one before".
+**Freeze Frame** — the Team Owner's call on Fri Nov 13, 12:30 AM Pacific. That is power 1, not the power from the
+boss before him, so beat 5 is the one rung where the "beat each boss with the power you took from the one before"
+ladder is broken on purpose. It is broken in the useful direction: Splice is still unbuilt, and this fight does
+not need it.
 
-- **What his power does, mechanically.** He spawns two or three doubles **wearing the player's own face**, and
-  every hit that lands on him is transferred to the nearest double instead, so he cannot be damaged at all until
-  his stand-ins are gone. Splice is the counter because teleporting puts you behind the screen of doubles, which is
-  the one place his trick does not reach.
+- **What his power does, mechanically** (settled by the Team Owner, Fri Nov 13, 12:30 AM Pacific). He spawns
+  three doubles **of himself**, and while any of them is still standing, every hit aimed at him lands on one of
+  them instead — the double throws itself into the path of the blow, which is literally a stunt double's job.
+  So he cannot be damaged at all while he has stand-ins. **Freeze Frame is the counter**: with time stopped
+  nobody can dive, so the punch reaches the man it was aimed at. He can also **tag in** a double that actually
+  fights you, the way a film swaps the star out for the dangerous shot. The doubles do **not** wear the player's
+  face — that idea is dropped; they are copies of him.
 - **Why that is the Stunt Double power and not a generic clone fight.** A stunt double's whole job is that the
   damage happens to the wrong person on purpose. The boss is not copying himself for company; he is doing to the
   player what has been done to him for twenty years, and the doubles wear *your* face because a double is always
@@ -214,8 +221,8 @@ Every item here is a failure this repo has already paid for once.
 
 The fight shell exists now, so beat 5 is playable before any art lands. `BP_StuntDouble` is a child of
 `BP_EnemyBase`, in `Content/Game/Blueprints/`. **Nothing in the design above is approved by this** — the Team
-Owner approved the six-beat demo, which is what makes boss 3 a required fight; the colour, the silhouette and the
-doubles-wear-your-face idea are all still proposals.
+Owner approved the six-beat demo, which is what makes boss 3 a required fight; the colour and the silhouette are
+still proposals. His power is no longer a proposal - it was settled and built on Fri Nov 13, 12:30 AM Pacific.
 
 - **Body is Epic's mannequin**, `SKM_Manny_Simple` with `ABP_Unarmed`, inherited from `BP_EnemyBase`. The mesh is
   scaled **1.15** so he does not read as another goon in the playtest. Both go away at the model swap.
@@ -224,26 +231,39 @@ doubles-wear-your-face idea are all still proposals.
 - **Tuned between a goon and the mob boss:** 300 health, move 460, damage 14, windup 0.40 s, cooldown 1.0 s,
   attack range 150, reach 190, knockback 320. Faster and lighter than the cleaver boss (240 hp but 0.70 s windup),
   which is the read we want for a stuntman. `EnemyStartsAwake` is false, like every other enemy.
-- **His power is not built**, and cannot be until the conflict below is settled.
+### His power is built: the stand-ins (Fri Nov 13, 2026, 12:45 AM Pacific)
 
-**The three docs describe three different fights.** This has to be picked before anyone builds the gimmick:
+The three docs used to describe three different fights. The Team Owner picked one, and it is the one above. What
+that cost, in code:
 
-| Source | What it says he does |
-|---|---|
-| `ROADMAP.md` beat 5 | "He makes a copy of **himself** and the player must fight both" |
-| `PITCH.md` power 3 | "Makes a double of **you** plus decoys" |
-| The proposal above | Two or three doubles wearing **your** face; damage transfers to the nearest one, so he is invulnerable until they are gone |
+- **`BP_StuntStandIn`** — a new `BP_EnemyBase` child, the double itself. Same mannequin and same human montages as
+  the boss, mesh scaled **1.15** to match him, 45 health, and a `StandInFights` flag. With the flag off it does
+  not chase or punch: it stands and faces the player, waiting to be hit. With it on it fights exactly like a goon.
+- **The redirect lives in `BP_EnemyBase.EnemyTakeHit`**, not in the boss, because it needed to sit in front of the
+  damage for *any* enemy that has stand-ins. Every enemy now carries an `EnemyStandIns` array; it is empty for
+  goons and for the cleaver boss, so their damage path is untouched. When it is not empty and the enemy is not
+  time-stopped, `EnemyPickStandIn` picks a living stand-in, teleports it onto the line between the boss and the
+  attacker, turns it to face the blow, and forwards the whole hit — damage, knockback, stun — to it.
+- **Freeze Frame falls out of that for free.** Freeze Frame already sets `EnemyTimeStopped` on every enemy
+  (`BP_Player.PlayerStopAllEnemies`). The redirect is skipped whenever the boss is time-stopped, so during Freeze
+  Frame the doubles are pinned mid-dive and the hit goes through to him. No new flag, no coupling to the player.
+- **The boss drives it from `EnemyThink`**: `BossCallStandIns` calls in a fresh crew of three in a 42° fan toward
+  the player whenever the last crew is gone (14 s cooldown, first wave 2.5 s after he wakes), and `BossCallFighter`
+  tags in one fighting double from behind him every 16 s, at most one alive at a time.
 
-The first is one extra enemy. The third is a damage-redirection system plus a copy of the player's mesh. They are
-not the same Friday.
+**Verified in Play-In-Editor on GameStation, by reading live actor state — no person has played it.** Three
+stand-ins spawn in the fan; a 10-damage hit on the boss left him at 300/300 and took one stand-in from 45 to 35,
+and moved that stand-in onto the attack line; with Freeze Frame on, the same hit took the boss 300 → 290 and left
+every stand-in untouched; the tag-in double spawned with `StandInFights` true and awake. A plain goon still took
+10 damage from the same call, so the shared base class is not broken.
 
 ### What a person has to decide before anyone draws him
 
 1. **Whether boss 3 is in the game at all.** He is number 2 on the cut list, and `ROADMAP.md` makes Saturday's
    "Stunt Double only if Friday went well" the gate. Nothing here changes that.
 2. **Safety orange as the Stunt Double colour.** The numbers are above; the choice is not an agent's.
-3. **Whether the doubles wear the player's face.** It is the best part of the design and the most expensive part to
-   build, and it is a gameplay decision, not an art one.
+3. ~~**Whether the doubles wear the player's face.**~~ **Settled Fri Nov 13, 12:30 AM Pacific: they do not.** The
+   doubles are copies of the boss. Nothing has to be drawn twice, and his model is the only one beat 5 needs.
 
 ### How to draw him, with nothing else to work out
 

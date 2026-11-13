@@ -30,12 +30,17 @@ Each boss is beaten with the power taken from the boss before. Boss 1 is already
 |---|---|---|---|---|
 | 1 | Freeze Frame | Everything pauses for 10 s | No fight: the dying driver who crashes through the cafe wall | - |
 | 2 | Splice | Teleport; used for platforming in the second half of the map | Blinks around and attacks through portals. A Japanese mob boss with a cleaver | Freeze Frame |
-| 3 | Stunt Double | A copy fights beside you and takes one hit | Makes a double of you plus decoys | Splice |
+| 3 | Stunt Double | A copy fights beside you and takes one hit | Spawns stunt doubles **of himself** that dive in front of his hits, and can tag one in to fight for him | Freeze Frame |
 | 4 | Director's Cut | "Your will becomes reality"; the full version only at the ending | Calls 10-second "scenes" with one rule each ("No abilities", "The floor is gone", "You can't move left") | Stunt Double |
 
 **Rewind** moves to a later boss (Nov 12, see Decisions in [`ROADMAP.md`](ROADMAP.md)) and has no row yet: which
-boss gives it, and where it sits in the ladder, is still open there. The rest of the ladder is unchanged, because each
-boss is still countered by the power before it.
+boss gives it, and where it sits in the ladder, is still open there.
+
+**Boss 3 breaks the "countered by the power before it" rule, deliberately** (Manny, the Team Owner, Fri Nov 13,
+12:30 AM Pacific). The Stunt Double boss is countered by **Freeze Frame**, which is power 1, not by Splice. His
+doubles jump in front of your punches, so the only way to land one on *him* is to stop time first. Bosses 2 and 4
+still follow the old rule. The cost is that beat 5 no longer needs Splice to be finished - which, with Splice
+still unbuilt, is a reason it is this way round.
 
 **Who the characters are** — the worker, the crash driver and the mob boss: [`CHARACTERS.md`](CHARACTERS.md).
 
