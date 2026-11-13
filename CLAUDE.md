@@ -310,6 +310,23 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   The user signs in to Meshy themselves. Downloading needs the user's OK in chat unless the request already says to
   download (e.g. "make these five and download them"); take the newest file in `~/Downloads`, never one picked by name.
   Plan credits are monthly and reset each month (no carry-over); bought credit packs never expire.
+  **Claude Code drives this in a real browser now** (M Station, 2026-11-12): `@playwright/mcp` at user scope,
+  on our own Chrome, with its own profile at `C:/Users/thecl/Documents/megajam-browser/profile` that the user signs
+  into by hand once (Google refuses a sign-in inside an automated browser, and we deliberately do not copy the
+  user's normal profile). That is the **website**, so it is on the free-retry side of the rule above: the ban is on
+  the paid API, not on a browser. `browser_file_upload` is what sends the reference picture.
+- **Meshy Image to 3D, the settings that worked:** High Detail (Meshy 7.1), Texture on, Ultra 2K, texture 2K,
+  License Private, and Pose -> A-Pose **on** for people, **off** for props. 35 credits and about 2 minutes each.
+- **Rigging is two presses, and the first one is only a remesh.** Image to 3D returns 600-950k triangles and
+  rigging refuses anything over 300k (*"The polycount is over 300K. Please remesh before rigging"*). The first
+  **Rig** press opens a *Target Polycount / Topology* dialog - that is the remesh, it costs 0 credits, and it makes
+  a new model-phase asset. Press **Rig** again on **that** asset to get the real *Rig Model* dialog (Humanoid /
+  Quadruped Dog / Smart Rig). Use **30K + Quad** so the mesh matches `meshy_character.py`'s 30,000-triangle target.
+  The two "Rigging failed" assets from 2026-11-09 are this trap, not bad art.
+- **Only the animate-phase asset carries the skeleton.** Downloading the remeshed model gives a bare mesh in
+  **both** glb and fbx - no armature, no vertex groups - and `meshy_character.py` then dies with `IndexError` on
+  `[o for o in sc.objects if o.type == 'ARMATURE'][0]`. The rigged one is the running-man filter in the asset
+  panel and downloads as `..._character.glb`. That is the file the script wants.
 
 ## Blender (for building our own 3D models)
 - Blender **5.2 LTS** with Blender's official MCP (Blender Lab), from

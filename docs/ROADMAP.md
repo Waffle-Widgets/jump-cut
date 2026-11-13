@@ -109,6 +109,10 @@ _(nothing yet)_
 - **2026-11-12: The player fights with fists** for now, and there are ordinary goons between bosses (Justin).
 - **2026-11-12: The Splice gap comes after the Splice boss** (Justin).
 - **2026-11-12: The devlog is one file per entry** in `docs/devlog/`, so teammates never collide on one file (Justin).
+- **2026-11-12: The art style is cel-shaded anime** (Manny). It was the leading candidate all along (the
+  `mendezm87/anime-look` demo, the `CafeWalker` model); it is now the chosen look and everything we draw or model
+  matches it. The cast was redrawn in it through Gemini the same evening:
+  [`CHARACTERS.md`](CHARACTERS.md#gemini-pass-2026-11-12).
 - **2026-11-12: The game is called Jump Cut** (the team; the story is in the devlog entry for Nov 11 to 12).
 - **2026-11-11: Prize focus is Glass Box first, Render Royalty second, Best Team third**, Best Overall as a stretch
   (the team; `CLAUDE.md`, "Goals, and keeping us on track").

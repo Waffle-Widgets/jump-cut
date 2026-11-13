@@ -94,23 +94,95 @@ Twelve takes were drawn. The picks, committed next to this file:
 | `CleaverBoss` | `Art/Refs/CleaverBoss_apose.png` (`BOSS2-NOBLADE` take 2) | Both arms well clear of the torso and both hands open with the fingers spread — the first three takes all had the blade across his leg |
 | the cleaver | `Art/Refs/Cleaver_prop.png` (`CLEAVER-PROP` take 1) | Clean side-on blade filling the frame, nothing else in the picture |
 
-**Two things are wrong with this set, and neither is fixed yet.**
+**One thing is still wrong with this set, and one has been fixed.**
 
-1. **The bosses are drawn in a different style from the main character.** `CafeWalker` came out as clean
-   cel-shaded anime, exactly as asked. Both bosses came out heavier and grittier — closer to a western comic, with
-   painted leather and fabric. The prompts named the same style for all three; the subject matter (worn leather,
-   a tailored suit) pulled the model somewhere else. A cast that does not share a style will cost us on looks,
-   which is our second prize target.
-   **The fix is already in the tool:** `gen_images.py --ref` switches to the Qwen *edit* model and draws in the
-   style of up to three reference pictures. So re-roll the bosses anchored to the main character we picked:
-
-       python tools/gen_images.py BOSS1-APOSE --ref Art/Refs/CafeWalker_apose.png --takes 2 --size 1024x1536
-
-   That is about four minutes per boss. It has **not** been run — flagging it rather than spending the GPU time
-   unasked, because the team has not yet settled the art style at all (`ROADMAP.md`, "Still to decide").
+1. ~~The bosses are drawn in a different style from the main character.~~ **Fixed on 2026-11-12 — see the Gemini
+   pass below.** `CafeWalker` came out as clean cel-shaded anime, exactly as asked. Both bosses came out heavier
+   and grittier, closer to a western comic, because the subject matter (worn leather, a tailored suit) pulled the
+   model somewhere else even though all three prompts named the same style. The drift was carried into the Meshy
+   models before it was caught, so `SK_CrashDriver` and `SK_CleaverBoss` and their textures still have it.
 
 2. **These are reference pictures, not the game's look.** Nothing here has been seen in Unreal, from the game
    camera, under the cel-shader. Per `CLAUDE.md`, that makes all of it **untested** until the builder imports it.
+
+## Gemini pass (2026-11-12)
+
+The team settled the art style on the evening of 2026-11-12: **cel-shaded anime** (`ROADMAP.md`, Decisions). The
+cast was redrawn in it through **Gemini in the browser**, which is what `CLAUDE.md` asks for in the first place —
+reference pictures come from Gemini, and the local `gen_images.py` path is the substitute for when nobody can drive
+a browser.
+
+**Why Gemini and not another `gen_images.py` run.** The drift is a consistency problem, and consistency is the one
+thing a conversation gives you that a one-shot prompt does not. All four pictures were drawn in a **single Gemini
+chat**, each one told to match the picture before it. The main character was drawn first and is the style anchor;
+the rest were measured against him, by eye, and sent back when they missed.
+
+**The settings that mattered:** `Create image` on (otherwise it answers in prose), model **4 Hydrogen**, aspect
+ratio **3:4** for the figures and **4:3** for the cleaver. The original ComfyUI pick was uploaded with each prompt
+to carry the *design* across, with the prompt saying in as many words that the upload is there for the costume and
+not for the rendering.
+
+| Character | File | Takes | Note |
+|---|---|---|---|
+| `CafeWalker` | `GEM-MC-1.jpg` | 1 | The anchor. Right first time |
+| `CrashDriver` | `GEM-BOSS1-2.jpg` | 2 | Take 1 kept as `GEM-BOSS1-1-rejected-drift.png` |
+| `CleaverBoss` | `GEM-BOSS2-1.jpg` | 1 | The closest match to the anchor of the three |
+| the cleaver | `GEM-CLEAVER-1.jpg` | 1 | Hands still empty on the boss; the blade stays a separate prop |
+
+All four are in `Art/Refs/gen/gemini/`, **which git ignores**, alongside `STYLE-COMPARISON.jpg` — a contact sheet
+with the ComfyUI cast above the Gemini cast, which is the picture to look at before deciding anything.
+
+**What the second take on `CrashDriver` was for**, because it is the reusable lesson: a leather jacket drags any
+image model toward texture. Take 1 came back dark, busy and covered in scuff strokes, and the frost read as *white
+fur trim* rather than ice. What fixed it was naming the failure rather than repeating the style words — delete the
+scuffs, raise the value, one flat shadow shape per garment, and *"sharp angular pale cyan crystals with crisp
+geometric edges, not soft, not fluffy, not feathery"*. He is still the darkest and busiest of the three.
+
+**Not yet done:** nothing from this pass has been through Meshy. The three rigged models on `main` were all built
+from the **ComfyUI** pictures, so the cast in the repo is still the drifted set until they are rebuilt. Rebuilding
+all four costs 140 Meshy credits and the two-press rig flow again.
+
+## Text-only Gemini pass (2026-11-12, evening)
+
+The pass above uploaded the ComfyUI pick with each prompt. That carries the costume across, but it also hands the
+model the drifted rendering, and an image model copies what it is **shown** more faithfully than what it is
+**told**. So the cast was drawn a third time, in a **new Gemini chat with nothing uploaded at all** — only
+prompts we wrote, in [`prompts-gemini.md`](prompts-gemini.md).
+
+The real benefit is not the pictures. It is that the design now exists as **text**: if the whole cast has to be
+redrawn again, in any tool, the prompt file is the source and nothing depends on a picture that happens to still
+be on M Station.
+
+| Character | File | Takes | Verdict |
+|---|---|---|---|
+| `CafeWalker` | `GEM2-MC-1.png` | take 1 | Design correct. **Legs close together** — a fusion risk for image-to-3D |
+| `CafeWalker` | `GEM2-MC-2.png` | take 2 | Wide stance, Meshy-safe. **But the design drifted**: brown hair not black, smiling not tired, collared shirt, brown leather shoes not grey sneakers, folded cloth gone |
+| `CrashDriver` | `GEM2-BOSS1-1.png` | take 1 | Style and leather both right. **Ice spikes protrude past his silhouette** |
+| `CrashDriver` | `GEM2-BOSS1-2.png` | take 2 | **The pick.** Ice lies flat on the shoulder, inside the silhouette |
+| `CleaverBoss` | `GEM2-BOSS2-1.png` | take 1 | **The pick.** Hands empty, invented diamond pin, wave tattoos, no blade |
+| the cleaver | `GEM2-CLEAVER-1.png` | take 1 | **The pick.** Side-on, clean, nothing else in frame |
+
+All in `Art/Refs/gen/gemini2/`, **which git ignores**, with two contact sheets: `TEXT-ONLY-COMPARISON.jpg` (the
+uploaded-reference pass above the text-only pass) and `MC-STANCE-COMPARISON.jpg` (the main character's two takes).
+
+**Three things this pass established, which are the reusable part:**
+
+1. **The driver's frost is fixed, and it took two tries across three tools to learn how.** Describing the
+   *material* gives fur. Describing the *shape* — "sharp angular pale cyan crystals with crisp geometric edges"
+   — gives ice. But take 1 then drew those crystals as spikes **sticking out past his shoulder**, and
+   image-to-3D turns a thin protruding spike into a fused blob or a shard floating off the mesh. The fix was
+   asking for the ice as flat angular plates lying **on the surface** of the jacket, with nothing crossing the
+   silhouette. That rule — *nothing protrudes from the outline* — belongs in every A-pose prompt from now on.
+2. **Never write "reference sheet" in an image prompt.** It produces a multi-view page with labels and colour
+   swatches, and image-to-3D bakes the labels into the mesh as surface detail. Every prompt in
+   `prompts-gemini.md` rules it out by name.
+3. **An edit request costs design fidelity.** Asking for one change to an existing character ("wider legs")
+   re-rolls everything else too — `GEM2-MC-2` silently changed his hair colour, his expression, his shirt and his
+   shoes. For a *costume* change, edit the prompt and draw fresh rather than asking for a tweak.
+
+**Still open:** which `CafeWalker` take to use, and whether the cast gets rebuilt in Meshy from this pass. The
+three rigged models on `main` are still built from the **ComfyUI** pictures. Rebuilding all four is 140 Meshy
+credits and the two-press rig flow again.
 
 ## How these get built
 
@@ -128,21 +200,24 @@ Twelve takes were drawn. The picks, committed next to this file:
 
 ## Hand-off
 
-**For Manny, in Chrome (the one step an agent must not do):** on meshy.ai, upload each picture below to
-**Image to 3D**, press **Retry** until the face and the hands are clean, and download the result. Meshy keeps
-results three days, so download on the day. The website's retries are free; the API's cost credits.
+**Done - 2026-11-12, by Claude in a real browser on M Station.** All four were made on meshy.ai (the website, so
+the free retries still apply), the three people were rigged with **Smart Rig**, and everything was downloaded.
+Settings: High Detail (Meshy 7.1), Texture on, Ultra 2K, texture 2K, License Private, Pose -> A-Pose on for the
+people and off for the prop. 35 credits each; the remesh and the rig were free.
 
-| Upload | Then | Download |
+| Reference | Meshy named it | Result |
 |---|---|---|
-| `Art/Refs/CafeWalker_apose.png` | **Rig** → Smart Rig | rigged GLB |
-| `Art/Refs/CrashDriver_apose.png` | **Rig** → Smart Rig | rigged GLB |
-| `Art/Refs/CleaverBoss_apose.png` | **Rig** → Smart Rig | rigged GLB |
-| `Art/Refs/Cleaver_prop.png` | **no rig** — it is a prop | plain GLB |
+| `Art/Refs/CafeWalker_apose.png` | `Meshy_AI_The_Weary_Apron` | Smart Rig, 69 bones -> `SK_CafeWalker.fbx` |
+| `Art/Refs/CrashDriver_apose.png` | `Meshy_AI_Frostbound_Rider` | Smart Rig, 45 bones -> `SK_CrashDriver.fbx` |
+| `Art/Refs/CleaverBoss_apose.png` | `Meshy_AI_The_Obsidian_Enforcer` | Smart Rig, 83 bones -> `SK_CleaverBoss.fbx` |
+| `Art/Refs/Cleaver_prop.png` | `Meshy_AI_Steel_Butcher_Cleaver` | no rig, it is a prop -> `SM_Cleaver.fbx` |
 
-Smart Rig for the three people (they are humans, not the Quadruped Dog rig). The cleaver is not rigged: it goes on
-a hand socket.
+**If you redo one, rigging is two presses.** The first **Rig** press is only a remesh (Image to 3D returns
+600-950k triangles and rigging refuses over 300k); press Rig again on the remeshed asset for the real rig dialog,
+and use 30K + Quad. Download the **animate-phase** asset, `..._character.glb` - the remeshed one has **no
+skeleton** in either glb or fbx. Both traps are written up in `CLAUDE.md`'s Meshy section.
 
-**Then, on M Station (I can run this):** the three people,
+**Then, on M Station (done 2026-11-12):** the three people,
 
     blender -b --factory-startup --python Art/Blender/meshy_character.py -- <rigged.glb> CafeWalker smart 175
     blender -b --factory-startup --python Art/Blender/meshy_character.py -- <rigged.glb> CrashDriver smart 180
