@@ -22,7 +22,9 @@ go in the table above instead. This list is also what goes in the itch.io form's
 
 - Claude Code (Anthropic) — implementation in Unreal via MCP, and the character design work on M Station
 - Gemini (Google) — art and second opinions
-- Qwen-Image, run locally through ComfyUI on M Station's graphics card — the character reference sheets in
+- Qwen-Image, run locally through ComfyUI on **both** machines' graphics cards (M Station's 3090 since Nov 12;
+  GameStation's RTX 5090 from Nov 13, installed by `tools/install_comfyui.sh` with the same model files so the
+  two draw in the same hand) — the character reference sheets in
   `Art/Refs/` (prompts kept in `docs/prompts.md`, so every picture can be traced to the words that made it).
   Nothing is sent to a service: it runs on our own hardware.
 - Meshy (paid, cloud) — image-to-3D and rigging for the characters. Used from the website, not the API.

@@ -195,12 +195,13 @@ in case playtesting shows we need it. Still not something to build from: only a 
 - **Does the player get Stunt Double in the demo**, or does it end when its boss falls?
 - ~~**Where Freeze Frame is handed over:** only at the driver, or also at the cafe door?~~ **Settled Fri Nov 13,
   2:35 AM Pacific** by the Team Owner's scene: only at the driver, and only by touching him. Both markers are off.
-- **What sets off the explosion.** The Team Owner said "we can play with what sets it off". It is a 1.2 s timer
-  after the power lands, which nothing in the fiction explains. A leaking fuel tank, a spark, the driver's body
-  flickering as the power leaves him - any of these is a small change to `ExplosionDelay` plus an effect.
-- **Is the cafe day job in the demo?** The scene opens with taking orders and a **latte art minigame** before the
-  crash. None of it is built, and it is the only part of beat 1 that is not a few hours' work. If it is cut, the
-  demo opens on the crash; if it is kept, it needs a design and a day it does not have.
+- **What sets off the explosion.** The Team Owner said "we can play with what sets it off". It is now a **2.0 s**
+  timer after the power lands (he asked for "a couple seconds"), which nothing in the fiction still explains. A
+  leaking fuel tank, a spark, the driver's body flickering as the power leaves him - any of these is an effect
+  plus a trigger, on top of a delay that is already the right length.
+- ~~**Is the cafe day job in the demo?**~~ **Settled Fri Nov 13, 2:55 AM Pacific**, as an ordering rather than a
+  cut: the day job and the **latte art minigame** get built *after* the beats up to and including the Splice boss
+  play through with their art in. Until that bar is met the demo opens on the crash. See Decisions.
 - **How long and how hard the game is at default numbers.** A scripted run takes 25 to 27 s against the 3 to 5
   minutes we want, and the fights are easy. Only people playing it can say what to change.
 
@@ -219,6 +220,32 @@ They are beats 5 and 4 of the demo now (Decisions), so they are off this list.
 _(nothing yet)_
 
 ## Decisions
+
+- **2026-11-13 (2:55 AM Pacific): The explosion opens a bullet-time window; the player presses Freeze Frame
+  themselves** (Manny, the Team Owner). The explosion goes off **2 seconds** after the power is picked up (was
+  1.2) and drops the world into **bullet time at 0.25 speed for 3.5 real seconds**, instead of freezing time
+  *for* the player. Inside that window **E** activates Freeze Frame normally and the ten-second freeze takes
+  over. "this way they are given a chance to learn how to use the power" - the old auto-freeze taught nothing,
+  because the player never pressed the button that beat 1 exists to teach. Miss the window and the shrapnel
+  finishes its flight; the coworker dies once and the level continues. Built and verified in Play-In-Editor
+  (`BP_Player.PlayerBulletTimeStart/End/TickBulletTime`, `BP_Coworker.BulletTimeOnExplosion`), not yet by a
+  person.
+- **2026-11-13 (2:55 AM Pacific): Freeze Frame counts down out loud, like a film set** (Manny, the Team
+  Owner). At **5 seconds remaining** a large number appears on the HUD and a 1 kHz pop plays on each whole
+  second - 5, 4, 3, 2, 1 - with a clapperboard "Action" cue when time resumes. This is the first sound in the
+  game: `SFX_CountdownBeep`, `SFX_CountdownAction` and `SFX_BulletTime`, synthesized by `tools/make_sfx.py`
+  from the standard library, so nothing needs crediting. **Nobody has heard them yet.**
+- **2026-11-13 (2:55 AM Pacific): The latte art minigame waits until the Splice boss is beatable** (Manny, the
+  Team Owner). It is no longer an open keep-or-cut question - it is sequenced: "We can start working on the
+  latte art minigame after we complete the sequences up until we defeat the Splice boss and add the assets
+  into the game." So the queue is beats 1-3 playable with their art in, **then** the minigame. It stays under
+  Stretch until that bar is met.
+- **2026-11-13 (2:55 AM Pacific): GameStation draws reference art too** (Manny, the Team Owner). "We should
+  have GameStation create more assets if we aren't making any here. We should also install ComfyUI here in
+  case we need to start generating here so the art stays consistent." ComfyUI + the same **Qwen-Image** models
+  M Station uses are now installed on GameStation's RTX 5090 (`tools/install_comfyui.sh`), pinned to the exact
+  filenames `tools/gen_images.py` asks for so the two machines draw in the same hand. Verified: ComfyUI 0.45.0
+  on torch cu128, all four models present, server answers on :8188.
 
 - **2026-11-13 (1:15 AM Pacific): We build in the order the game is played** (Manny, the Team Owner). When
   there is a choice of what to do next, the earliest unfinished beat wins, not the most interesting one: "if we

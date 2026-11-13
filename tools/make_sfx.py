@@ -204,5 +204,42 @@ def make_endless(folder):
                 for k, n in enumerate((67, 71, 74, 79))]))
 
 
+def make_jumpcut(folder):
+    """Jump Cut's own sounds. Beat 1's quick time event: the world drops into bullet time, the
+    player has to hit Freeze Frame, and the last five seconds of the freeze are counted down the
+    way a film set counts down to "Action" - a 1 kHz pop per second, then the clapper.
+
+    Synthesized here from sine/square/noise like everything else in this file, so they are ours
+    and need no CREDITS.md entry.
+
+        python tools/make_sfx.py <folder> jumpcut
+    """
+    # SFX_CountdownBeep - the Academy leader's 1 kHz "pop", one per remaining second.
+    # Deliberately dry and short so five of them in a row read as a countdown, not as music.
+    write(os.path.join(folder, "SFX_CountdownBeep.wav"),
+          tone(lambda x: 1000.0, 0.11, math.sin, 0.55, attack=0.001, decay_pow=2.2))
+
+    # SFX_CountdownAction - time is up and the world moves again. A clapperboard crack
+    # (short bright noise burst) followed by a rising two-tone, so it reads as "go", not "fail".
+    clap = noise(0.07, 0.75, lowpass=0.9, decay_pow=4.0)
+    call = seq(tone(lambda x: 1245.0, 0.10, math.sin, 0.42, attack=0.001, decay_pow=2.0),
+               tone(lambda x: 1660.0, 0.34, math.sin, 0.42, attack=0.002, decay_pow=1.6))
+    write(os.path.join(folder, "SFX_CountdownAction.wav"), seq(clap, call))
+
+    # SFX_BulletTime - the explosion drops the world into slow motion. A tone bending DOWN a
+    # fifth plus a noise swell: the standard "everything just slowed" cue, falling rather than
+    # rising so it cannot be mistaken for the countdown's pops.
+    swoop = mix(tone(lambda x: 880.0 * (1.0 - 0.42 * x), 0.75, math.sin, 0.30, attack=0.004, decay_pow=1.2),
+                tone(lambda x: 586.0 * (1.0 - 0.42 * x), 0.75, tri, 0.18, attack=0.004, decay_pow=1.2))
+    write(os.path.join(folder, "SFX_BulletTime.wav"), mix(swoop, noise(0.8, 0.22, 0.05, 1.4)))
+
+
 if __name__ == "__main__":
-    make_all(sys.argv[1] if len(sys.argv) > 1 else "sfx")
+    folder = sys.argv[1] if len(sys.argv) > 1 else "sfx"
+    which = sys.argv[2] if len(sys.argv) > 2 else "all"
+    os.makedirs(folder, exist_ok=True)
+    if which == "jumpcut":
+        make_jumpcut(folder)
+    else:
+        make_all(folder)
+        make_jumpcut(folder)

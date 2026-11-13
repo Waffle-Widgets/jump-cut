@@ -276,11 +276,34 @@ there is exactly one live `BP_Player_C` in Play mode.
 
 `PlayerTickInput` (player controller 0, `IsInputKeyDown`):
 1. `AttackDownNow` = LeftMouseButton or Gamepad_FaceButton_Left. `RewindDownNow` = Q or Gamepad_LeftShoulder.
-   `FreezeDownNow` = E or Gamepad_RightShoulder.
+   `FreezeDownNow` = E or Gamepad_RightShoulder. `InteractDownNow` = **F** or Gamepad_FaceButton_Top.
 2. If `AttackDownNow` and not `AttackWasDown` and `PunchIntervalLeft` <= 0: `PunchIntervalLeft` = `PunchInterval`, `PlayerPunch`.
 3. If `RewindDownNow` and not `RewindWasDown`: `RewindStart`.
 4. If `FreezeDownNow` and not `FreezeWasDown`: `FreezeFrameStart`.
-5. Copy each `...DownNow` into its `...WasDown`.
+5. If `InteractDownNow` and not `InteractWasDown`: `PlayerInteract`.
+6. Copy each `...DownNow` into its `...WasDown`.
+
+There are **four** controls, not three. Nothing drives them through an Input Action asset - there is no
+`IA_Punch` and none is needed; it is all polled here with edge detection. A fifth key, **R**, restarts and is
+polled by the game mode (`JumpCutFlowStep`), not here.
+
+**Bullet time and the Freeze Frame countdown** (added Fri Nov 13 for beat 1's quick time event):
+
+| Function | Does |
+| --- | --- |
+| `PlayerBulletTimeStart` | If not already in bullet time: `BulletTimeActive` = true, `BulletTimeRealLeft` = `BulletTimeRealDuration` (3.5), `SetGlobalTimeDilation(max(0.01, BulletTimeDilation))` (0.25), plays `SfxBulletTime` |
+| `PlayerBulletTimeEnd` | Clears the flag and the clock, `SetGlobalTimeDilation(1.0)` |
+| `PlayerTickBulletTime` | Counts `BulletTimeRealLeft` down in **real** seconds - `DeltaSeconds / GetGlobalTimeDilation()`, because `DeltaSeconds` is already dilated - and ends bullet time when it runs out **or** when `PlayerCanAct` goes false (downed, lost, won), so a slowed world can never be left behind |
+| `PlayerTickFreezeCountdown` | While the freeze is live and `FreezeFrameTimeLeft` <= `FreezeCountdownAt` (5), takes `Ceil` of the time left and plays `SfxCountdownBeep` each time that whole number changes: 5, 4, 3, 2, 1. Resets `FreezeCountdownLast` to 0 whenever the window is not open |
+
+`FreezeFrameStart` additionally calls `PlayerBulletTimeEnd` and zeroes `FreezeCountdownLast`, so pressing **E**
+inside the window hands straight over from slow motion to stopped time. The **"Action"** cue
+(`SfxCountdownAction`) is fired from `PlayerFreezeFrameEnd`, **not** from the countdown: by the time
+`FreezeFrameTimeLeft` reaches 0 the power is already inactive, so a tick-based countdown can never announce its
+own zero. It is inside the existing not-lost-and-not-won branch, so it does not play over a death.
+
+Both ticks are called from `EventTick`: `PlayerTickBulletTime` early (before input, so the dilation the input
+sees is current) and `PlayerTickFreezeCountdown` straight after `PlayerTickFreezeFrame`.
 
 `PlayerPunch` (does **not** check `PunchInterval`, so a checker can call it three times in one script):
 1. `bind` `PlayerCanAct`; if false, return.
