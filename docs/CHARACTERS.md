@@ -262,3 +262,61 @@ Note the two scripts write to **different places**: `meshy_character.py` to
 animations together. Do **not** use `SkeletalMeshTools.import_file` onto an existing skeleton; `CLAUDE.md` records
 that going wrong twice. Then point the material slot at the character's `MI_`, place it next to a plain copy, and
 look at it **from the game camera** before calling it good.
+
+
+## Colour audit — Thu Nov 12 evening
+
+Run `python tools/color_audit.py`. It renders each finished model's **baked base colour unlit** (front and back),
+takes the skin tone from the middle of the face, and paints every pixel within dE76 14 of it — green where skin
+belongs, **red anywhere else**. Sheet: [`../docs/media/COLOUR-AUDIT.jpg`](media/COLOUR-AUDIT.jpg).
+
+Unlit matters: the contact sheets in `meshy_character.py` are lit and 300 px, so they show you the light rig, not
+the texture. The **back** matters just as much: every reference sheet we drew shows the front only, so the back of
+every model is invented by image-to-3D and is where a colour is most likely to go wrong.
+
+### What it measured
+
+| Model | Hair | Skin | Main garment | Legs | Feet | Skin colour outside head/hands |
+|---|---|---|---|---|---|---|
+| `CafeWalker` | `#0C0D0D` black | `#FDD9BF` | apron `#445345` green, shirt `#F7F2E0` cream | `#353635` charcoal | `#9D978A` grey | **6.13% front / 3.94% back** |
+| `CrashDriver` | helmet `#A1AAB0` | `#D6A993` | jacket brown, frost pale cyan on one shoulder | `#383838` | `#423F3C` | 0.00% / 0.00% |
+| `CleaverBoss` | `#8D8C8C` grey | `#E3B5A4` | suit `#313135` charcoal, shirt `#611339` magenta | `#303136` | `#232326` | 0.18% / 0.00% |
+| `CleaverBossGemRef` | `#C5C7C7` grey | `#FCD9C8` | suit `#5C6167` mid grey, shirt `#AC3B75` magenta | `#5C6167` | `#2D3034` | 0.14% / 0.00% |
+| `CleaverBossGemText` | `#CECECA` grey | `#FDDFCB` | suit `#41444A`, shirt `#8E345E` magenta | `#41444A` | `#1E2125` | 0.28% / 0.00% |
+| `SM_Cleaver` | — | — | blade `#9CA5AC` steel (86%), handle `#3C201D` wood (14%) | — | — | — |
+
+**No model has skin-coloured hair, and no model has skin where skin should not be.** The thing we were checking
+for is absent on all six. Every hair sample is far from its own skin tone (`CafeWalker` dE 87.7, `CleaverBoss`
+dE 27.8), and the crash driver scores a literal 0.00% — the only skin on him is his face.
+
+**All three mob bosses' shirts are magenta**, hue 329°–333°, inside the 290°–335° the palette rule wants, so
+Splice's colour is safe. Measure a garment from its *saturated* pixels, not from a shaded fold: the first pass
+sampled `CleaverBoss`'s collar in shadow and read 345° (crimson), which would have been a false alarm.
+
+### The one real finding: `CafeWalker`'s shirt and his face are the same colour
+
+His cream shirt `#F7F2E0` sits **dE 14.4** from his face skin `#FDD9BF` — close enough that it fills 6% of his
+front with "skin" in the map. Two things make this less alarming and one makes it worse:
+
+- Up close it is fine. The boundary that actually touches is **rolled sleeve against bare forearm**, and that is
+  dE **26.5** — clearly two colours. The cel-shader's dark outline separates them further.
+- At game-camera size it is not fine. Rendered at 64 px tall, his head, shirt and hands merge into one pale mass
+  and you cannot tell which way he is facing. The apron and trousers still read, which is what `Silhouette` above
+  promises — but we lose the head.
+
+**Darkening the shirt makes it worse, which is the non-obvious part.** Measured: dropping it 22% to `#C0BDB4`
+raises separation from the *face* to 19.9 but drops separation from the *forearm* to 15.3, because the shirt moves
+down through the skin's own lightness. Options, with numbers:
+
+| Change | shirt→face | shirt→forearm |
+|---|---|---|
+| keep `#F7F2E0` as-is | 14.4 | 26.5 |
+| shirt darkened 22% `#C0BDB4` | 19.9 | **15.3 (worse)** |
+| shirt darkened 45% `#8A8781` | 36.5 | 22.0 — but no longer "cream" |
+| **skin deepened 10% `#E4BFA4`, shirt untouched** | **21.0** | 26.5 |
+
+A grid search over every pale colour (value > 0.76, saturation < 0.18) found that the only ones clearly separated
+from his skin are **blue, violet or lilac** — and the palette rule at the top of this file reserves pale cyan for
+Freeze Frame and magenta/violet for Splice, neither of which he may wear. So the cast's own colour rules box this
+in: **deepening his skin is the only move that separates him without stealing a power colour.** Nobody has decided
+this; it is a design call, not a bug fix.

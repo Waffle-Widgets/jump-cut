@@ -90,6 +90,14 @@ _(nothing yet)_
 
 ## Decisions
 
+- **2026-11-12: The ComfyUI models are the ones we build on** (Manny). Of everything generated, `SK_CafeWalker`,
+  `SK_CrashDriver`, `SK_CleaverBoss` and `SM_Cleaver` - all made from the local ComfyUI/Qwen reference sheets -
+  came out best, so `SK_CleaverBoss` is the canonical second boss and the two Gemini-sourced bosses
+  (`CleaverBossGemRef`, `CleaverBossGemText`) stay in the repo as alternates. This supersedes the earlier
+  preference for drawing the cast in Gemini; the cel-shaded anime look is unchanged and still the style.
+- **2026-11-12: GameStation's RTX 5090 is the machine for image generation when speed matters** (Manny).
+  M Station's 3090 runs Qwen-Image at about 2 minutes a picture; the 5090 is there when a batch needs to be
+  faster. `tools/gen_images.py` is machine-independent, so this is a choice of where to run it, not a code change.
 - **2026-11-12: The first boss gives Freeze Frame**, not Rewind. He is the driver who crashes through the cafe
   wall in the opening; he still does not fight (Manny).
 - **2026-11-12: The second boss gives Splice and is a Japanese mob boss with a cleaver** (Manny).

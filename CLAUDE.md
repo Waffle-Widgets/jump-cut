@@ -332,6 +332,13 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   legs and two arms. If the first Rig press does not offer the remesh, use the mesh-ops button in the viewer bottom
   bar -> **Remesh** -> 30K + Quad; that standalone remesh is **also 0 credits**. The script now prints
   `MESHYCHAR-BAD-RIG` when a "smart" rig has no leg chains, so this cannot ship silently again.
+- **Look at the colours before calling a character done: `python tools/color_audit.py`.** Image to 3D bakes one
+  texture for the whole body and nothing in the pipeline knows a pixel is "hair" or "sleeve", so a model can come
+  back with skin-coloured hair, or a shirt the same colour as the arm inside it, and every number still reads
+  green. The audit renders the baked base colour **unlit** (a lit contact sheet makes you judge the light rig
+  instead of the texture), takes the skin tone from the middle of the face, and paints every pixel within dE76 14
+  of it: green on the head and hands where skin belongs, **red everywhere else**. Run it on the **back** too - the
+  reference picture only ever shows the front, so the back is the half the model invented.
 - **Only the animate-phase asset carries the skeleton.** Downloading the remeshed model gives a bare mesh in
   **both** glb and fbx - no armature, no vertex groups - and `meshy_character.py` then dies with `IndexError` on
   `[o for o in sc.objects if o.type == 'ARMATURE'][0]`. The rigged one is the running-man filter in the asset
