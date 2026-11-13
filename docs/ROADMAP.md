@@ -113,6 +113,33 @@ person.**
 | Sat Nov 14 | Playtests by people and iterating on what they find; model swaps; art, sound, juice (the flashy combat effects); footage |
 | Sun Nov 15 | Bug fixes and submission only |
 
+### Tonight: the work moves to M Station (Fri Nov 13, 4:20 AM Pacific)
+
+**Pull first, with Unreal closed.** `main` is `e12ab52` and `playtest` matches it exactly. The pull moves
+`.uasset` binaries, so close the editor before switching or pulling - that is the trap this project has already
+hit. **No LFS locks are held by anyone**, so nothing is blocked.
+
+**What M Station may not do:** save Unreal files. [`CLAUDE.md`](../CLAUDE.md) keeps one builder, and that is
+GameStation. M Station's lane is art, prompts and docs.
+
+**What only M Station can do:** reach Meshy and Gemini in a signed-in browser. GameStation now has ComfyUI and
+the same Qwen-Image models, but no signed-in browser - and the decision above makes **Meshy the model path**, so
+generating characters belongs on M Station.
+
+**The queue, in play order** (the work-order rule in Decisions: the earliest unfinished beat wins):
+
+1. **The coworker, `CafeCoworker`** - beat 1. She is designed in [`CHARACTERS.md`](CHARACTERS.md) with prompts
+   ready (`GEM2-COWORKER`, and `COWORKER-APOSE` for the ComfyUI path), **nothing has been drawn**, and in Unreal
+   she is still a box. She is the only character in the demo's opening beat who has no face. ~35 credits.
+2. **The Director** - beat 6. No design, no colour, no prompt: the write-up has to come before any picture. He
+   is the one genuinely missing model in the cast.
+3. **Not boss 3.** The Stunt Double is conditional again (Decisions, above). His fight is built and plays on a
+   mannequin; no credits go on his art until beats 1 to 4 play through.
+
+**What stays on GameStation:** putting `CafeWalker` on `BP_Player` with `ABP_Unarmed` retargeted onto his
+skeleton (the player and the goons are still Epic's mannequin, and that is the most visible thing left in a
+judging video), building Splice for beat 4, and laying out beats 4 to 6.
+
 ### The demo: six story beats (Justin, Nov 12, late evening)
 
 The jam entry is **a demo, not the completed game**. It ends after the last boss below.
