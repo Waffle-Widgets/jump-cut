@@ -86,8 +86,11 @@ in case playtesting shows we need it. Still not something to build from: only a 
 - Camera: third person behind the player (the template's) unless we choose otherwise.
 - **Which later boss gives Rewind**, and where it sits in the ladder (Freeze Frame -> Splice -> Stunt Double ->
   Director's Cut today). The small Rewind (only the player slides back, health restored) is what is built and parked.
-- **What the plaza boss is now.** The pitch's first fighting boss is the Splice mob boss, but the built plaza boss
-  (`BP_BossFreeze`) is a plain bruiser with his freeze switched off. Keep him, turn him into the mob boss, or drop him?
+- **Which power the plaza boss hands over.** He is the Splice mob boss now (Decisions below), but his
+  `BossHandOverPower` still calls `PlayerGrantFreezeFrame`, and the Blueprint is still called `BP_BossFreeze`
+  with `BossUsesFreeze` switched off. Does the mob boss give **Splice** (and Freeze Frame move to the crash
+  driver), or does he hand over Freeze Frame anyway and Splice wait for a later boss? Nothing in the build
+  changes until this is answered: today he looks like the mob boss and gives Freeze Frame.
 - **Where Freeze Frame is handed over:** only at the driver, or also at the cafe door (as built, so nobody leaves
   the cafe without it)?
 - **How long and how hard the game is at default numbers.** A scripted run takes 25 to 27 s against the 3 to 5
@@ -108,6 +111,12 @@ _(nothing yet)_
 
 ## Decisions
 
+- **2026-11-12: The plaza boss is the Splice mob boss** (Manny, the Team Owner, answering "Mob boss"). The
+  built plaza boss is kept and turned into him rather than dropped, so every number the playtest settled -
+  240 health, 15 damage, 380 move speed, his capsule and his warning sign - survives. `BP_BossFreeze` now
+  wears `SK_CleaverBoss` with `MI_CleaverBoss`, plays Unreal's mannequin idle and walk retargeted onto his own
+  skeleton, and carries `SM_Cleaver` in a `cleaver_r` socket on his right hand. Which power he hands over is
+  still open, above.
 - **2026-11-12: The ComfyUI models are the ones we build on** (Manny). Of everything generated, `SK_CafeWalker`,
   `SK_CrashDriver`, `SK_CleaverBoss` and `SM_Cleaver` - all made from the local ComfyUI/Qwen reference sheets -
   came out best, so `SK_CleaverBoss` is the canonical second boss and the two Gemini-sourced bosses

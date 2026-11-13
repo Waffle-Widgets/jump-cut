@@ -353,3 +353,40 @@ from his skin are **blue, violet or lilac** — and the palette rule at the top 
 Freeze Frame and magenta/violet for Splice, neither of which he may wear. So the cast's own colour rules box this
 in: **deepening his skin is the only move that separates him without stealing a power colour.** Nobody has decided
 this; it is a design call, not a bug fix.
+
+---
+
+## CleaverBoss is the plaza boss (Thu Nov 12, evening, GameStation)
+
+The Team Owner settled the open question "what is the plaza boss now" with one word: **mob boss**. The built boss
+was kept and dressed as him rather than replaced, so nothing the playtest settled was thrown away.
+
+| Part | What it is |
+|---|---|
+| mesh | `SK_CleaverBoss` on `BP_BossFreeze`'s Character mesh, scale **1.2921**, offset `z = -115`, yaw **270** |
+| why that scale | the capsule is 115 cm half-height; the model is 178.0 cm, so 230/178 fills the capsule exactly - the same silhouette size the mannequin boss had at 1.3 |
+| material | `MI_CleaverBoss` (our `M_AnimeChar` instance), one slot |
+| animation | `BS_Idle_Walk_Run_CB`, played in **single-node** mode and driven each think by `BossDriveAnim` |
+| cleaver | `SM_Cleaver` as a component, attached in the Construction Script to socket **`cleaver_r`** on bone `Bone_019` |
+
+**The skeleton has no names.** Meshy's Smart Rig calls every bone `Bone_000`...`Bone_082`, so Unreal's automatic
+IK-rig characterisation finds **nothing** - it returns no root and no chains. The retarget was done by naming the
+chains by hand, read off the rig in Blender. Right is `-X` in that file and left is `+X`, which is how the sides
+were told apart; the toes point `-Y`, which is what fixes the handedness:
+
+| Chain | Bones | | Chain | Bones |
+|---|---|---|---|---|
+| retarget root | `Bone_001` (pelvis) | | `RightArm` | `Bone_022` -> `Bone_019` |
+| `Spine` | `Bone_005` -> `Bone_002` | | `LeftClavicle` | `Bone_028` |
+| `Neck` | `Bone_018` | | `LeftArm` | `Bone_027` -> `Bone_024` |
+| `Head` | `Bone_017` | | `RightLeg` | `Bone_010` -> `Bone_006` |
+| `RightClavicle` | `Bone_023` | | `LeftLeg` | `Bone_015` -> `Bone_011` |
+
+The right hand is `Bone_019` - the wrist with **five** finger chains hanging off it, on the `-X` side. That is
+where the socket went. Its transform was solved, not eyeballed: the cleaver's handle sits at mesh-local
+`(15, 0, 7.6)` (the `+X` end is the wooden grip, 4.5 cm tall; the `-X` end is the full-height blade), so the
+socket is `(-16.437, -1.978, 2.945)` with rotation `(-31.84, -10.18, 39.68)` - the transform that puts that grip
+point in the fist with the blade pointing forward and down.
+
+**The same chain map works for any Meshy character we make**, because `Art/Blender/meshy_character.py` numbers
+bones the same way every time. `CafeWalker` and `CrashDriver` are not wired into Blueprints yet.
