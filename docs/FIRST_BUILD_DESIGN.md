@@ -499,8 +499,13 @@ Overrides (events in his EventGraph):
 **`BossStartFreezeWindup`** (its own function so a checker can call it): `BossState` = 1, `BossFreezeWindupLeft` =
 `BossFreezeWindup`, show `FreezeRing`, `EnemyIsWindingUp` false, `EnemyShowWarning false`.
 
-**`EnemyDefeatedHook`**: hide `FreezeRing`; `PlayerRef.PlayerFreezeBreak`; `PlayerRef.PlayerGrantFreezeFrame`; if
-`BossExitGate` is valid: `BossExitGate.PlazaGateOpenForGood`. (The base then destroys him after the linger.)
+**`EnemyDefeatedHook`**: hide `FreezeRing`; if `BossExitGate` is valid `BossExitGate.PlazaGateOpenForGood`; then
+`BossHandOverPower` either way. (The base then destroys him after the linger.)
+
+**`BossHandOverPower`** (Nov 12, the boss ladder decision): if `PlayerRef` is valid, `PlayerRef.PlayerFreezeBreak`
+then `PlayerRef.PlayerGrantSplice`. It used to call `PlayerGrantFreezeFrame`; the mob boss is boss 2 and hands over
+**Splice**, while Freeze Frame comes from boss 1, the car crash, through the two cafe markers. `HasSplice` gates
+nothing yet - the Splice ability is not built and the HUD has no Splice box.
 
 **`EnemyResetHook`**: `BossState` 0, hide `FreezeRing`, `BossFreezeCooldownLeft` = `BossFirstFreezeDelay`, other
 countdowns 0.
@@ -513,6 +518,7 @@ countdowns 0.
 | `PlayerFreezeBreak` | `IsFrozenByBoss` false, `FrozenTimeLeft` 0 |
 | `PlayerTickBossFreeze(DeltaSeconds)` | if `IsFrozenByBoss`: lower `FrozenTimeLeft`; at 0 `PlayerFreezeBreak` |
 | `PlayerGrantFreezeFrame` | `HasFreezeFrame` true |
+| `PlayerGrantSplice` | `HasSplice` true (nothing reads it yet) |
 
 What "frozen" means for the player: `PlayerRefreshMoveLock` disables movement (he hangs mid-air if he was jumping),
 `PlayerCanAct` is false so punches and Freeze Frame do nothing, the HUD shows `FrozenTint`, and hits still land.
@@ -704,8 +710,8 @@ E1 also fills `PlayerRespawnAtCheckpoint` on `BP_Player` (section 6, step 1) and
   (A single circle round the driver can't reach the door without also covering the start point.) The plaza's old
   `Marker_FreezeFrameGiven` is now **`Marker_BossDefeated`**. Nothing looks markers up by label.
 - **Boss:** `BP_BossFreeze.BossUsesFreeze` (default false); `BossThinkFight` only starts the freeze wind-up when it is
-  true. `BossStartFreezeWindup` itself still works for checkers. His defeat still opens the exit gate (and grants
-  Freeze Frame again, harmless).
+  true. `BossStartFreezeWindup` itself still works for checkers. His defeat still opens the exit gate (and since the
+  Nov 12 ladder decision grants **Splice**, not Freeze Frame).
 - **Gate:** `GatePushPlayerInside` clears `GateGuardingClose` at slab height `<= 0.01` (it rested at 0.000091).
 - **E1 extras:** game mode variables `RestartPressedNow` (stored before `RestartWasDown` is overwritten) and helper
   functions `JumpCutFlowStep`, `JumpCutTitleStep`, `JumpCutPlayStep`; the HUD is created Collapsed and shown by
@@ -723,7 +729,7 @@ E1 also fills `PlayerRespawnAtCheckpoint` on `BP_Player` (section 6, step 1) and
 |---|---|---|---|
 | `BP_Player` | every `BP_EnemyBase` | `GetAllActorsOfClass` | `EnemyTakeHit` (punch), `EnemySetTimeStopped` (Freeze Frame, lose screen) |
 | `BP_EnemyBase` and children | `BP_Player` | `PlayerRef` | `PlayerTakeHit`, `PlayerKnockFrom`; reads its location |
-| `BP_BossFreeze` | `BP_Player` | `PlayerRef` | `PlayerFreezeApply`; reads `IsFrozenByBoss`; on defeat `PlayerFreezeBreak`, `PlayerGrantFreezeFrame` |
+| `BP_BossFreeze` | `BP_Player` | `PlayerRef` | `PlayerFreezeApply`; reads `IsFrozenByBoss`; on defeat `PlayerFreezeBreak`, `PlayerGrantSplice` |
 | `BP_BossFreeze` | exit `BP_PlazaGate` | `BossExitGate` (set in the level) | `PlazaGateOpenForGood` on defeat |
 | entry `BP_PlazaGate` | boss | `GateEnemyToWake` (set in the level) | `EnemyWake` when it shuts |
 | `BP_Checkpoint` | `BP_Player` | `PlayerRef` | `PlayerStoreCheckpoint` |

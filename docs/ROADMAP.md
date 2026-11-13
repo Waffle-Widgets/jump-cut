@@ -97,13 +97,9 @@ in case playtesting shows we need it. Still not something to build from: only a 
 
 - The Director's real name and the final names of the powers.
 - Camera: third person behind the player (the template's) unless we choose otherwise.
-- **Which later boss gives Rewind**, and where it sits in the ladder (Freeze Frame -> Splice -> Stunt Double ->
-  Director's Cut today). The small Rewind (only the player slides back, health restored) is what is built and parked.
-- **Which power the plaza boss hands over.** He is the Splice mob boss now (Decisions below), but his
-  `BossHandOverPower` still calls `PlayerGrantFreezeFrame`, and the Blueprint is still called `BP_BossFreeze`
-  with `BossUsesFreeze` switched off. Does the mob boss give **Splice** (and Freeze Frame move to the crash
-  driver), or does he hand over Freeze Frame anyway and Splice wait for a later boss? Nothing in the build
-  changes until this is answered: today he looks like the mob boss and gives Freeze Frame.
+- **Which later boss gives Rewind.** The ladder itself is now settled (Decisions below): Freeze Frame -> Splice ->
+  Stunt Double -> Director's Cut. Rewind is the one power with no boss. The small Rewind (only the player slides
+  back, health restored) is what is built and parked.
 - **Where Freeze Frame is handed over:** only at the driver, or also at the cafe door (as built, so nobody leaves
   the cafe without it)?
 - **How long and how hard the game is at default numbers.** A scripted run takes 25 to 27 s against the 3 to 5
@@ -124,6 +120,17 @@ _(nothing yet)_
 
 ## Decisions
 
+- **2026-11-12: The boss ladder is settled - Freeze Frame, then Splice, then Stunt Double** (Manny, the Team
+  Owner). **Boss 1 is the car crash** through the cafe wall and it gives **Freeze Frame**. **Boss 2 is the mob
+  boss with the cleaver** and he gives **Splice**. **Boss 3, only if there is time**, gives **Stunt Double** -
+  it stays at number 2 on the cut list, so it is still the second thing dropped if we fall behind. Built the
+  same evening on `playtest`: `BP_Player` gained a `HasSplice` flag and a `PlayerGrantSplice` function, and
+  `BP_BossFreeze.BossHandOverPower` now calls `PlayerGrantSplice` where it used to call
+  `PlayerGrantFreezeFrame`. Freeze Frame is not lost by that change: it is already granted inside the cafe by
+  two `BP_SceneMarker`s - the driver at (-300, 330) and the cafe door at (560, 0), both confirmed in
+  `Lvl_JumpCut` with `MarkerGrantsFreezeFrame` true - so nobody can reach the plaza without it. **`HasSplice`
+  gates nothing yet**: the Splice ability itself is not built, so today the hand-over sets a flag and the HUD
+  does not show it. The Blueprint is still named `BP_BossFreeze` and still has `BossUsesFreeze` false.
 - **2026-11-12: The cafe minigame is a stretch goal, not a Friday feature** (Manny, the Team Owner). Taking
   orders and pouring latte art in the cafe before the crash, to be built "if there is time left over". It sits
   under Stretch above, below everything in Open, and nobody starts it until the critical path is done.
@@ -131,8 +138,8 @@ _(nothing yet)_
   built plaza boss is kept and turned into him rather than dropped, so every number the playtest settled -
   240 health, 15 damage, 380 move speed, his capsule and his warning sign - survives. `BP_BossFreeze` now
   wears `SK_CleaverBoss` with `MI_CleaverBoss`, plays Unreal's mannequin idle and walk retargeted onto his own
-  skeleton, and carries `SM_Cleaver` in a `cleaver_r` socket on his right hand. Which power he hands over is
-  still open, above.
+  skeleton, and carries `SM_Cleaver` in a `cleaver_r` socket on his right hand. Which power he hands over was
+  settled the same evening - Splice, see the entry above.
 - **2026-11-12: The ComfyUI models are the ones we build on** (Manny). Of everything generated, `SK_CafeWalker`,
   `SK_CrashDriver`, `SK_CleaverBoss` and `SM_Cleaver` - all made from the local ComfyUI/Qwen reference sheets -
   came out best, so `SK_CleaverBoss` is the canonical second boss and the two Gemini-sourced bosses
