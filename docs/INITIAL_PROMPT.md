@@ -9,6 +9,14 @@ later boss (`docs/ROADMAP.md`, Decisions), so the powers table and the "Rewind i
 superseded by those Decisions. The run's result is in `docs/FIRST_BUILD_LEDGER.md`, and its audit in
 `docs/FIRST_BUILD_AUDIT.md`.
 
+**Later status (Nov 13, evening): the beat-5 fight was settled, so row 3's boss column below is superseded too.**
+The Stunt Double does **not** make a double of *you* plus decoys. He makes copies of **himself** that dive into the
+path of an attack, and he can tag one in to fight for him (the Team Owner, Nov 13 — `docs/ROADMAP.md`, Decisions).
+That changed the counter: **Freeze Frame** is what lets a hit land, because a frozen double cannot dive. Splice
+still has a job in the fight, but a different one — it gets the player **past the attack stand-in** to reach the
+boss. So "Counter: Splice" in the table below is half-true at best, and "makes a double of you" is wrong. The live
+version is `docs/CHARACTERS.md` and `docs/PITCH.md`.
+
 **Earlier status: draft, not agreed (Nov 12).** Written from Justin's answers that morning. It has not been run, and it
 must not be run yet: the scope it builds — one large city, about 30 minutes — is still under **Waiting for a yes**
 in [`docs/ROADMAP.md`](ROADMAP.md), which says in its own header *"Never build from these as if they were agreed"*.
