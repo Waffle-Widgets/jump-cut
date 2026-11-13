@@ -174,3 +174,26 @@ From B2 / C1d (`WBP_HUD`, the game mode frame, the gate fix; graphs `tools/b2_gr
   (`Default__BP_Player_C`) in memory with `ObjectTools.set_properties` before `StartPIE`, and set it back after
   (never save `BP_Player` for it). Health can be refilled with a negative `PlayerTakeHit(h - 100)`.
 - An awake boss kills an idle test player between scripted runs; send him home (`EnemyResetToStart`) at the end of each run.
+
+From G1 / E1 (design change, screens and restart; graphs `tools/e1_graphs.py`, editor steps `JumpCut/Saved/e1_editor.py`,
+Play-mode scenarios `JumpCut/Saved/e1_pie.py`):
+- **A component added to a Blueprint reaches placed copies blank.** `BP_SceneMarker`'s new `GiftMesh` had no mesh, no
+  material, scale 1, collision on (!) on every marker placed before it; only a newly spawned one was right. Fix per
+  instance in Python: `c.modify()`, set it, `retransform(actor)`, then **fetch the component again**: the
+  re-run construction replaces it (the old reference prints `TRASH_StaticMeshComponent_0`) and keeps only some of
+  what you set (mesh, material and location stuck; `relative_scale3d` via `set_editor_property`, visibility and
+  collision didn't until set with `set_relative_scale3d`, `set_visibility`, `set_collision_enabled` in a second pass).
+  Check every placed copy in Play mode (`e1_probe.py`).
+- **Duplicate-graph trap again** on `BossThinkFight` (an `if` with an `else`): 17 -> 35 nodes. Count every write.
+- **A collapsed widget doesn't tick.** The HUD, kept Collapsed on the title, showed its designer defaults (both power
+  icons) on its first visible frame. Make the designer defaults the "off" state.
+- `Game|OpenLevel(byName)` needs `(Utilities|String|StringToName (Game|GetCurrentLevelName :bRemovePrefixString true))`.
+  `Input|SetInputModeGameOnly :PlayerController pc`; `Pawn|SetControlRotation :self pc :NewRotation r`.
+- `ObjectTools.set_properties` on a class default: `/Game/.../BP_X.Default__BP_X_C` (NOT `BP_X.BP_X.Default__...`).
+- Widget slot: `get_properties(widget, ['slot'])` returns the `CanvasPanelSlot` ref to set `layoutData` / `bAutoSize` on.
+- **A scenario generator across `OpenLevel`:** the new world's game time restarts, so a `('t', n)` wait set in the old
+  world never ends. Stop the callback and run a new scenario in the new world.
+- `CaptureEditorImage` -> `AssetTools.write_file` (`file_path`, `content`) inside one `execute_tool_script`, decode in
+  Bash with `base64`: no picture through the chat.
+- Defeated goons stay standing until a Freeze Frame ends (by design), and probably block the player's capsule: the
+  scripted walk from the goons to the checkpoint (21 m) took 12 s instead of about 4 (inferred, not measured).

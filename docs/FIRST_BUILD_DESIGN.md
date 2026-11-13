@@ -650,6 +650,31 @@ No buttons, no mouse: the input mode is always "game only" (`JumpCutFlowSetup` s
 E1 also fills `PlayerRespawnAtCheckpoint` on `BP_Player` (section 6, step 1) and sets `GameDefaultMap` /
 `EditorStartupMap`. The game is never paused (`SetGamePaused` would stop the Ticks that read the restart key).
 
+**As built (G1/E1, Nov 12 design change: Freeze Frame first, Rewind parked).** Graphs in `tools/e1_graphs.py`.
+- **Rewind parked:** `BP_Player`'s class default `HasRewind` = false; no Rewind function or variable changed. With it
+  false, `RewindStart` returns at once (Q does nothing), the HUD's `RewindBox` stays collapsed, and
+  `PlayerHealthHitZero` goes straight to `PlayerLose`: no downed window. The section 6 "downed" rule and the Rewind
+  blink only apply again when a later boss sets `HasRewind`.
+- **Freeze Frame from the driver:** `BP_SceneMarker` has `MarkerGrantsFreezeFrame` (instance editable, default false)
+  and a `GiftMesh` (cyan unlit sphere, 100 cm up, no collision). `MarkerTickStep` = `MarkerWinStep` (the old body) +
+  `MarkerGiftStep`: the sphere shows while the marker grants and the player lacks the power; inside the trigger the
+  player gets `PlayerGrantFreezeFrame` once and every gift sphere hides. Two markers grant: **`Marker_FreezeFrameGiven`**
+  by the driver (re-labelled from `Marker_RewindGiven`, radius 250) and **`Marker_FreezeFrameDoor`** (new, at
+  (560, 0), radius 200 on the instance) which covers the whole cafe door, so nobody leaves the cafe without the power.
+  (A single circle round the driver can't reach the door without also covering the start point.) The plaza's old
+  `Marker_FreezeFrameGiven` is now **`Marker_BossDefeated`**. Nothing looks markers up by label.
+- **Boss:** `BP_BossFreeze.BossUsesFreeze` (default false); `BossThinkFight` only starts the freeze wind-up when it is
+  true. `BossStartFreezeWindup` itself still works for checkers. His defeat still opens the exit gate (and grants
+  Freeze Frame again, harmless).
+- **Gate:** `GatePushPlayerInside` clears `GateGuardingClose` at slab height `<= 0.01` (it rested at 0.000091).
+- **E1 extras:** game mode variables `RestartPressedNow` (stored before `RestartWasDown` is overwritten) and helper
+  functions `JumpCutFlowStep`, `JumpCutTitleStep`, `JumpCutPlayStep`; the HUD is created Collapsed and shown by
+  `JumpCutStartPlay`. `JumpCutStartPlay` also sets the input mode to game only. `PlayerRespawnAtCheckpoint` also zeroes
+  `HitFlashLeft`, `DownedTimeLeft` and `PunchIntervalLeft`. `WBP_HUD`'s `RewindBox` and `FreezeBox` now start
+  Collapsed (the HUD doesn't tick while collapsed on the title). Screens: dark full-screen panel, title text, the key
+  as "R / (A)" on a light box. Restart in the cafe (no checkpoint yet) puts the player back at the start; the power is
+  kept if taken, and the gift spheres are still there if not.
+
 ---
 
 ## 9. Who talks to whom

@@ -57,8 +57,11 @@ ACTORS = [
     ('Checkpoint_StreetEnd', 'BP_Checkpoint', 6300, 0, 0, 0, {}),
     ('Spawner_Street', 'BP_GoonSpawner', 4600, 0, 0, 180, {'GoonCount': 3}),
     ('Marker_Crash', 'BP_SceneMarker', -200, -100, 0, 0, {'MarkerId': 'Marker_Crash'}),
-    ('Marker_RewindGiven', 'BP_SceneMarker', -300, 330, 0, 0, {'MarkerId': 'Marker_RewindGiven'}),
-    ('Marker_FreezeFrameGiven', 'BP_SceneMarker', 8120, 0, 0, 0, {'MarkerId': 'Marker_FreezeFrameGiven'}),
+    # G1 (Nov 12): the driver hands over Freeze Frame; the plaza marker is where the boss is beaten. The door catch's
+    # TriggerSphere radius (200) is set on the placed instance by JumpCut/Saved/e1_editor.py, not here.
+    ('Marker_FreezeFrameGiven', 'BP_SceneMarker', -300, 330, 0, 0, {'MarkerId': 'Marker_FreezeFrameGiven', 'MarkerGrantsFreezeFrame': True}),
+    ('Marker_FreezeFrameDoor', 'BP_SceneMarker', 560, 0, 0, 0, {'MarkerId': 'Marker_FreezeFrameDoor', 'MarkerGrantsFreezeFrame': True}),
+    ('Marker_BossDefeated', 'BP_SceneMarker', 8120, 0, 0, 0, {'MarkerId': 'Marker_BossDefeated'}),
     ('Marker_BossSpot', 'BP_SceneMarker', 8120, 0, 0, 180, {'MarkerId': 'Marker_BossSpot'}),
     ('Marker_Win', 'BP_SceneMarker', 10220, 0, 0, 0, {'MarkerId': 'Marker_Win', 'MarkerEndsGame': True}),
 ]
