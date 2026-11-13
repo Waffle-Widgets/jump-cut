@@ -309,3 +309,55 @@ because this cast's one measured colour failure is `CafeWalker`'s cream shirt si
 >
 > The background is flat pure white and completely empty. Even flat lighting from the front. No shadow on the
 > ground beneath her.
+
+### GEM2-GOON — the mob's foot soldier, `StreetGoon` (beats 2 to 5)
+
+Aspect ratio **3:4**. The enemy the player actually fights, in four of the demo's six beats. His design is in
+[`CHARACTERS.md`](CHARACTERS.md#the-goons--streetgoon-beats-2-to-5); `BP_Goon` has been playable since the first
+build wearing Epic's mannequin, so this prompt is a model swap and not a blocker.
+
+Three things in it are deliberate. **He wears no jacket** - an open suit jacket is what a mob foot soldier should
+wear, and its lapels stand off the chest as a loose shell, the exact shape image-to-3D returns as a floating
+sheet; a buttoned waistcoat gives the same chest panel lying flush. **His sleeves reach his wrists**, because the
+coworker's rolled sleeves put her bare forearms outside the colour audit's head-and-hands whitelist and she reads
+FLAG for it as a false positive. **And nothing on him is white or pale**: Freeze Frame's colour is "pale cyan,
+almost white", every white garment measures under dE76 10 from it, and three goons stand on screen in the beats
+that teach Freeze Frame.
+
+> A single anime character illustration of one tall, broad-shouldered, heavily built young man, drawn in a clean
+> cel-shaded anime style: flat areas of solid colour, hard-edged shadows, only two or three large simple shadow
+> shapes per garment, a clean dark outline around every form, and a face drawn with a few confident clean lines.
+>
+> He stands facing the viewer in a wide relaxed A-pose, his whole body from the top of his head to the soles of
+> his boots inside the frame. Both arms are angled down and away from his sides at about fifty degrees, with a
+> large empty gap of white background clearly visible between each arm and his torso and his shoulders completely
+> clear of his chest. Both hands are open with the palms toward the viewer and the fingers spread wide apart and
+> clearly separated from one another. His legs are well apart, with a wide clear gap of white background between
+> his thighs, between his knees and between his ankles. He stands straight and symmetrical.
+>
+> He has warm tan skin and black hair buzzed down almost to the scalp, so his head is a small clean round shape
+> with no loose strands standing out. His expression is hard, flat and blank.
+>
+> He wears a dark graphite grey waistcoat buttoned flat and lying flush against his chest, over a medium grey
+> long-sleeve shirt with the cuffs at his wrists. A dark red necktie is tucked flat under the waistcoat. A plain
+> dark red cloth band is wrapped around his left upper arm, lying flush against the sleeve. He wears dark
+> graphite grey trousers and flat black boots. Nothing on his clothes is white, cream, beige, pale blue or pale
+> grey, and there is no magenta and no orange anywhere on him.
+>
+> His hands are completely empty and he carries nothing: no weapon, no knife, no bat, no club, no gun, no bag and
+> no strap. He wears no jacket, no coat, no hat, no cap, no mask, no sunglasses and no jewellery. Nothing hangs or
+> dangles from him and nothing protrudes past his silhouette.
+>
+> He carries no insignia of any kind: no letters, no numbers, no logos, no crests, no badges, no emblems and no
+> tattoos anywhere on his clothes or his skin.
+>
+> One single figure, one single front view, alone in the picture. This is not a reference sheet and not a
+> character model sheet: no text, no letters, no words, no labels, no arrows, no measurements, no colour swatches,
+> no grid, no panels, no second view of him, no turnaround, no border or frame.
+>
+> No photographic texture of any kind: no fabric weave, no stitching detail, no cross-hatching, no stippling, no
+> visible brush strokes, no gradient or airbrushed shading, no film grain, no painterly rendering, no comic-book
+> inking texture, no 3D render look. No stains, no dirt and no blood anywhere.
+>
+> The background is flat pure white and completely empty. Even flat lighting from the front. No shadow on the
+> ground beneath him.

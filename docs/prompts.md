@@ -107,6 +107,36 @@ has (`CafeWalker`'s cream shirt, dE76 14.4 from his face).
 > panels, no border, no fabric weave, no stitching detail, no stains, no dirt, no blood, no gradient shading, flat
 > plain white background, even front lighting, no ground shadow
 
+### GOON-APOSE
+The mob's foot soldiers, the enemy the player actually fights in beats 2, 3, 4 and 5: see
+[`CHARACTERS.md`](CHARACTERS.md#the-goons--streetgoon-beats-2-to-5). The self-contained Gemini version is
+`GEM2-GOON` in [`prompts-gemini.md`](prompts-gemini.md). He carries **nothing** and wears **no jacket** - an open
+jacket's lapels are a loose shell held away from the chest, which is the shape image-to-3D returns as a floating
+sheet, the same failure the `StuntDouble` write-up warns about for pads. The chest read comes from a flat
+buttoned waistcoat instead, which lies flush. Sleeves stay **long**: the coworker's rolled sleeves put her bare
+forearms outside the colour audit's head-and-hands whitelist and she reads FLAG for it, which is a false positive
+nobody needs twice. **Nothing on him is white or pale**, because Freeze Frame's colour is "pale cyan, almost
+white" and every white garment measures under dE76 10 from it - with three goons on screen at once in the beat
+that teaches Freeze Frame, that is the one collision worth designing out.
+
+> anime character illustration, single front view of one man alone, cel shaded with hard-edged shadows and clean
+> dark line art, flat areas of solid colour, two or three large simple shadow shapes per garment, full body from
+> the top of his head to the soles of his boots, a tall broad-shouldered heavily built young man standing straight
+> and symmetrical in a wide A-pose, both arms angled down and away from his sides at about fifty degrees with a
+> large empty gap of white background between each arm and his torso, both hands empty and open with the palms
+> toward the viewer and the fingers spread wide apart and clearly separated, legs well apart with a wide gap of
+> white background between the thighs and between the knees and between the ankles, facing the viewer, warm tan
+> skin, black hair buzzed down almost to the scalp, a hard flat blank expression, a dark graphite grey waistcoat
+> buttoned flat and lying flush against his chest, a medium grey long-sleeve shirt with the cuffs at the wrists,
+> a dark red necktie tucked flat under the waistcoat, a plain dark red cloth band around his left upper arm lying
+> flush against the sleeve, dark graphite grey trousers, flat black boots, bare hands, holding nothing, carrying
+> nothing, no jacket, no coat, no weapon, no knife, no bat, no hat, no cap, no mask, no sunglasses, no jewellery,
+> no bag, no strap, nothing hanging or dangling, nothing protruding past his silhouette, no white and no cream and
+> no beige and no pale blue and no pale grey anywhere on his clothes, no magenta, no orange, no letters or numbers
+> or logos or crests or badges or tattoos, no text, no labels, no colour swatches, no second view, no panels, no
+> border, no fabric weave, no stitching detail, no stains, no dirt, no blood, no gradient shading, flat plain
+> white background, even front lighting, no ground shadow
+
 ### CLEAVER-PROP
 > a single heavy steel meat cleaver lying flat and seen straight from the side, filling the frame, clean polished
 > blade with a dark wooden handle and three rivets, one round hole near the top corner of the blade, cel shaded

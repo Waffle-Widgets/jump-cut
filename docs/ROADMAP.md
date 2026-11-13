@@ -133,9 +133,20 @@ generating characters belongs on M Station.
    162.0 cm with Walk and Idle: see
    [the devlog entry](devlog/2026-11-13-the-coworker-gets-a-body.md). **She is not in Unreal** - importing her is
    the builder's job, so it has moved to the GameStation list below, and `BP_Coworker` still shows a green box.
-2. **The Director** - beat 6. No design, no colour, no prompt: the write-up has to come before any picture. He
-   is the one genuinely missing model in the cast.
-3. **Not boss 3.** The Stunt Double is conditional again (Decisions, above). His fight is built and plays on a
+2. **The goons, `StreetGoon`** - beats 2, 3, 4 and 5. **Moved above the Director on Fri Nov 13 morning by the
+   work-order rule in Decisions** ("the earliest unfinished beat wins"): the player fights goons from beat 2
+   onward, and the six-beat decision below ends the demo *before* the Director in as many words. `BP_Goon` has
+   been playable since the first build wearing Epic's mannequin, and until this morning **no document in this
+   repo said what a goon looks like** - no design, no colour, no prompt. They have more screen time than any
+   boss. Designed and drawn Fri Nov 13 morning on M Station:
+   [`CHARACTERS.md`](CHARACTERS.md#the-goons--streetgoon-beats-2-to-5), with `GOON-APOSE` in
+   [`prompts.md`](prompts.md) and `GEM2-GOON` in [`prompts-gemini.md`](prompts-gemini.md).
+3. **The Director** - **no beat in the demo.** No design, no colour, no prompt: the write-up has to come before
+   any picture, and he is the one genuinely missing model in the *full game's* cast. But the six-beat decision
+   below **supersedes** his two rule scenes and ends the demo at the Stunt Double, so no credits and no
+   drawing time go on him until the demo plays through. The queue entry that called him "beat 6" was wrong:
+   beat 6 is a fade to a "continue", which is a screen and not a character.
+4. **Not boss 3.** The Stunt Double is conditional again (Decisions, above). His fight is built and plays on a
    mannequin; no credits go on his art until beats 1 to 4 play through.
 
 **What stays on GameStation:** importing `SK_CafeCoworker.fbx` and pointing `BP_Coworker` at it (the asset is

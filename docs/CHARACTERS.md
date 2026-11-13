@@ -27,6 +27,7 @@ minutes, so a colour that appears twice is worse than a dull character.
 | Splice | magenta into violet | the mob boss, his portals, his blade's edge |
 | Stunt Double | safety orange `#E8601D` — **proposed**, see the third boss below | the stunt double, and the player's decoy. Hue 20°, so it collides with neither cyan (192°) nor magenta (331°) |
 | the main character | warm cream, dark green, charcoal — **no** cyan, **no** magenta | so both power colours read as borrowed, not his |
+| the goons — **no colour at all** | graphite, medium grey, black, one oxblood band | `StreetGoon`, the crew the player fights for most of the demo. Achromatic on purpose, so every colour on screen belongs to a power. Nothing white or pale: see the goons below for why |
 
 **Judge every one of these from the game camera, not a close-up.** `CLAUDE.md` records the TRELLIS coupe that
 "looked great close up and like a dark blob from the game camera". That is why each design below leads with its
@@ -184,6 +185,76 @@ he must read as *magenta* instantly, because magenta is about to become the port
     lapel pin is a plain invented diamond, and there is no insignia anywhere else on him.
   - **13+.** The blade stays clean — no blood, ever, on the model or in the concept art. Tattoos are stylised
     waves, which is an anime convention rather than a depiction of any real group.
+
+## The goons — `StreetGoon` (beats 2 to 5)
+
+The crew the player actually fights. Written on M Station on Fri Nov 13, 2026, because `BP_Goon` has existed
+since the first build and **nobody had ever written down what a goon looks like** — they are Epic's mannequin in
+four of the demo's six beats (street thugs in 2, the plaza in 3, the destroyed buildings in 4, and beside the
+Stunt Double in 5), which is more screen time than any boss gets.
+
+- **Silhouette:** the only **inverted triangle** in the cast. Heavy square shoulders, narrow waist, straight thin
+  legs, and a small round buzzed head sitting clear of the shoulder line. The others are narrow-and-upright
+  (`CafeWalker`), short-and-compact (`CafeCoworker`), lopsided-headed (`CrashDriver`), a broad rectangle with one
+  bright edge (`CleaverBoss`) and segmented (`StuntDouble`) — a wedge was free.
+- **The head is load-bearing.** `BP_GoonSpawner` puts three of them on screen 150 cm apart
+  (`FIRST_BUILD_DESIGN.md`), and a dark head above dark shoulders turns a group into one blob at the game camera.
+  His hair is buzzed almost to the scalp so the head reads as a skin-tone dot, which is what separates three
+  figures into three.
+- **Design:** a tall, heavily built young man with a hard flat expression. Dark graphite waistcoat buttoned flat
+  over a medium grey long-sleeve shirt, a dark red necktie tucked flat underneath, a plain dark red cloth band
+  around the left upper arm as the crew mark, graphite trousers, flat black boots. Bare hands, empty.
+- **No jacket, deliberately.** An open suit jacket is what a mob foot soldier should wear, and its lapels are a
+  loose shell standing off the chest — the exact shape image-to-3D returns as a floating sheet, the failure the
+  `StuntDouble` write-up already warns about for floating pads. The buttoned waistcoat gives the same chest panel
+  lying flush against the body.
+- **Long sleeves, deliberately.** The coworker's rolled sleeves put her bare forearms outside the colour audit's
+  head-and-hands whitelist, so she reads FLAG at 4.46% / 5.27% as a false positive. Cuffs at the wrist mean this
+  one measures clean instead of needing the same explanation twice.
+- **No weapon.** `BP_Goon` is defaults-only on `BP_EnemyBase` with no graph of its own, and it punches. A prop
+  would need a socket, a second asset and a reason.
+- **Height:** 180 cm — taller than the 175 cm hero so a group of three is intimidating, while `CleaverBoss` still
+  outranks him on width (1.3x through the chest) rather than on height.
+- **Triangle budget: 18,000, not 30,000.** Three on screen at once is 54,000 — nearly two heroes' worth for the
+  cast's least important body. Meshy's remesh step stays at the documented fixed 30K quad; the budget is applied
+  at FBX export by `meshy_character.py`'s `tris` argument.
+- **One model, used three times.** Every goon is the same skeletal mesh, so variety — if anyone ever wants it —
+  is a material swap, not a second character.
+
+### Palette, with the numbers
+
+| Part | Hex | dE76 from his skin |
+|---|---|---|
+| face and hands | `#C08E5E` | — |
+| hair, buzzed | `#15131A` | **68.5** |
+| waistcoat and trousers | `#23262E` | **62.5** |
+| shirt | `#8A8F99` | **41.1** |
+| necktie and arm band | `#6B2430` | **48.2** |
+| boots and belt | `#141519` | **67.6** |
+
+His **worst** skin separation is 41.1 against `color_audit.py`'s threshold of 14 — nearly three times the
+clearance, and well clear of `CafeWalker`'s known failure at 14.4.
+
+**He owns no colour, and that is the point.** Every colour on screen is supposed to mean a power, so the crew the
+player fights for most of the demo is deliberately achromatic: graphite, grey and black. The one chroma on him is
+the oxblood band, which measures dE76 **54.9** from Splice's magenta, **80.0** from Freeze Frame's cyan and
+**62.3** from the proposed safety orange, so it dilutes nothing.
+
+**Nothing on him is white or pale, and this is the finding worth keeping.** This file records the Freeze Frame
+colour in words only — "pale cyan, almost white, like frost" — with no hex anywhere, so it was measured against a
+representative pale cyan, `#DCF2F5`. Against that, **pure white is dE76 9.7 away and every off-white tested is
+8.5 to 9.8** — all of them *under* the audit's threshold of 14. With three goons on screen in the beats that
+teach Freeze Frame, a white shirt on the crew is the one colour collision in this cast that would actually cost
+the player something, so the shirt is a medium grey at dE 35.4 from that cyan.
+
+That number also applies to the coworker's pure white shirt, and **it is not a reason to re-make her**: she is one
+small figure against a full-screen effect, her deep teal apron carries her read, and her 35 credits are spent.
+It is written down here so the next white garment in this cast is a choice rather than an accident.
+
+### How to draw him, with nothing else to work out
+
+`GOON-APOSE` in [`prompts.md`](prompts.md) for the ComfyUI/Qwen path on either card, and `GEM2-GOON` in
+[`prompts-gemini.md`](prompts-gemini.md) as the self-contained version.
 
 ## The third boss — `StuntDouble` (power SETTLED, look still PROPOSED)
 
