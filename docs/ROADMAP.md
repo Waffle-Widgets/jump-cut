@@ -104,6 +104,22 @@ driver sets `HasFreezeFrame`; 1.2 s later the explosion fires, the shrapnel spaw
 `CoworkerDead` with `RescueTriesUsed` 1 and nothing restarts. **The F key itself still has not been pressed by a
 person.**
 
+**The game has a city to stand in** (Fri Nov 13, 11:20 AM -> 1:50 PM Pacific, M Station, on `main`). The
+level has been a grey corridor since the first build: two 60 m boxes for the street and five more for the
+cafe. There are now **44 models and 216 worked-out placements** for it — the coffee shop as a real room,
+nine building types, five ruin pieces for beat 4 and twenty pieces of street clutter — in
+[`CITY.md`](CITY.md). **It is all procedural geometry from our own Blender script, 0 Meshy credits, and
+nothing was uploaded anywhere**; the whole city is 20,615 triangles, fewer than the single goon model. The
+cast is untouched and still comes from ComfyUI and Meshy, so the Nov 13 pipeline decision stands.
+Tokyo and New York are blended by **zoning**: the 10 m lane the player walks is Tokyo, the 42-62 m towers
+above and behind it are New York, and a New York avenue at x = -1900 is what the car came down before it
+hit the cafe's west wall. **Verified by measurement, not by eye**: the kit writes its own footprints and
+[`tools/jumpcut_city_layout.py`](../tools/jumpcut_city_layout.py) checks all 216 placements against them —
+it found 17 real collisions on its first run and now reports none. **Nothing has been seen in Unreal.**
+`tools/jumpcut_city_place.py` was written on M Station, which is a maker with no editor, so it has never
+been run; expect to fix a line, not a layout. See
+[the devlog entry](devlog/2026-11-13-the-city-gets-built.md).
+
 ## Open
 
 | Day | Goal |
@@ -159,7 +175,7 @@ generating characters belongs on M Station.
 4. **Not boss 3.** The Stunt Double is conditional again (Decisions, above). His fight is built and plays on a
    mannequin; no credits go on his art until beats 1 to 4 play through.
 
-**What stays on GameStation:** importing `SK_CafeCoworker.fbx` and `SK_StreetGoon.fbx` (both committed and
+**What stays on GameStation:** importing the city (`Art/Blender/export/City/` -> `Content/Game/Imported/City/`, then `py tools/jumpcut_city_place.py hide`; see [`CITY.md`](CITY.md)), importing `SK_CafeCoworker.fbx` and `SK_StreetGoon.fbx` (both committed and
 canonical; the goon also needs his retarget chains mapped by hand, since Smart Rig does not use mannequin bone
 names) and pointing `BP_Coworker` at it (the asset is
 committed and waiting; she is a green box in beat 1 until someone does), putting `CafeWalker` on `BP_Player` with
@@ -225,7 +241,22 @@ opening beat and the reason the cafe is the first room.
 
 ## Waiting for a yes
 
-_(nothing right now)_
+**Remake `CafeWalker` and `CafeCoworker` for colour** (M Station, Nov 13). The full colour audit says the
+player leaks **6.13% front / 3.94% back** and the coworker **4.46% / 5.27%** — clothing within dE 14 of
+their own skin, which the Team Owner's standing colour rule forbids. They are the worst two in a cast of
+ten and they are the two on screen most. **Neither is wired into Unreal yet**, so nothing downstream
+depends on them and this is the cheapest moment it will ever be: a redrawn reference sheet each (ComfyUI,
+free) plus **35 Meshy credits each**. Cost if we wait until after they are imported: the same, plus the
+rework. Numbers and the proposed fix are in
+[`CHARACTERS.md`](CHARACTERS.md#colour-audit--fri-nov-13-after-the-city-pass-m-station).
+
+**A crowd on the street** (M Station, Nov 13). The city is dressed but has no people in it. The cheap route
+is `BP_Civilian` walking instances of the two bodies we already own (`SK_StreetGoon`, `SK_CafeCoworker`)
+in six recoloured material instances — **0 credits, no new rig** — but it needs Blueprint work on the
+builder, and it is unverified whether `M_AnimeChar` exposes a tint parameter to drive. Reasoning in
+[`CHARACTERS.md`](CHARACTERS.md#crowds--making-the-street-feel-populated-fri-nov-13-m-station), including
+why generating clothing separately from bodies is **not** worth it here.
+
 
 ## Fallbacks (turned down, kept in case we need them)
 

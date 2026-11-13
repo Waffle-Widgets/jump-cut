@@ -969,3 +969,75 @@ try to cancel it with a mesh `z` offset: that would sink him into the floor when
 PIE. It wakes the boss, puts the player in front of him, and writes a per-frame table of the lowest bone's Z. A
 fixed boss reads `LIFT` near 0 while walking. Judge it by that number, not by a montage name: a montage reports
 itself as playing whether or not the pose is anywhere near the floor.
+
+## Crowds — making the street feel populated (Fri Nov 13, M Station)
+
+The city brief asked whether **generating clothing and humans separately** would make more sense than how
+we have been working. It would not, and the reason is specific rather than general:
+
+1. **Separate clothing needs a shared base body, and we do not have one.** Every model in this cast comes
+   back from Meshy's Smart Rig with its own `Bone_000...` skeleton and its own topology — `SK_StreetGoon`
+   has 76 bones, `SK_CafeCoworker` 68. A shirt authored for one of them does not fit the other, and there
+   is no neutral body to author against.
+2. **A garment then has to be skinned to that body**, with either per-garment weights or cloth, before it
+   can move with a walk cycle. That is days, on a jam with two left.
+3. **The payoff is variety across many NPCs** — and we can buy that variety far more cheaply.
+
+So: **keep making characters in one piece, drawn in ComfyUI and modelled on Meshy**, exactly as the Nov 13
+decision says.
+
+### The cheap crowd, and what it needs
+
+We already own two civilian-shaped bodies with Walk and Idle on them: `SK_StreetGoon` and
+`SK_CafeCoworker`. A crowd is those two meshes placed repeatedly, each instance wearing a different
+**material instance** — a tint on the existing `M_AnimeChar` — so six recoloured instances of two meshes
+read as a dozen different people at the distances a pedestrian is ever seen from. **0 credits, no new rig,
+no new model.**
+
+**This is a proposal, not built, and it is the builder's job, not a maker's**, because it needs:
+
+- a `BP_Civilian` that walks a spline or between two points and gets out of the way of a fight;
+- six `MI_Crowd_*` instances — **unverified**: nobody has checked whether `M_AnimeChar` exposes a tint or
+  hue parameter to drive from an instance. If it does not, it needs one parameter added to the parent, or
+  six small texture variants instead;
+- a decision about whether a goon-shaped body in a different colour reads as a civilian or just as a goon
+  who is not attacking. That one is a judgement call and it is the Team Owner's.
+
+Until that exists, the street is dressed but empty of people. `docs/CITY.md` lists it under *Known gaps*.
+
+## Colour audit — Fri Nov 13, after the city pass (M Station)
+
+Full `tools/color_audit.py` run over all ten models, to answer "do any characters need remaking for
+consistency". **Eight are clean. Two are not — and they are the two the player looks at most.**
+
+| Model | front leak | back leak | skin ref | verdict |
+|---|---|---|---|---|
+| `CafeWalker` (the player) | **6.13%** | **3.94%** | `#FDD9BF` | **FLAG — worst in the cast** |
+| `CafeCoworker` | **4.46%** | **5.27%** | `#DC8754` | **FLAG** |
+| `CrashDriverTrellis` | 2.84% | 0.91% | `#8E6D58` | flag, but it is brown-leather specular, not skin — and this is the non-canonical fallback |
+| `CleaverBossGemText` | 0.28% | 0.00% | `#FDDFCB` | clean |
+| `CleaverBoss` | 0.18% | 0.00% | `#E3B5A4` | clean |
+| `CleaverBossGemRef` | 0.14% | 0.00% | `#FCD9C8` | clean |
+| `StreetGoonTrellis` | 0.11% | 0.01% | `#56523E` | clean |
+| `CrashDriver` | 0.00% | 0.00% | `#D6A993` | clean |
+| `StreetGoon` | 0.00% | 0.00% | `#C78E79` | clean |
+
+"Leak" is the share of the body within dE76 14 of the model's own face skin tone that is neither head nor
+hand — the Team Owner's standing rule that no clothing may be skin-coloured and no skin may be
+clothing-coloured.
+
+**`CafeWalker` is the one that matters.** He is the player, he is on screen for every second of the demo,
+and his cream shirt sits inside dE 14 of his own very pale skin (`#FDD9BF`), so at a distance his torso and
+his arms merge. `CafeCoworker` has the same fault from two directions — rolled sleeves at the front and a
+near-white apron back (`#FDFDFC`) against `#DC8754` skin.
+
+**Neither has been remade yet, and the timing is unusually good.** `BP_Player` still wears Epic's
+mannequin and `BP_Coworker` is still a green box, so *nothing downstream depends on either model* — no
+retarget, no material instance, no placed actor. Redoing them now costs a reference sheet each (ComfyUI,
+free) plus 35 Meshy credits each, and costs nothing else. After they are imported, it costs all of that
+plus the rework.
+
+The fix is a colour change in the prompt, not a redesign: give the player a shirt with real separation from
+his skin (a mid tone, measured against `#FDD9BF` before it is drawn, the way `StreetGoon`'s grey was
+measured against Freeze Frame's pale cyan) and give the coworker cuffs at the wrists and a non-white apron.
+
