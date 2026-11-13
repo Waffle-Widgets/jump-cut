@@ -229,13 +229,114 @@ The queue the work-order decision creates. Take the top unfinished line.
 |---|---|
 | 1. Cafe | Crash, Freeze Frame hand-over (touch the driver), auto-freeze and the coworker rescue all work. **Missing from the Team Owner's scene: the day job, the latte art minigame, delivering the drink.** **Her model is made but not imported** (art, not code): `SK_CafeCoworker.fbx` is committed, but `BP_Coworker` is still a green box until the builder imports her |
 | 2. Street | **Done** - goons, fists, animation. Tuning only: one combo clears all three in about 1.0 s. **Their model is made but not imported** (art, not code): `SK_StreetGoon.fbx` is committed, but `BP_Goon` still wears Epic's mannequin until the builder imports him, and they are the enemy in beats 2 to 5. Designed, drawn and modelled Nov 13, see `StreetGoon` in [`CHARACTERS.md`](CHARACTERS.md#the-goons--streetgoon-beats-2-to-5) |
-| 3. Splice boss | Fight works. He hands over `HasSplice`, which still gates nothing |
-| 4. Destroyed buildings | **Nothing built.** The Splice power itself, and the platforming section that needs it |
-| 5. Stunt Double boss | Fight and doubles built. Two decisions from Nov 13 are unbuilt: Splice past the attack stand-in, and the attack stand-in's despawn timer |
+| 3. Splice boss | Fight works. He hands over `HasSplice`, which **now opens the Splice blink** (below) |
+| 4. Destroyed buildings | **Half built.** The **Splice power is built, measured and on disk** (600 cm blink, Left Shift / gamepad B) - rebuilt on Justin's Mac mini and re-measured there, see below. The **platforming section is still nothing in the level**: Splice is the power the gaps are for and no gaps are placed yet. The five ruin pieces it needs are modelled and committed (above), not imported |
+| 5. Stunt Double boss | Fight and doubles built. **Splice past the attack stand-in is now measured, not just argued** - 600.0 cm straight through `BP_StuntStandIn` with the stand-in not shoved, and its capsule and mesh both ignore the Visibility channel the blink traces, so it needed no code in the fight at all. Still unbuilt: the attack stand-in's despawn timer |
 | 6. Fade to "continue" | **Nothing built**, and what it even is has not been decided (Still to decide, below) |
 
-**Beat 4 is the earliest unfinished one**, and it is where Splice has to exist, so it is also what unblocks
-beat 5's Splice decision.
+**Beat 4's power now exists.** Splice is built, committed and on disk. What is still missing from beat 4 is the
+other half: the destroyed-building gaps for it to cross. Beat 5's Splice decision is no longer blocked.
+
+### Splice is on disk (Fri Nov 13, 18:20 UTC, Justin's Mac mini)
+
+The blink that was built and measured on GameStation was lost before saving - the editor quit with
+`BP_Player` and `WBP_HUD` dirty. **It has been rebuilt on Justin's Mac mini and committed.**
+
+The route was `tools/splice_graphs.py`, the recipe's own known-good path. It was the only route available
+here: the GameStation autosaves in `JumpCut/Saved/jcpy/recovered/` are on that machine and are not in git, so
+they do not exist on the Mac. That settles the open question - re-run the recipe - without anyone having to
+answer it.
+
+**What was checked rather than assumed.** The DSL printer collapses two things in a way that can hide a wrong
+graph, so both were read at the pin level instead:
+
+- The stop-short vector is fed from `BreakHitResult` **output 5, `ImpactPoint`** - not the struct's first pin
+  (`bBlockingHit`), which is what the printer's collapsed `(Collision|BreakHitResult _outhit)` form could
+  equally have meant.
+- The trace is `TraceChannel = TraceTypeQuery1` (Visibility), `bIgnoreSelf = true`, `bTraceComplex = false`.
+  Visibility is the whole design: the Pawn collision preset ignores it, so the blink passes through people and
+  stops only on world geometry - which is what delivers the Team Owner's beat-5 call ("Splice lets the user get
+  past the attack Stunt Double") with no code in the stunt-double fight at all.
+
+All nine defaults read back exact (600 cm, 1.2 s cooldown, 30 cm trace radius, 45 cm wall back-off). `BP_Player`
+compiled with warnings as errors. In Play-In-Editor the live pawn carries every Splice value correctly, map
+check is clean and there were **no Blueprint runtime errors**.
+
+**The HUD box is new work, not a restore.** The GameStation autosave pre-dated the `HudRefresh` edit, so those
+lines had never been saved anywhere. `SpliceBox` / `SpliceIcon` / `SpliceKey` / `SpliceBar` now sit third along
+the bottom-left row (violet, `SHIFT`), and all **11** `HudShowIf` `Target` pins were audited after the
+whole-function rewrite to confirm none lost its widget.
+
+### Splice re-measured on the Mac (Fri Nov 13, 19:05 UTC, Justin's Mac mini)
+
+The note that used to sit here said the blink could not be re-measured on this machine. That was wrong: a
+temporary `DebugSplice` bool plus a one-line hook in `PlayerTickInput` drives the real `SpliceStart` on the live
+Play-In-Editor pawn, exactly as on GameStation. **Splice is now measured here, not inherited.**
+
+| Test | Measured | Expected |
+|---|---|---|
+| No power (`HasSplice` false), input unlocked | **0.0 cm**, cooldown untouched | 0 - the gate holds |
+| Open ground, facing +X from x=1000 | **600.0 cm** (1000 -> 1600.0) | 600 |
+| Wall: building face 500 cm ahead (line trace = 500) | **455.0 cm**, x drift **0.0** | 455 = 500 - 45 back-off |
+| **Through the attack stand-in**, `BP_StuntStandIn` 250 cm dead ahead | **600.0 cm** (1000 -> 1600.0); stand-in **not shoved** (0.0) | 600 = passed through |
+| Cooldown is written by a successful blink | **19.44 s of 30** still left afterwards | > 0 |
+| Fire again while that cooldown runs | **0.0 cm** with **8.54 s** left | 0 - the gate blocks |
+
+To prove the cooldown is really written rather than inferred from the graph, `SpliceCooldown` was temporarily
+raised 1.2 -> 30 s for one run, so the value could still be read after the round trip. It is back at 1.2.
+
+**The through-a-body claim is now proved structurally as well, which is stronger than any single blink.** Every
+character's **capsule and skeletal mesh both** set `Visibility -> ECR_Ignore`:
+
+| Body | Capsule profile | Visibility | Capsule r / half-height |
+|---|---|---|---|
+| `BP_Goon` | `Pawn` | `ECR_Ignore` | 34 / 88 |
+| `BP_StuntStandIn` | `Pawn` | `ECR_Ignore` | 34 / 88 |
+| `BP_BossFreeze` (cleaver) | `Pawn` | `ECR_Ignore` | 45 / 115 |
+| `BP_Player` | `Custom` | `ECR_Ignore` (+ `Camera` ignored) | 35 / 90 |
+
+Their meshes are all profile `CharacterMesh`, `QueryOnly`, with `Pawn` / `Visibility` / `Vehicle` ignored. And
+`DefaultEngine.ini` declares **no custom trace channels**, so `TraceTypeQuery1` is the engine default -
+Visibility. A character therefore *cannot* block the blink: there is no surface on them that answers the channel
+it traces. This is the first time the **stand-in** itself was checked; GameStation tested a goon and the cleaver
+boss, which is the case the beat-5 call actually depends on.
+
+**What is still not measured here.** The goon and cleaver-boss pass-throughs are still GameStation's numbers.
+Both were attempted and both runs were thrown away rather than reported: the test goon chased the player across
+the street and **killed him** (`Health` 0, `IsLost` true), and `PlayerCanAct` is false when lost, so every
+later blink read 0 cm for a reason that had nothing to do with Splice. The stand-in is the usable case because
+with `StandInFights` false it genuinely stands still. The two bodies are structurally identical to it (table
+above), so nothing is left in doubt about the mechanic - only about those two specific numbers.
+
+**And still true: nobody has pressed Left Shift.** Every measurement above drives `SpliceStart` directly. The
+*key poll* is unproven, and cannot be driven from here: `PressKey` presses and releases inside one call, while
+`PlayerTickInput` reads `IsInputKeyDown` once per tick, so a simulated press never spans a tick.
+
+**Three traps found doing this.**
+- `ObjectTools.set_properties` only writes **instance-editable** Blueprint variables. A non-exposed one is
+  refused by name (`SpliceCooldownLeft`), which is the loud failure. The quiet one is worse: `InputLocked` was
+  exposed, accepted the write **without any error**, and still read back `true` - the write simply did not take.
+- The title screen cannot be dismissed by a simulated key either: its "pressed" test is also an
+  `IsInputKeyDown` poll (R / `Gamepad_FaceButton_Bottom`) on the game-mode tick. The way in is
+  `ShowTitleOnStart` on `BP_JumpCutGameMode`: with it false, `JumpCutFlowTick` calls the real `JumpCutStartPlay`
+  itself, which is how these runs reached `FlowState` 1 with `InputLocked`/`MoveLocked` both false. It is back
+  at true.
+- MCP tool calls run **on the game thread**, so the world does not tick inside one script. Setting the hook and
+  reading the result must be two separate calls or the blink has not happened yet.
+
+**Everything temporary was reverted and verified:** the hook removed from `PlayerTickInput` (read back - no
+`Debug` references, and exactly **one** `CallFunction|SpliceStart` call site, so nothing was duplicate-appended),
+the `DebugSplice` variable deleted, the two instance-editable flags put back, `SpliceCooldown` back to 1.2 and
+`ShowTitleOnStart` back to true. The three test bodies were removed from `Lvl_JumpCut`, which ended the session
+**not dirty**, so no actor package was written or orphaned. `BP_Player.uasset` and `BP_JumpCutGameMode.uasset`
+re-serialized to different bytes on save with identical content, so both were restored to their committed bytes
+and the LFS locks released - the working tree is clean.
+
+**Two traps worth keeping.** `HudShowIf` is printed positionally but takes a `Target` parameter, so writing the
+function back as printed is rejected outright ("Could not connect pin ... to self") - every call needs the
+`:Target` / `:Show` keyword form, not just the new ones. And the reader attributes the player's `GetHealth` /
+`GetMaxHealth` to `Class|AbilitySystemTestAttributeSet`, a colliding engine class; they must be written back as
+`Class|BPPlayer|`.
 
 
 ## Stretch (only if the critical path is finished)
@@ -290,6 +391,21 @@ in case playtesting shows we need it. Still not something to build from: only a 
   Stunt Double -> Director's Cut. Rewind is the one power with no boss. The small Rewind (only the player slides
   back, health restored) is what is built and parked.
 - **Who builds which beat, and on which computer.** `TEAM.md` lists no owners, and GameStation is the only builder.
+- **May Justin's Mac mini change Unreal files?** It already has, twice, and the rule says it may not. `TEAM.md`
+  gives it `tester, maker`, and a maker *"never saves in Unreal"* - only the builder (GameStation) changes
+  `.uasset`/`.umap`. The Splice commits `26d437b` and `2c76ffc` were made on the Mac, and the Fri Nov 13 19:05 UTC
+  verification saved in Unreal there too (nothing from it reached the repo). The rule exists for a real reason -
+  binary files cannot be merged, and two chats in one editor is how the first Splice build was lost - so this
+  wants an answer rather than a habit. Three ways out: make the Mac **`builder (area)`** for a named area with LFS
+  locks (the table's own mechanism, and the only option that keeps "exactly one builder" true per area); hand all
+  Unreal work back to **GameStation**; or record a deliberate exception here. Until then the Mac should stick to
+  docs, scripts and art. **Nobody has decided this; it has only happened.**
+- **Whether to fix the author on the two Splice commits.** `26d437b` and `2c76ffc` are authored
+  `Claude <noreply@anthropic.com>`, not under Justin's name, although that clone's `user.name` / `user.email` are
+  set correctly. `CLAUDE.md` requires every commit to be under the teammate's own name *because Epic may read our
+  Git history, and it shows who built what* - so this is a submission-facing detail, not tidiness. Fixing it means
+  rewriting commits already pushed to `playtest`, which GameStation and at least one other chat have, so it is
+  a force-push and needs saying out loud first. The alternative is to leave them and note it in the submission.
 - **What the "continue" after the last fight is** (beat 6): a screen, a card, a cut to the title?
 - **Does the player get Stunt Double in the demo**, or does it end when its boss falls?
 - ~~**Where Freeze Frame is handed over:** only at the driver, or also at the cafe door?~~ **Settled Fri Nov 13,

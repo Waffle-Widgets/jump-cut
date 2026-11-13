@@ -277,15 +277,33 @@ there is exactly one live `BP_Player_C` in Play mode.
 `PlayerTickInput` (player controller 0, `IsInputKeyDown`):
 1. `AttackDownNow` = LeftMouseButton or Gamepad_FaceButton_Left. `RewindDownNow` = Q or Gamepad_LeftShoulder.
    `FreezeDownNow` = E or Gamepad_RightShoulder. `InteractDownNow` = **F** or Gamepad_FaceButton_Top.
+   `SpliceDownNow` = **Left Shift** or Gamepad_FaceButton_Right.
 2. If `AttackDownNow` and not `AttackWasDown` and `PunchIntervalLeft` <= 0: `PunchIntervalLeft` = `PunchInterval`, `PlayerPunch`.
 3. If `RewindDownNow` and not `RewindWasDown`: `RewindStart`.
 4. If `FreezeDownNow` and not `FreezeWasDown`: `FreezeFrameStart`.
 5. If `InteractDownNow` and not `InteractWasDown`: `PlayerInteract`.
-6. Copy each `...DownNow` into its `...WasDown`.
+6. If `SpliceDownNow` and not `SpliceWasDown`: `SpliceStart`.
+7. Copy each `...DownNow` into its `...WasDown`.
 
-There are **four** controls, not three. Nothing drives them through an Input Action asset - there is no
-`IA_Punch` and none is needed; it is all polled here with edge detection. A fifth key, **R**, restarts and is
+There are **five** controls, not four. Nothing drives them through an Input Action asset - there is no
+`IA_Punch` and none is needed; it is all polled here with edge detection. A sixth key, **R**, restarts and is
 polled by the game mode (`JumpCutFlowStep`), not here.
+
+**Splice, power 2** (built and verified in PIE Fri Nov 13; **not on disk** - see the warning below and
+`tools/splice_graphs.py`). `SpliceStart` is a 600 cm forward blink on a 1.2 s cooldown, gated on `HasSplice`
+and `PlayerCanAct`. Direction is `GetActorForwardVector` flattened to XY, the same forward `PlayerPunch` uses,
+so the player blinks where he punches. The path is a `SphereTraceByChannel` on **Visibility** (`TraceTypeQuery1`,
+`bIgnoreSelf` true, radius `SpliceTraceRadius` 30): the Pawn collision preset ignores Visibility, so **the blink
+passes through characters and stops only on world geometry**. That is what satisfies the Team Owner's beat-5
+call ("Splice lets the user get past the attack Stunt Double") with no special case for the stand-in. On a
+blocked trace the player lands at `ImpactPoint - direction * SpliceWallBackoff` (45 cm), never inside the wall.
+Do **not** replace the trace with a swept `SetActorLocation`: sweeping blocks on pawns, which inverts the power.
+
+> **Warning (Fri Nov 13, 17:44 UTC):** the Splice work on `BP_Player` and the `SpliceBox` on `WBP_HUD` were
+> verified in Play-In-Editor and then lost before saving - the "Save Content" dialog was clicked through and
+> the editor quit with both assets dirty. The recipe to put it back is `tools/splice_graphs.py`; the compiled
+> autosaves are kept at `JumpCut/Saved/jcpy/recovered/` (outside git). Nothing about Splice is in the
+> committed `.uasset` files yet.
 
 **Bullet time and the Freeze Frame countdown** (added Fri Nov 13 for beat 1's quick time event):
 
@@ -541,7 +559,7 @@ countdowns 0.
 | `PlayerFreezeBreak` | `IsFrozenByBoss` false, `FrozenTimeLeft` 0 |
 | `PlayerTickBossFreeze(DeltaSeconds)` | if `IsFrozenByBoss`: lower `FrozenTimeLeft`; at 0 `PlayerFreezeBreak` |
 | `PlayerGrantFreezeFrame` | `HasFreezeFrame` true |
-| `PlayerGrantSplice` | `HasSplice` true (nothing reads it yet) |
+| `PlayerGrantSplice` | `HasSplice` true. **It gates something now:** `SpliceStart` (the blink) and the HUD's `SpliceBox` both read it - see "Splice, power 2" above |
 
 What "frozen" means for the player: `PlayerRefreshMoveLock` disables movement (he hangs mid-air if he was jumping),
 `PlayerCanAct` is false so punches and Freeze Frame do nothing, the HUD shows `FrozenTint`, and hits still land.

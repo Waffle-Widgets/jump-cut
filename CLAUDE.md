@@ -189,6 +189,28 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
 - `ObjectTools.get_properties` takes exact property names only. `list_properties` returns a JSON schema, not a list:
   never turn its text into names by string-splitting. A 2,000-character "name" hit Unreal's 1,023-character FName
   limit and crashed the editor (assertion in UnrealNames.cpp). Save before any exploratory call during PIE.
+- `ObjectTools.set_properties` writes only **instance-editable** Blueprint variables. A variable that isn't exposed
+  is refused by name (the loud failure). The quiet failure is worse: an exposed one can accept the write with **no
+  error at all** and still read back unchanged (`BP_Player.InputLocked` did exactly that). Read every value back
+  after setting it; never assume a set took.
+- **To call one of our own Blueprint functions from a script there is no "call function" tool.** Add a temporary
+  instance-editable `Debug<Thing>` bool and one `if` in the actor's tick that clears the flag and calls the
+  function. Afterwards remove both and `read_graph_dsl` to check — count the call sites of the function you hooked,
+  because `write_graph_dsl` appending twice looks identical to appending once until you count.
+- **A simulated key press cannot drive anything we poll.** `SlateInspector.PressKey` presses *and releases* inside
+  one call, while our input is read with `IsInputKeyDown` once per tick, so the press never spans a tick. That
+  includes the title screen's R. The way into play from a script is `ShowTitleOnStart = false` on the
+  `BP_JumpCutGameMode` CDO: `JumpCutFlowTick` then calls the real `JumpCutStartPlay` itself (`FlowState` 1,
+  `InputLocked` and `MoveLocked` both false). Put it back to true afterwards.
+- **A live enemy ruins a measurement, silently.** A test goon placed 250 cm away chased the player across the
+  street and killed him; `PlayerCanAct` is false when `IsLost`, so every ability measured after that read "did
+  nothing" for a reason that had nothing to do with the ability. Read `Health` and `IsLost` either side of every
+  measurement, and for a static obstacle prefer a body that does not chase (`BP_StuntStandIn` with
+  `StandInFights` false stands still).
+- **Prefer a structural check to a physics race.** Whether the Splice blink passes through people is settled for
+  good by reading each character's capsule *and* mesh `BodyInstance`: all of ours set `Visibility -> ECR_Ignore`,
+  and `DefaultEngine.ini` declares no custom trace channels, so `TraceTypeQuery1` is Visibility. That is a fact
+  about the assets; a single blink past a walking goon is an anecdote about one frame.
 - The frog's `CameraBoom` has Inherit Yaw off (that keeps the camera north while the frog turns). A spring arm
   with Inherit Yaw off ignores its world rotation's yaw and uses its *relative* yaw, so turn it with
   `SetRelativeRotation`, not `SetWorldRotation`. Debug camera problems with `CaptureEditorImage` during PIE: the
