@@ -269,6 +269,17 @@ else:
     spine, head = chest, head_root
     log['found'] = {'root': root, 'hip': hip, 'legs': legs, 'arms': arms, 'spine': spine_chain, 'head': ck[head_root], 'tail': tail}
 
+    # A two-legged character with no legs found means Meshy returned a degenerate skeleton (seen 2026-11-12: rigging
+    # an un-remeshed 300K mesh gave a 60-bone rig with a one-bone spine, and the legs got classified as the arms).
+    # The walk still renders and still *looks* like walking - the legs swing because they are being driven as arms -
+    # so this has to shout, or it ships. Remesh to 30K Quad first and rig that; see CLAUDE.md.
+    if not legs:
+        msg = ('MESHYCHAR-BAD-RIG no leg chains found on a "smart" rig (%d bones, spine %d). The walk will drive the '
+               'wrong limbs. Remesh the Meshy model to 30K Quad and rig THAT, then re-run.'
+               % (len(rig.data.bones), len(spine_chain)))
+        log['bad_rig'] = msg
+        print(msg); sys.stderr.write(msg + '\n')
+
     # Walk: a chibi waddle, 0.8 s a loop (two steps)
     s_sw = {u: sign_for(u, SIDE, e, FWD) for u, l, e, ph in legs}
     s_kn = {l: sign_for(l, SIDE, e, -FWD) for u, l, e, ph in legs}

@@ -213,6 +213,32 @@ people and off for the prop. 35 credits each; the remesh and the rig were free.
 | `Art/Refs/CleaverBoss_apose.png` | `Meshy_AI_The_Obsidian_Enforcer` | Smart Rig, 83 bones -> `SK_CleaverBoss.fbx` |
 | `Art/Refs/Cleaver_prop.png` | `Meshy_AI_Steel_Butcher_Cleaver` | no rig, it is a prop -> `SM_Cleaver.fbx` |
 
+### Two more CleaverBoss models — 2026-11-12 evening
+
+The CleaverBoss reference art that had never been through Meshy got made into models, so the boss can be picked
+from three rather than accepted as one. **No existing asset was replaced** — `SK_CleaverBoss.fbx` on `main` is
+untouched; these are additional names.
+
+| Name | Reference it came from | Meshy named it | Result |
+|---|---|---|---|
+| `CleaverBossGemRef` | `Art/Refs/CleaverBoss_apose_gemref.jpg` (Gemini, drawn with our earlier picture attached) | `Meshy_AI_The_Iron_Broker` | Smart Rig, **69 bones** -> `SK_CleaverBossGemRef.fbx` |
+| `CleaverBossGemText` | `Art/Refs/CleaverBoss_apose_gemtext.png` (Gemini, text-only chat, nothing uploaded) | `Meshy_AI_The_Stern_Negotiator` | Smart Rig, **31 bones** -> `SK_CleaverBossGemText.fbx` |
+
+Both are 178 cm, ~30,000 triangles, Walk + Idle, bake fit 0.09 cm. 70 credits; the remeshes and rigs were free.
+
+    blender -b --factory-startup --python Art/Blender/meshy_character.py -- <rigged.glb> CleaverBossGemRef smart 178
+    blender -b --factory-startup --python Art/Blender/meshy_character.py -- <rigged.glb> CleaverBossGemText smart 178
+
+**Not made, and why.** Four other CleaverBoss pictures exist and were deliberately left alone:
+`BOSS2-APOSE-1/2/3` hold the cleaver **across the trouser leg**, which image-to-3D fuses into the mesh — that is
+the defect the `BOSS2-NOBLADE` prompt was written to avoid. `BOSS2-NOBLADE-1` is sound but is in the ComfyUI
+rendering the team has since decided against (`ROADMAP.md` → Decisions: cel-shaded anime). Say the word and either
+becomes a model for 35 credits.
+
+**The one that nearly shipped broken.** `CleaverBossGemText` was rigged *without* a remesh the first time, because
+Meshy let its 300,892 faces past the 300K gate. The rig came back with no identifiable legs and the walk drove the
+legs as if they were arms — see `CLAUDE.md`'s Meshy section. Remesh first, every time.
+
 **If you redo one, rigging is two presses.** The first **Rig** press is only a remesh (Image to 3D returns
 600-950k triangles and rigging refuses over 300k); press Rig again on the remeshed asset for the real rig dialog,
 and use 30K + Quad. Download the **animate-phase** asset, `..._character.glb` - the remeshed one has **no
