@@ -5,6 +5,9 @@ Every asset we did not create ourselves goes here, added the moment it enters th
 | Asset | Used for | Source / tool | Creator | License | Added by |
 | --- | --- | --- | --- | --- | --- |
 | Third Person template content (mannequin, level prototyping meshes, input actions) | Starting point of the project | Unreal Engine 5.8 Third Person Blueprint template | Epic Games | Unreal Engine EULA | bootstrap script, 2026-11-12 |
+| Mannequin animations copied onto our hero (`Content/Game/Imported/CafeWalker/Anims/*_CW`: idle, walk, jog, jump) | The hero's movement | Unreal Engine 5.8 Third Person template, retargeted with `tools/unreal_retarget_mannequin.py` | Epic Games | Unreal Engine EULA (sourced, not scored) | Claude on GameStation, 2026-11-12 |
+| Hero character drawing (`Art/Refs/cafe_walker_ref.jpg`) | Reference for the hero model | AI-generated with Gemini from our own prompt; redrawn in an A-pose with Tripo's image tool | Team (AI-generated) | Ours | Claude on GameStation, 2026-11-12 |
+| Hero character model (`Art/Refs/CafeWalker_tripo_apose.glb`, `SK_CafeWalker_Walk`, `T_CafeWalker_BaseColor`) | The playable character in `Lvl_Cafe` | AI-generated with Tripo (tripo3d.ai, jam partner) from our drawing, slimmed with its Retopology, rigged with `Art/Blender/trellis_character.py` | Team (AI-generated) | Ours | Claude on GameStation, 2026-11-12 |
 
 ## Team
 - **Manuel Mendez** — Team Owner (submits the entry). Driver: Unreal implementation on GameStation, art pipeline on M Station, devlog and video.
@@ -23,9 +26,10 @@ go in the table above instead. This list is also what goes in the itch.io form's
   `Art/Refs/` (prompts kept in `docs/prompts.md`, so every picture can be traced to the words that made it).
   Nothing is sent to a service: it runs on our own hardware.
 - Meshy (paid, cloud) — image-to-3D and rigging for the characters. Used from the website, not the API.
-- Tripo (a jam partner) — image-to-3D for the `CafeWalker` model made on the jam's first night. That model is on
-  branch `mendezm87/anime-look` and is not on `main` yet; this line moves into the table above if it lands.
+- Tripo (tripo3d.ai, a jam partner) — image-to-3D for the `CafeWalker` hero made on the jam's first night, its
+  A-pose redraw and retopology (the model is in the table above).
 - TRELLIS.2 (Microsoft, MIT) — image-to-3D models, run locally
+- Blender 5.2 — rigging and clean-up, run by script
 
 ## Made before the jam
 This file covers assets. Our **tools, scripts, agent instructions and prompt library** were prepared before the
