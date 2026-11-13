@@ -120,6 +120,18 @@ it found 17 real collisions on its first run and now reports none. **Nothing has
 been run; expect to fix a line, not a layout. See
 [the devlog entry](devlog/2026-11-13-the-city-gets-built.md).
 
+**The player stopped wearing his own skin** (Fri Nov 13, 12:00 -> 1:35 PM Pacific, M Station, on `main`). The
+first full-cast colour audit ranked all ten models side by side and put **the player worst**, on the one rule
+the Team Owner set: his cream shirt measured **dE76 8.8** from his own face tone against a threshold of 14, so
+his torso and arms merged at distance. The repo had already written this down in `prompts.md` and never fixed
+it. `SK_CafeWalker.fbx` is now re-made from a redrawn sheet with a **khaki-brown** shirt measured at **dE
+40.3**; skin leak went **6.13% -> 1.03%** front and **3.94% -> 0.44%** back, and what is left is only the bare
+forearm the audit miscounts on anyone in short or rolled sleeves. **35 credits**, nothing else about him
+changed, verified by re-importing the FBX: 69 bones, 175.01 cm, 30,000 tris, 0 unweighted vertices, Walk +
+Idle. The old model is superseded and lives in git history, not beside it. **He is still not in Unreal** -
+`BP_Player` wears Epic's mannequin until the builder imports him, which is why this was the cheapest possible
+moment to redo him. See [the devlog entry](devlog/2026-11-13-the-player-stops-wearing-his-own-skin.md).
+
 ## Open
 
 | Day | Goal |
@@ -240,15 +252,6 @@ opening beat and the reason the cafe is the first room.
   so does tuning the fights, and that costs nothing new.
 
 ## Waiting for a yes
-
-**Remake `CafeWalker` and `CafeCoworker` for colour** (M Station, Nov 13). The full colour audit says the
-player leaks **6.13% front / 3.94% back** and the coworker **4.46% / 5.27%** — clothing within dE 14 of
-their own skin, which the Team Owner's standing colour rule forbids. They are the worst two in a cast of
-ten and they are the two on screen most. **Neither is wired into Unreal yet**, so nothing downstream
-depends on them and this is the cheapest moment it will ever be: a redrawn reference sheet each (ComfyUI,
-free) plus **35 Meshy credits each**. Cost if we wait until after they are imported: the same, plus the
-rework. Numbers and the proposed fix are in
-[`CHARACTERS.md`](CHARACTERS.md#colour-audit--fri-nov-13-after-the-city-pass-m-station).
 
 **A crowd on the street** (M Station, Nov 13). The city is dressed but has no people in it. The cheap route
 is `BP_Civilian` walking instances of the two bodies we already own (`SK_StreetGoon`, `SK_CafeCoworker`)

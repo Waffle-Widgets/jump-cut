@@ -73,6 +73,9 @@
   - Detail belongs in geometry when a cel shader is going to flatten your lighting into bands and outline
     every edge. Flat material slots plus recessed windows beat a photographic facade texture, and they cost
     nothing to bake.
+  - Build the view, not the map. The avenue west of the cafe was correct on paper and invisible in play:
+    the hole in the wall is 3 m wide, so it admits a narrow cone, and every building was off to the sides.
+    The player would have spent beat 1 looking through a hole at flat grey.
   - "Alive" is not more buildings. It is evidence that somebody was here five minutes ago and will be back
     — and it wants to be in clumps, because a prop every two metres reads as a shop display, not a street.
 
@@ -83,3 +86,5 @@
   ![The coffee shop, dressed, with the ceiling and the south wall cut away](../media/2026-11-13-cafe-interior.jpg)
 
   ![The nine building types](../media/2026-11-13-city-buildings.jpg)
+
+  ![Through the hole the car made, west across the avenue](../media/2026-11-13-city-crash-view.jpg)

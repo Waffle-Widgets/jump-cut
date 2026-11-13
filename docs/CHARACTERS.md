@@ -40,9 +40,13 @@ the plainest design of the three: no coat, no weapon, no insignia.
 
 - **Silhouette:** narrow and upright, the apron making a clear rectangle across his hips. The only read from
   distance is that flat apron line — everything else is a thin standing figure.
-- **Design:** short messy black hair, tired calm face. Cream long-sleeve shirt, sleeves pushed up. Dark green
-  canvas apron. Charcoal trousers, scuffed grey sneakers. A folded cloth at the apron tie — the one piece of
-  silhouette that moves when he does.
+- **Design:** short messy black hair, tired calm face. **Khaki-brown** long-sleeve shirt, sleeves pushed up.
+  Dark green canvas apron. Charcoal trousers, scuffed grey sneakers. A folded cloth at the apron tie — the one
+  piece of silhouette that moves when he does.
+  **The shirt was cream until Fri Nov 13** and that was a measured defect, not a taste call: cream sat
+  **dE76 8.8** from his own face tone, under the threshold of 14, so his torso and arms merged at distance.
+  Khaki measures **dE 40.3**. Everything else about him is unchanged. See the colour audit at the end of this
+  file.
 - **Height:** 175 cm. **Triangle budget:** 30,000.
 - **Already exists:** `Art/Refs/cafe_walker_ref.jpg` and `Art/Refs/CafeWalker_tripo_apose.glb`, first on
   `mendezm87/anime-look` and now merged into `Gamestation/first-build` (not yet on `main`), made with Tripo on the
@@ -572,7 +576,7 @@ people and off for the prop. 35 credits each; the remesh and the rig were free.
 
 | Reference | Meshy named it | Result |
 |---|---|---|
-| `Art/Refs/CafeWalker_apose.png` | `Meshy_AI_The_Weary_Apron` | Smart Rig, 69 bones -> `SK_CafeWalker.fbx` |
+| `Art/Refs/CafeWalker_apose.png` | `Meshy_AI_The_Weary_Apron` (Nov 12, cream shirt - **superseded**), `Meshy-AI-The-Reluctant-Barista` (Nov 13, khaki shirt - **canonical**) | Smart Rig, 69 bones -> `SK_CafeWalker.fbx` |
 | `Art/Refs/CrashDriver_apose.png` | `Meshy_AI_Frostbound_Rider` | Smart Rig, 45 bones -> `SK_CrashDriver.fbx` |
 | `Art/Refs/CleaverBoss_apose.png` | `Meshy_AI_The_Obsidian_Enforcer` | Smart Rig, 83 bones -> `SK_CleaverBoss.fbx` |
 | `Art/Refs/Cleaver_prop.png` | `Meshy_AI_Steel_Butcher_Cleaver` | no rig, it is a prop -> `SM_Cleaver.fbx` |
@@ -1008,13 +1012,13 @@ Until that exists, the street is dressed but empty of people. `docs/CITY.md` lis
 ## Colour audit — Fri Nov 13, after the city pass (M Station)
 
 Full `tools/color_audit.py` run over all ten models, to answer "do any characters need remaking for
-consistency". **Eight are clean. Two are not — and they are the two the player looks at most.**
+consistency". **One real defect, two already-explained false positives, seven clean.**
 
 | Model | front leak | back leak | skin ref | verdict |
 |---|---|---|---|---|
-| `CafeWalker` (the player) | **6.13%** | **3.94%** | `#FDD9BF` | **FLAG — worst in the cast** |
-| `CafeCoworker` | **4.46%** | **5.27%** | `#DC8754` | **FLAG** |
-| `CrashDriverTrellis` | 2.84% | 0.91% | `#8E6D58` | flag, but it is brown-leather specular, not skin — and this is the non-canonical fallback |
+| `CafeWalker` (the player) | **6.13%** | **3.94%** | `#FDD9BF` | **REAL — the cream shirt. Fixed, see below** |
+| `CafeCoworker` | 4.46% | 5.27% | `#DC8754` | false positive: bare forearms, [already explained above](#the-coworker--cafecoworker-beat-1-modelled-and-rigged-nov-13-not-yet-imported-into-unreal) |
+| `CrashDriverTrellis` | 2.84% | 0.91% | `#8E6D58` | false positive: brown-leather specular; and this is the non-canonical fallback |
 | `CleaverBossGemText` | 0.28% | 0.00% | `#FDDFCB` | clean |
 | `CleaverBoss` | 0.18% | 0.00% | `#E3B5A4` | clean |
 | `CleaverBossGemRef` | 0.14% | 0.00% | `#FCD9C8` | clean |
@@ -1022,22 +1026,52 @@ consistency". **Eight are clean. Two are not — and they are the two the player
 | `CrashDriver` | 0.00% | 0.00% | `#D6A993` | clean |
 | `StreetGoon` | 0.00% | 0.00% | `#C78E79` | clean |
 
-"Leak" is the share of the body within dE76 14 of the model's own face skin tone that is neither head nor
-hand — the Team Owner's standing rule that no clothing may be skin-coloured and no skin may be
-clothing-coloured.
+This is the first time the whole cast has been measured side by side, and the ranking is the useful part: the
+**player is the worst model in the game** on the one rule the Team Owner set, and he is on screen for every
+second of the demo.
 
-**`CafeWalker` is the one that matters.** He is the player, he is on screen for every second of the demo,
-and his cream shirt sits inside dE 14 of his own very pale skin (`#FDD9BF`), so at a distance his torso and
-his arms merge. `CafeCoworker` has the same fault from two directions — rolled sleeves at the front and a
-near-white apron back (`#FDFDFC`) against `#DC8754` skin.
+### The player's shirt was a real defect — found, fixed, and measured both ways
 
-**Neither has been remade yet, and the timing is unusually good.** `BP_Player` still wears Epic's
-mannequin and `BP_Coworker` is still a green box, so *nothing downstream depends on either model* — no
-retarget, no material instance, no placed actor. Redoing them now costs a reference sheet each (ComfyUI,
-free) plus 35 Meshy credits each, and costs nothing else. After they are imported, it costs all of that
-plus the rework.
+The leak map put his red on the shoulders, the upper arms and the sleeve down to the elbow — all shirt, no bare
+skin. Measured off that map, the offending colour was **`#F3E3CF`, dE76 8.8 from his face tone `#FDD9BF`**,
+with dominant texels as close as **dE 6.0**, against a threshold of 14.
 
-The fix is a colour change in the prompt, not a redesign: give the player a shirt with real separation from
-his skin (a mid tone, measured against `#FDD9BF` before it is drawn, the way `StreetGoon`'s grey was
-measured against Freeze Frame's pale cyan) and give the coworker cuffs at the wrists and a non-white apron.
+**The repo already knew.** `COWORKER-APOSE` in [`prompts.md`](prompts.md) calls it out by name — "the one
+failure this cast already has (`CafeWalker`'s cream shirt, dE76 14.4 from his face)" — and her design was
+written to avoid repeating it. It was recorded, it was never fixed, and the baked model measured worse than the
+14.4 written down at the time.
+
+**Fixed the same day**, by changing one thing: the shirt colour. Khaki-brown was picked by measurement before
+anything was drawn, against every cast and power colour at once.
+
+| | old (cream) | new (khaki) |
+|---|---|---|
+| shirt on the baked model | `#F3E3CF` | **`#847755`** |
+| dE76 from his own face | **8.8** (threshold 14) | **40.3** |
+| skin leak, front | **6.13%** | **1.03%** |
+| skin leak, back | **3.94%** | **0.44%** |
+| what the red covers | shoulders, upper arms, sleeves | two small bands at the wrists |
+
+**He still reads FLAG, and that one is a false positive too.** All that is left is the band of bare forearm
+between the hand allowance and his pushed-up cuff — the identical artefact `CafeCoworker` carries. The sleeves
+stayed pushed up on purpose: the leak map showed they were never the fault, and changing two things at once
+would have made it impossible to say which one fixed it.
+
+Everything else about the model is unchanged and was verified by **re-importing the exported FBX**, not by
+reading the generator's log: **69 bones** (same as before), **175.01 cm**, **30,000 triangles**, **0 unweighted
+vertices**, Walk and Idle both present, bake fit 0.077 cm. The walk was checked by eye — legs alternate, knees
+bend, feet plant, and the apron does not drag with `Bone_010`, which top-owns 18% of the mesh.
+
+**One artefact worth knowing:** the remesh smeared a little shirt colour onto the top of the apron bib. It is
+small, it is the same khaki that is meant to be above it, and it is not a colour-rule problem — but it is there.
+
+### What the audit still cannot do
+
+Three of its findings have now been overturned by looking: brown-leather specular read as skin
+(`CrashDriverTrellis`), a 53% head-to-body contrast loss it passed without comment (`StreetGoonTrellis`), and a
+**bare forearm counted as a defect** (`CafeCoworker`, and it would do the same to anyone in short sleeves). Its
+only allowance for legitimate skin below the head is a small disc at each hand.
+
+It is still worth running — it is what found the player's shirt. But **a flag is a reason to open the leak map,
+not a verdict**, and nobody should spend credits on one without looking first.
 

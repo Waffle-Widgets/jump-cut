@@ -234,6 +234,19 @@ def crossing():
     # the lane's own back wall: the buildings that close the view north and south of the cafe
     put('City_CafeNeighbourN', 'SM_ShopHouse_C', -200.0, 560.0, 0, 180)
     put('City_CafeNeighbourS', 'SM_ShopHouse_A', -250.0, -560.0, 0, 0)
+    # THE VIEW THROUGH THE HOLE. The first mock-up render of this looked right and showed nothing: the hole in
+    # the west wall is 3 m wide at x = -630, so from inside the cafe it only admits a narrow cone around y = 0,
+    # and every avenue building was off to the sides at y = +/-1500 or further. The player would have spent the
+    # whole of beat 1 looking through a hole at flat grey. These are the far side of the avenue, ON that axis -
+    # which is also simply what you see when you look across a street: the building opposite.
+    put('City_AvenueFar_Mid', 'SM_BlockFiller', -3400.0, 0.0, 0, 270)
+    put('City_AvenueFar_N', 'SM_ShopHouse_C', -3400.0, 1250.0, 0, 270)
+    put('City_AvenueFar_S', 'SM_ShopHouse_A', -3400.0, -1150.0, 0, 270)
+    put('City_AvenueFar_Tower', 'SM_SetbackTower', -4600.0, 300.0, 0, 270)
+    put('City_AvenueLamp', 'SM_StreetLamp', -2250.0, 260.0, 0, 180)
+    put('City_AvenuePole', 'SM_UtilityPole', -2450.0, -380.0, 0, 0)
+    put('City_AvenueCone', 'SM_TrafficCone', -1500.0, -120.0, 0, 0)
+    put('City_AvenueBarrier', 'SM_Barrier', -1750.0, 180.0, 0, 90)
     put('City_CrossLamp', 'SM_StreetLamp', -1250.0, 520.0, 0, 180)
     put('City_CrossPole', 'SM_UtilityPole', -1300.0, -480.0, 0, 0)
 

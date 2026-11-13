@@ -126,7 +126,10 @@ grey boxes are **hidden, not deleted** — `jumpcut_city_place.py show` puts the
 
 ## What is checked, and what is not
 
-**Checked.** Every model was built, measured and looked at — the check sheets are in `Art/Blender/cache/`
+**Checked.** All 44 exported FBX were **re-imported into a clean Blender and re-measured**, rather than
+trusting the exporter: every one comes back as a single mesh, within 1.5 cm of its intended size on both
+axes, with its triangle count exact and every material slot named `MS_City*`. Then every model was built,
+measured and looked at — the check sheets are in `Art/Blender/cache/`
 (`city_cafe.png`, `city_cafe_interior.png`, `city_city.png`, `city_ruins.png`, `city_props.png`) and the
 layout was assembled in Blender and rendered from eye height at the player's own start point
 (`city_layout_lane.png`, `city_layout_lane_back.png`, `city_layout_cafe_west.png`,

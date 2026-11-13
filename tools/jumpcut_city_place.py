@@ -92,6 +92,11 @@ def ensure_materials():
                                        unreal.LinearColor(rgb[0] * 2.2, rgb[1] * 2.2, rgb[2] * 2.2, 1.0))
                 mel.connect_material_property(em, '', unreal.MaterialProperty.MP_EMISSIVE_COLOR)
             mel.recompile_material(mat)
+            # Save the material itself. The level is deliberately left unsaved for the builder to judge, but a
+            # brand-new material asset that is only in memory is lost on close, and then every actor placed
+            # below is pointing at nothing. Creating an asset and saving that asset is not the same act as
+            # saving the level.
+            unreal.EditorAssetLibrary.save_asset(path)
             out[slot] = mat
         except Exception as e:                                   # noqa: BLE001 - report and carry on
             say('could not make a material for %s: %s' % (slot, e))
