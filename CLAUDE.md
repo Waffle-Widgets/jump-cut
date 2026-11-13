@@ -211,6 +211,37 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   good by reading each character's capsule *and* mesh `BodyInstance`: all of ours set `Visibility -> ECR_Ignore`,
   and `DefaultEngine.ini` declares no custom trace channels, so `TraceTypeQuery1` is Visibility. That is a fact
   about the assets; a single blink past a walking goon is an anecdote about one frame.
+- **A bounding box is not a walking surface.** `SM_RuinSlab_A` is a broken slab: its box reaches 119 cm only
+  because of chunks standing up near the edges, while the surface the player stands on down the centre line is
+  45. Placing it at `z = -box_height` put the whole beat-4 walkway 74 cm below the street, which turned the head
+  room under its 215 ceiling from 39 cm into 113 - enough that a jump clears the gaps the section exists to stop
+  it clearing. Nothing about it is visible; the slabs render exactly where you put them. For anything broken or
+  jagged, **line-trace down and use where the feet land**, not the box.
+- **Imported meshes get ONE auto convex hull from Interchange, and it need not match the art.** For static level
+  geometry set `body_setup.collision_trace_flag = CTF_USE_COMPLEX_AS_SIMPLE` so collision is the render mesh.
+- **Hidden is not non-colliding, and component collision does not serialize.** `set_actor_hidden_in_game(True)`
+  survived a reload; `static_mesh_component.set_collision_enabled(NO_COLLISION)` did NOT, leaving an invisible
+  wall across the route (`C1_Run_End` blocked all of beat 4). Use the actor property `set_actor_enable_collision(False)`,
+  then re-set the full transform to dirty the package, then save it. Trace from **before** the obstacle to check.
+- **An orphaned actor package is not orphaned.** If the editor dies with placed actors dirty, it restores their
+  packages to `__ExternalActors__` on the next start. They are not in the loaded level, so they look like junk -
+  but World Partition loads every package in that folder, so the next map load gives you **two of everything**
+  (we got 46 beat-4 actors from 23). Compare the level's own `actor.get_outermost().get_name()` list against the
+  files on disk and move the extras out of `Content` before committing.
+- **`unreal.HitResult` is opaque in 5.8:** no `.distance`, every property "protected and cannot be read", and
+  `SystemLibrary.break_hit_result` does not exist. Use `to_tuple()` / `to_dict()`, or get the distance from the
+  MCP's `SceneTools.trace_world`, which just returns a number.
+- **Start a downward trace BELOW anything overhead.** Tracing down from z=300 through a ceiling that occupies
+  215-350 begins inside the collider and reported a floor where there was a gap - it hid all three gaps at once.
+- **A viewport capture can be of a different world than Python is editing.** The editor sat on a scratch
+  `/Temp/Untitled_1` while `get_editor_world()` answered `Lvl_JumpCut`, so three screenshots showed an empty
+  landscape while the work was fine. Check `SceneTools.get_current_level` **and** `GetVisibleActors` (it prints
+  the world in each actor's path) before believing a picture, and `SceneTools.load_level` to fix it.
+- **`SlateInspector.Type` APPENDS to a textbox, it does not replace.** A leftover `stat fps` turned the next
+  command into `stat fpspy /path/to/script.py`, which failed silently. Clear the box with BackSpace presses
+  first. It also returns **false** for text containing double quotes - pass an unquoted path.
+- **`AssetTools.write_file` only accepts `.csv/.html/.json/.md/.py/.txt` and only under the project roots**, so
+  write a capture's base64 to a `.txt` under `Saved/` and decode it outside the editor.
 - The frog's `CameraBoom` has Inherit Yaw off (that keeps the camera north while the frog turns). A spring arm
   with Inherit Yaw off ignores its world rotation's yaw and uses its *relative* yaw, so turn it with
   `SetRelativeRotation`, not `SetWorldRotation`. Debug camera problems with `CaptureEditorImage` during PIE: the
