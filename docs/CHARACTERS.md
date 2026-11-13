@@ -663,7 +663,78 @@ animations together. Do **not** use `SkeletalMeshTools.import_file` onto an exis
 that going wrong twice. Then point the material slot at the character's `MI_`, place it next to a plain copy, and
 look at it **from the game camera** before calling it good.
 
-### The goons' model — 2026-11-13, made locally on M Station with TRELLIS (no credits)
+### The goons' model — 2026-11-13, Meshy, 35 credits (canonical)
+
+The Team Owner's answer to the choice below was **"spend them"**, and the meshy.ai session in the dedicated
+Chrome profile was logged back in by hand: account `theclassyhobo`, **8,322 credits** before this run. Same
+recipe as the five characters before him - High Detail (Meshy 7.1), Texture on, Ultra 2K, texture 2K, License
+Private, Pose -> A-Pose **on**.
+
+| Reference | Meshy named it | Result |
+|---|---|---|
+| `Art/Refs/StreetGoon_apose.png` | `Meshy_AI_Crimson_Enforcer` | Smart Rig, **76 bones** -> `SK_StreetGoon.fbx` |
+
+    blender -b --factory-startup --python Art/Blender/meshy_character.py -- <rigged.glb> StreetGoon smart 180 18000
+
+**180.0 cm exactly**, **18,000 triangles**, Walk + Idle, bake fit **0.145 cm**. Image-to-3D returned 411,898
+faces, which is over the 300K rig gate, so it was remeshed to **Fixed 30K / Quad** first - 27,829 faces - and
+only then rigged. Both remeshes and the rig were free; the 35 credits are the generation alone.
+
+**Verified by re-importing the exported FBX**, not by reading the generator's log: 76 bones, 18,000 triangles,
+15,417 vertices, **0 unweighted vertices**, and both actions (`Walk`, `Idle`) present. The weighting is also
+better spread than the TRELLIS characters - the heaviest top-owner is `Bone_014` at **10.1%** of the mesh,
+against `SK_CrashDriverTrellis`'s `clavicle_r` at 16%, which is the bone that flattens that model's sleeve on a
+50-degree shoulder swing.
+
+**Two traps fired on the way, both recorded because both are silent.** The **Pose switch read off** when the
+upload panel opened, even though the previous character was generated with it on - it does not persist, and
+A-Pose off on a character that will be rigged is the mistake that is only visible once the rig is wrong. And the
+Remesh dialog defaulted to **10K / Triangle** this time rather than the 30K / Quad it offered for the coworker,
+so the documented values have to be *set and read back*, never assumed. Picking the textured asset out of the two
+that one run leaves behind was done by querying the DOM for mean saturation (**0.19 textured vs 0.03
+untextured**, 220,082 verts vs 205,951), which is the reliable tell - the thumbnails do not distinguish them.
+
+**What the 35 credits actually bought, measured.** The design's whole silhouette rule is that the head is a
+bright dot above dark shoulders, so three goons standing 150 cm apart read as three figures rather than one
+mass. On the reference sheet, skin sits **47.6 L points** above the graphite. In the two bakes:
+
+| | sampled skin | sampled chest | head-to-body lightness | share of the sheet's contrast kept |
+|---|---|---|---|---|
+| **Meshy `StreetGoon`** | `#C78E79` (L 64.1) | `#2A363A` (L 21.7) | **42.3 L** | **89%** |
+| TRELLIS `StreetGoonTrellis` | `#56523E` (L 34.7) | `#202020` (L 12.3) | 22.5 L | 47% |
+
+TRELLIS bakes the reference sheet's cel shading into the base colour, so its "skin" is a shadow tone; Meshy's
+reads as lit skin. That one number is the reason to have spent the credits, and it is a thing the colour audit
+cannot see - **both** models pass it with no flags.
+
+**His colour audit is clean, and this time for a real reason.** `color_audit.py` returns no flags and a skin
+leak of **0.00% front / 0.00% back**, the cleanest in the cast. The long sleeves with cuffs at the wrists are
+why there is nothing to miscount - that detail was put in the prompt specifically because `CafeCoworker`'s
+rolled sleeves are what make her read FLAG - and the sampled skin reference `#C78E79` is a genuine lit tone
+rather than the shadow one TRELLIS gave the audit to compare against.
+
+**The back is clean, which is the defect the free model has.** TRELLIS invented a dusty mauve patch on the left
+shoulder blade; Meshy's back view is the waistcoat, belt and pockets the design asks for, with the buzzed scalp
+intact. Measured on the baked texture: the nearest texel to Splice's reserved magenta is **dE76 45.4** away
+(TRELLIS's was 33.4) and **zero** texels sit within 25 of it.
+
+![Meshy vs TRELLIS, the same goon](media/2026-11-13-streetgoon-meshy-vs-trellis.jpg)
+
+**One thing flagged and deliberately not changed.** The whole garment carries a blue-slate cast - the sampled
+chest, waist, thigh and shin all land at hue **195 to 210 degrees**, within a few degrees of the **192 degrees**
+this file reserves for Freeze Frame. By the measure that decides whether a player confuses two colours it is
+clear: those zones are value 0.22 to 0.29 against frost's near-white, 65 to 80 dE apart, and only 0.003% of the
+texture comes within dE 14 of frost at all (specular highlight). It is the same shape as `CafeCoworker`'s apron
+at hue 189.9 - recorded so nobody is surprised by it, not acted on.
+
+**The cost of choosing Meshy, stated plainly.** Smart Rig names bones `Bone_000...`, so this model gives up the
+one advantage the TRELLIS build had: the goon's three animations (`AM_Human_Punch_02`, `AM_Human_HitReact`,
+`AM_Human_Death`) are authored on Epic's mannequin skeleton, and a mannequin-named rig should retarget them
+without hand-mapping. This rig will need chains mapped by hand in Unreal the way `SK_CleaverBoss` needed nine.
+That work has not been done and **neither model has been imported into Unreal at all**, so the retarget claim on
+either side is still untested.
+
+### The goons' model, the TRELLIS trial — 2026-11-13 morning, 0 credits (superseded the same day)
 
 `StreetGoon` is the first character in this cast built **without Meshy**. The Team Owner's Nov 13 decision is
 "Meshy where we can, TRELLIS as the backup", and Meshy was unreachable: the dedicated Chrome profile's meshy.ai
@@ -673,10 +744,10 @@ password is not something an agent may ask for or type. TRELLIS.2 is installed o
 
 | Reference | Pipeline | Result |
 |---|---|---|
-| `Art/Refs/StreetGoon_apose.png` | TRELLIS.2-4B `1024_cascade`, `DEC=30000 TEX=2048` | 23 mannequin-named bones -> `SK_StreetGoon.fbx` |
+| `Art/Refs/StreetGoon_apose.png` | TRELLIS.2-4B `1024_cascade`, `DEC=30000 TEX=2048` | 23 mannequin-named bones -> `SK_StreetGoonTrellis.fbx` |
 
     D:/AI/TRELLIS2/venv/Scripts/python.exe run_image_to_3d.py in/StreetGoon_rgba.png out/StreetGoon 1024_cascade
-    blender -b --factory-startup --python Art/Blender/trellis_character.py -- out/StreetGoon.glb StreetGoon human 1.8 18000
+    blender -b --factory-startup --python Art/Blender/trellis_character.py -- out/StreetGoon.glb StreetGoonTrellis human 1.8 18000
 
 **There is a second reason beyond the lapsed login, and for this character it is the stronger one.**
 `trellis_character.py` names its bones the way Epic's mannequin does; Meshy's Smart Rig names them
@@ -716,9 +787,12 @@ apart**. The bake keeps the hues but throws away **53% of the head-to-body light
 characteristic already recorded for `SK_CrashDriverTrellis`, whose leather measured value 0.28-0.35 and "is why
 the model reads dark". It is the strongest argument for spending the 35 credits on him once Meshy is reachable.
 
-**Nothing about this makes him canonical.** He is committed as the free option, in the same way
-`SK_CrashDriverTrellis` sits beside the Meshy `SK_CrashDriver`. One Meshy login restores the 35-credit path, and
-the choice between them belongs to a person.
+**He is not canonical, and the question was settled a few hours later.** The Team Owner said "spend them",
+the meshy.ai session was logged back in, and 35 credits produced the model in the section above. This build keeps
+the name `StreetGoonTrellis` and stays on disk as the free fallback, exactly as `SK_CrashDriverTrellis` sits beside
+the Meshy `SK_CrashDriver`. It keeps one genuine advantage the paid model gives up - its 23 bones carry Epic's
+mannequin names - so if the hand-mapped retarget chains the Meshy rig needs turn out to be a problem in Unreal,
+this is the model to try instead.
 
 ### Imported — Thu Nov 12, evening (GameStation)
 
