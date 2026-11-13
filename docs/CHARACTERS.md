@@ -128,21 +128,24 @@ Twelve takes were drawn. The picks, committed next to this file:
 
 ## Hand-off
 
-**For Manny, in Chrome (the one step an agent must not do):** on meshy.ai, upload each picture below to
-**Image to 3D**, press **Retry** until the face and the hands are clean, and download the result. Meshy keeps
-results three days, so download on the day. The website's retries are free; the API's cost credits.
+**Done - 2026-11-12, by Claude in a real browser on M Station.** All four were made on meshy.ai (the website, so
+the free retries still apply), the three people were rigged with **Smart Rig**, and everything was downloaded.
+Settings: High Detail (Meshy 7.1), Texture on, Ultra 2K, texture 2K, License Private, Pose -> A-Pose on for the
+people and off for the prop. 35 credits each; the remesh and the rig were free.
 
-| Upload | Then | Download |
+| Reference | Meshy named it | Result |
 |---|---|---|
-| `Art/Refs/CafeWalker_apose.png` | **Rig** → Smart Rig | rigged GLB |
-| `Art/Refs/CrashDriver_apose.png` | **Rig** → Smart Rig | rigged GLB |
-| `Art/Refs/CleaverBoss_apose.png` | **Rig** → Smart Rig | rigged GLB |
-| `Art/Refs/Cleaver_prop.png` | **no rig** — it is a prop | plain GLB |
+| `Art/Refs/CafeWalker_apose.png` | `Meshy_AI_The_Weary_Apron` | Smart Rig, 69 bones -> `SK_CafeWalker.fbx` |
+| `Art/Refs/CrashDriver_apose.png` | `Meshy_AI_Frostbound_Rider` | Smart Rig, 45 bones -> `SK_CrashDriver.fbx` |
+| `Art/Refs/CleaverBoss_apose.png` | `Meshy_AI_The_Obsidian_Enforcer` | Smart Rig, 83 bones -> `SK_CleaverBoss.fbx` |
+| `Art/Refs/Cleaver_prop.png` | `Meshy_AI_Steel_Butcher_Cleaver` | no rig, it is a prop -> `SM_Cleaver.fbx` |
 
-Smart Rig for the three people (they are humans, not the Quadruped Dog rig). The cleaver is not rigged: it goes on
-a hand socket.
+**If you redo one, rigging is two presses.** The first **Rig** press is only a remesh (Image to 3D returns
+600-950k triangles and rigging refuses over 300k); press Rig again on the remeshed asset for the real rig dialog,
+and use 30K + Quad. Download the **animate-phase** asset, `..._character.glb` - the remeshed one has **no
+skeleton** in either glb or fbx. Both traps are written up in `CLAUDE.md`'s Meshy section.
 
-**Then, on M Station (I can run this):** the three people,
+**Then, on M Station (done 2026-11-12):** the three people,
 
     blender -b --factory-startup --python Art/Blender/meshy_character.py -- <rigged.glb> CafeWalker smart 175
     blender -b --factory-startup --python Art/Blender/meshy_character.py -- <rigged.glb> CrashDriver smart 180

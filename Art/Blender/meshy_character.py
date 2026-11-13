@@ -239,9 +239,17 @@ else:
     hip = bones[root].children[0].name if bones[root].children else root   # Bone_001: where legs and tail start
     hip_kids = [ch.name for ch in bones[hip].children]
     chains = {k_: chain_from(k_) for k_ in hip_kids}
-    tail_root = max(hip_kids, key=lambda k_: far_y(chains[k_]))
-    leg_roots = [k_ for k_ in hip_kids if k_ != tail_root and tipz(chains[k_]) < 0.25 * H]
-    spine_root = [k_ for k_ in hip_kids if k_ not in leg_roots and k_ != tail_root][0]
+    # The spine is the branch whose tip reaches highest. Everything else low off the hip is a LEG unless it starts
+    # on the body's centre line - a tail does, a leg never does - which is what tells a human (two legs, no tail)
+    # from a dog. Taking the furthest-back chain as the tail made one of a human's legs a tail: it then got the
+    # lazy sway instead of a stride, and the walk only half worked. See docs/devlog 2026-11-12.
+    def hx(k_): return bones[chains[k_][0]].head_local.x
+    spine_root = max(hip_kids, key=lambda k_: tipz(chains[k_]))
+    low = [k_ for k_ in hip_kids if k_ != spine_root and tipz(chains[k_]) < 0.25 * H]
+    off = max([abs(hx(k_)) for k_ in low], default=0.0)
+    leg_roots = [k_ for k_ in low if abs(hx(k_)) > 0.25 * off] if off > 1e-6 else list(low)
+    tail_cands = [k_ for k_ in hip_kids if k_ != spine_root and k_ not in leg_roots]
+    tail_root = max(tail_cands, key=lambda k_: far_y(chains[k_])) if tail_cands else None
     spine_chain = []; n = spine_root
     while True:                                        # follow the spine to the bone where arms branch off
         spine_chain.append(n); kids = [ch.name for ch in bones[n].children]
@@ -251,7 +259,7 @@ else:
     ck = {ch.name: chain_from(ch.name) for ch in bones[chest].children}
     head_root = max(ck, key=lambda k_: tipz(ck[k_]))
     arm_roots = [k_ for k_ in ck if k_ != head_root]
-    tail = chains[tail_root]
+    tail = chains[tail_root] if tail_root else []
     legs = []
     for r in sorted(leg_roots, key=lambda r: bones[r].head_local.x):
         ch = chains[r]; legs.append((ch[0], ch[1], ch[-1], 0.0 if len(legs) == 0 else math.pi))
