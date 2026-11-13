@@ -56,6 +56,17 @@ reading back which montage was playing, not by eye, and not by a person playing 
 the player and the goons: swapping `CafeWalker` onto `BP_Player` needs this same montage set retargeted onto his
 skeleton, and is the next job.
 
+**Beat 1 has its lesson now** (Fri Nov 13, 1:15 AM Pacific, GameStation, on `playtest`). The demo's opening beat
+asked the player to save a coworker from shrapnel using Freeze Frame, and none of it existed - no coworker
+anywhere in the project, no shrapnel, and no action button on the player at all. `BP_Coworker` and `BP_Shrapnel`
+are built and `Coworker_Cafe` is placed in `Lvl_JumpCut` at (300, -250), between the counter and the door.
+Picking up Freeze Frame is what starts the danger; while time is stopped the shrapnel does not move or age; **F**
+(or the gamepad's top face button) pulls her clear, and it only works while time is stopped, so the beat cannot
+be passed without using the power it teaches. Failing it is a 2.5 s loop, not a death. **Verified in
+Play-In-Editor by reading live actor positions and state, not by eye - and the F key itself has not been pressed
+by a person.** She is still a green box: her design and prompt are in [`CHARACTERS.md`](CHARACTERS.md), her model
+is not made.
+
 ## Open
 
 | Day | Goal |
@@ -91,6 +102,23 @@ The jam entry is **a demo, not the completed game**. It ends after the last boss
    be boring, so it needs flashy effects as well.
 
 Once all of this is in, we playtest and iterate.
+
+### Still to build, in play order (Manny, the Team Owner, Fri Nov 13, 1:15 AM Pacific)
+
+The queue the work-order decision creates. Take the top unfinished line.
+
+| Beat | What is missing |
+|---|---|
+| 1. Cafe | **Done** - crash, Freeze Frame hand-over, coworker rescue. Her model is not made (art, not code) |
+| 2. Street | **Done** - goons, fists, animation. Tuning only: one combo clears all three in about 1.0 s |
+| 3. Splice boss | Fight works. He hands over `HasSplice`, which still gates nothing |
+| 4. Destroyed buildings | **Nothing built.** The Splice power itself, and the platforming section that needs it |
+| 5. Stunt Double boss | Fight and doubles built. Two decisions from Nov 13 are unbuilt: Splice past the attack stand-in, and the attack stand-in's despawn timer |
+| 6. Fade to "continue" | **Nothing built**, and what it even is has not been decided (Still to decide, below) |
+
+**Beat 4 is the earliest unfinished one**, and it is where Splice has to exist, so it is also what unblocks
+beat 5's Splice decision.
+
 
 ## Stretch (only if the critical path is finished)
 
@@ -161,6 +189,24 @@ _(nothing yet)_
 
 ## Decisions
 
+- **2026-11-13 (1:15 AM Pacific): We build in the order the game is played** (Manny, the Team Owner). When
+  there is a choice of what to do next, the earliest unfinished beat wins, not the most interesting one: "if we
+  still have work to be done on earlier beats we should do that." The first thing this rule found was that
+  **beat 1 had no coworker, no shrapnel and no action button** while beat 5 already had a working boss power -
+  built and shipped the same hour (`BP_Coworker`, `BP_Shrapnel`, `BP_Player.PlayerInteract`, see the devlog).
+  Read the beats list under Open as a work queue, top down.
+- **2026-11-13 (1:15 AM Pacific): Splice gets a job in the beat-5 fight after all** (Manny, the Team Owner).
+  Splice lets the player **get past the attack stand-in** - the double the boss tags in to fight for him - and
+  reach the boss directly. This softens, but does not cancel, the deliberate rule break recorded in
+  [`PITCH.md`](PITCH.md): **Freeze Frame is still the counter** to the diving doubles, because stopping time is
+  the only thing that stops a dive. Splice is the answer to the *bodyguard*, not to the soak. **Not built**:
+  Splice itself does not exist yet (`HasSplice` still gates nothing), and under the work-order rule above it is
+  beat 4's job to build it.
+- **2026-11-13 (1:15 AM Pacific): The attack stand-in leaves when it has nothing to fight** (Manny, the Team
+  Owner). The double that fights for the boss only stays on the field while it is in combat; once nothing is in
+  its range to attack, a timer starts and it disappears. This stops the arena silting up with tagged-in doubles
+  during a long fight, and it makes running away from the bodyguard a real option rather than a stall. **Not
+  built** - it is a change to `BP_StuntStandIn`, and it is beat 5 work.
 - **2026-11-13 (12:30 AM Pacific): How the Stunt Double boss fights** (Manny, the Team Owner). His doubles are
   copies of **himself**, not of the player. They soak damage the way a stunt double does - they jump into the
   path of the blow - so while any of them is standing, every hit meant for the boss lands on one of them

@@ -48,6 +48,68 @@ the plainest design of the three: no coat, no weapon, no insignia.
   jam's first night. That model is the starting point, not a
   throwaway — the question for the team is whether to keep it or re-run it against the new reference sheet.
 
+## The coworker — `CafeCoworker` (beat 1; built in Unreal as a box, not yet drawn)
+
+The person the player saves in the demo's first beat. She exists because the beat's *lesson* needs a subject:
+the roadmap's beat 1 ends with an explosion sending shrapnel at a coworker, and the action button teaching the
+player to use Freeze Frame to save her. Until Fri Nov 13 she was not written down anywhere, which is how a beat
+can be "designed" and have no character in it.
+
+She is deliberately the plainest person in the cast after `CafeWalker` — she is on screen for about fifteen
+seconds and her job is to be unmistakably *a colleague*, in the same cafe, in the same uniform family.
+
+- **Silhouette:** short and compact, the same flat apron rectangle across the hips as `CafeWalker` so the two
+  read as the same workplace from distance. Hair tied back in a short tail — the one piece that moves.
+- **Design:** dark brown hair tied back; open friendly face, mid-twenties. White short-sleeve shirt, teal canvas
+  apron, charcoal trousers, flat brown shoes. No bag, no tray, no prop — see the rules note below.
+- **Height:** 162 cm. **Triangle budget:** 30,000.
+- **Palette, with the numbers** — picked against the one colour failure this project has already had
+  (`CafeWalker`'s cream shirt sits dE76 **14.4** from his own face, see the colour audit below):
+
+  | Part | Hex | Why |
+  |---|---|---|
+  | Skin | `#C98C64` | warm mid-brown; different family from every garment |
+  | Hair | `#3A2A22` | near-black brown, dE76 ~37 from the skin — not a skin-coloured hair |
+  | Shirt | `#FFFFFF` | pure white, the largest possible separation from skin |
+  | Apron | `#14626B` | deep teal; reads as the same uniform as `CafeWalker`'s dark green without copying it |
+  | Trousers | `#2E3338` | charcoal, matching the cast |
+  | Shoes | `#5A4231` | flat brown |
+
+  **Run the colour check before anyone models her**, the same one that caught `CafeWalker`: no garment within
+  dE76 20 of the skin, and no hair within dE76 20 of either.
+- **Rules constraint, deliberate:** no prop and nothing that leaves her silhouette. Image-to-3D fuses a thin
+  protruding shape into a blob or drops it as a floating shard — the lesson from the `CrashDriver` ice crystals
+  — so she is empty-handed and her apron ties are flat against her.
+- **Prompt:** `GEM2-COWORKER` in [`prompts-gemini.md`](prompts-gemini.md). **No artwork has been generated.**
+
+### Built in Unreal: `BP_Coworker` + `BP_Shrapnel` (Fri Nov 13, 2026, 1:15 AM Pacific, GameStation)
+
+The fight-shaped half of her exists and is verified; the body does not. She is a green box
+(`/Engine/BasicShapes/Cube`, `M_CheckGreen`, 0.5 x 0.5 x 1.8, chest at +90 cm) so that beat 1 is playable now
+and model-swappable on Saturday, exactly as `BP_StuntDouble` was.
+
+- **`BP_Coworker`** owns the whole beat. `TriggerSphere` 650 cm arms it, but `CoworkerStartStep` only fires once
+  `BP_Player.HasFreezeFrame` is true — so **picking up the power is what starts the danger**, and the player can
+  never meet the shrapnel without the means to stop it. It spawns the shrapnel, watches its distance to her own
+  chest, and shows `RescuePrompt` (a cyan `M_WarnFreeze` sphere at +260 cm) exactly when a rescue would succeed.
+- **`BP_Shrapnel`** flies to a fixed world point at `ShrapnelSpeed` 260 cm/s and destroys itself on arrival or
+  after 14 s. Every tick it reads `BP_Player.FreezeFrameActive`; while that is true it does not move, does not
+  turn, and **does not age** — a player who stops time is not punished for thinking.
+- **The rescue is gated on the power, not on speed.** `RescueRequiresFreeze` is true, so the prompt stays dark
+  and **F** does nothing unless time is stopped. It is instance-editable: a playtest that finds it heavy-handed
+  can switch it off without touching a graph.
+- **Failing it loops.** Shrapnel reaching her tips the mesh 80°, counts `RescueTriesUsed`, and 2.5 s later she
+  stands up, returns to her spot and a fresh piece leaves the car. Beat 1 cannot strand anybody.
+- **The action button is new.** `BP_Player` had no interact key at all. `PlayerTickInput` now polls **F** and
+  **Gamepad_FaceButton_Top** with the same edge detection as punch/rewind/freeze, and `PlayerInteract` offers the
+  rescue to every `BP_Coworker` in the level after a `PlayerCanAct` check.
+- **Placed as** `Coworker_Cafe` in `Lvl_JumpCut` at (300, -250, 0), yaw 180, with `ShrapnelSpawnLocation`
+  (-470, 0, 185) — the crashed car's cab — and `CoworkerSafeOffset` (0, 320, 0).
+- **Verified in Play-In-Editor** by reading live actor state, not by eye: shrapnel spawns at the car and travels;
+  left alone it hits her twice and the retry loop recovers both times; with the freeze on it sits at exactly
+  (-470, 0, 185) with its life timer untouched; the rescue moves her (300, -250) → (300, 70) and the shrapnel
+  then finishes its flight into empty space. **Nobody has pressed F** — the key binding itself is unplayed.
+
 ## The first boss — `CrashDriver`
 
 The man who drives a car through the cafe wall in the opening and dies giving you Freeze Frame. **He does not

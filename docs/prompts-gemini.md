@@ -264,3 +264,48 @@ Aspect ratio **4:3**, because a cleaver seen side-on is a landscape shape and a 
 > room, no 3D render look.
 >
 > The background is flat pure white and completely empty. Even flat lighting. No shadow on the ground beneath it.
+
+### GEM2-COWORKER — the cafe coworker, `CafeCoworker` (beat 1)
+
+Aspect ratio **3:4**. The person the player saves in the demo's opening beat. Her design is in
+[`CHARACTERS.md`](CHARACTERS.md#the-coworker--cafecoworker-beat-1-built-in-unreal-as-a-box-not-yet-drawn); she is
+built and playable in Unreal as a green box already, so this prompt is a model swap, not a blocker.
+
+Two things in it are deliberate. **She carries nothing at all** - the obvious cafe props (a tray, a cup, a
+cloth) are exactly the thin shapes held away from the body that image-to-3D fuses into the torso or drops as a
+floating shard, the lesson the `CrashDriver` ice crystals cost us. **And cream, beige and tan are banned on her**,
+because this cast's one measured colour failure is `CafeWalker`'s cream shirt sitting dE76 14.4 from his own face.
+
+> A single anime character illustration of one short compact woman in her mid-twenties, drawn in a clean
+> cel-shaded anime style: flat areas of solid colour, hard-edged shadows, only two or three large simple shadow
+> shapes per garment, a clean dark outline around every form, and a face drawn with a few confident clean lines.
+> Bright overall, light and airy, nothing dark or heavy or gritty.
+>
+> She stands facing the viewer in a wide relaxed A-pose, her whole body from the top of her head to the soles of
+> her shoes inside the frame. Both arms are angled down and away from her sides at about forty-five degrees, with
+> a large empty gap of white background clearly visible between each arm and her torso and her shoulders
+> completely clear of her chest. Both hands are open with the palms toward the viewer and the fingers spread wide
+> apart and clearly separated from one another. Her legs are well apart, with a wide clear gap of white background
+> between her thighs, between her knees and between her ankles. She stands straight and symmetrical.
+>
+> She has warm mid-brown skin and very dark brown, almost black, hair tied back in a short low tail that lies
+> flat against the back of her head with no loose strands standing out. Her face is open, friendly and calm.
+>
+> She wears a plain pure white short-sleeve shirt, a deep teal canvas apron with a flat square bib and flat ties
+> lying flush against her hips, charcoal grey trousers and flat brown shoes. No cream, no beige and no tan
+> anywhere on her clothes or her hair.
+>
+> Her hands are completely empty and she carries nothing: no tray, no cup, no plate, no cloth, no notepad, no bag
+> and no strap. Nothing hangs or dangles from her apron and nothing protrudes past her silhouette - no scarf, no
+> hat, no jewellery, no badge.
+>
+> One single figure, one single front view, alone in the picture. This is not a reference sheet and not a
+> character model sheet: no text, no letters, no words, no labels, no arrows, no measurements, no colour swatches,
+> no grid, no panels, no second view of her, no turnaround, no border or frame.
+>
+> No photographic texture of any kind: no fabric weave, no stitching detail, no cross-hatching, no stippling, no
+> visible brush strokes, no gradient or airbrushed shading, no film grain, no painterly rendering, no comic-book
+> inking texture, no 3D render look. No stains, no dirt and no blood anywhere.
+>
+> The background is flat pure white and completely empty. Even flat lighting from the front. No shadow on the
+> ground beneath her.

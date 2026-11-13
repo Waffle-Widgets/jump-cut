@@ -82,6 +82,31 @@ clavicle.
 > view, no panels, no border, no fabric weave, no stitching detail, no scuffs, no dirt, no soot, no burn marks, no
 > blood, no gradient shading, flat plain white background, even front lighting, no ground shadow
 
+### COWORKER-APOSE
+The cafe coworker the player saves in beat 1: see
+[`CHARACTERS.md`](CHARACTERS.md#the-coworker--cafecoworker-beat-1-built-in-unreal-as-a-box-not-yet-drawn). The
+self-contained Gemini version is `GEM2-COWORKER` in [`prompts-gemini.md`](prompts-gemini.md). She carries
+**nothing** - no tray, no cup, no cloth, no bag - because a thin prop held away from the body is the exact shape
+image-to-3D fuses into a blob or drops as a floating shard, which is what the `CrashDriver` ice crystals taught
+us. Her palette is chosen so no garment and no hair sits near her skin colour, the one failure this cast already
+has (`CafeWalker`'s cream shirt, dE76 14.4 from his face).
+
+> anime character illustration, single front view of one woman alone, cel shaded with hard-edged shadows and clean
+> dark line art, flat areas of solid colour, two or three large simple shadow shapes per garment, bright and light,
+> full body from the top of her head to the soles of her shoes, a short compact woman in her mid-twenties standing
+> straight and symmetrical in a wide A-pose, both arms angled down and away from her sides at about forty-five
+> degrees with a large empty gap of white background between each arm and her torso, both hands empty and open with
+> the palms toward the viewer and the fingers spread wide apart and clearly separated, legs well apart with a wide
+> gap of white background between the thighs and between the knees and between the ankles, facing the viewer, warm
+> mid-brown skin, very dark brown hair tied back in a short low tail lying flat against the back of her head, an
+> open friendly calm face, a plain pure white short-sleeve shirt, a deep teal canvas apron with a flat square bib
+> and flat ties lying flush against her hips, charcoal grey trousers, flat brown shoes, bare hands, holding
+> nothing, carrying nothing, no tray, no cup, no cloth, no bag, no strap, no jewellery, no badge, nothing hanging
+> or dangling, nothing protruding past her silhouette, no cream and no beige and no tan anywhere on her clothes or
+> her hair, no letters or numbers or logos on the apron, no text, no labels, no colour swatches, no second view, no
+> panels, no border, no fabric weave, no stitching detail, no stains, no dirt, no blood, no gradient shading, flat
+> plain white background, even front lighting, no ground shadow
+
 ### CLEAVER-PROP
 > a single heavy steel meat cleaver lying flat and seen straight from the side, filling the frame, clean polished
 > blade with a dark wooden handle and three rivets, one round hole near the top corner of the blade, cel shaded

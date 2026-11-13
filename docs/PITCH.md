@@ -29,8 +29,8 @@ Each boss is beaten with the power taken from the boss before. Boss 1 is already
 | # | Power | What the player does with it | How its boss uses it | Counter |
 |---|---|---|---|---|
 | 1 | Freeze Frame | Everything pauses for 10 s | No fight: the dying driver who crashes through the cafe wall | - |
-| 2 | Splice | Teleport; used for platforming in the second half of the map | Blinks around and attacks through portals. A Japanese mob boss with a cleaver | Freeze Frame |
-| 3 | Stunt Double | A copy fights beside you and takes one hit | Spawns stunt doubles **of himself** that dive in front of his hits, and can tag one in to fight for him | Freeze Frame |
+| 2 | Splice | Teleport; platforming in the second half of the map, and getting past the stunt double that fights for boss 3 | Blinks around and attacks through portals. A Japanese mob boss with a cleaver | Freeze Frame |
+| 3 | Stunt Double | A copy fights beside you and takes one hit | Spawns stunt doubles **of himself** that dive in front of his hits, and can tag one in to fight for him - the tagged-in one leaves on a timer once nothing is in its range | Freeze Frame (Splice to get past the tagged-in one) |
 | 4 | Director's Cut | "Your will becomes reality"; the full version only at the ending | Calls 10-second "scenes" with one rule each ("No abilities", "The floor is gone", "You can't move left") | Stunt Double |
 
 **Rewind** moves to a later boss (Nov 12, see Decisions in [`ROADMAP.md`](ROADMAP.md)) and has no row yet: which
@@ -41,6 +41,13 @@ boss gives it, and where it sits in the ladder, is still open there.
 doubles jump in front of your punches, so the only way to land one on *him* is to stop time first. Bosses 2 and 4
 still follow the old rule. The cost is that beat 5 no longer needs Splice to be finished - which, with Splice
 still unbuilt, is a reason it is this way round.
+
+**Splice is back in that fight, but not as the counter** (Manny, the Team Owner, Fri Nov 13, 1:15 AM Pacific).
+Splice gets the boss's **bodyguard**, not his soak: the player blinks past the stunt double the boss tags in to
+fight, and reaches the boss directly. Freeze Frame is still what makes a hit on the boss land, because a teleport
+does nothing about a double diving in front of a punch. So the ladder's rung is half restored - the power from
+the boss before is useful in the fight, it is just not the thing that wins it. **Neither half of this is built
+yet**: Splice does not exist, and the tagged-in double has no despawn timer.
 
 **Who the characters are** — the worker, the crash driver and the mob boss: [`CHARACTERS.md`](CHARACTERS.md).
 
