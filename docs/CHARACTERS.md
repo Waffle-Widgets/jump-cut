@@ -48,7 +48,7 @@ the plainest design of the three: no coat, no weapon, no insignia.
   jam's first night. That model is the starting point, not a
   throwaway — the question for the team is whether to keep it or re-run it against the new reference sheet.
 
-## The coworker — `CafeCoworker` (beat 1; reference sheet drawn Nov 13, still a box in Unreal)
+## The coworker — `CafeCoworker` (beat 1; modelled and rigged Nov 13, not yet imported into Unreal)
 
 The person the player saves in the demo's first beat. She exists because the beat's *lesson* needs a subject:
 the roadmap's beat 1 ends with an explosion sending shrapnel at a coworker, and the action button teaching the
@@ -80,7 +80,10 @@ seconds and her job is to be unmistakably *a colleague*, in the same cafe, in th
 - **Rules constraint, deliberate:** no prop and nothing that leaves her silhouette. Image-to-3D fuses a thin
   protruding shape into a blob or drops it as a floating shard — the lesson from the `CrashDriver` ice crystals
   — so she is empty-handed and her apron ties are flat against her.
-- **Prompt:** `GEM2-COWORKER` in [`prompts-gemini.md`](prompts-gemini.md). **No artwork has been generated.**
+- **Prompt:** `GEM2-COWORKER` in [`prompts-gemini.md`](prompts-gemini.md), and `COWORKER-APOSE` in
+  [`prompts.md`](prompts.md). **Both have now been run.** Her reference sheet is
+  `Art/Refs/CafeCoworker_apose.png` and her model is `Art/Blender/export/Characters/CafeCoworker/` — see
+  "The coworker's model" under Hand-off.
 
 ### Built in Unreal: `BP_Coworker` + `BP_Shrapnel` (Fri Nov 13, 2026, 1:15 AM Pacific, GameStation)
 
@@ -518,6 +521,41 @@ Both are 178 cm, ~30,000 triangles, Walk + Idle, bake fit 0.09 cm. 70 credits; t
 
     blender -b --factory-startup --python Art/Blender/meshy_character.py -- <rigged.glb> CleaverBossGemRef smart 178
     blender -b --factory-startup --python Art/Blender/meshy_character.py -- <rigged.glb> CleaverBossGemText smart 178
+
+### The coworker's model — 2026-11-13, by Claude in a real browser on M Station
+
+She was the first item on the roadmap's M Station queue and the only character in the opening beat with no face.
+Same settings as the four above: High Detail (Meshy 7.1), Texture on, Ultra 2K, texture 2K, License Private,
+Pose -> A-Pose on. **35 credits; the remesh and the rig were free.**
+
+| Reference | Meshy named it | Result |
+|---|---|---|
+| `Art/Refs/CafeCoworker_apose.png` | `Meshy_AI_Welcoming_Apron_Pose` | Smart Rig, **68 bones** -> `SK_CafeCoworker.fbx` |
+
+    blender -b --factory-startup --python Art/Blender/meshy_character.py -- <rigged.glb> CafeCoworker smart 162 30000
+
+**162.0 cm exactly**, 30,000 triangles (from 57,447), Walk + Idle, bake fit **0.072 cm**. The rig is clean on
+every test the script makes: two leg chains, two arm chains, a four-bone spine, a three-bone head and **no tail**
+— so `MESHYCHAR-BAD-RIG` did not fire. `color_audit.py` independently re-imported the exported **FBX** and counted
+the same 68 bones, so the export round-trips, and the FBX carries `T_CafeCoworker_BaseColor` inside it.
+
+**The remesh was done twice, and the first one was on the wrong asset.** One Image-to-3D run with Pose on leaves
+**two** generated assets in the panel — an untextured one (191,949 verts) and the textured one (210,280 verts) —
+and the workspace auto-selected the *untextured* one. Remeshing that gives a bare 28,857-face mesh that would have
+rigged and downloaded with no colour at all. Check the viewer's vertex count, not the thumbnail, before pressing
+Remesh. Both remeshes cost 0 credits, so the mistake was free; the one that matters is **28,762 faces, Quad**.
+
+**Her colour audit reads FLAG and it is a false positive.** 4.46% front / 5.27% back of the body sits within
+dE76 14 of her face tone `#DC8754` while being neither head nor hand — and the painted sheet
+([`media/2026-11-13-coworker-colour-audit.jpg`](media/2026-11-13-coworker-colour-audit.jpg)) shows all of it is
+her **bare forearms**. She wears a short-sleeve shirt, and the audit only whitelists the head plus a disc at each
+hand, so the arm between elbow and wrist is counted as a defect. No garment is skin-coloured and no skin is
+garment-coloured, which is the rule that actually matters. This is the same shape of false positive as
+`CrashDriverTrellis`'s brown-leather highlights.
+
+**Meshy has no rename.** The current meshy.ai workspace shows assets by date only and offers no rename control in
+the grid, the Assets sidebar or a context menu, so an asset cannot be labelled on their side. The mapping tables in
+this file are the label: find a model by its reference picture, not by Meshy's invented name.
 
 **Not made, and why.** Four other CleaverBoss pictures exist and were deliberately left alone:
 `BOSS2-APOSE-1/2/3` hold the cleaver **across the trouser leg**, which image-to-3D fuses into the mesh — that is

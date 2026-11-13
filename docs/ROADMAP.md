@@ -128,17 +128,20 @@ generating characters belongs on M Station.
 
 **The queue, in play order** (the work-order rule in Decisions: the earliest unfinished beat wins):
 
-1. **The coworker, `CafeCoworker`** - beat 1. She is designed in [`CHARACTERS.md`](CHARACTERS.md) with prompts
-   ready (`GEM2-COWORKER`, and `COWORKER-APOSE` for the ComfyUI path), **nothing has been drawn**, and in Unreal
-   she is still a box. She is the only character in the demo's opening beat who has no face. ~35 credits.
+1. ~~**The coworker, `CafeCoworker`**~~ - **done on M Station, Fri Nov 13 morning**, 35 credits. Drawn, modelled,
+   Smart Rigged (68 bones) and exported as `Art/Blender/export/Characters/CafeCoworker/SK_CafeCoworker.fbx` at
+   162.0 cm with Walk and Idle: see
+   [the devlog entry](devlog/2026-11-13-the-coworker-gets-a-body.md). **She is not in Unreal** - importing her is
+   the builder's job, so it has moved to the GameStation list below, and `BP_Coworker` still shows a green box.
 2. **The Director** - beat 6. No design, no colour, no prompt: the write-up has to come before any picture. He
    is the one genuinely missing model in the cast.
 3. **Not boss 3.** The Stunt Double is conditional again (Decisions, above). His fight is built and plays on a
    mannequin; no credits go on his art until beats 1 to 4 play through.
 
-**What stays on GameStation:** putting `CafeWalker` on `BP_Player` with `ABP_Unarmed` retargeted onto his
-skeleton (the player and the goons are still Epic's mannequin, and that is the most visible thing left in a
-judging video), building Splice for beat 4, and laying out beats 4 to 6.
+**What stays on GameStation:** importing `SK_CafeCoworker.fbx` and pointing `BP_Coworker` at it (the asset is
+committed and waiting; she is a green box in beat 1 until someone does), putting `CafeWalker` on `BP_Player` with
+`ABP_Unarmed` retargeted onto his skeleton (the player and the goons are still Epic's mannequin, and that is the
+most visible thing left in a judging video), building Splice for beat 4, and laying out beats 4 to 6.
 
 ### The demo: six story beats (Justin, Nov 12, late evening)
 
