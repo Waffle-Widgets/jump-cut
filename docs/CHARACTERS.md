@@ -210,6 +210,33 @@ Every item here is a failure this repo has already paid for once.
   soot, no scorch marks, no bandages and no visible wounds, on the model or in the concept art. The one scar on his
   chin is a thin clean line. He is cheerful and unhurt, which is the whole joke.
 
+### Built in Unreal: `BP_StuntDouble` (placeholder body, Thu Nov 12, 2026, 11:54 PM Pacific)
+
+The fight shell exists now, so beat 5 is playable before any art lands. `BP_StuntDouble` is a child of
+`BP_EnemyBase`, in `Content/Game/Blueprints/`. **Nothing in the design above is approved by this** — the Team
+Owner approved the six-beat demo, which is what makes boss 3 a required fight; the colour, the silhouette and the
+doubles-wear-your-face idea are all still proposals.
+
+- **Body is Epic's mannequin**, `SKM_Manny_Simple` with `ABP_Unarmed`, inherited from `BP_EnemyBase`. The mesh is
+  scaled **1.15** so he does not read as another goon in the playtest. Both go away at the model swap.
+- **Animations are the shared human montages** — `AM_Human_Punch_02` to attack, `AM_Human_HitReact`,
+  `AM_Human_Death`. All three sit on `DefaultSlot`, which `ABP_Unarmed` wires through to Output Pose, so they play.
+- **Tuned between a goon and the mob boss:** 300 health, move 460, damage 14, windup 0.40 s, cooldown 1.0 s,
+  attack range 150, reach 190, knockback 320. Faster and lighter than the cleaver boss (240 hp but 0.70 s windup),
+  which is the read we want for a stuntman. `EnemyStartsAwake` is false, like every other enemy.
+- **His power is not built**, and cannot be until the conflict below is settled.
+
+**The three docs describe three different fights.** This has to be picked before anyone builds the gimmick:
+
+| Source | What it says he does |
+|---|---|
+| `ROADMAP.md` beat 5 | "He makes a copy of **himself** and the player must fight both" |
+| `PITCH.md` power 3 | "Makes a double of **you** plus decoys" |
+| The proposal above | Two or three doubles wearing **your** face; damage transfers to the nearest one, so he is invulnerable until they are gone |
+
+The first is one extra enemy. The third is a damage-redirection system plus a copy of the player's mesh. They are
+not the same Friday.
+
 ### What a person has to decide before anyone draws him
 
 1. **Whether boss 3 is in the game at all.** He is number 2 on the cut list, and `ROADMAP.md` makes Saturday's
