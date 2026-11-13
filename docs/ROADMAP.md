@@ -256,12 +256,74 @@ The queue the work-order decision creates. Take the top unfinished line.
 | 1. Cafe | Crash, Freeze Frame hand-over (touch the driver), auto-freeze and the coworker rescue all work. **Missing from the Team Owner's scene: the day job, the latte art minigame, delivering the drink.** **Her model is made but not imported** (art, not code): `SK_CafeCoworker.fbx` is committed, but `BP_Coworker` is still a green box until the builder imports her |
 | 2. Street | **Done** - goons, fists, animation. Tuning only: one combo clears all three in about 1.0 s. **Their model is made but not imported** (art, not code): `SK_StreetGoon.fbx` is committed, but `BP_Goon` still wears Epic's mannequin until the builder imports him, and they are the enemy in beats 2 to 5. Designed, drawn and modelled Nov 13, see `StreetGoon` in [`CHARACTERS.md`](CHARACTERS.md#the-goons--streetgoon-beats-2-to-5) |
 | 3. Splice boss | Fight works. He hands over `HasSplice`, which **now opens the Splice blink** (below) |
-| 4. Destroyed buildings | **Half built.** The **Splice power is built, measured and on disk** (600 cm blink, Left Shift / gamepad B) - rebuilt on Justin's Mac mini and re-measured there, see below. The **platforming section is still nothing in the level**: Splice is the power the gaps are for and no gaps are placed yet. The five ruin pieces it needs are modelled and committed (above), not imported |
+| 4. Destroyed buildings | **Half built, and the other half is a script away.** The **Splice power is built, measured and on disk** (600 cm blink, Left Shift / gamepad B). The five ruin pieces are now **imported, Nanite off, and committed as Unreal assets** with three flat city materials. `tools/beat4_platforming.py` places the whole section - three gaps, two collapsed ceilings, the 10x15 m landing pad, a checkpoint and a goon pair - and its geometry is verified offline (below). **What is left is one editor run:** `py <repo>/tools/beat4_platforming.py`, look at it, save the level. Nothing of the section is in `Lvl_JumpCut` yet |
 | 5. Stunt Double boss | Fight and doubles built. **Splice past the attack stand-in is now measured, not just argued** - 600.0 cm straight through `BP_StuntStandIn` with the stand-in not shoved, and its capsule and mesh both ignore the Visibility channel the blink traces, so it needed no code in the fight at all. Still unbuilt: the attack stand-in's despawn timer |
 | 6. Fade to "continue" | **Nothing built**, and what it even is has not been decided (Still to decide, below) |
 
-**Beat 4's power now exists.** Splice is built, committed and on disk. What is still missing from beat 4 is the
-other half: the destroyed-building gaps for it to cross. Beat 5's Splice decision is no longer blocked.
+**Beat 4's power now exists.** Splice is built, committed and on disk. What is still missing from beat 4 is one
+editor run that places the gaps. Beat 5's Splice decision is no longer blocked.
+
+### Beat 4's ruins are imported and the section is designed (Fri Nov 13, 22:40 UTC, Justin's Mac mini)
+
+The Team Owner put beat 4 on this Mac, so the Mac's row in [`TEAM.md`](TEAM.md) is now
+`tester, maker, builder (beat 4)` - scoped, so GameStation stays the builder for everything else.
+
+**On disk and committed:** the five ruin meshes (`SM_RuinSlab_A/B`, `SM_RuinBeam`, `SM_RuinWall`, `SM_Rubble`)
+imported through Interchange from their committed FBXs into `/Game/Game/Imported/City/`, Nanite switched off on
+each, plus `M_CityBrick` / `M_CityConcrete` / `M_CityMetal` in `/Game/Game/Materials/City/`. They were sitting
+**uncommitted on this Mac's disk** when this run started - the same shape as the Splice loss, one machine and no
+copy - so committing them came before anything else.
+
+**`tools/beat4_platforming.py` is the whole section**, idempotent (it only ever adds or removes actors tagged
+`JC_Beat4`), and it deliberately **does not save**: the builder looks at it in the viewport and saves.
+
+**Why the gaps are 250 / 400 / 400 and not what [`CITY.md`](CITY.md) proposed.** CITY.md asked for "a gap the
+player must blink is 6.5-8.5 m". That cannot work, and the reason is arithmetic, not taste. The player's three
+movement numbers were settled by reading the assets rather than a running editor: `BP_Player` serializes none of
+them, and its parent `BP_ThirdPersonCharacter` serializes only `JumpZVelocity` - exactly one `500.0` in the file,
+with no 420, 600 or 700 anywhere in it - beside `AirControl 0.35` and `BrakingDecelerationFalling 1500`, the UE5
+template's trio. `MaxWalkSpeed` and `GravityScale` are in neither asset, so they are the engine defaults 600 and
+1; no capsule override either, so `ACharacter`'s 34 x 88 stands and the player is 176 cm tall.
+
+So a flat run-and-jump carries `2*500/980 * 600` = **612 cm**, plus a capsule at each lip: about **680 cm**. A
+6.5 m gap is therefore *jumpable*, and it is also **wider than the 600 cm blink**, so widening a gap until the
+jump fails makes it un-blinkable too. The jump is taken away with a **ceiling** instead - a collapsed slab whose
+underside is 215 cm up. The player walks under it with 39 cm to spare; a jump spends that head room and stops,
+which collapses the arc to about **288 cm**. The blink is horizontal at chest height and passes beneath it.
+
+**The section, measured offline from the piece table and `city_models.json` (no editor):**
+
+| Gap | Width | Roof | Jump reaches | Blink 600 | Teaches |
+|---|---|---|---|---|---|
+| 11200 -> 11450 | 250 cm | open sky | 680 cm | crosses | the ledge; a free jump |
+| 11950 -> 12350 | 400 cm | ceiling 215 | **288 cm** | crosses | Splice is the only way on |
+| 13350 -> 13750 | 400 cm | ceiling 215 | **288 cm** | crosses | the same, after the goons |
+
+Solid ground on the `y=0` line comes out as the street to 11200, `B4_P1` 11450-11950, `B4_P2` 12350-13350 and
+the landing pad 13750-14750 (1000 x 1500 cm, where beat 5's boss goes). `Marker_Win` is **moved** from 10220 to
+the pad, because `MarkerEndsGame` is true on it and the old spot is in front of beat 4; `C1_Run_End` is hidden,
+not deleted. `clear` undoes both.
+
+**Two defects were found and fixed in the script before it ever ran.** Both are the "convincing false
+measurement" kind this project keeps meeting:
+
+- The two ceiling slabs were at `y = +-170`, and `SM_RuinSlab_B` is only 320 cm deep, so they left a **20 cm
+  slit straight along `y = 0`**. The capsule (r=34) could never fit through it - but the script's own ceiling
+  check traces up `y = 0` *exactly*, so it would have reported **"open sky" over both roofed gaps** and the
+  section would have looked broken when it was not. They are at `+-150` now and overlap across the centre line.
+- The ground trace started at `z = 300`, which is **inside** the ceiling slabs (they occupy 215-350). A trace
+  that begins inside a collider is start-penetrating and its answer is not worth having. It starts at `z = 200`
+  now: under every ceiling, over every walkway.
+
+**The one thing a playtest has to answer.** The blink is a fixed 600 cm forward and it does **not** stop at a
+gap. Clearing gap 2 means standing in the eastern 200 cm of `B4_P1`; blink from its western lip and the player
+lands at 12050, inside the gap, and falls. A 2 m window on a 5 m platform is "walk to the edge first" if it
+reads well and a cliff if it does not. `Checkpoint_Beat4Entry` sits 3 m back so a mistake costs about five
+seconds. If it plays badly, narrow the gaps - do not touch the power, which beat 5 also depends on.
+
+**Not done:** nothing of this is in `Lvl_JumpCut`. The Unreal editor was closed when this run started and the
+`unreal` MCP could not connect, so the placing run has not happened. Nobody has played beat 4 and nobody has
+pressed Left Shift anywhere.
 
 ### Splice is on disk (Fri Nov 13, 18:20 UTC, Justin's Mac mini)
 

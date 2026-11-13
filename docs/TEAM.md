@@ -40,7 +40,14 @@ table, commits and pushes. A computer can have more than one role (`tester, make
 | Gamestation | Manuel Mendez | Windows | builder | Unreal edits, packaging, fixes playtest issues |
 | M_Station | Manuel Mendez | Windows | maker | TRELLIS, Blender, Meshy, sounds |
 | _(Manny's Mac: hostname to add)_ | Manuel Mendez | macOS | tester | |
-| Justins-Mac-mini | Justin Catrambone | macOS | tester, maker | Mac mini, Apple silicon. git-lfs, gh, uv and the Blender MCP set up Nov 9; Blender is 5.1.2 (team uses 5.2) |
+| Justins-Mac-mini | Justin Catrambone | macOS | tester, maker, **builder (beat 4)** | Mac mini, Apple silicon. Full UE 5.8 (43 GB, `~/Epic Games/UE_5.8`) with the MCP plugin prebuilt for Mac, and a complete clone with all LFS objects, so it can do Unreal work. git-lfs, gh, uv and the Blender MCP set up Nov 9; Blender is 5.1.2 (team uses 5.2) |
+
+**Why this Mac is a builder for beat 4 only** (asked for by the Team Owner, Fri Nov 13, 22:30 UTC: *"Continue beat 4
+on this mac"*). It was `tester, maker`, and a maker never saves in Unreal - but it had already saved `.uasset`s twice
+(the Splice rebuild, `26d437b` and `2c76ffc`) because it was the only machine that could, and the Team Owner has now
+put beat 4's platforming here. The role is **scoped to beat 4** so GameStation stays the builder for everything else:
+this Mac saves the beat-4 ruin assets and the beat-4 actors in `Lvl_JumpCut`, and nothing else. GameStation and this
+Mac share one GitHub account, so LFS locks cannot tell them apart - say which files were touched after each push.
 
 **Roles**
 - **builder:** the only computer that changes Unreal files (`.uasset`, `.umap`) and commits them. It packages and publishes
