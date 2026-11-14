@@ -1,9 +1,21 @@
 """Cut the one-shot title picture down its centre into the two halves the title animation fades in.
 
-THE POINT. docs/prompts.md UI-TITLE3 draws the barista and the director BACK TO BACK IN ONE PICTURE, on
-purpose: two separately generated halves would disagree at the seam - different shoulder height, different
-head height, different light - and no prompt wording fixes that. Drawn together and cut afterwards, the
-seam is exact because both halves came off the same drawing.
+THE POINT. The picture is drawn ONCE and cut afterwards, never generated as two halves: two separately
+generated halves disagree at the seam - different shoulder height, different head height, different light -
+and no prompt wording fixes that. Drawn together and cut, the seam is exact because both halves came off
+the same drawing.
+
+TWO COMPOSITIONS, AND THEY ARE NOT THE SAME PICTURE.
+  * default   - docs/prompts.md UI-TITLE3: the barista and the director as TWO WHOLE PEOPLE side by side.
+  * --one-body - docs/prompts.md UI-TITLE4: ONE person, one head, one face, standing dead centre, the apron
+                on his right-hand side and the coat on his left. The Team Owner's words, Sat Nov 14: "two
+                halves of the main character... together they make one person on the screen but there is a
+                clear split down the center". Cut, the first fade shows HALF A MAN and the second completes
+                him. This is the one being built.
+The modes check different things, because they fail differently. Two people fail by straddling the cut; one
+body fails by standing OFF CENTRE - the cut then runs down his cheek instead of his nose, the barista half
+keeps a strip of coat, and the join stops reading as one person. Nothing moves the cut to compensate: it is
+at w // 2 because the widget stacks the halves at 0,0.
 
 WHAT IT WRITES. Two PNGs on the SAME canvas as the source, each holding only its own half and transparent
 everywhere else, so the title widget can stack them at 0,0 and fade them in one at a time with no
@@ -39,6 +51,8 @@ from PIL import Image
 BG_TOL = 26          # per-channel distance that still counts as the flat background
 SOFT = 38            # distance at which a pixel is fully opaque; between BG_TOL and this it ramps
 LEVEL_TOL = 0.02     # head heights may differ by this fraction of image height
+CENTRE_TOL = 0.02    # --one-body: how far off the cut he may stand, as a fraction of width
+SKEW_TOL = 0.22      # --one-body: how much wider one half may be than the other before he reads as turned
 
 
 def key_background(rgb):
@@ -93,6 +107,13 @@ def main():
                     help='fill N columns centred on the cut with the background first. Gemini draws a thin '
                          'vertical divider line between the two panels; left in, half of it fades in with each '
                          'half and reads as a stray line down the screen')
+    ap.add_argument('--erase-rows', default=None, metavar='A:B',
+                    help='limit --erase-seam to rows A..B-1 instead of the whole height. REQUIRED with '
+                         '--one-body: there, the divider runs over the background ABOVE his head and then '
+                         'into his hair, and erasing the full height would fill a cream slot straight down '
+                         'his face. Erase only the rows where the line has nothing behind it but background')
+    ap.add_argument('--one-body', dest='one_body', action='store_true',
+                    help='UI-TITLE4: one person split down his own midline, not two people. Checks that he is CENTRED on the cut and squarely frontal instead of checking two separate figures')
     ap.add_argument('--force', action='store_true', help='write the halves even if a check fails')
     a = ap.parse_args()
 
@@ -112,17 +133,33 @@ def main():
     if a.erase_seam:
         half = a.erase_seam // 2
         x0, x1 = seam - half, seam - half + a.erase_seam
-        rgb = rgb.copy(); rgb[:, x0:x1] = bg.astype(np.uint8)
+        if a.erase_rows:
+            y0, y1 = (int(v) for v in a.erase_rows.split(':'))
+        else:
+            y0, y1 = 0, h
+            if a.one_body:
+                print('  NOTE  --one-body with no --erase-rows: erasing the FULL height will cut a background '
+                      'slot down his face. Pass --erase-rows 0:N for the rows above his head only.')
+        rgb = rgb.copy(); rgb[y0:y1, x0:x1] = bg.astype(np.uint8)
         alpha, bg, spread = key_background(rgb)
-        print('erased     : x %d..%d filled with the background - the divider line Gemini draws between panels'
-              % (x0, x1 - 1))
+        print('erased     : x %d..%d, rows %d..%d filled with the background - the divider line Gemini draws '
+              'between panels' % (x0, x1 - 1, y0, y1 - 1))
 
     touch = float((alpha[:, seam] > 40).sum()) / h
-    kind = 'back to back' if touch > 0.9 else ('a clean gap' if touch < 0.05 else 'STRADDLED')
-    print('seam x=%-5d: %.0f%% of the centre column is figure - %s' % (seam, touch * 100, kind))
-    if kind == 'STRADDLED':
-        bad.append('the centre column is %.0f%% figure - somebody straddles the cut and will lose a shoulder'
-                   % (touch * 100))
+    if a.one_body:
+        # One body: the centre column IS him, from the top of his head to the bottom edge. A gap there means
+        # the model drew two separate figures - a different picture, and not the one the animation needs.
+        print('seam x=%-5d: %.0f%% of the centre column is figure (one body: must be ~all of it)'
+              % (seam, touch * 100))
+        if touch < 0.90:
+            bad.append('the centre column is only %.0f%% figure - this is not one continuous body; the model '
+                       'drew two separate people or left a gap down the middle' % (touch * 100))
+    else:
+        kind = 'back to back' if touch > 0.9 else ('a clean gap' if touch < 0.05 else 'STRADDLED')
+        print('seam x=%-5d: %.0f%% of the centre column is figure - %s' % (seam, touch * 100, kind))
+        if kind == 'STRADDLED':
+            bad.append('the centre column is %.0f%% figure - somebody straddles the cut and will lose a shoulder'
+                       % (touch * 100))
 
     lb, rb = ink_box(alpha, 0, seam), ink_box(alpha, seam, w)
     if not lb or not rb:
@@ -130,10 +167,31 @@ def main():
     print('left  half : x %d..%d, top %d, bottom %d' % (lb[0], lb[2], lb[1], lb[3]))
     print('right half : x %d..%d, top %d, bottom %d' % (rb[0], rb[2], rb[1], rb[3]))
 
-    drop = abs(lb[1] - rb[1]) / float(h)
-    print('heads      : tops differ by %d px (%.1f%% of height, limit %.1f%%)' % (abs(lb[1]-rb[1]), drop*100, LEVEL_TOL*100))
-    if drop > LEVEL_TOL:
-        bad.append('the two heads are %d px apart vertically - the second fade will visibly jump' % abs(lb[1]-rb[1]))
+    if a.one_body:
+        # THE CHECK THAT MATTERS IN THIS MODE. He has to stand on the cut. 40 px left of centre and the split
+        # runs down his cheek: the barista half keeps a strip of coat and the first fade is not half a man.
+        whole = ink_box(alpha, 0, w)
+        cx = (whole[0] + whole[2]) / 2.0
+        off = abs(cx - seam) / float(w)
+        print('centred    : his middle is at x %.0f, cut is at %d - off by %.0f px (%.1f%% of width, limit %.1f%%)'
+              % (cx, seam, abs(cx - seam), off * 100, CENTRE_TOL * 100))
+        if off > CENTRE_TOL:
+            bad.append('he stands %.0f px off the cut - the split will run down his cheek, not his midline'
+                       % abs(cx - seam))
+        # A frontal figure fills the two halves about equally. A three-quarter turn does not, and a turned
+        # head has no straight vertical midline to cut along in the first place.
+        lw, rw = lb[2] - lb[0], rb[2] - rb[0]
+        skew = abs(lw - rw) / float(max(lw, rw))
+        print('frontal    : halves are %d px and %d px wide - %.0f%% apart (limit %.0f%%)'
+              % (lw, rw, skew * 100, SKEW_TOL * 100))
+        if skew > SKEW_TOL:
+            bad.append('one half is %.0f%% wider than the other - he is turned, not square to the camera'
+                       % (skew * 100))
+    else:
+        drop = abs(lb[1] - rb[1]) / float(h)
+        print('heads      : tops differ by %d px (%.1f%% of height, limit %.1f%%)' % (abs(lb[1]-rb[1]), drop*100, LEVEL_TOL*100))
+        if drop > LEVEL_TOL:
+            bad.append('the two heads are %d px apart vertically - the second fade will visibly jump' % abs(lb[1]-rb[1]))
 
     for name, b in (('left', lb), ('right', rb)):
         if b[3] < h - 4:

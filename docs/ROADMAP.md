@@ -908,6 +908,26 @@ _(nothing yet)_
 
 ## Decisions
 
+- **2026-11-14 (10:20 PM Pacific): the title is ONE man split down the centre, not two men side by side**
+  (Team Owner). The back-to-back pair merged an hour earlier was the wrong picture, and he said so plainly:
+  *"I was thinking two halves of the main character, half barista and half director, and together they make one
+  person on the screen but there is a clear split down the center. The barista half looks like he does normally,
+  the director version looks powerful."* One body, one head, one face, standing dead centre, apron on his
+  right-hand side and coat on his left. Cut at the centre, the first fade is **half a man** and the second
+  completes him - which is what the animation always needed and what two whole people could never give it.
+  `UI-TITLE4` in `docs/prompts.md`, drawn in Gemini; `T_UI_TitlePair.png` and its halves are replaced in place,
+  so **#64 does not change shape** - only the picture underneath it, and the background cream it sits on
+  (`#FBF0DA`, not the `#FBEFD8` written into the ticket against the old picture).
+  - **The composition is easier for the model, not harder.** All three takes came back centred and frontal,
+    inside 3 px of the cut. `UI-TITLE2` lost its first take because "back to back" and "seen from the front"
+    cannot both be true; one body has no such contradiction.
+  - **It is harder for us, so there is a new check.** `split_title_pair.py --one-body` measures his middle
+    against the cut and refuses a take that stands off it - the cut cannot move, because the widget stacks the
+    halves at `0,0`. Proved by failing it on purpose.
+  - **The forearm rings swapped arms** - only his left arm is inside the director half. The lock now records
+    that the **count** is the invariant and the arm is staging. Not a lock edited to match a picture.
+  - **The picked take needed no retouch**, unlike `T_UI_Title`, which had a badge painted off a car grille.
+
 - **2026-11-14 (9:30 PM Pacific): the title screen is an animation, not a card, and M Station is a builder**
   (Team Owner). He rejected the crash-scene title outright, then rejected the back-to-back still as well, and
   described what he wanted instead: *"half of the barista fade into frame then the other half fades in as the
