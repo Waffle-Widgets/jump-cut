@@ -2,7 +2,7 @@
  "units": "cm",
  "note": "Unreal world coordinates for Lvl_JumpCut. Z is the actor origin; every model stands on its own origin at z = 0 except wall-mounted ones, whose geometry starts at its mounting height.",
  "generated_by": "tools/jumpcut_city_layout.py",
- "generated_at_pacific": "2026-11-13 23:15",
+ "generated_at_pacific": "2026-11-14 01:38",
  "mesh_path": "/Game/Game/Imported/City/",
  "supersedes_greybox": [
   "C1_Cafe_WallN",
@@ -261,6 +261,174 @@
    "x": -520,
    "y": 0,
    "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_CafeDeco_00_CafeFloorBoards",
+   "model": "SM_CafeFloorBoards",
+   "x": 0.0,
+   "y": 0.0,
+   "z": 2.0,
+   "yaw": 0
+  },
+  {
+   "label": "City_CafeDeco_01_CafeRug",
+   "model": "SM_CafeRug",
+   "x": -480.0,
+   "y": 345.0,
+   "z": 3.0,
+   "yaw": 0
+  },
+  {
+   "label": "City_CafeDeco_02_CafePendant",
+   "model": "SM_CafePendant",
+   "x": -310.0,
+   "y": 310.0,
+   "z": 305.0,
+   "yaw": 0
+  },
+  {
+   "label": "City_CafeDeco_03_CafePendant",
+   "model": "SM_CafePendant",
+   "x": 10.0,
+   "y": 345.0,
+   "z": 305.0,
+   "yaw": 0
+  },
+  {
+   "label": "City_CafeDeco_04_CafePendant",
+   "model": "SM_CafePendant",
+   "x": 360.0,
+   "y": 310.0,
+   "z": 305.0,
+   "yaw": 0
+  },
+  {
+   "label": "City_CafeDeco_05_CafePendant",
+   "model": "SM_CafePendant",
+   "x": -430.0,
+   "y": -240.0,
+   "z": 305.0,
+   "yaw": 0
+  },
+  {
+   "label": "City_CafeDeco_06_CafeWallArt",
+   "model": "SM_CafeWallArt",
+   "x": -150.0,
+   "y": 500.0,
+   "z": 160.0,
+   "yaw": 180
+  },
+  {
+   "label": "City_CafeDeco_07_CafeWallArt",
+   "model": "SM_CafeWallArt",
+   "x": 320.0,
+   "y": 500.0,
+   "z": 160.0,
+   "yaw": 180
+  },
+  {
+   "label": "City_CafeDeco_08_CafeClock",
+   "model": "SM_CafeClock",
+   "x": 85.0,
+   "y": 500.0,
+   "z": 265.0,
+   "yaw": 180
+  },
+  {
+   "label": "City_CafeDeco_09_CafeChalkboard",
+   "model": "SM_CafeChalkboard",
+   "x": -480.0,
+   "y": -500.0,
+   "z": 185.0,
+   "yaw": 0
+  },
+  {
+   "label": "City_CafeDeco_10_CafeBanquette",
+   "model": "SM_CafeBanquette",
+   "x": -480.0,
+   "y": 464.0,
+   "z": 2.0,
+   "yaw": 180
+  },
+  {
+   "label": "City_CafeDeco_11_CafeBarCounter",
+   "model": "SM_CafeBarCounter",
+   "x": 578.0,
+   "y": -330.0,
+   "z": 2.0,
+   "yaw": 90
+  },
+  {
+   "label": "City_CafeDeco_12_CafeStool",
+   "model": "SM_CafeStool",
+   "x": 525.0,
+   "y": -270.0,
+   "z": 2.0,
+   "yaw": 0
+  },
+  {
+   "label": "City_CafeDeco_13_CafeStool",
+   "model": "SM_CafeStool",
+   "x": 525.0,
+   "y": -390.0,
+   "z": 2.0,
+   "yaw": 0
+  },
+  {
+   "label": "City_CafeDeco_14_CafePlantTall",
+   "model": "SM_CafePlantTall",
+   "x": 545.0,
+   "y": 430.0,
+   "z": 2.0,
+   "yaw": 0
+  },
+  {
+   "label": "City_CafeDeco_15_CafePlantTall",
+   "model": "SM_CafePlantTall",
+   "x": 150.0,
+   "y": -445.0,
+   "z": 2.0,
+   "yaw": 0
+  },
+  {
+   "label": "City_CafeDeco_16_CafePlantSmall",
+   "model": "SM_CafePlantSmall",
+   "x": 578.0,
+   "y": -430.0,
+   "z": 107.0,
+   "yaw": 0
+  },
+  {
+   "label": "City_CafeDeco_17_CafePlantSmall",
+   "model": "SM_CafePlantSmall",
+   "x": 460.0,
+   "y": -490.0,
+   "z": 236.0,
+   "yaw": 0
+  },
+  {
+   "label": "City_CafeDeco_18_CafeTableTop",
+   "model": "SM_CafeTableTop",
+   "x": -310.0,
+   "y": 310.0,
+   "z": 78.0,
+   "yaw": 0
+  },
+  {
+   "label": "City_CafeDeco_19_CafeTableTop",
+   "model": "SM_CafeTableTop",
+   "x": 10.0,
+   "y": 345.0,
+   "z": 78.0,
+   "yaw": 0
+  },
+  {
+   "label": "City_CafeDeco_20_CafeTableTop",
+   "model": "SM_CafeTableTop",
+   "x": 360.0,
+   "y": 310.0,
+   "z": 78.0,
    "yaw": 0
   },
   {
@@ -1878,6 +2046,398 @@
    "y": -265.0,
    "z": 0,
    "yaw": 0
+  },
+  {
+   "label": "City_Tree_00",
+   "model": "SM_StreetTree",
+   "x": 1390.0,
+   "y": -395.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Tree_01",
+   "model": "SM_StreetTree",
+   "x": 2824.2,
+   "y": 395.0,
+   "z": 0,
+   "yaw": 270
+  },
+  {
+   "label": "City_Tree_02",
+   "model": "SM_StreetTree",
+   "x": 4150.0,
+   "y": -395.0,
+   "z": 0,
+   "yaw": 270
+  },
+  {
+   "label": "City_Tree_03",
+   "model": "SM_StreetTree",
+   "x": 5266.0,
+   "y": 395.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Lantern_0",
+   "model": "SM_LanternString",
+   "x": 1180.0,
+   "y": 0.0,
+   "z": 500.0,
+   "yaw": 90
+  },
+  {
+   "label": "City_Lantern_1",
+   "model": "SM_LanternString",
+   "x": 2360.0,
+   "y": 0.0,
+   "z": 500.0,
+   "yaw": 90
+  },
+  {
+   "label": "City_Lantern_2",
+   "model": "SM_LanternString",
+   "x": 3540.0,
+   "y": 0.0,
+   "z": 500.0,
+   "yaw": 90
+  },
+  {
+   "label": "City_Lantern_3",
+   "model": "SM_LanternString",
+   "x": 4720.0,
+   "y": 0.0,
+   "z": 500.0,
+   "yaw": 90
+  },
+  {
+   "label": "City_Lantern_4",
+   "model": "SM_LanternString",
+   "x": 5900.0,
+   "y": 0.0,
+   "z": 500.0,
+   "yaw": 90
+  },
+  {
+   "label": "City_Banner_S04",
+   "model": "SM_BannerFlag",
+   "x": 1197.6,
+   "y": -492.0,
+   "z": 300.0,
+   "yaw": 0.0
+  },
+  {
+   "label": "City_Banner_N05",
+   "model": "SM_BannerFlag",
+   "x": 1184.2,
+   "y": 492.0,
+   "z": 300.0,
+   "yaw": 180.0
+  },
+  {
+   "label": "City_Banner_S06",
+   "model": "SM_BannerFlag",
+   "x": 4437.9,
+   "y": -492.0,
+   "z": 300.0,
+   "yaw": 0.0
+  },
+  {
+   "label": "City_Banner_N07",
+   "model": "SM_BannerFlag",
+   "x": 4449.5,
+   "y": 492.0,
+   "z": 300.0,
+   "yaw": 180.0
+  },
+  {
+   "label": "City_Banner_S08",
+   "model": "SM_BannerFlag",
+   "x": 5814.5,
+   "y": -492.0,
+   "z": 300.0,
+   "yaw": 0.0
+  },
+  {
+   "label": "City_Banner_N09",
+   "model": "SM_BannerFlag",
+   "x": 5851.1,
+   "y": 492.0,
+   "z": 300.0,
+   "yaw": 180.0
+  },
+  {
+   "label": "City_Laundry_0",
+   "model": "SM_LaundryRack",
+   "x": 1500.0,
+   "y": -490.0,
+   "z": 380.0,
+   "yaw": 0.0
+  },
+  {
+   "label": "City_Laundry_1",
+   "model": "SM_LaundryRack",
+   "x": 2100.0,
+   "y": 490.0,
+   "z": 380.0,
+   "yaw": 180.0
+  },
+  {
+   "label": "City_Laundry_2",
+   "model": "SM_LaundryRack",
+   "x": 2860.0,
+   "y": -490.0,
+   "z": 380.0,
+   "yaw": 0.0
+  },
+  {
+   "label": "City_Laundry_3",
+   "model": "SM_LaundryRack",
+   "x": 3620.0,
+   "y": 490.0,
+   "z": 380.0,
+   "yaw": 180.0
+  },
+  {
+   "label": "City_Laundry_4",
+   "model": "SM_LaundryRack",
+   "x": 4280.0,
+   "y": -490.0,
+   "z": 380.0,
+   "yaw": 0.0
+  },
+  {
+   "label": "City_Laundry_5",
+   "model": "SM_LaundryRack",
+   "x": 5340.0,
+   "y": 490.0,
+   "z": 380.0,
+   "yaw": 180.0
+  },
+  {
+   "label": "City_Scooter_0",
+   "model": "SM_Scooter",
+   "x": 960.0,
+   "y": -395.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Scooter_1",
+   "model": "SM_Scooter",
+   "x": 1820.0,
+   "y": 400.0,
+   "z": 0,
+   "yaw": 180
+  },
+  {
+   "label": "City_Scooter_2",
+   "model": "SM_Scooter",
+   "x": 3100.0,
+   "y": -392.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Scooter_3",
+   "model": "SM_Scooter",
+   "x": 4520.0,
+   "y": 398.0,
+   "z": 0,
+   "yaw": 180
+  },
+  {
+   "label": "City_Scooter_4",
+   "model": "SM_Scooter",
+   "x": 5680.0,
+   "y": -396.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Billboard_0",
+   "model": "SM_RoofBillboard",
+   "x": 2725.0,
+   "y": -725.0,
+   "z": 1075.0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Billboard_1",
+   "model": "SM_RoofBillboard",
+   "x": 5120.3,
+   "y": -725.0,
+   "z": 1428.7,
+   "yaw": 0
+  },
+  {
+   "label": "City_Billboard_2",
+   "model": "SM_RoofBillboard",
+   "x": 2428.3,
+   "y": 725.0,
+   "z": 1428.7,
+   "yaw": 180
+  },
+  {
+   "label": "City_Billboard_3",
+   "model": "SM_RoofBillboard",
+   "x": 4863.6,
+   "y": 725.0,
+   "z": 1761.7,
+   "yaw": 180
+  },
+  {
+   "label": "City_Hedge_S0",
+   "model": "SM_Hedge",
+   "x": 7120.0,
+   "y": -1415.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Hedge_S1",
+   "model": "SM_Hedge",
+   "x": 7410.0,
+   "y": -1415.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Hedge_S2",
+   "model": "SM_Hedge",
+   "x": 7880.0,
+   "y": -1415.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Hedge_S3",
+   "model": "SM_Hedge",
+   "x": 8320.0,
+   "y": -1415.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Hedge_S4",
+   "model": "SM_Hedge",
+   "x": 8760.0,
+   "y": -1415.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Hedge_S5",
+   "model": "SM_Hedge",
+   "x": 9140.0,
+   "y": -1415.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Hedge_N0",
+   "model": "SM_Hedge",
+   "x": 6490.0,
+   "y": 1415.0,
+   "z": 0,
+   "yaw": 180
+  },
+  {
+   "label": "City_Hedge_N1",
+   "model": "SM_Hedge",
+   "x": 9360.0,
+   "y": 1415.0,
+   "z": 0,
+   "yaw": 180
+  },
+  {
+   "label": "City_PlazaTree_0",
+   "model": "SM_StreetTree",
+   "x": 6750.0,
+   "y": 1760.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_PlazaTree_1",
+   "model": "SM_StreetTree",
+   "x": 9400.0,
+   "y": 1760.0,
+   "z": 0,
+   "yaw": 90
+  },
+  {
+   "label": "City_PlazaTree_2",
+   "model": "SM_StreetTree",
+   "x": 7900.0,
+   "y": -1760.0,
+   "z": 0,
+   "yaw": 180
+  },
+  {
+   "label": "City_PlazaTree_3",
+   "model": "SM_StreetTree",
+   "x": 8800.0,
+   "y": -1760.0,
+   "z": 0,
+   "yaw": 270
+  },
+  {
+   "label": "City_AvenueTree_0",
+   "model": "SM_StreetTree",
+   "x": -1250.0,
+   "y": 300.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_AvenueTree_1",
+   "model": "SM_StreetTree",
+   "x": -2000.0,
+   "y": 430.0,
+   "z": 0,
+   "yaw": 90
+  },
+  {
+   "label": "City_AvenueHedge_0",
+   "model": "SM_Hedge",
+   "x": -2480.0,
+   "y": 100.0,
+   "z": 0,
+   "yaw": 90
+  },
+  {
+   "label": "City_AvenueHedge_1",
+   "model": "SM_Hedge",
+   "x": -2480.0,
+   "y": 380.0,
+   "z": 0,
+   "yaw": 90
+  },
+  {
+   "label": "City_AvenueHedge_2",
+   "model": "SM_Hedge",
+   "x": -2480.0,
+   "y": 660.0,
+   "z": 0,
+   "yaw": 90
+  },
+  {
+   "label": "City_AvenueLantern",
+   "model": "SM_LanternString",
+   "x": -1500.0,
+   "y": 200.0,
+   "z": 430.0,
+   "yaw": 90
+  },
+  {
+   "label": "City_AvenueScooter",
+   "model": "SM_Scooter",
+   "x": -1550.0,
+   "y": 430.0,
+   "z": 0,
+   "yaw": 200
   },
   {
    "label": "City_Near_S00",

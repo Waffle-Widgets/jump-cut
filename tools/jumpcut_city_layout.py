@@ -84,6 +84,94 @@ def put(label, model, x, y, z=0.0, yaw=0.0):
                    'z': round(z, 1), 'yaw': round(yaw, 1)})
 
 
+
+# Props that a new prop is allowed to stand in, and why. Everything else is a real collision.
+#   the ground pictures          - paving, road lines, crossings and the cafe's floorboards are 1 cm plates
+#   the facade furniture         - signs, air conditioners, fire escapes and balconies hang off a wall at a
+#                                  height a tree canopy is supposed to reach; branches in front of a shop
+#                                  sign is what a street with trees in it looks like
+#   poles and cables             - a lantern string is TIED to the poles either side of the road, so an
+#                                  overlap at its two ends is the thing working, not a fault
+#   the buildings themselves     - a canopy brushing a shopfront is wanted; a trunk inside one is caught
+#                                  because the trunk is what the x nudge below moves
+OVERLAP_OK = ('City_CafeShell', 'City_Kerb', 'City_RoadLines', 'City_Crosswalk', 'City_PlazaPaving',
+              'City_Manhole', 'City_Sign_', 'City_AC_', 'City_FireEscape', 'City_Pole_', 'City_Cable_',
+              'City_Lane', 'City_Near', 'City_Sky', 'City_CafeDeco_00', 'City_Billboard', 'City_Laundry',
+              'City_Banner', 'City_Lantern')
+
+_BOXES = {}
+
+
+def _box(model):
+    """The kit's measured footprints, loaded once. Empty if the kit has never been run, in which case
+    put_clear() degrades to a plain put() and says so."""
+    if not _BOXES:
+        if os.path.exists(MODELS_JSON):
+            _BOXES.update(json.load(open(MODELS_JSON, encoding='utf-8')))
+        else:
+            _BOXES['__none__'] = True
+    return _BOXES.get(model)
+
+
+def _solid(a):
+    """World x/y/z box of one placed actor."""
+    import math
+    b = _box(a['model'])
+    th = math.radians(a['yaw'])
+    cs, sn = math.cos(th), math.sin(th)
+    xs, ys = [], []
+    for lx in b['x']:
+        for ly in b['y']:
+            xs.append(a['x'] + lx * cs - ly * sn)
+            ys.append(a['y'] + lx * sn + ly * cs)
+    return min(xs), max(xs), min(ys), max(ys), a['z'] + b['z'][0], a['z'] + b['z'][1]
+
+
+def _hits(cand):
+    """Everything already placed that this candidate would stand inside, ignoring OVERLAP_OK."""
+    out = []
+    for a in actors:
+        if a['label'].startswith(OVERLAP_OK) or _box(a['model']) is None:
+            continue
+        ax0, ax1, ay0, ay1, az0, az1 = _solid(a)
+        bx0, bx1, by0, by1, bz0, bz1 = cand
+        if (min(ax1, bx1) - max(ax0, bx0) > 8.0 and min(ay1, by1) - max(ay0, by0) > 8.0
+                and min(az1, bz1) - max(az0, bz0) > 8.0):
+            out.append(a['label'])
+    return out
+
+
+def put_clear(label, model, x, y, z=0.0, yaw=0.0, slide=420.0, step=30.0):
+    """put(), but it nudges along x first so the thing does not end up standing inside something else.
+
+    Written because the first pass of the street-life layout put a tree inside a crate stack, a scooter
+    inside a street lamp and six plaza hedges inside the plaza tower's own footprint - none of which the
+    layout checker looks for, because it only checks keep-clear rectangles and lane buildings. Clutter was
+    hand-placed in clumps at made-up x values before this existed; a tree is 2.5 m wide and there is no
+    free hand-picked number left on a 60 m street that already has 246 things on it.
+
+    Tries the asked-for spot, then +/- step up to slide either side. If nothing is free it places it
+    anyway at the original spot and records why, because a missing tree is harder to notice than one that
+    is slightly inside a bin bag.
+    """
+    if _box(model) is None:
+        put(label, model, x, y, z, yaw)
+        return
+    for d in [0.0] + [sgn * step * k for k in range(1, int(slide / step) + 1) for sgn in (1.0, -1.0)]:
+        cand = _solid({'model': model, 'x': x + d, 'y': y, 'z': z, 'yaw': yaw})
+        if not _hits(cand):
+            put(label, model, x + d, y, z, yaw)
+            if d:
+                NUDGED.append('%s moved %+.0f cm along x to clear what was already there' % (label, d))
+            return
+    put(label, model, x, y, z, yaw)
+    NUDGED.append('%s could NOT be cleared: it stands in %s'
+                  % (label, ', '.join(_hits(_solid({'model': model, 'x': x, 'y': y, 'z': z, 'yaw': yaw}))[:3])))
+
+
+NUDGED = []
+
+
 # ----------------------------------------------------------------- 1. the cafe, and how it is dressed
 # These metres come straight from CAFE_DRESS in Art/Blender/jumpcut_city_kit.py, so the mock-up render and
 # the level are placing the identical list. Three lanes are kept clear and nothing is allowed into them:
@@ -122,6 +210,139 @@ def cafe():
     # (C1_Cafe_Car is centred on (-520, 0) and 400 x 200). Nose east, into the room; the open driver's door
     # is on the +Y side, which is the side his body lies on at (-380, 220).
     put('City_CafeCrashCar', 'SM_CrashCar', -520, 0, 0, 0)
+    cafe_deco()
+
+
+
+# The cafe's dressing, added Fri Nov 13 (Pacific) on the Team Owner's note that the room was bare and should
+# read like an anime cafe. Same contract as CAFE_DRESS_CM above: this list and CAFE_DECO in
+# Art/Blender/jumpcut_city_kit.py are the identical data in different units, and _cafe_dress_agrees() proves
+# it on every run. Every one of the three protected lanes is still clear: the player's walk along y = 0 from
+# (0,0) to the door at (615,0), the shrapnel's fall from (-330,-60,370), and the driver's body at (-380,220).
+# Wall pieces follow the kit's one convention - a face built on Blender -Y leaves the FBX facing Unreal +Y -
+# so yaw 0 hangs a thing on the south wall and yaw 180 on the north, exactly like the lane's two rows of
+# shopfronts.
+CAFE_DECO_CM = [
+    # the floor, and the one soft thing in the room. Both are walk-through: the player stands on the shell's
+    # concrete slab underneath, which is the surface every fight in beat 1 was tuned on.
+    ('SM_CafeFloorBoards', 0.0, 0.0, 2.0, 0),
+    ('SM_CafeRug', -480.0, 345.0, 3.0, 0),
+    # four pendants: one over each table, one over the counter where the work happens
+    ('SM_CafePendant', -310.0, 310.0, 305.0, 0), ('SM_CafePendant', 10.0, 345.0, 305.0, 0),
+    ('SM_CafePendant', 360.0, 310.0, 305.0, 0), ('SM_CafePendant', -430.0, -240.0, 305.0, 0),
+    # the north wall, which the player faces across the seating for the whole first scene
+    ('SM_CafeWallArt', -150.0, 500.0, 160.0, 180), ('SM_CafeWallArt', 320.0, 500.0, 160.0, 180),
+    ('SM_CafeClock', 85.0, 500.0, 265.0, 180),
+    # the menu, on the south wall behind the counter from where the player stands
+    ('SM_CafeChalkboard', -480.0, -500.0, 185.0, 0),
+    # a corner to sit in, and the window bar people actually watch the street from
+    ('SM_CafeBanquette', -480.0, 464.0, 2.0, 180),
+    ('SM_CafeBarCounter', 578.0, -330.0, 2.0, 90),
+    ('SM_CafeStool', 525.0, -270.0, 2.0, 0), ('SM_CafeStool', 525.0, -390.0, 2.0, 0),
+    # things that are alive, and things left on a table
+    ('SM_CafePlantTall', 545.0, 430.0, 2.0, 0), ('SM_CafePlantTall', 150.0, -445.0, 2.0, 0),
+    ('SM_CafePlantSmall', 578.0, -430.0, 107.0, 0), ('SM_CafePlantSmall', 460.0, -490.0, 236.0, 0),
+    ('SM_CafeTableTop', -310.0, 310.0, 78.0, 0), ('SM_CafeTableTop', 10.0, 345.0, 78.0, 0),
+    ('SM_CafeTableTop', 360.0, 310.0, 78.0, 0),
+]
+
+# Filled in by lane() so street_life() can stand a billboard on a roof whose height it actually knows,
+# rather than guessing one and leaving it floating. (label, x, y, model)
+lane_roofs = []
+ROOF_TOP = {'SM_ShopHouse_A': 1428.7, 'SM_ShopHouse_B': 1761.7, 'SM_ShopHouse_C': 1075.0}
+
+
+def cafe_deco():
+    for i, (m, x, y, z, yaw) in enumerate(CAFE_DECO_CM):
+        put('City_CafeDeco_%02d_%s' % (i, m[3:]), m, x, y, z, yaw)
+
+
+def street_life():
+    """Trees, lanterns, banners, washing and parked scooters - the half of the note that said everything
+    outside the play area looks barren.
+
+    The lane already had buildings, signage, poles, air conditioners and clutter, and it still read as empty,
+    because every one of those is a THING and none of them is a sign that somebody lives here. What was
+    missing was in three bands the kit never filled:
+      * the ground beside the kerb - nothing was parked anywhere in 60 m of shopping street
+      * the air over the road between first-floor height and the cables - completely empty
+      * anything green - the kit's only foliage was the planter shrub, and it was painted beige
+    Everything below sits in one of those three bands. Nothing is added inside the walking road (y +/-260)
+    at a height a player could walk into: the lanterns and the banners clear 2.6 m, and the trees are planted
+    mid-pavement at y = +/-385, which puts their 1.25 m canopy edge at 2.60 m from the centre line.
+    """
+    rng = random.Random(1411)
+    n = 0
+    tx = STREET_X0 + 760.0
+    side = 0
+    while tx < STREET_X1 - 520.0:
+        sgn = -1.0 if side % 2 == 0 else 1.0
+        # yaw only ever a right angle: at 45 degrees the canopy's bounding box grows by root 2 and the
+        # tree reaches into the road it was planted clear of. y = 395 rather than 385 because the
+        # canopy is 2 cm wider across x than across y, so a quarter turn was pushing it over the
+        # 260 cm road edge - caught by the layout checker, not by looking at it.
+        put_clear('City_Tree_%02d' % n, 'SM_StreetTree', tx, sgn * 395.0, 0, rng.choice([0, 90, 180, 270]))
+        n += 1
+        side += 1
+        tx += rng.uniform(1150.0, 1600.0)
+    # lanterns strung across the road, under the cables and over the player's head
+    for k, lx in enumerate((1180.0, 2360.0, 3540.0, 4720.0, 5900.0)):
+        put('City_Lantern_%d' % k, 'SM_LanternString', lx, 0.0, 500.0, 90)
+    # shop banners off the facades, both sides
+    bx = STREET_X0 + 520.0
+    while bx < STREET_X1 - 420.0:
+        for sgn, yaw in ((-1.0, 0.0), (1.0, 180.0)):
+            if rng.random() < 0.6:
+                put('City_Banner_%s%02d' % ('SN'[sgn > 0], n), 'SM_BannerFlag',
+                    bx + rng.uniform(-80.0, 80.0), sgn * (STREET_Y - 8.0), 300.0, yaw)
+                n += 1
+        bx += rng.uniform(850.0, 1350.0)
+    # washing out over the street, at first-floor height
+    for k, (wx, sgn) in enumerate([(1500.0, -1.0), (2100.0, 1.0), (2860.0, -1.0), (3620.0, 1.0),
+                                   (4280.0, -1.0), (5340.0, 1.0)]):
+        put('City_Laundry_%d' % k, 'SM_LaundryRack', wx, sgn * (STREET_Y - 10.0), 380.0,
+            0.0 if sgn < 0 else 180.0)
+    # something parked. Offsets picked to miss the prop clumps, which sit hard against the shopfronts at
+    # y = +/-470 and the kerb at +/-285; these sit between the two.
+    for k, (sx, sy, syaw) in enumerate([(960.0, -395.0, 0), (1820.0, 400.0, 180), (3160.0, -392.0, 0),
+                                        (4520.0, 398.0, 180), (5680.0, -396.0, 0)]):
+        put_clear('City_Scooter_%d' % k, 'SM_Scooter', sx, sy, 0, syaw)
+    # billboards on roofs whose height is read from the kit, not guessed
+    for k, (lx, ly, model) in enumerate(lane_roofs):
+        put('City_Billboard_%d' % k, 'SM_RoofBillboard', lx, ly * 1.45, ROOF_TOP[model],
+            0 if ly < 0 else 180)
+    # the plaza: 30 x 30 m of empty ground with a boss standing in the middle of it
+    # y = 1460 is the only lane left in the lot: the arena keep-clear ends at 1300, the plaza lamps stand
+    # at 1380, the plaza tower's own face is at 1420 and the lot wall is at 1500.
+    # The south side takes a full row; the north side takes two, at the ends. The band a hedge can live in
+    # up there is 1382..1448 (past the arena keep-clear at 1300, inside the lot wall whose inner face is at
+    # 1452) and the plaza tower's own facade stands at 1420 across x 7111..9129, so the middle of the north
+    # side is solid building. Measured, not guessed: the first attempt ran six hedges straight through it.
+    for k in range(6):
+        put_clear('City_Hedge_S%d' % k, 'SM_Hedge', 7000.0 + k * 440.0, -1415.0, 0, 0)
+    for k, hx in enumerate((6880.0, 9360.0)):
+        put_clear('City_Hedge_N%d' % k, 'SM_Hedge', hx, 1415.0, 0, 180)
+    # The trees stand OUTSIDE the lot and hang over its wall. There is no room for one inside: the gap
+    # between the arena keep-clear and the wall is 200 cm and a street tree is 255 cm across, so a tree in
+    # the lot is either in the fight or through the wall. Behind the wall it is neither, and a canopy over
+    # a yard wall is what tells you the lot is in a city rather than in a void.
+    for k, (tx2, ty2) in enumerate([(6750.0, 1760.0), (9400.0, 1760.0), (7900.0, -1760.0),
+                                    (8800.0, -1760.0)]):
+        put_clear('City_PlazaTree_%d' % k, 'SM_StreetTree', tx2, ty2, 0, 90 * k)
+    # the avenue, which is the only thing the player sees through the hole for the whole of beat 1.
+    # The visible cone from the player's eye at (0, 0, 160) through the 3 m hole at x = -630 is roughly
+    # y +/- 0.26 x per metre of distance and z up to 1.6 + 0.15 x, so at x = -2400 that is y +/- 630 and
+    # z 520: everything below is inside it on purpose, and nothing above 5 m would be seen at all.
+    # Everything here is on the NORTH half of the avenue. The south half is not empty: City_CornerSW is a
+    # corner block whose origin is at its own corner, so at yaw 90 it occupies x -2632..-1000, y -1500..-100
+    # - it already swallows the avenue's own pole and traffic cone, which were placed before anything
+    # measured footprints. Nothing new goes in there.
+    for k, (ax, ay) in enumerate([(-1250.0, 300.0), (-2000.0, 430.0)]):
+        put_clear('City_AvenueTree_%d' % k, 'SM_StreetTree', ax, ay, 0, 90 * k)
+    for k, hy in enumerate((100.0, 380.0, 660.0)):
+        put_clear('City_AvenueHedge_%d' % k, 'SM_Hedge', -2480.0, hy, 0, 90)
+    put('City_AvenueLantern', 'SM_LanternString', -1500.0, 200.0, 430.0, 90)
+    put_clear('City_AvenueScooter', 'SM_Scooter', -1550.0, 430.0, 0, 200)
 
 
 # ----------------------------------------------------------------- 2. the lane the player walks
@@ -143,6 +364,8 @@ def lane():
             if x + w > STREET_X1:
                 break
             put('City_Lane%s_%02d_%s' % (tag, i, m[12:]), m, x + w / 2, y, 0, yaw)
+            if i in (2, 6):
+                lane_roofs.append((x + w / 2, y, m))
             x += w + GAP
             if rng.random() < 0.28:                       # an alley gap: the lane needs somewhere to breathe
                 x += rng.uniform(140.0, 260.0)
@@ -508,6 +731,7 @@ def validate():
             problems.append('the crash car door reaches x = %.0f, within 60 cm of the driver at x = -380'
                             % door_front)
     problems += _cafe_dress_agrees()   # the mock-up render and the level must place the identical list
+    problems += _list_agrees('CAFE_DECO', CAFE_DECO_CM)
     if problems:
         print('LAYOUT PROBLEMS (%d):' % len(problems))
         for p in problems:
@@ -516,6 +740,27 @@ def validate():
         print('layout checked: nothing solid stands in the road, the cafe, the arena, the gates or the exit '
               'run, and no two lane buildings overlap')
     return len(problems)
+
+
+def _list_agrees(kit_name, ours):
+    """One of the kit's placement lists here, in centimetres, against the same list in the Blender kit, in
+    metres. Written for CAFE_DRESS and reused for CAFE_DECO: the lists are kept twice on purpose (the level
+    needs cm, the mock-up render needs m) and nothing but this check keeps them in step."""
+    import re as _re
+    kit = os.path.join(ROOT, 'Art', 'Blender', 'jumpcut_city_kit.py')
+    if not os.path.exists(kit):
+        return []
+    m = _re.search(kit_name + r'\s*=\s*\[(.*?)\n\]', open(kit, encoding='utf-8').read(), _re.S)
+    if not m:
+        return ['could not find %s in the Blender kit to compare against' % kit_name]
+    rx = r"\('(SM_\w+)',\s*(-?[\d.]+),\s*(-?[\d.]+),\s*(-?[\d.]+),\s*(-?\d+)\)"
+    theirs = [(g[0], round(float(g[1]) * 100, 1), round(float(g[2]) * 100, 1), round(float(g[3]) * 100, 1),
+               int(g[4])) for g in _re.findall(rx, m.group(1))]
+    mine = [(r[0], round(r[1], 1), round(r[2], 1), round(r[3], 1), r[4]) for r in ours]
+    if len(mine) != len(theirs):
+        return ['%s has %d rows here and %d in the Blender kit' % (kit_name, len(mine), len(theirs))]
+    return ['%s row %d differs: here %s, Blender kit %s' % (kit_name, i, a, b)
+            for i, (a, b) in enumerate(zip(mine, theirs)) if a != b]
 
 
 def _cafe_dress_agrees():
@@ -550,6 +795,7 @@ def main():
     crossing()
     plaza()
     exit_run()
+    street_life()      # after plaza() and exit_run(): put_clear() can only avoid what is already placed
     near_skyline()
     skyline()
     doc = {
@@ -585,6 +831,8 @@ def main():
     print('actors: %d, distinct models: %d' % (len(actors), len(by)))
     for m in sorted(by, key=lambda k: -by[k]):
         print('  %-20s %d' % (m, by[m]))
+    for line in NUDGED:
+        print('  ~ ' + line)
     validate()
 
 

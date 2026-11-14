@@ -238,6 +238,48 @@ blinks 600 cm on open ground** (measured on Justin's Mac, Nov 13). So:
 - platform tops are flat and at least 3 m across, because landing a blink on a narrow or sloped surface is
   where this kind of section stops being fun
 
+## Cafe dressing and street life (Fri Nov 13)
+
+Nineteen models were added on the note "the cafe should look like an anime cafe" and "everything outside
+the play area looks barren". They are two groups in the kit, `cafedeco` and `life`.
+
+**Cafe** — `SM_CafeFloorBoards`, `SM_CafeRug`, `SM_CafePendant`, `SM_CafeWallArt`, `SM_CafeChalkboard`,
+`SM_CafeClock`, `SM_CafePlantTall`, `SM_CafePlantSmall`, `SM_CafeTableTop`, `SM_CafeStool`,
+`SM_CafeBarCounter`, `SM_CafeBanquette`. Placed from `CAFE_DECO_CM` in `tools/jumpcut_city_layout.py`,
+which is checked against `CAFE_DECO` in the Blender kit on every run, the same way `CAFE_DRESS` is.
+
+**Street** — `SM_StreetTree`, `SM_Hedge`, `SM_LanternString`, `SM_BannerFlag`, `SM_LaundryRack`,
+`SM_Scooter`, `SM_RoofBillboard`, placed by `street_life()`.
+
+Four material slots are new: **MS_CafeWall** (cream plaster) and **MS_CafeFloor** (honey boards), so the
+cafe can be warm without the street being warm; **MS_CityLantern** (emissive warm red); and **MS_CityLeaf**,
+which is the first green in the project — every plant in the kit before this was painted `MS_CityCloth`,
+which is beige.
+
+### Rules this group added, all learned the hard way
+
+- **Foliage is solid blocks, never crossed cards.** A card is one quad, so Unreal culls its back and the
+  canopy vanishes from one side. Two-siding the material is worse: a back face renders with the FRONT
+  face's normal, so the half of the canopy facing away from the sun lights as if it faced the ground and
+  comes out black. Blocks have outward normals on every face. See `build_street_tree`'s docstring.
+- **You cannot make a card two-sided by emitting it twice.** `B.finish()` welds coincident verts and the
+  duplicate face is dropped, so the mesh comes out byte-identical and the tri count does not move.
+- **Leaf green must be a LIGHT green.** The look bands `sceneColour / baseColour` and the shadow band is
+  about 0.6x the base, so a realistic leaf green is black on the shadow side.
+- **`street_life()` must run after `plaza()` and `exit_run()`.** It places with `put_clear()`, which nudges
+  a prop along x until it stops standing inside something - and it can only avoid what is already in the
+  list. Run earlier, it put six hedges through the plaza tower.
+- **`put_clear()`, not `put()`, for anything standing on the ground.** The lane already has 246 things on
+  it; there is no free hand-picked x left.
+
+### The trap in `add` mode
+
+`tools/jumpcut_city_place.py add` decides what is already placed **by actor label**. The cafe's labels are
+positional, so inserting one prop renumbers every prop after it and `add` then places a second copy of each
+renumbered actor on top of the first. That happened on this pass: seven duplicates, invisible in the
+viewport, two coincident surfaces each. Run **`tools/jumpcut_city_dedupe.py`** (report) after any `add`,
+and `... dedupe.py fix` if it finds any. It matches on mesh and position, not on names.
+
 ## Known gaps
 
 - **No people.** The city has no pedestrians. See `docs/CHARACTERS.md` → *Crowds* for the cheap route

@@ -53,8 +53,44 @@ COLOURS = {
     'MS_CitySignA': (0.95, 0.42, 0.18), 'MS_CitySignB': (0.25, 0.72, 0.90),
     'MS_CityAccent': (0.72, 0.16, 0.20), 'MS_CityWood': (0.47, 0.31, 0.18),
     'MS_CityRoof': (0.23, 0.23, 0.25), 'MS_CityCloth': (0.80, 0.74, 0.62),
+    # Added Fri Nov 13 with the cafe dressing and the street life. MS_CityLeaf is the first green in the
+    # project: until now the kit's only foliage was the planter shrub and it was painted MS_CityCloth,
+    # which is beige, so nothing in the city was alive. The two MS_Cafe* slots exist so the room the
+    # player spends beat 1 in can be warm without repainting the whole street with it.
+    # A LIGHT green, not a realistic one. The look divides scene colour by base colour and bands the
+    # result, so the shadow band is roughly 0.6x the base: a believable leaf green (0.29, 0.46, 0.22) comes
+    # out of the shadow side as near-black, and the first street trees read as holes in the street rather
+    # than as trees. Lifted until both bands are still obviously green.
+    'MS_CityLeaf': (0.46, 0.64, 0.30), 'MS_CityLantern': (0.90, 0.26, 0.19),
+    'MS_CafeWall': (0.93, 0.85, 0.72), 'MS_CafeFloor': (0.58, 0.39, 0.23),
 }
-EMISSIVE = ('MS_CitySignA', 'MS_CitySignB')
+EMISSIVE = ('MS_CitySignA', 'MS_CitySignB', 'MS_CityLantern')
+
+# Slots whose geometry is a THIN THING standing for a thick one: a leaf, a cloth panel, a paper lantern.
+# The kit draws those as a single quad, so Unreal culls the back face and the thing disappears from one
+# side. Measured on Fri Nov 13: every street tree in the lane had a full canopy seen from the south and a
+# bare trunk seen from the north, with no error, no warning and correct materials on the actor. Doubling
+# the geometry does NOT fix it - the kit's own weld pass merges the two windings back into one face - so
+# it is fixed here, where one flag does it for every mesh that uses the slot.
+TWO_SIDED = ('MS_CityLeaf', 'MS_CityCloth')
+
+# Leaves need one more thing than two-sidedness. With a plain Default-Lit two-sided material, the face
+# pointing AWAY from the sun receives nothing, and the cel pass bands "nothing" to flat black - so the
+# first two-sided street tree read as a black blob with a few green cards on the sunny side, which is
+# worse than the bare trunk it replaced. Unreal's Two Sided Foliage shading model is exactly this case:
+# it transmits light through the sheet, so a backlit leaf comes out as a lighter green instead of a hole.
+# The subsurface colour is the leaf colour lifted, which is what you see when you look up through a tree.
+FOLIAGE = {'MS_CityLeaf': (0.58, 0.78, 0.38)}
+
+# ...and even that is not enough on its own. A canopy is forty-odd cards inside a 2.3 m ball, so every card
+# on the inside is shadowed by the cards outside it - and with the look's hard band, "shadowed by something"
+# and "shadowed by everything" land on the same flat tone. Measured on the first tree in the lane: pale
+# green rim, solid black core, which reads as a hole in the street rather than as a tree.
+# A small self-lit term fixes it where it is broken. The look computes its band from
+# sceneColour / baseColour, so adding a fraction of the leaf's own colour to the scene lifts the inside of
+# the canopy back over the threshold without making it glow. It is a cheat, and it is the same cheat every
+# stylised foliage shader makes.
+SOFT_EMISSIVE = {'MS_CityLeaf': 0.5}
 
 # Pieces the player is supposed to pass THROUGH. Measured, not guessed: with collision set
 # complex-as-simple (which is right for the rest of the kit) the cafe's noren became a solid 150 x 100 cm
@@ -64,7 +100,13 @@ EMISSIVE = ('MS_CitySignA', 'MS_CitySignB')
 # property and serializes, where the component-level flag silently came back after a reload in beat 4.
 # The three painted pieces (paving, crossings, road lines) are pictures laid 1 cm over the real floor:
 # with collision on, the player would be standing on a second floor the fight was never tuned on.
-WALK_THROUGH = {'SM_Noren', 'SM_CableSpan', 'SM_PlazaPaving', 'SM_Crosswalk', 'SM_RoadLines'}
+WALK_THROUGH = {'SM_Noren', 'SM_CableSpan', 'SM_PlazaPaving', 'SM_Crosswalk', 'SM_RoadLines',
+                # the cafe's floorboards and its rug are the same kind of thing as the paving: a picture of
+                # a surface laid over the real one. With collision on, the boards are a SECOND floor 1.2 cm
+                # above the slab every fight in beat 1 was tuned on.
+                'SM_CafeFloorBoards', 'SM_CafeRug',
+                # a lantern string is a cable with lanterns on it, and the cable is already walk-through
+                'SM_LanternString'}
 
 # Models that must KEEP simple collision, because something simulates them. Chaos physics (PR #48,
 # tools/unreal_chaos_props.py) gives these three a box and CTF_USE_DEFAULT so a punch can shove them:
@@ -85,6 +127,53 @@ def say(msg):
     print(msg)
 
 
+def upgrade(mat, slot, mel, recompile=True):
+    """Bring one slot's material up to what COLOURS/TWO_SIDED/FOLIAGE currently say.
+
+    Idempotent, and it repairs a material made before any of those ideas existed. Without the colour half,
+    changing a value in COLOURS did nothing at all on a machine where the material already existed, which
+    is a quiet way to spend an afternoon.
+    Returns True if it changed anything.
+    """
+    done = False
+    want = COLOURS.get(slot)
+    if want is not None:
+        for ex in mat.get_editor_property('expressions'):
+            if (isinstance(ex, unreal.MaterialExpressionVectorParameter)
+                    and str(ex.get_editor_property('parameter_name')) == 'BaseColor'):
+                have = ex.get_editor_property('default_value')
+                if (abs(have.r - want[0]) > 0.004 or abs(have.g - want[1]) > 0.004
+                        or abs(have.b - want[2]) > 0.004):
+                    ex.set_editor_property('default_value',
+                                           unreal.LinearColor(want[0], want[1], want[2], 1.0))
+                    done = True
+    if slot in TWO_SIDED and not mat.get_editor_property('two_sided'):
+        mat.set_editor_property('two_sided', True)
+        done = True
+    lift = SOFT_EMISSIVE.get(slot)
+    if lift is not None and want is not None:
+        named = {str(ex.get_editor_property('parameter_name')) for ex in mat.get_editor_property('expressions')
+                 if isinstance(ex, unreal.MaterialExpressionVectorParameter)}
+        if 'LeafLift' not in named:
+            em = mel.create_material_expression(mat, unreal.MaterialExpressionVectorParameter, -380, 720)
+            em.set_editor_property('parameter_name', 'LeafLift')
+            em.set_editor_property('default_value', unreal.LinearColor(want[0] * lift, want[1] * lift,
+                                                                      want[2] * lift, 1.0))
+            mel.connect_material_property(em, '', unreal.MaterialProperty.MP_EMISSIVE_COLOR)
+            done = True
+    sss = FOLIAGE.get(slot)
+    if sss is not None and mat.get_editor_property('shading_model') != unreal.MaterialShadingModel.MSM_TWO_SIDED_FOLIAGE:
+        mat.set_editor_property('shading_model', unreal.MaterialShadingModel.MSM_TWO_SIDED_FOLIAGE)
+        ss = mel.create_material_expression(mat, unreal.MaterialExpressionVectorParameter, -380, 540)
+        ss.set_editor_property('parameter_name', 'Subsurface')
+        ss.set_editor_property('default_value', unreal.LinearColor(sss[0], sss[1], sss[2], 1.0))
+        mel.connect_material_property(ss, '', unreal.MaterialProperty.MP_SUBSURFACE_COLOR)
+        done = True
+    if done and recompile:
+        mel.recompile_material(mat)
+    return done
+
+
 def ensure_materials():
     """Make one flat material per slot name, once. Returns {slot name: material}, skipping any it cannot
     build - a missing material costs you a grey building, not a failed run."""
@@ -94,7 +183,12 @@ def ensure_materials():
     for slot, rgb in COLOURS.items():
         path = '%s/M_%s' % (MATDIR, slot[3:])
         if unreal.EditorAssetLibrary.does_asset_exist(path):
-            out[slot] = unreal.load_asset(path)
+            mat = unreal.load_asset(path)
+            # idempotent, and it repairs a material made before TWO_SIDED existed
+            if upgrade(mat, slot, mel):
+                unreal.EditorAssetLibrary.save_asset(path, only_if_is_dirty=False)
+                say('%s upgraded (two-sided / foliage)' % path)
+            out[slot] = mat
             continue
         try:
             mat = at.create_asset('M_' + slot[3:], MATDIR, unreal.Material, unreal.MaterialFactoryNew())
@@ -112,6 +206,7 @@ def ensure_materials():
                 em.set_editor_property('default_value',
                                        unreal.LinearColor(rgb[0] * 2.2, rgb[1] * 2.2, rgb[2] * 2.2, 1.0))
                 mel.connect_material_property(em, '', unreal.MaterialProperty.MP_EMISSIVE_COLOR)
+            upgrade(mat, slot, mel, recompile=False)
             mel.recompile_material(mat)
             # Save the material itself. The level is deliberately left unsaved for the builder to judge, but a
             # brand-new material asset that is only in memory is lost on close, and then every actor placed
@@ -123,6 +218,42 @@ def ensure_materials():
             say('could not make a material for %s: %s' % (slot, e))
     say('materials ready: %d of %d' % (len(out), len(COLOURS)))
     return out
+
+
+def remat(eas, mats):
+    """Put the right material on every JC_City actor that is already in the level, by SLOT NAME.
+
+    'add' mode deliberately leaves existing actors alone, which is what makes it safe - but a mesh can be
+    re-imported with different material slots, and then the actor is still pointing its old materials at
+    the new slot indices. That is exactly what happened on Fri Nov 13: SM_CafeShell's walls moved from
+    MS_CityWall to MS_CafeWall and SM_Planter's shrub from MS_CityCloth to MS_CityLeaf, so without this the
+    cafe would have come back grey and the plants beige and nothing would have looked broken enough to
+    investigate. Idempotent, and it only dirties an actor whose material it actually changed.
+    """
+    changed, pkgs = 0, []
+    for a in list(eas.get_all_level_actors()):
+        if unreal.Name(TAG) not in a.get_editor_property('tags'):
+            continue
+        if not isinstance(a, unreal.StaticMeshActor):
+            continue
+        comp = a.static_mesh_component
+        mesh = comp.get_editor_property('static_mesh')
+        if mesh is None:
+            continue
+        touched = False
+        for i, nm in enumerate(slot_names(mesh)):
+            want = mats.get(nm)
+            if want is not None and comp.get_material(i) != want:
+                comp.set_material(i, want)
+                touched = True
+        if touched:
+            a.set_actor_transform(a.get_actor_transform(), False, False)   # one-file-per-actor: dirty it
+            pkgs.append(a.get_outermost())
+            changed += 1
+    if pkgs:
+        unreal.EditorLoadingAndSavingUtils.save_packages(pkgs, False)
+    say('re-materialled %d actors already in the level' % changed)
+    return changed
 
 
 def slot_names(mesh):
@@ -321,6 +452,8 @@ def main():
         for m in sorted(missing):
             say('   %s  (%d placements waiting on it)' % (m, missing[m]))
 
+    if mode == 'add':
+        remat(eas, mats)
     if mode in ('hide', 'add'):
         set_greybox(eas, True, set(doc['supersedes_greybox']))
         set_ground(eas, doc, mats, True)
