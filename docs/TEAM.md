@@ -55,6 +55,19 @@ table, commits and pushes. A computer can have more than one role (`tester, make
   on every round trip - `Armature|Armature|Idle` comes back as `Armature|Armature|Armature|Armature|Idle`.
   Export a clip, re-import it, export again and the name grows, which breaks the Unreal import naming. Author
   from the committed `SK_<Name>.fbx` each time rather than from a previous export.
+- **Launch Blender from a shell, not from the Dock or `open -a`, or the MCP wedges with no error.** A Blender
+  started by `open -a Blender` is its own responsible process for macOS privacy (TCC), so its first read under
+  `~/Documents` raises an *"allow access to Documents"* prompt. If the Mac is locked the prompt cannot be
+  shown, and Blender's main thread blocks inside `open()` indefinitely: the MCP port keeps listening, every
+  call times out, CPU sits at 0%, and nothing is logged anywhere. Found Nov 14 by `sample`-ing the process -
+  all 2,453 samples sat in `_io_open -> open` inside `import_scene.fbx`. Launching the binary from a shell
+  (`nohup /Applications/Blender.app/Contents/MacOS/Blender &`) inherits the shell's existing Documents grant,
+  so there is no prompt; that session imported `SK_CafeWalker.fbx` in 0.27 s and rendered it. Headless
+  `blender -b` runs were never affected, for the same reason - they are shell children too.
+- **Blender 5.x Actions are slotted: `Action.fcurves` no longer exists** (it is
+  `action.layers[].strips[].channelbags[].fcurves`). Checked Nov 14: `Art/Blender/meshy_character.py:36`
+  already falls back correctly, and `walk_cycle.py` and `pose_clip.py` never touch `fcurves`, so no
+  `Art/Blender/` script needs changing. Any new animation script must handle the slotted form.
 - **Fable: 5.2, and only 5.2** (`claude-fable-5-2`) (Team Owner, same message: *"Fable needs to be version
   5.2"*). This is the model pin, not a Blender version - the two got conflated when issue #103 was first
   written. Animation authoring (#103) runs on Fable 5.2; say in the ticket or PR which model did the work.
