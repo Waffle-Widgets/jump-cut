@@ -176,6 +176,101 @@ class B:
                 lp[self.uv].uv = (lp.vert.co.x, lp.vert.co.y)
             self._paint(f, c)
 
+    # ----------------------------------------------------------------- chamfers and profiles
+    # WHY THESE EXIST. Every prop in this kit was an axis-aligned cuboid, and under the cel shader that is
+    # the worst possible shape: the outline pass draws a hard line on every normal break, so a box becomes
+    # three flat fields meeting at three black lines and reads as a box however it is painted. A 2-4 cm
+    # chamfer costs eight triangles, catches a different light band on the cut face, and turns the same
+    # silhouette into an object. Chamfers cut INWARD, so a chamfered prop keeps the exact footprint the
+    # layout checker measured - which is the only reason this could be a sweep over finished models.
+
+    def poly(self, pts2d, z, slot, c=1.0, up=True):
+        """One horizontal n-gon at height z. pts2d anticlockwise; up=False flips it to face down."""
+        mi = self.slot(slot)
+        ring = [self.bm.verts.new((p[0], p[1], z)) for p in (pts2d if up else list(reversed(pts2d)))]
+        try:
+            f = self.bm.faces.new(ring)
+        except ValueError:
+            return None
+        f.material_index = mi
+        f.smooth = False
+        for lp in f.loops:
+            lp[self.uv].uv = (lp.vert.co.x, lp.vert.co.y)
+        self._paint(f, c)
+        return f
+
+    def loft(self, prof0, z0, prof1, z1, slot, c=1.0):
+        """Side walls between two profiles of the same length. A taper is just prof1 smaller than prof0."""
+        mi = self.slot(slot)
+        n = len(prof0)
+        lo = [self.bm.verts.new((p[0], p[1], z0)) for p in prof0]
+        hi = [self.bm.verts.new((p[0], p[1], z1)) for p in prof1]
+        for i in range(n):
+            j = (i + 1) % n
+            try:
+                f = self.bm.faces.new([lo[i], lo[j], hi[j], hi[i]])
+            except ValueError:
+                continue
+            f.material_index = mi
+            f.smooth = False
+            for lp in f.loops:
+                p = lp.vert.co
+                lp[self.uv].uv = (p.x + p.y, p.z)
+            self._paint(f, c)
+
+    def prism(self, prof, z0, z1, slot, c=1.0, prof1=None, cap_lo=True, cap_hi=True):
+        """Extrude a 2D profile from z0 to z1, optionally tapering to prof1."""
+        p1 = prof1 if prof1 is not None else prof
+        self.loft(prof, z0, p1, z1, slot, c)
+        if cap_lo:
+            self.poly(prof, z0, slot, c, up=False)
+        if cap_hi:
+            self.poly(p1, z1, slot, c, up=True)
+
+    @staticmethod
+    def chamfer_rect(x0, y0, x1, y1, ch):
+        """A rectangle with its four corners cut off: the 8-point profile a chamfered box extrudes."""
+        ch = min(ch, (x1 - x0) / 2.0 - 1e-4, (y1 - y0) / 2.0 - 1e-4)
+        if ch <= 0:
+            return [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+        return [(x0 + ch, y0), (x1 - ch, y0), (x1, y0 + ch), (x1, y1 - ch),
+                (x1 - ch, y1), (x0 + ch, y1), (x0, y1 - ch), (x0, y0 + ch)]
+
+    @staticmethod
+    def _shrink(prof, cx, cy, d):
+        """Move every point of a profile d metres towards (cx, cy). Used for a bevelled top or a taper."""
+        out = []
+        for (px, py) in prof:
+            vx, vy = px - cx, py - cy
+            L = math.hypot(vx, vy) or 1.0
+            k = max(0.0, 1.0 - d / L)
+            out.append((cx + vx * k, cy + vy * k))
+        return out
+
+    def cbox(self, p0, p1, slot, c=1.0, ch=0.025, top=0.0, bot=0.0, cap_lo=True, cap_hi=True):
+        """A cuboid with its vertical corners chamfered, and optionally its top and/or bottom edge bevelled.
+
+        ch   how far the vertical corners are cut in
+        top  bevel height AND inset at the top edge (so the top reads as a rolled edge, not a knife)
+        bot  the same at the bottom - a plinth or a kick
+        """
+        x0, y0, z0 = min(p0[0], p1[0]), min(p0[1], p1[1]), min(p0[2], p1[2])
+        x1, y1, z1 = max(p0[0], p1[0]), max(p0[1], p1[1]), max(p0[2], p1[2])
+        cx, cy = (x0 + x1) / 2.0, (y0 + y1) / 2.0
+        prof = self.chamfer_rect(x0, y0, x1, y1, ch)
+        zb, zt = z0 + bot, z1 - top
+        if bot > 0:
+            self.loft(self._shrink(prof, cx, cy, bot), z0, prof, zb, slot, c * 0.92)
+            self.poly(self._shrink(prof, cx, cy, bot), z0, slot, c * 0.9, up=False)
+        elif cap_lo:
+            self.poly(prof, z0, slot, c, up=False)
+        self.loft(prof, zb, prof, zt, slot, c)
+        if top > 0:
+            self.loft(prof, zt, self._shrink(prof, cx, cy, top), z1, slot, c * 1.0)
+            self.poly(self._shrink(prof, cx, cy, top), z1, slot, c * 0.96, up=True)
+        elif cap_hi:
+            self.poly(prof, z1, slot, c, up=True)
+
     def finish(self, name, weld=True):
         if weld:
             bmesh.ops.remove_doubles(self.bm, verts=list(self.bm.verts), dist=0.0008)
@@ -868,22 +963,38 @@ def build_vending_machine(name='SM_VendingMachine'):
     """1.10 x 0.75 x 1.90 m. The single most Tokyo object there is, and it is a free light source at night."""
     b = B(seed=51)
     w, d, h = 1.10, 0.75, 1.90
-    b.box((-w / 2, -d / 2, 0), (w / 2, d / 2, h), 'MS_CityAccent', 0.9, skip=('ylo',))
-    b.box((-w / 2, -d / 2, 0), (w / 2, -d / 2 + 0.05, h), 'MS_CityAccent', 0.95, skip=('ylo',))
-    b.quad([(-w / 2, -d / 2, 0.62), (w / 2, -d / 2, 0.62), (w / 2, -d / 2, h - 0.12), (-w / 2, -d / 2, h - 0.12)],
-           'MS_CityGlass', 0.8)                                                        # lit display window
+    hw, hd = w / 2, d / 2
+    # The cabinet: chamfered corners, a bevelled top edge and a recessed kick. A vending machine is the
+    # prop the player passes closest to on the whole lane, so it is the one that most has to stop being
+    # a cuboid. Footprint is unchanged - every cut goes inward.
+    b.cbox((-hw, -hd, 0.09), (hw, hd, h), 'MS_CityAccent', 0.9, ch=0.05, top=0.04)
+    b.cbox((-hw + 0.04, -hd + 0.04, 0.0), (hw - 0.04, hd - 0.04, 0.10), 'MS_CityTrim', 0.3, ch=0.03)  # kick
+    # The display is a RECESS, not a decal on the front: the reveal gives the outline pass a frame to draw.
+    gx0, gx1, gz0, gz1 = -hw + 0.07, hw - 0.07, 0.60, h - 0.26
+    b.box((gx0, -hd + 0.02, gz0), (gx1, -hd + 0.13, gz1), 'MS_CityTrim', 0.3, skip=('ylo', 'yhi'))
+    b.quad([(gx0, -hd + 0.13, gz0), (gx1, -hd + 0.13, gz0), (gx1, -hd + 0.13, gz1), (gx0, -hd + 0.13, gz1)],
+           'MS_CityGlass', 0.82)
     for r in range(3):                                                                 # rows of product
+        sz = gz0 + 0.06 + r * (gz1 - gz0 - 0.1) / 3
+        b.box((gx0 + 0.02, -hd + 0.13, sz - 0.03), (gx1 - 0.02, -hd + 0.30, sz), 'MS_CityTrim', 0.25)  # shelf
         for c in range(4):
-            px = -w / 2 + 0.1 + c * (w - 0.2) / 4
-            pz = 0.72 + r * 0.33
-            b.box((px, -d / 2 + 0.04, pz), (px + (w - 0.2) / 4 - 0.04, -d / 2 + 0.14, pz + 0.22),
-                  'MS_CitySignA' if (r + c) % 2 else 'MS_CitySignB', 1.0)
-    b.quad([(-w / 2, -d / 2 - 0.01, h - 0.12), (w / 2, -d / 2 - 0.01, h - 0.12),
-            (w / 2, -d / 2 - 0.01, h), (-w / 2, -d / 2 - 0.01, h)], 'MS_CitySignB', 1.0)   # lit header
-    b.box((-w / 2 + 0.06, -d / 2 - 0.04, 0.34), (w / 2 - 0.3, -d / 2, 0.52), 'MS_CityTrim', 0.4)  # delivery flap
-    b.box((w / 2 - 0.26, -d / 2 - 0.03, 0.56), (w / 2 - 0.06, -d / 2, 0.6), 'MS_CityMetal', 0.7)  # coin slot
-    for sx in (-w / 2 + 0.06, w / 2 - 0.12):                                           # feet
-        b.box((sx, -d / 2 + 0.06, -0.0), (sx + 0.06, d / 2 - 0.06, 0.04), 'MS_CityTrim', 0.3)
+            px = gx0 + 0.045 + c * (gx1 - gx0 - 0.09) / 4
+            pw = (gx1 - gx0 - 0.09) / 4 - 0.035
+            b.cbox((px, -hd + 0.15, sz), (px + pw, -hd + 0.26, sz + 0.21),
+                   'MS_CitySignA' if (r + c) % 2 else 'MS_CitySignB', 1.0, ch=0.018, top=0.02)
+    # Lit header, set proud of the face on its own chamfered bezel.
+    b.cbox((-hw + 0.02, -hd - 0.05, h - 0.23), (hw - 0.02, -hd + 0.02, h - 0.05), 'MS_CitySignB', 1.0, ch=0.03)
+    b.box((-hw + 0.05, -hd - 0.055, h - 0.19), (hw - 0.05, -hd - 0.05, h - 0.09), 'MS_CityTrim', 0.25)
+    # Controls: a chamfered selection strip, a coin column and a delivery flap with a real lip.
+    b.cbox((-hw + 0.08, -hd - 0.035, 0.48), (hw - 0.34, -hd + 0.01, 0.57), 'MS_CityTrim', 0.35, ch=0.02)
+    for c in range(5):
+        bx = -hw + 0.11 + c * 0.11
+        b.cbox((bx, -hd - 0.05, 0.505), (bx + 0.07, -hd - 0.033, 0.545), 'MS_CitySignA', 1.0, ch=0.012)
+    b.cbox((hw - 0.30, -hd - 0.04, 0.33), (hw - 0.05, -hd + 0.01, 0.60), 'MS_CityMetal', 0.72, ch=0.02)
+    b.cbox((-hw + 0.08, -hd - 0.05, 0.14), (hw - 0.34, -hd + 0.01, 0.32), 'MS_CityTrim', 0.4, ch=0.025, top=0.02)
+    for sx in (-hw + 0.03, hw - 0.055):                                                # corner ribs, both sides
+        b.cbox((sx, -hd + 0.03, 0.12), (sx + 0.025, hd - 0.03, h - 0.06), 'MS_CityTrim', 0.3, ch=0.008)
+    b.cbox((-hw + 0.12, hd - 0.06, 0.55), (hw - 0.12, hd - 0.02, 1.35), 'MS_CityMetal', 0.6, ch=0.02)  # back grille
     return b.finish(name)
 
 
@@ -916,12 +1027,36 @@ def build_sign_blade(name='SM_SignBlade'):
 
 
 def build_ac_unit(name='SM_ACUnit'):
+    """A wall condenser, 0.90 x 0.38 x 0.68 m. There are more of these on the lane than any other prop, so
+    at 48 triangles it was 48 triangles of 'box' repeated twenty times. It now has the two things that make
+    one readable at a glance: a ROUND fan guard and horizontal louvres, both of which the outline pass draws."""
     b = B(seed=54)
     w, d, h = 0.90, 0.38, 0.68
-    b.box((-w / 2, 0, 0), (w / 2, d, h), 'MS_CityMetal', 0.85)
-    b.box((-w / 2 + 0.08, -0.04, 0.08), (w / 2 - 0.08, 0.0, h - 0.08), 'MS_CityTrim', 0.45)
-    for sx in (-w / 2 + 0.05, w / 2 - 0.12):
-        b.box((sx, d - 0.02, -0.0), (sx + 0.07, d + 0.22, 0.05), 'MS_CityTrim', 0.4)   # wall bracket
+    hw = w / 2
+    b.cbox((-hw, 0, 0), (hw, d, h), 'MS_CityMetal', 0.85, ch=0.03, top=0.025)
+    # the recessed grille panel
+    b.box((-hw + 0.06, -0.035, 0.06), (hw - 0.06, 0.0, h - 0.06), 'MS_CityTrim', 0.4, skip=('ylo', 'yhi'))
+    b.quad([(-hw + 0.06, 0.0, 0.06), (hw - 0.06, 0.0, 0.06), (hw - 0.06, 0.0, h - 0.06), (-hw + 0.06, 0.0, h - 0.06)],
+           'MS_CityTrim', 0.28)
+    # the fan guard: a ring of blocks, which is the cheapest circle that survives an outline pass
+    cz, rr = h * 0.52, 0.21
+    for i in range(12):
+        a0, a1 = 2 * math.pi * i / 12, 2 * math.pi * (i + 1) / 12
+        b.box((-0.02 + rr * math.cos(a0), -0.045, cz + rr * math.sin(a0)),
+              (0.02 + rr * math.cos(a1), -0.03, cz + rr * math.sin(a1)), 'MS_CityMetal', 0.75)
+    for i in range(3):                                                                 # fan blades behind it
+        a = math.pi * i / 3
+        b.box((-rr * 0.85 * math.cos(a), -0.028, cz - rr * 0.85 * math.sin(a)),
+              (rr * 0.85 * math.cos(a) + 0.03, -0.01, cz + rr * 0.85 * math.sin(a) + 0.03), 'MS_CityTrim', 0.2)
+    for i in range(4):                                                                 # louvres down the side
+        lz = 0.10 + i * 0.13
+        b.box((hw - 0.30, -0.042, lz), (hw - 0.08, -0.016, lz + 0.055), 'MS_CityMetal', 0.7)
+    b.cbox((-hw + 0.1, d - 0.03, h - 0.06), (hw - 0.1, d + 0.03, h), 'MS_CityTrim', 0.35, ch=0.015)  # top rail
+    for sx in (-hw + 0.05, hw - 0.12):                                                 # wall bracket
+        b.box((sx, d - 0.02, 0.0), (sx + 0.07, d + 0.22, 0.05), 'MS_CityTrim', 0.4)
+        b.box((sx + 0.01, d + 0.16, 0.04), (sx + 0.06, d + 0.21, 0.30), 'MS_CityTrim', 0.35)
+    b.tube((hw - 0.17, d + 0.05, 0.0), 0.34, 0.035, 'MS_CityTrim', n=6, c=0.3)         # the pipe run down
+    b.tube((hw - 0.17, d + 0.05, 0.30), 0.16, 0.035, 'MS_CityTrim', n=6, c=0.3, axis='x')
     return b.finish(name)
 
 
@@ -959,15 +1094,30 @@ def build_cable_span(name='SM_CableSpan'):
 
 
 def build_street_lamp(name='SM_StreetLamp'):
+    """A 6 m lamp with a TAPERED column and a real lantern head. The old one was a constant-radius stick with
+    a flat plate on the end: at 130 triangles for six metres it was the tallest box on the lane."""
     b = B(seed=57)
-    b.tube((0, 0, 0), 0.25, 0.14, 'MS_CityConcrete', n=8, c=0.9)
-    b.tube((0, 0, 0.25), 5.2, 0.075, 'MS_CityTrim', n=8, c=0.5)
-    for i in range(5):                                                                  # the curved head
-        t0, t1 = i / 5, (i + 1) / 5
-        b.box((-0.06 - 1.2 * t0, -0.06, 5.45 + 0.45 * math.sin(t0 * math.pi / 2)),
-              (-0.06 - 1.2 * t1, 0.06, 5.5 + 0.45 * math.sin(t1 * math.pi / 2)), 'MS_CityTrim', 0.5)
-    b.box((-1.55, -0.16, 5.78), (-0.95, 0.16, 5.9), 'MS_CityTrim', 0.45)
-    b.quad([(-1.5, -0.13, 5.78), (-1.0, -0.13, 5.78), (-1.0, 0.13, 5.78), (-1.5, 0.13, 5.78)], 'MS_CitySignA', 1.0)
+    b.cbox((-0.17, -0.17, 0.0), (0.17, 0.17, 0.12), 'MS_CityConcrete', 0.9, ch=0.04, top=0.03)  # plinth
+    b.cbox((-0.125, -0.125, 0.12), (0.125, 0.125, 0.46), 'MS_CityTrim', 0.45, ch=0.03, top=0.04)  # base casting
+    for i in range(4):                                                                  # the taper, in 4 lifts
+        t0, t1 = i / 4.0, (i + 1) / 4.0
+        r0, r1 = 0.095 - 0.035 * t0, 0.095 - 0.035 * t1
+        z0, z1 = 0.46 + 4.74 * t0, 0.46 + 4.74 * t1
+        b.prism(b.chamfer_rect(-r0, -r0, r0, r0, r0 * 0.42), z0,
+                z1, 'MS_CityTrim', 0.5, prof1=b.chamfer_rect(-r1, -r1, r1, r1, r1 * 0.42),
+                cap_lo=(i == 0), cap_hi=False)
+    for i in range(6):                                                                  # the curved bracket arm
+        t0, t1 = i / 6.0, (i + 1) / 6.0
+        b.cbox((-0.05 - 1.25 * t0, -0.05, 5.20 + 0.52 * math.sin(t0 * math.pi / 2)),
+               (-0.05 - 1.25 * t1 - 0.02, 0.05, 5.26 + 0.52 * math.sin(t1 * math.pi / 2)),
+               'MS_CityTrim', 0.5, ch=0.014)
+    b.cbox((-1.46, -0.06, 5.52), (-1.22, 0.06, 5.80), 'MS_CityTrim', 0.4, ch=0.02)      # the hanger
+    # lantern head: a tapered box, wider at the top, with a glazed underside and a finial
+    top = b.chamfer_rect(-1.62, -0.19, -1.06, 0.19, 0.07)
+    bot = b.chamfer_rect(-1.50, -0.12, -1.18, 0.12, 0.05)
+    b.prism(bot, 5.18, 5.52, 'MS_CityTrim', 0.45, prof1=top, cap_lo=False, cap_hi=True)
+    b.poly(bot, 5.18, 'MS_CitySignA', 1.0, up=False)                                    # the lit lens
+    b.cbox((-1.40, -0.055, 5.80), (-1.28, 0.055, 5.96), 'MS_CityTrim', 0.4, ch=0.02, top=0.04)  # finial
     return b.finish(name)
 
 
@@ -984,9 +1134,14 @@ def build_traffic_cone(name='SM_TrafficCone'):
 
 def build_bollard(name='SM_Bollard'):
     b = B(seed=59)
-    b.tube((0, 0, 0), 0.86, 0.055, 'MS_CityMetal', n=8, c=0.85)
-    b.tube((0, 0, 0.86), 0.06, 0.07, 'MS_CityAccent', n=8, c=0.95)
-    b.tube((0, 0, 0.56), 0.1, 0.062, 'MS_CityAccent', n=8, c=0.95)
+    b.tube((0, 0, 0), 0.05, 0.085, 'MS_CityConcrete', n=10, c=0.8)                      # ground collar
+    b.prism([(math.cos(2 * math.pi * i / 10) * 0.062, math.sin(2 * math.pi * i / 10) * 0.062) for i in range(10)],
+            0.05, 0.80, 'MS_CityMetal', 0.85,
+            prof1=[(math.cos(2 * math.pi * i / 10) * 0.052, math.sin(2 * math.pi * i / 10) * 0.052)
+                   for i in range(10)], cap_lo=False, cap_hi=False)                     # tapered post
+    b.tube((0, 0, 0.80), 0.045, 0.062, 'MS_CityAccent', n=10, c=0.95)                   # shoulder
+    b.tube((0, 0, 0.845), 0.035, 0.045, 'MS_CityAccent', n=10, c=0.95)                  # dome
+    b.tube((0, 0, 0.54), 0.09, 0.058, 'MS_CityAccent', n=10, c=0.95)                    # reflective band
     return b.finish(name)
 
 
@@ -994,50 +1149,87 @@ def build_barrier(name='SM_Barrier'):
     """A 2 m A-frame roadworks barrier. Says 'this street is mid-repair', which beat 4 needs it to."""
     b = B(seed=60)
     w = 2.0
-    for sy in (-0.3, 0.3):
+    for sy in (-0.3, 0.3):                                                              # the two A-frames
         for sx in (-w / 2 + 0.1, w / 2 - 0.16):
-            b.box((sx, sy - 0.03, 0), (sx + 0.06, sy + 0.03, 1.0), 'MS_CityTrim', 0.5)
-    b.box((-w / 2, -0.06, 0.68), (w / 2, 0.06, 0.96), 'MS_CityAccent', 0.95)
-    for i in range(6):
+            b.cbox((sx, sy - 0.035, 0), (sx + 0.07, sy + 0.035, 1.0), 'MS_CityTrim', 0.5, ch=0.016, top=0.02)
+        b.cbox((-w / 2 + 0.14, sy - 0.028, 0.02), (w / 2 - 0.14, sy + 0.028, 0.09), 'MS_CityTrim', 0.4, ch=0.014)
+    b.cbox((-w / 2, -0.055, 0.68), (w / 2, 0.055, 0.96), 'MS_CityAccent', 0.95, ch=0.022)   # top rail
+    for i in range(6):                                                                  # hazard chevrons
         bx = -w / 2 + i * w / 6
-        b.box((bx, -0.07, 0.68), (bx + w / 12, 0.07, 0.96), 'MS_CityAccent', 0.5)
-    b.box((-w / 2 + 0.2, -0.05, 0.3), (w / 2 - 0.2, 0.05, 0.42), 'MS_CityAccent', 0.8)
+        b.cbox((bx + 0.01, -0.07, 0.69), (bx + w / 12, 0.07, 0.95), 'MS_CityAccent', 0.5, ch=0.018)
+    b.cbox((-w / 2 + 0.2, -0.05, 0.30), (w / 2 - 0.2, 0.05, 0.42), 'MS_CityAccent', 0.8, ch=0.02)  # lower rail
+    b.cbox((w / 2 - 0.24, -0.08, 1.00), (w / 2 - 0.06, 0.08, 1.16), 'MS_CitySignA', 1.0, ch=0.03, top=0.03)  # lamp
     return b.finish(name)
 
 
 def build_crate_stack(name='SM_CrateStack'):
+    """Four slatted market crates. Slats, not solid sides: the gap between boards is what the outline pass
+    needs to tell a crate from a wooden cube."""
     b = B(seed=61)
     rng = random.Random(61)
     for i, (x, y, z, s) in enumerate([(0, 0, 0, 0.52), (0.56, 0.04, 0, 0.48), (0.06, 0.1, 0.52, 0.44),
                                       (0.58, -0.02, 0.48, 0.4)]):
-        b.box((x, y, z), (x + s, y + s * 0.9, z + s * 0.85), 'MS_CityWood', rng.uniform(0.75, 1.0))
-        b.box((x + 0.03, y - 0.015, z + s * 0.3), (x + s - 0.03, y, z + s * 0.45), 'MS_CityTrim', 0.4)
+        hgt, dep = s * 0.85, s * 0.9
+        c = rng.uniform(0.75, 1.0)
+        for cx in (x, x + s - 0.035):                                                   # corner posts
+            for cy in (y, y + dep - 0.035):
+                b.cbox((cx, cy, z), (cx + 0.035, cy + 0.035, z + hgt), 'MS_CityWood', c * 0.88, ch=0.008)
+        for k in range(3):                                                              # slats, with gaps
+            sz = z + 0.02 + k * (hgt - 0.08) / 3
+            sh = (hgt - 0.08) / 4.6
+            b.box((x, y + 0.004, sz), (x + s, y + 0.028, sz + sh), 'MS_CityWood', c)
+            b.box((x, y + dep - 0.028, sz), (x + s, y + dep - 0.004, sz + sh), 'MS_CityWood', c * 0.94)
+            b.box((x + 0.004, y, sz), (x + 0.028, y + dep, sz + sh), 'MS_CityWood', c * 0.9)
+            b.box((x + s - 0.028, y, sz), (x + s - 0.004, y + dep, sz + sh), 'MS_CityWood', c * 0.9)
+        b.box((x + 0.02, y + 0.02, z + 0.012), (x + s - 0.02, y + dep - 0.02, z + 0.03), 'MS_CityWood', c * 0.7)
+        b.cbox((x + 0.05, y - 0.012, z + hgt * 0.42), (x + s - 0.05, y + 0.006, z + hgt * 0.62),
+               'MS_CityTrim', 0.4, ch=0.012)                                            # the label card
     return b.finish(name)
 
 
 def build_trash_bags(name='SM_TrashBags'):
+    """Bin bags, as lobed sacks rather than drums. A 7-sided cylinder with a smaller one on top reads as a
+    bucket; what makes a bag a bag is that it bulges at the bottom and gathers at the neck."""
     b = B(seed=62)
     rng = random.Random(62)
     for _ in range(7):
-        x, y = rng.gauss(0, 0.32), rng.gauss(0, 0.26)
-        r = rng.uniform(0.17, 0.27)
-        b.tube((x, y, 0), r * 1.5, r, 'MS_CityCloth', n=7, c=rng.uniform(0.25, 0.45))
-        b.tube((x, y, r * 1.5), r * 0.35, r * 0.45, 'MS_CityCloth', n=6, c=rng.uniform(0.25, 0.45))
+        x, y = max(-0.3, min(0.3, rng.gauss(0, 0.22))), max(-0.22, min(0.22, rng.gauss(0, 0.17)))
+        r = rng.uniform(0.16, 0.24)
+        c = rng.uniform(0.25, 0.45)
+        n = 8
+        def ring(rad, lob):
+            return [((rad + lob * math.sin(3.0 * (2 * math.pi * i / n))) * math.cos(2 * math.pi * i / n) + x,
+                     (rad + lob * math.sin(3.0 * (2 * math.pi * i / n))) * math.sin(2 * math.pi * i / n) + y)
+                    for i in range(n)]
+        b.prism(ring(r * 0.86, r * 0.05), 0.0, r * 0.55, 'MS_CityCloth', c,
+                prof1=ring(r, r * 0.09), cap_lo=True, cap_hi=False)                     # the sag at the bottom
+        b.loft(ring(r, r * 0.09), r * 0.55, ring(r * 0.72, r * 0.07), r * 1.25, 'MS_CityCloth', c * 1.06)
+        b.loft(ring(r * 0.72, r * 0.07), r * 1.25, ring(r * 0.22, r * 0.03), r * 1.62, 'MS_CityCloth', c * 0.9)
+        b.poly(ring(r * 0.22, r * 0.03), r * 1.62, 'MS_CityCloth', c * 0.8)             # the gathered neck
+        b.cbox((x - r * 0.1, y - r * 0.1, r * 1.62), (x + r * 0.1, y + r * 0.1, r * 1.62 + 0.06),
+               'MS_CityCloth', c * 0.7, ch=r * 0.03)                                    # the knot
     b.box((-0.6, -0.5, 0), (0.6, 0.5, 0.02), 'MS_CityConcrete', 0.8)
     return b.finish(name)
 
 
 def build_planter(name='SM_Planter'):
+    """A tapered concrete planter with a real rim. Solid-block foliage, per the street-tree lesson."""
     b = B(seed=63)
     rng = random.Random(63)
     w, d, h = 1.20, 0.50, 0.62
-    b.box((-w / 2, -d / 2, 0), (w / 2, d / 2, h), 'MS_CityConcrete', 0.95, skip=('zhi',))
-    b.box((-w / 2 + 0.07, -d / 2 + 0.07, h - 0.1), (w / 2 - 0.07, d / 2 - 0.07, h - 0.04), 'MS_CityWood', 0.5)
-    for _ in range(11):                                     # a shrub, as crossed cards - MS_CityLeaf since Nov 13
-        px, py = rng.uniform(-w / 2 + 0.15, w / 2 - 0.15), rng.uniform(-d / 2 + 0.1, d / 2 - 0.1)
-        ph = rng.uniform(0.3, 0.62)
-        b.box((px - 0.15, py - 0.09, h - 0.06), (px + 0.15, py + 0.09, h - 0.06 + ph),
-              'MS_CityLeaf', rng.uniform(0.5, 0.85))
+    outer = b.chamfer_rect(-w / 2, -d / 2, w / 2, d / 2, 0.08)
+    base = b.chamfer_rect(-w / 2 + 0.07, -d / 2 + 0.055, w / 2 - 0.07, d / 2 - 0.055, 0.06)
+    b.prism(base, 0.0, h - 0.09, 'MS_CityConcrete', 0.95, prof1=outer, cap_lo=True, cap_hi=False)
+    b.prism(outer, h - 0.09, h, 'MS_CityConcrete', 1.0, cap_lo=False, cap_hi=False)     # the rim
+    inner = b.chamfer_rect(-w / 2 + 0.08, -d / 2 + 0.08, w / 2 - 0.08, d / 2 - 0.08, 0.05)
+    b.poly(outer, h, 'MS_CityConcrete', 1.0)
+    b.poly(inner, h - 0.05, 'MS_CityWood', 0.45)                                        # the soil
+    for _ in range(13):                                     # the shrub: solid blocks, never crossed cards
+        px, py = rng.uniform(-w / 2 + 0.16, w / 2 - 0.16), rng.uniform(-d / 2 + 0.12, d / 2 - 0.12)
+        ph = rng.uniform(0.26, 0.56)
+        s = rng.uniform(0.11, 0.17)
+        b.cbox((px - s, py - s * 0.62, h - 0.07), (px + s, py + s * 0.62, h - 0.07 + ph),
+               'MS_CityLeaf', rng.uniform(0.62, 0.92), ch=s * 0.3, top=s * 0.3)
     return b.finish(name)
 
 
@@ -1084,13 +1276,20 @@ def build_awning(name='SM_Awning'):
     b = B(seed=66)
     w, pr = 3.0, 1.1
     for sx in (-w / 2 + 0.08, w / 2 - 0.08):
-        b.box((sx - 0.035, 0, 2.42), (sx + 0.035, pr, 2.46), 'MS_CityTrim', 0.5)
-        b.box((sx - 0.035, pr - 0.07, 2.46), (sx + 0.035, pr, 2.95), 'MS_CityTrim', 0.5)
+        b.cbox((sx - 0.035, 0, 2.42), (sx + 0.035, pr, 2.46), 'MS_CityTrim', 0.5, ch=0.012)
+        b.cbox((sx - 0.035, pr - 0.07, 2.46), (sx + 0.035, pr, 2.95), 'MS_CityTrim', 0.5, ch=0.012)
+    for i in range(6):                                      # ribs under the canvas, so it is not one flat slab
+        rx = -w / 2 + 0.1 + i * (w - 0.2) / 5
+        b.box((rx - 0.02, 0.04, 2.93), (rx + 0.02, pr - 0.04, 2.47), 'MS_CityTrim', 0.35)
     b.quad([(-w / 2, 0, 2.95), (w / 2, 0, 2.95), (w / 2, pr, 2.46), (-w / 2, pr, 2.46)], 'MS_CityCloth', 0.9)
-    for i in range(8):
-        vx = -w / 2 + w * i / 8
-        b.quad([(vx, pr, 2.46), (vx + w / 8, pr, 2.46), (vx + w / 8, pr, 2.22), (vx, pr, 2.22)],
-               'MS_CityCloth', 0.72 if i % 2 else 0.9)
+    b.cbox((-w / 2 - 0.01, pr - 0.04, 2.44), (w / 2 + 0.01, pr + 0.02, 2.50), 'MS_CityTrim', 0.4, ch=0.015)
+    for i in range(10):                                     # scalloped valance, not a straight hem
+        vx = -w / 2 + w * i / 10
+        dip = 0.26 if i % 2 else 0.19
+        b.quad([(vx, pr, 2.44), (vx + w / 10, pr, 2.44), (vx + w / 10, pr, 2.44 - dip * 0.35),
+                (vx, pr, 2.44 - dip * 0.35)], 'MS_CityCloth', 0.72 if i % 2 else 0.9)
+        b.quad([(vx, pr, 2.44 - dip * 0.35), (vx + w / 10, pr, 2.44 - dip * 0.35),
+                (vx + w / 20, pr, 2.44 - dip)], 'MS_CityCloth', 0.72 if i % 2 else 0.9)
     return b.finish(name)
 
 
@@ -1119,15 +1318,21 @@ def build_manhole(name='SM_Manhole'):
 
 
 def build_bench(name='SM_Bench'):
+    """Cast ends and chamfered slats. The ends are the shape that says 'bench' from across the street."""
     b = B(seed=69)
     w = 1.8
     for sx in (-w / 2 + 0.16, w / 2 - 0.22):
-        b.box((sx, -0.24, 0), (sx + 0.06, 0.24, 0.42), 'MS_CityTrim', 0.5)
-        b.box((sx, 0.18, 0.42), (sx + 0.06, 0.24, 0.86), 'MS_CityTrim', 0.5)
-    for i in range(4):
-        b.box((-w / 2, -0.24 + i * 0.13, 0.42), (w / 2, -0.24 + i * 0.13 + 0.1, 0.47), 'MS_CityWood', 0.85)
-    for i in range(3):
-        b.box((-w / 2, 0.2, 0.56 + i * 0.11), (w / 2, 0.24, 0.56 + i * 0.11 + 0.08), 'MS_CityWood', 0.85)
+        b.cbox((sx, -0.24, 0), (sx + 0.065, -0.14, 0.40), 'MS_CityTrim', 0.45, ch=0.018)      # front foot
+        b.cbox((sx, 0.14, 0), (sx + 0.065, 0.24, 0.40), 'MS_CityTrim', 0.45, ch=0.018)        # back foot
+        b.cbox((sx, -0.25, 0.37), (sx + 0.065, 0.25, 0.45), 'MS_CityTrim', 0.5, ch=0.02)      # seat rail
+        b.cbox((sx, 0.175, 0.45), (sx + 0.065, 0.245, 0.88), 'MS_CityTrim', 0.5, ch=0.018, top=0.03)  # back post
+        b.cbox((sx, -0.20, 0.06), (sx + 0.065, 0.20, 0.13), 'MS_CityTrim', 0.4, ch=0.015)     # stretcher
+    for i in range(4):                                                                        # seat slats
+        sy = -0.235 + i * 0.128
+        b.cbox((-w / 2, sy, 0.43), (w / 2, sy + 0.098, 0.485), 'MS_CityWood', 0.85, ch=0.012, top=0.012)
+    for i in range(3):                                                                        # back slats
+        sz = 0.555 + i * 0.112
+        b.cbox((-w / 2, 0.195, sz), (w / 2, 0.238, sz + 0.082), 'MS_CityWood', 0.85, ch=0.012)
     return b.finish(name)
 
 
@@ -1951,6 +2156,256 @@ def build_roof_billboard(name='SM_RoofBillboard'):
     return b.finish(name)
 
 
+# =========================================================================== the alley and the parked street
+# Added Fri Nov 14 on the Team Owner's note that "a lot of things on that street look very blocky" and that
+# the scene has to make sense: two baristas, a car through the BACK wall into the ALLEY, then out into that
+# alley where the thugs are. Two things were missing and they are the same gap seen twice:
+#   * NOTHING IS PARKED ON THE ROAD. The lane is 10 m wide and the middle 5.2 m of it is empty grey for all
+#     60 m. Everything the kit owns stands against a wall, so the eye has nothing between the two facades
+#     and the street reads as a corridor with wallpaper.
+#   * THERE IS NO BACK OF HOUSE ANYWHERE. Every building in the kit is a shopfront. A service alley is the
+#     opposite: bins, ducts, meters, gas bottles, a fire stair, nothing for sale. Without those the "alley"
+#     the story needs is just more shopping street.
+
+def build_kei_van(name='SM_KeiVan'):
+    """A parked 3.3 m delivery van - a one-box kei shape, which is the vehicle this lane would actually hold.
+    Chamfered all round, body on MS_CityAccent so a material instance can recolour it per placement."""
+    b = B(seed=150)
+    L, W, H = 3.30, 1.45, 1.92
+    hw = W / 2
+    b.cbox((-L / 2 + 0.06, -hw, 0.33), (L / 2 - 0.06, hw, 0.80), 'MS_CityWall', 0.88, ch=0.07)     # lower body
+    b.cbox((-L / 2 + 0.06, -hw, 0.80), (L / 2 - 0.30, hw, 1.74), 'MS_CityWall', 0.98, ch=0.09)     # box body
+    b.cbox((L / 2 - 0.34, -hw + 0.03, 0.80), (L / 2 - 0.02, hw - 0.03, 1.56), 'MS_CityWall', 0.9,
+           ch=0.08, top=0.07)                                                                       # snub nose
+    b.cbox((-L / 2 + 0.10, -hw + 0.02, 1.74), (L / 2 - 0.34, hw - 0.02, 1.86), 'MS_CityWall', 0.82,
+           ch=0.09, top=0.05)                                                                       # roof cap
+    b.cbox((-L / 2 + 0.3, -hw + 0.05, 1.86), (-L / 2 + 1.0, hw - 0.05, 1.92), 'MS_CityMetal', 0.6, ch=0.05)
+    # glass: windscreen, a door window each side, and the two little rear panes
+    b.quad([(L / 2 - 0.14, -hw + 0.06, 1.00), (L / 2 - 0.05, -hw + 0.06, 1.54),
+            (L / 2 - 0.05, hw - 0.06, 1.54), (L / 2 - 0.14, hw - 0.06, 1.00)], 'MS_CityGlass', 0.7)
+    for sy in (-hw - 0.004, hw + 0.004):
+        b.quad([(L / 2 - 0.42, sy, 1.02), (L / 2 - 1.18, sy, 1.02),
+                (L / 2 - 1.18, sy, 1.58), (L / 2 - 0.42, sy, 1.58)], 'MS_CityGlass', 0.62)
+        b.cbox((-L / 2 + 0.14, sy - 0.02, 0.86), (L / 2 - 1.26, sy + 0.02, 1.66), 'MS_CityTrim', 0.3, ch=0.03)
+    b.cbox((-L / 2 + 0.02, -hw + 0.08, 0.86), (-L / 2 + 0.09, hw - 0.08, 1.66), 'MS_CityTrim', 0.35, ch=0.03)
+    for wx in (-L / 2 + 0.62, L / 2 - 0.60):                                            # wheels in arches
+        for sy in (-hw + 0.03, hw - 0.17):
+            b.tube((wx, sy, 0.33), 0.14, 0.33, 'MS_CityTrim', n=12, c=0.22, axis='y')
+            b.tube((wx, sy + 0.055, 0.33), 0.03, 0.15, 'MS_CityMetal', n=8, c=0.8, axis='y')
+        b.cbox((wx - 0.44, -hw - 0.02, 0.30), (wx + 0.44, hw + 0.02, 0.40), 'MS_CityTrim', 0.3, ch=0.06)
+    b.cbox((L / 2 - 0.10, -hw + 0.04, 0.46), (L / 2, hw - 0.04, 0.64), 'MS_CityTrim', 0.3, ch=0.03)  # bumper
+    for sy in (-hw + 0.12, hw - 0.28):                                                  # headlamps
+        b.cbox((L / 2 - 0.06, sy, 0.68), (L / 2 - 0.01, sy + 0.16, 0.82), 'MS_CitySignA', 1.0, ch=0.02)
+    b.cbox((-L / 2, -hw + 0.06, 0.46), (-L / 2 + 0.07, hw - 0.06, 0.62), 'MS_CityTrim', 0.3, ch=0.03)
+    for sy in (-hw + 0.1, hw - 0.26):                                                   # tail lamps
+        b.cbox((-L / 2 + 0.02, sy, 0.86), (-L / 2 + 0.07, sy + 0.16, 1.06), 'MS_CityAccent', 0.55, ch=0.02)
+    b.cbox((-L / 2 + 0.3, -hw - 0.02, 1.02), (L / 2 - 1.3, -hw + 0.01, 1.46), 'MS_CityAccent', 0.85, ch=0.03)
+    b.cbox((-L / 2 + 0.3, hw - 0.01, 1.02), (L / 2 - 1.3, hw + 0.02, 1.46), 'MS_CityAccent', 0.85, ch=0.03)
+    return b.finish(name)
+
+
+def build_dumpster(name='SM_Dumpster'):
+    """A 1.8 m wheeled bin, lid half up. The single most back-of-house object there is."""
+    b = B(seed=151)
+    L, W, H = 1.80, 0.95, 1.10
+    bot = b.chamfer_rect(-L / 2 + 0.16, -W / 2 + 0.10, L / 2 - 0.16, W / 2 - 0.10, 0.07)
+    top = b.chamfer_rect(-L / 2, -W / 2, L / 2, W / 2, 0.09)
+    b.prism(bot, 0.22, H, 'MS_CityMetal', 0.72, prof1=top, cap_lo=True, cap_hi=False)   # the flared body
+    b.prism(top, H, H + 0.055, 'MS_CityMetal', 0.62, cap_lo=False, cap_hi=False)        # the top rail
+    b.poly(b.chamfer_rect(-L / 2 + 0.07, -W / 2 + 0.07, L / 2 - 0.07, W / 2 - 0.07, 0.06), H - 0.02,
+           'MS_CityTrim', 0.18)                                                         # the dark inside
+    for i in range(5):                                                                  # body ribs
+        rx = -L / 2 + 0.22 + i * (L - 0.44) / 4
+        b.cbox((rx - 0.025, -W / 2 - 0.012, 0.30), (rx + 0.025, W / 2 + 0.012, H - 0.04),
+               'MS_CityMetal', 0.62, ch=0.008)
+    # the lid, hinged at the back and standing half open: the shape that reads as 'bin' in silhouette
+    for i in range(4):
+        t0, t1 = i / 4.0, (i + 1) / 4.0
+        b.cbox((-L / 2 + 0.02, W / 2 - 0.06 - 0.86 * t1 * 0.82, H + 0.05 + 0.62 * t0),
+               (L / 2 - 0.02, W / 2 - 0.06 - 0.86 * t0 * 0.82, H + 0.09 + 0.62 * t1),
+               'MS_CityTrim', 0.4, ch=0.02)
+    for sx in (-L / 2 + 0.22, L / 2 - 0.30):                                            # castors
+        for sy in (-W / 2 + 0.12, W / 2 - 0.22):
+            b.tube((sx, sy, 0.056), 0.22, 0.055, 'MS_CityTrim', n=8, c=0.25, axis='y')
+    b.cbox((-L / 2 + 0.3, -W / 2 - 0.02, 0.52), (L / 2 - 0.3, -W / 2 + 0.01, 0.78), 'MS_CitySignB', 0.8, ch=0.02)
+    return b.finish(name)
+
+
+def build_duct_run(name='SM_DuctRun'):
+    """A 4 m bundle of extract duct, conduit and a lagged pipe, to run up a back wall. Geometry starts at
+    mounting height like the other wall pieces, so it is placed at the FOOT of the wall."""
+    b = B(seed=152)
+    H0, H1 = 0.6, 4.6
+    b.cbox((-0.21, 0.0, H0), (0.21, 0.30, H1), 'MS_CityMetal', 0.8, ch=0.05)            # the big rectangular duct
+    for i in range(7):                                                                  # its flanged joints
+        z = H0 + 0.25 + i * (H1 - H0 - 0.4) / 6
+        b.cbox((-0.245, -0.025, z), (0.245, 0.33, z + 0.055), 'MS_CityMetal', 0.66, ch=0.03)
+    b.tube((0.34, 0.14, H0 - 0.6), H1 - H0 + 0.6, 0.075, 'MS_CityMetal', n=8, c=0.7)    # lagged pipe
+    for i in range(5):
+        b.tube((0.34, 0.14, H0 - 0.4 + i * 0.86), 0.05, 0.088, 'MS_CityTrim', n=8, c=0.35)
+    for sx in (-0.34, -0.44):                                                           # conduit pair
+        b.tube((sx, 0.06, H0 - 0.6), H1 - H0 + 0.5, 0.032, 'MS_CityTrim', n=6, c=0.3)
+    for z in (1.1, 2.4, 3.7):                                                           # wall straps
+        b.cbox((-0.50, 0.0, z), (0.42, 0.055, z + 0.05), 'MS_CityTrim', 0.3, ch=0.015)
+    b.cbox((-0.30, 0.0, H1), (0.30, 0.40, H1 + 0.26), 'MS_CityMetal', 0.72, ch=0.06, top=0.05)  # the cowl
+    return b.finish(name)
+
+
+def build_meter_box(name='SM_MeterBox'):
+    """Three service cabinets and a gas meter on a back wall, 1.5 m wide. Placed at the foot of the wall."""
+    b = B(seed=153)
+    for i, (x0, w, z0, h) in enumerate([(-0.75, 0.52, 0.62, 0.68), (-0.16, 0.44, 0.74, 0.52),
+                                        (0.34, 0.40, 0.58, 0.80)]):
+        b.cbox((x0, 0.0, z0), (x0 + w, 0.19, z0 + h), 'MS_CityMetal', 0.74 + 0.06 * i, ch=0.028, top=0.022)
+        b.cbox((x0 + 0.04, 0.19, z0 + 0.05), (x0 + w - 0.04, 0.205, z0 + h - 0.05), 'MS_CityTrim', 0.35, ch=0.02)
+        b.cbox((x0 + w - 0.09, 0.205, z0 + h * 0.46), (x0 + w - 0.03, 0.225, z0 + h * 0.54),
+               'MS_CityTrim', 0.25, ch=0.01)                                            # the latch
+    b.tube((0.54, 0.09, 0.0), 0.58, 0.045, 'MS_CityMetal', n=6, c=0.6)                  # the riser
+    b.tube((0.54, 0.09, 1.38), 0.5, 0.045, 'MS_CityMetal', n=6, c=0.6)
+    b.cbox((-0.84, 0.0, 1.44), (-0.44, 0.13, 1.60), 'MS_CityTrim', 0.3, ch=0.02)        # a junction box
+    return b.finish(name)
+
+
+def build_gas_bottles(name='SM_GasBottles'):
+    """Four propane cylinders in a cage - what is actually behind a cafe, and nothing like a shopfront."""
+    b = B(seed=154)
+    for i, (x, y) in enumerate([(-0.20, -0.14), (0.20, -0.14), (-0.20, 0.18), (0.20, 0.18)]):
+        n = 10
+        prof = [(x + 0.155 * math.cos(2 * math.pi * k / n), y + 0.155 * math.sin(2 * math.pi * k / n))
+                for k in range(n)]
+        small = [(x + 0.085 * math.cos(2 * math.pi * k / n), y + 0.085 * math.sin(2 * math.pi * k / n))
+                 for k in range(n)]
+        b.prism(prof, 0.02, 0.80, 'MS_CityAccent', 0.55 + 0.08 * i, cap_lo=True, cap_hi=False)
+        b.loft(prof, 0.80, small, 0.92, 'MS_CityAccent', 0.5 + 0.08 * i)                # the shoulder
+        b.poly(small, 0.92, 'MS_CityAccent', 0.5)
+        b.tube((x, y, 0.92), 0.10, 0.052, 'MS_CityMetal', n=8, c=0.7)                   # the collar
+    for sx in (-0.44, 0.44):                                                            # the cage
+        b.cbox((sx - 0.03, -0.38, 0.0), (sx + 0.03, -0.32, 1.14), 'MS_CityTrim', 0.4, ch=0.012)
+        b.cbox((sx - 0.03, 0.36, 0.0), (sx + 0.03, 0.42, 1.14), 'MS_CityTrim', 0.4, ch=0.012)
+    for z in (0.26, 0.70, 1.10):
+        b.cbox((-0.47, -0.38, z), (0.47, -0.32, z + 0.04), 'MS_CityTrim', 0.4, ch=0.012)
+        b.cbox((-0.47, 0.36, z), (0.47, 0.42, z + 0.04), 'MS_CityTrim', 0.4, ch=0.012)
+    return b.finish(name)
+
+
+def build_pot_row(name='SM_PotRow'):
+    """Five mismatched pots in a row outside a shop door. The cheapest green there is, at ground level where
+    the player actually looks - the kit's only other foliage is a 3.4 m canopy over their head."""
+    b = B(seed=155)
+    rng = random.Random(155)
+    x = -1.05
+    for i in range(5):
+        r = rng.uniform(0.14, 0.22)
+        hh = rng.uniform(0.22, 0.38)
+        y = rng.uniform(-0.06, 0.06)
+        n = 8
+        base = [(x + r * 0.72 * math.cos(2 * math.pi * k / n), y + r * 0.72 * math.sin(2 * math.pi * k / n))
+                for k in range(n)]
+        rim = [(x + r * math.cos(2 * math.pi * k / n), y + r * math.sin(2 * math.pi * k / n)) for k in range(n)]
+        b.prism(base, 0.0, hh, 'MS_CityWood' if i % 2 else 'MS_CityConcrete',
+                rng.uniform(0.6, 0.95), prof1=rim, cap_lo=True, cap_hi=False)
+        b.prism(rim, hh, hh + 0.045, 'MS_CityWood' if i % 2 else 'MS_CityConcrete', 0.8,
+                cap_lo=False, cap_hi=False)
+        b.poly(rim, hh + 0.045, 'MS_CityWood' if i % 2 else 'MS_CityConcrete', 0.85)
+        for _ in range(rng.randint(3, 5)):                  # solid-block foliage, per the street-tree lesson
+            px, py = x + rng.uniform(-r * 0.5, r * 0.5), y + rng.uniform(-r * 0.5, r * 0.5)
+            s = rng.uniform(0.07, 0.13)
+            ph = rng.uniform(0.16, 0.46)
+            b.cbox((px - s, py - s * 0.7, hh), (px + s, py + s * 0.7, hh + ph),
+                   'MS_CityLeaf', rng.uniform(0.6, 0.95), ch=s * 0.3, top=s * 0.3)
+        x += r + rng.uniform(0.16, 0.28)
+    return b.finish(name)
+
+
+def build_aframe_sign(name='SM_AFrameSign'):
+    """A pavement A-board. Blank panels, section 15d."""
+    b = B(seed=156)
+    for sy, lean in ((-0.22, -0.055), (0.22, 0.055)):
+        b.prism([(-0.33, sy - 0.03), (0.33, sy - 0.03), (0.33, sy + 0.03), (-0.33, sy + 0.03)], 0.0, 0.96,
+                'MS_CityWood', 0.8,
+                prof1=[(-0.27, sy - 0.03 - lean), (0.27, sy - 0.03 - lean),
+                       (0.27, sy + 0.03 - lean), (-0.27, sy + 0.03 - lean)])
+        b.quad([(-0.30, sy + (0.045 if sy < 0 else -0.045), 0.10),
+                (0.30, sy + (0.045 if sy < 0 else -0.045), 0.10),
+                (0.25, sy + (0.045 if sy < 0 else -0.045) - lean * 0.85, 0.88),
+                (-0.25, sy + (0.045 if sy < 0 else -0.045) - lean * 0.85, 0.88)], 'MS_CityTrim', 0.22)
+    b.cbox((-0.33, -0.26, 0.90), (0.33, 0.26, 0.98), 'MS_CityWood', 0.7, ch=0.025, top=0.02)   # the hinge cap
+    b.cbox((-0.30, -0.05, 0.22), (0.30, 0.05, 0.28), 'MS_CityTrim', 0.3, ch=0.015)             # the stay
+    return b.finish(name)
+
+
+def build_shop_display(name='SM_ShopDisplay'):
+    """A sloped produce display on trestles - the thing a Tokyo shopfront actually puts on the pavement."""
+    b = B(seed=157)
+    W, D = 1.60, 0.70
+    for sx in (-W / 2 + 0.10, W / 2 - 0.18):                                            # trestles
+        for sy in (-D / 2 + 0.06, D / 2 - 0.14):
+            b.cbox((sx, sy, 0), (sx + 0.08, sy + 0.08, 0.62), 'MS_CityWood', 0.7, ch=0.018)
+        b.cbox((sx, -D / 2 + 0.04, 0.20), (sx + 0.08, D / 2 - 0.04, 0.27), 'MS_CityWood', 0.65, ch=0.015)
+    b.prism([(-W / 2, -D / 2), (W / 2, -D / 2), (W / 2, D / 2), (-W / 2, D / 2)], 0.62, 0.68,
+            'MS_CityWood', 0.85)                                                        # the bench top
+    rng = random.Random(157)
+    for i in range(4):                                                                  # open crates on it
+        cx = -W / 2 + 0.08 + i * (W - 0.16) / 4
+        cw = (W - 0.16) / 4 - 0.05
+        b.cbox((cx, -D / 2 + 0.06, 0.68), (cx + cw, D / 2 - 0.06, 0.76), 'MS_CityWood', 0.78, ch=0.012)
+        for sy in (-D / 2 + 0.06, D / 2 - 0.11):                                        # crate walls, leaning back
+            b.prism([(cx, sy), (cx + cw, sy), (cx + cw, sy + 0.05), (cx, sy + 0.05)], 0.76, 0.92,
+                    'MS_CityWood', 0.72, prof1=[(cx, sy - 0.05), (cx + cw, sy - 0.05),
+                                                (cx + cw, sy), (cx, sy)])
+        for k in range(5):                                                              # the goods
+            px = cx + 0.04 + k * (cw - 0.08) / 5
+            s = rng.uniform(0.035, 0.055)
+            b.cbox((px, rng.uniform(-0.12, 0.08), 0.76), (px + s * 2, rng.uniform(0.10, 0.2), 0.76 + s * 2),
+                   'MS_CitySignA' if k % 2 else 'MS_CityLeaf', rng.uniform(0.7, 1.0), ch=s * 0.45, top=s * 0.45)
+    b.cbox((-W / 2 - 0.02, D / 2 - 0.04, 0.92), (W / 2 + 0.02, D / 2 + 0.02, 1.26), 'MS_CitySignB', 0.9,
+           ch=0.03)                                                                     # a price board, blank
+    return b.finish(name)
+
+
+def build_drain_grate(name='SM_DrainGrate'):
+    """A road gully at the kerb line. Flat, 2 cm proud, no collision needed - but it is one more edge for
+    the outline pass to find in 5 m of empty grey road."""
+    b = B(seed=158)
+    b.cbox((-0.33, -0.21, 0.0), (0.33, 0.21, 0.025), 'MS_CityConcrete', 0.85, ch=0.035)
+    b.cbox((-0.27, -0.16, 0.025), (0.27, 0.16, 0.04), 'MS_CityTrim', 0.32, ch=0.02)
+    for i in range(7):
+        bx = -0.24 + i * 0.07
+        b.cbox((bx, -0.13, 0.04), (bx + 0.042, 0.13, 0.052), 'MS_CityMetal', 0.55, ch=0.006)
+    return b.finish(name)
+
+
+def build_fire_stair(name='SM_FireStair'):
+    """A straight external steel stair with a half landing, 3.4 m rise - the way out of the back of a
+    building, and the piece that tells the player the alley is somewhere people work rather than shop."""
+    b = B(seed=159)
+    rise, run = 3.40, 2.80
+    for sy in (-0.56, 0.50):                                                            # the two raking stringers
+        for i in range(10):
+            t0, t1 = i / 10.0, (i + 1) / 10.0
+            b.cbox((-run / 2 + run * t0, sy, max(0.0, rise * t0 - 0.24)), (-run / 2 + run * t1 + 0.03,
+                   sy + 0.06, rise * t1 + 0.02), 'MS_CityTrim', 0.42, ch=0.012)
+    for i in range(11):                                                                 # treads
+        t = i / 10.0
+        b.cbox((-run / 2 + run * t - 0.13, -0.52, rise * t), (-run / 2 + run * t + 0.13, 0.52, rise * t + 0.045),
+               'MS_CityMetal', 0.6, ch=0.018)
+        b.cbox((-run / 2 + run * t - 0.02, -0.56, rise * t + 0.04), (-run / 2 + run * t + 0.02, -0.50, rise * t + 1.00),
+               'MS_CityTrim', 0.35, ch=0.008) if i % 2 == 0 else None                   # balusters
+        b.cbox((-run / 2 + run * t - 0.02, 0.50, rise * t + 0.04), (-run / 2 + run * t + 0.02, 0.56, rise * t + 1.00),
+               'MS_CityTrim', 0.35, ch=0.008) if i % 2 == 0 else None
+    for sy in (-0.58, 0.52):                                                            # the handrails
+        for i in range(10):
+            t0, t1 = i / 10.0, (i + 1) / 10.0
+            b.cbox((-run / 2 + run * t0, sy, rise * t0 + 0.98), (-run / 2 + run * t1 + 0.04, sy + 0.06,
+                   rise * t1 + 1.02), 'MS_CityTrim', 0.4, ch=0.012)
+    b.cbox((run / 2 - 0.1, -0.56, rise), (run / 2 + 1.0, 0.56, rise + 0.06), 'MS_CityMetal', 0.6, ch=0.03)
+    for sy in (-0.56, 0.50):                                                            # the landing rail
+        b.cbox((run / 2 - 0.1, sy, rise + 0.06), (run / 2 + 1.0, sy + 0.06, rise + 1.02), 'MS_CityTrim', 0.4,
+               ch=0.015)
+    b.cbox((run / 2 + 0.84, -0.5, 0.0), (run / 2 + 0.98, 0.5, rise), 'MS_CityTrim', 0.4, ch=0.03)  # the leg
+    return b.finish(name)
+
+
 GROUPS = {
     'cafe': [
         ('SM_CafeShell', build_cafe_shell), ('SM_CafeCounter', build_cafe_counter),
@@ -1996,6 +2451,12 @@ GROUPS = {
         ('SM_LaundryRack', build_laundry_rack), ('SM_Scooter', build_scooter),
         ('SM_RoofBillboard', build_roof_billboard),
     ],
+    'alley': [
+        ('SM_KeiVan', build_kei_van), ('SM_Dumpster', build_dumpster), ('SM_DuctRun', build_duct_run),
+        ('SM_MeterBox', build_meter_box), ('SM_GasBottles', build_gas_bottles), ('SM_PotRow', build_pot_row),
+        ('SM_AFrameSign', build_aframe_sign), ('SM_ShopDisplay', build_shop_display),
+        ('SM_DrainGrate', build_drain_grate), ('SM_FireStair', build_fire_stair),
+    ],
     'set': [
         ('SM_CrashCar', build_crash_car), ('SM_Shrapnel', build_shrapnel),
         ('SM_YardWall_1250', build_yard_wall_1250), ('SM_YardWall_3040', build_yard_wall_3040),
@@ -2005,7 +2466,7 @@ GROUPS = {
         ('SM_RoadLines', build_road_lines),
     ],
 }
-MODELS = [p for g in ('cafe', 'cafedeco', 'city', 'ruins', 'props', 'life', 'set')
+MODELS = [p for g in ('cafe', 'cafedeco', 'city', 'ruins', 'props', 'life', 'alley', 'set')
           for p in GROUPS[g]]
 
 # How the cafe is dressed, in metres relative to the cafe centre (which is the level origin: the cafe is built
@@ -2323,6 +2784,10 @@ def render_layout(px=1700):
         ('plaza_in',  (67.2, 4.0, 1.70),    (84.0, -4.0, 2.0),   26, 0.56),
         ('exit_run',  (96.6, 0.0, 1.70),    (106.0, 0.0, 2.0),   26, 0.56),
         ('overview',  (36.0, -205.0, 150.0), (52.0, 4.0, 6.0),  48, 0.42),
+        # The alley, added Sat Nov 14: what the player looks at through the hole for the whole of beat 1,
+        # and what they are standing in when they turn round in it. Blender = (ux/100, -uy/100, uz/100).
+        ('alley',     (-1.0, 0.0, 1.60),    (-26.0, 0.6, 2.4),   30, 0.56),
+        ('alley_in',  (-24.0, -1.0, 1.62),  (-6.4, 0.1, 2.2),    28, 0.56),
     ]
     for nm, pos, look, lens, asp in shots:
         cam_data.lens = lens

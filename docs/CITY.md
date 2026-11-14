@@ -280,6 +280,76 @@ renumbered actor on top of the first. That happened on this pass: seven duplicat
 viewport, two coincident surfaces each. Run **`tools/jumpcut_city_dedupe.py`** (report) after any `add`,
 and `... dedupe.py fix` if it finds any. It matches on mesh and position, not on names.
 
+## The back alley, and the pass that stopped the props being boxes (Sat Nov 14)
+
+Two notes from the Team Owner, which turned out to be one gap seen twice: *"a lot of things on that street
+look very blocky"*, and *"make sure the scene makes sense — a car comes bursting through the back wall of
+the store leading to the alley… the player then goes out to the alley and the thugs get in the way."*
+
+### Chamfers, not triangles
+
+Under `MI_AnimeLook` an axis-aligned cuboid renders as **three flat fields of colour meeting at three black
+lines**, because the outline pass draws every normal break. That is a picture of a box however it is
+painted, and gluing more small boxes to the front of it does not help — detail only counts where the
+outline pass looks, which is **the silhouette and the corners**.
+
+The builder gained `B.poly`, `B.loft`, `B.prism` and `B.cbox`. **`cbox` cuts INWARD**, which is the whole
+reason this could be a sweep over finished models: a chamfered prop keeps the exact footprint the layout
+checker measured, so ten props were rebuilt without moving any of the 316 things already in the level.
+
+| Prop | tris | What it gained |
+|---|---|---|
+| `SM_ACUnit` | 48 → 398 | a **round** fan guard and louvres. There are more of these on the lane than anything else |
+| `SM_VendingMachine` | 216 → 962 | chamfered body, bevelled top, recessed kick, and a display that is a real recess with a reveal |
+| `SM_StreetLamp` | 130 → 426 | a tapered column and a tapered lantern head with a lit underside, instead of a stick with a plate on it |
+| `SM_CrateStack` | 96 → 1,152 | slats **with gaps**, which is what tells a crate from a wooden cube |
+| `SM_TrashBags` | 320 → 628 | lobed sacks that bulge low and gather at a knotted neck, not cylinders |
+| `SM_Bench` | 132 → 572 | cast ends, which is the shape that says "bench" from across the street |
+| `SM_Barrier`, `SM_Bollard`, `SM_Planter`, `SM_Awning` | — | chamfers, a taper, a lamp, a scalloped valance |
+
+Whole city: **29,683 → 41,299 triangles**. One street goon is 18,000.
+
+### The alley, and the geography call behind it
+
+The crash is on the cafe's **west** wall and what was on the other side of it was a wide avenue with a zebra
+crossing. A car coming off a main road through the back of a shop is a different accident from a car coming
+down the alley the shop puts its bins in.
+
+**The decision, because it is a judgement call and may be reversed:** the expensive reading is that the
+player should leave through the hole, which relocates 60 m of lane, the plaza, both gates and the boss. The
+reading taken is that **the cafe is a corner unit on an L-shaped back lane** — the alley runs down its west
+(back) side and turns the corner along its east front. The car came off the avenue, down the alley, through
+the back wall; the player leaves by the front door into the **same lane**, one corner along. Nothing moves.
+
+Ten models, because every building in this kit is a shopfront and a service alley is defined by what is
+**not for sale** in it: `SM_KeiVan`, `SM_Dumpster`, `SM_DuctRun`, `SM_MeterBox`, `SM_GasBottles`,
+`SM_PotRow`, `SM_AFrameSign`, `SM_ShopDisplay`, `SM_DrainGrate`, `SM_FireStair`. Same rules as the rest of
+the kit — procedural, **0 credits, nothing uploaded**.
+
+### Three things measured here that are worth not re-deriving
+
+- **The alley had only one wall.** `City_CornerSW`'s origin is at its own corner, so at yaw 90 it occupies
+  x −2632…−1000, **y −1500…−100** — the south side is solid building for the alley's whole length, and the
+  north side had nothing at all past x = −607. Two building backs (`City_AlleyBackN0/N1`) close it and set
+  the corridor at y −100…560, i.e. **6.6 m**. Anything standing against the south wall must therefore sit
+  at y > −100, not at y ≈ −470 where an 11 m alley would have put it.
+- **The south wall is a flank, so it is blank.** This kit puts a building's detail on its facade only, so
+  the alley's south side was 16 m of featureless 22 m slab. Two `SM_Hoarding_990` cover it at eye height.
+- **Vans park at y = ±345.** The road keep-clear ends at 260 and a van is 150 wide, so that spans 270…420:
+  wholly on the pavement side, fight lane untouched, and none within 9 m of the goon spawner at x = 4600.
+
+### Traps this pass added to the list
+
+- **Rewriting a prop's RNG loop moves the prop.** Changing how many times `rng` is called per bin bag
+  reshuffled every bag and grew the pile's footprint from 1.20 × 1.00 m to 1.57 × 1.31 — a real collision on
+  a 2.6 m pavement, invisible in a render, caught only by diffing `city_models.json`.
+- **Never chamfer a 2.4 cm board.** Chamfering the crate slats cost 1,400 triangles on a prop placed twelve
+  times, for a bevel nobody can see. `cbox` for the posts, plain `box` for the slats.
+- **`put_clear` outcomes depend on footprints.** Shrinking `SM_TrashBags` moved `City_Hedge_S5` by 30 cm,
+  40 m away, because the nudge search runs against whatever is already placed. **Diff the layout
+  actor-by-actor against the committed one before running `add`** — that diff (0 removed, 71 added, 1 moved)
+  is what proved `add` was safe here.
+
 ## Known gaps
 
 - **No people.** The city has no pedestrians. See `docs/CHARACTERS.md` → *Crowds* for the cheap route

@@ -969,6 +969,27 @@ _(nothing yet)_
 
 ## Decisions
 
+- **2026-11-14 (3:30 AM Pacific): the cafe is a CORNER UNIT on an L-shaped back lane** (M Station, acting
+  on the Team Owner's account of beat 1 — *"a car comes bursting through the back wall of the store leading
+  to the alley… the player then goes out to the alley and the thugs get in the way"*).
+  **This is a judgement call between two readings and it can be reversed, so it is written down rather than
+  left in the geometry.** The crash is on the cafe's west wall and what was behind that wall was a wide New
+  York avenue with a zebra crossing across it — a main road. A car coming off a main road through the back
+  of a shop is a different accident from a car coming down the alley the shop puts its bins in.
+  - **The reading NOT taken** is that the player should leave through the hole, so the fight belongs west.
+    That relocates 60 m of lane, the plaza, both gates, the goon spawner and the boss. It is not a Saturday's
+    work with ~38 hours left.
+  - **The reading taken:** the alley runs down the cafe's west (back) side and **turns the corner** along its
+    east front. The car came off the avenue, down the alley, through the back wall; the player leaves by the
+    front door into the **same lane**, one corner along, and the thugs are down it. Nothing in the level
+    moves — the west side stops being a main road and starts being a back lane, and the first 15 m of the
+    east lane keeps that character before the shops start.
+  - Ten new models were needed because **every building in the city kit is a shopfront** and a service alley
+    is defined by what is *not for sale* in it. Detail in `docs/CITY.md` → *The back alley*.
+  - Two pieces of the Team Owner's account still do not exist and were filed rather than faked: there is **no
+    customer** in the cafe and **the ceiling does not collapse** (#77). Whether the alley is somewhere the
+    player can actually stand is unchecked (#78).
+
 - **2026-11-13 (10:30 PM Pacific): the director's power rings are FOUR, not three** (Team Owner).
   *"take 1 is fine but we should have 4 rings since it takes all 4 powers to unlock the director look."* The
   director of reality is what collecting Freeze Frame, Rewind, Splice and Director's Cut buys, and the rings are

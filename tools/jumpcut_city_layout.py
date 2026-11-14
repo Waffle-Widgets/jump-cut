@@ -345,8 +345,135 @@ def street_life():
     put_clear('City_AvenueScooter', 'SM_Scooter', -1550.0, 430.0, 0, 200)
 
 
+def back_alley():
+    """The SERVICE ALLEY behind the cafe - the thing beat 1 has always described and the level has never had.
+
+    The Team Owner's account of the scene is: two baristas, a customer, latte art, and then a car comes
+    through THE BACK WALL OF THE STORE, which leads to AN ALLEY. The player goes out into that alley and the
+    thugs are in the way. The level we have does put the crash on the cafe's west wall, but what is on the
+    other side of that wall is a wide New York avenue with a zebra crossing on it - a main road. A car coming
+    off a main road through the back of a shop is a different accident from a car coming down the alley the
+    shop puts its bins in, and only the second one is the scene as described.
+
+    THE GEOGRAPHY THIS SETTLES, because two readings were possible and they cost very different amounts.
+    The expensive one is to move the fight west so the player leaves through the hole; that relocates 60 m
+    of lane, the plaza, both gates and the boss, and it is not a Saturday's work. The cheap one, and the
+    one that is actually truer to a Tokyo corner, is that THE CAFE IS A CORNER UNIT ON AN L-SHAPED BACK
+    LANE: the alley runs down its west (back) side and turns the corner along its east front. The car came
+    off the avenue, down the alley beside the cafe, and through the back wall. The player goes out of the
+    front door into the SAME lane, one corner along, and the thugs are down it. Nothing moves; the west side
+    stops being a main road and starts being a back lane, and the first 15 m of the east lane keeps that
+    character before the shops start.
+
+    WHAT KEEPS THE SCENE PLAYABLE. Three things in here are measured, not placed by eye:
+      * the driver's body is at (-380, 220) and the player has to walk to it and touch it, so nothing goes
+        into x -760..-300, y -260..420 at all
+      * the player looks WEST THROUGH THE HOLE for the whole of beat 1 - the hole is 3 m wide at x = -615,
+        so the cone it admits is roughly y +/- 0.26 per metre. Everything here is pushed out to the side
+        walls (|y| > 430) so the view down the avenue stays open
+      * the alley's two side walls are the backs of City_CafeNeighbourN (a ShopHouse_C at y 560..1409) and
+        City_CafeNeighbourS (a ShopHouse_A at y -560..-1442), so the alley is the 11 m between them
+    """
+    # --- THE ALLEY HAD ONLY ONE WALL, and nothing said so until something was placed against both of them.
+    #     South of the cafe the lane is closed for its whole length: City_CafeNeighbourS backs onto
+    #     x -557..57 and City_CornerSW - a corner block whose origin is at its own corner - occupies
+    #     x -2632..-1000, y -1500..-100, so from x = -1000 westward the south side is solid building at
+    #     y = -100. NORTH of the cafe there is one ShopHouse_C (x -607..207) and then NOTHING at all until
+    #     the avenue's corner block 26 m away. An alley with one wall is a yard. These two close it, and
+    #     they set the corridor at y -100..560 - 6.6 m, which is an alley rather than the 11 m I assumed.
+    put('City_AlleyBackN0', 'SM_ShopHouse_C', -1060.0, 560.0, 0, 180)
+    put('City_AlleyBackN1', 'SM_BlockFiller', -2120.0, 560.0, 0, 180)
+    # --- the cafe's own back of house, on the wall the car came through, kept off the driver's side.
+    #     Nothing goes into x -760..-300, y -260..420: that is the walk to the body and the body itself.
+    put('City_Alley_Duct', 'SM_DuctRun', -690.0, -430.0, 0, 90)
+    put('City_Alley_Meter', 'SM_MeterBox', -680.0, 480.0, 0, 90)
+    put_clear('City_Alley_Gas', 'SM_GasBottles', -900.0, -430.0, 0, 90, slide=260.0)
+    put_clear('City_Alley_Bin0', 'SM_Dumpster', -1180.0, -46.0, 0, 6, slide=200.0)
+    put_clear('City_Alley_Bin1', 'SM_Dumpster', -1560.0, 460.0, 0, 180)
+    put_clear('City_Alley_Trash0', 'SM_TrashBags', -1480.0, -48.0, 0, 0, slide=200.0)
+    put_clear('City_Alley_Trash1', 'SM_TrashBags', -960.0, 470.0, 0, 0)
+    put_clear('City_Alley_Crates', 'SM_CrateStack', -1820.0, -54.0, 0, 20, slide=200.0)
+    # --- the backs of the neighbours: ducts, meters and a fire stair. No shopfronts anywhere in here;
+    #     that absence is the whole point, because a back lane is defined by what is NOT for sale in it.
+    put('City_Alley_DuctN', 'SM_DuctRun', -1320.0, 545.0, 0, 180)
+    put('City_Alley_DuctS', 'SM_DuctRun', -1100.0, -96.0, 0, 0)
+    put('City_Alley_MeterN', 'SM_MeterBox', -1680.0, 545.0, 0, 180)
+    put('City_Alley_MeterS', 'SM_MeterBox', -1480.0, -96.0, 0, 0)
+    put('City_Alley_Stair', 'SM_FireStair', -2050.0, 470.0, 0, 180)
+    put('City_Alley_Pot', 'SM_PotRow', -760.0, 470.0, 0, 90)
+    # The corridor between the wreck and the avenue was 13 m of empty asphalt in the mock-up. These fill it
+    # without entering the view cone's centre band, which has to stay open so the avenue reads through
+    # the hole: at x = -2000 the cone from the player's eye is about y +/- 490, so everything here is
+    # either outside it or deliberately tall enough to be seen OVER the wreck (the car is 1.43 m and the
+    # hole is 3 m wide, so it masks the bottom half of the view and nothing below it is ever seen).
+    put('City_Alley_DuctN2', 'SM_DuctRun', -2430.0, 545.0, 0, 180)
+    put('City_Alley_MeterS2', 'SM_MeterBox', -2240.0, -96.0, 0, 0)
+    put_clear('City_Alley_Bin2', 'SM_Dumpster', -2480.0, 470.0, 0, 176, slide=200.0)
+    put_clear('City_Alley_Gas2', 'SM_GasBottles', -2150.0, 500.0, 0, 180, slide=200.0)
+    put_clear('City_Alley_Trash2', 'SM_TrashBags', -2720.0, -50.0, 0, 0, slide=200.0)
+    put_clear('City_Alley_Crates2', 'SM_CrateStack', -1340.0, 440.0, 0, 190, slide=200.0)
+    # The alley's south wall is City_CornerSW's FLANK, and this kit puts a building's detail on its facade
+    # only - so it is 16 m of blank 22 m slab, which is the one thing that stops the alley reading as a
+    # place. Two demolition hoardings cover it at eye height, which also says why a back lane next to a
+    # main road is derelict enough for a car to come down it at speed.
+    put('City_Alley_Hoard0', 'SM_Hoarding_990', -1560.0, -96.0, 0, 0)
+    put('City_Alley_Hoard1', 'SM_Hoarding_990', -2560.0, -96.0, 0, 0)
+    put('City_Alley_Lamp', 'SM_StreetLamp', -1900.0, 530.0, 0, 180)
+    put('City_Alley_Grate0', 'SM_DrainGrate', -1150.0, 120.0, 0, 0)
+    put('City_Alley_Grate1', 'SM_DrainGrate', -2600.0, -60.0, 0, 0)
+    # --- the car's own path down the alley, which should be readable without a line of dialogue.
+    #     The wreck is at x -720..-320; these sit behind it, on the line it came in on, shoved aside.
+    put('City_Alley_HitBin', 'SM_Dumpster', -2320.0, -210.0, 0, 28)
+    put('City_Alley_HitCone0', 'SM_TrafficCone', -1950.0, -150.0, 0, 0)
+    put('City_Alley_HitCone1', 'SM_TrafficCone', -2650.0, 190.0, 0, 0)
+    put('City_Alley_HitGrate', 'SM_DrainGrate', -1700.0, -250.0, 0, 0)
+    # --- the avenue it came off. Two vehicles parked on it, which is what the player stares at through the
+    #     hole for the whole of beat 1 and what tells them the alley leads to a real road.
+    put_clear('City_AvenueVan0', 'SM_KeiVan', -2850.0, 620.0, 0, 90)
+    put_clear('City_AvenueVan1', 'SM_KeiVan', -3000.0, -660.0, 0, 270)
+
+
+def kerb_life():
+    """Something PARKED, something GROWING at eye level, and something FOR SALE on the pavement.
+
+    The lane's clutter all stands hard against a shopfront or on the kerb edge, and the middle 5.2 m of the
+    road is kept clear for the fight - so the eye crosses 10 m of street and finds nothing between the two
+    facades. Vans go at y = +/-375, which is tight against the kerb and wholly on the pavement side: the
+    road keep-clear ends at 260 and a van is 150 wide, so it spans 300..450 and the fight lane is untouched.
+    None is within 9 m of the goon spawner at x = 4600.
+    """
+    rng = random.Random(1144)
+    for k, (vx, sgn, yaw) in enumerate([(1450.0, -1.0, 0.0), (2550.0, 1.0, 180.0), (5750.0, -1.0, 0.0)]):
+        put_clear('City_Van_%d' % k, 'SM_KeiVan', vx, sgn * 345.0, 0, yaw, slide=900.0, step=40.0)
+    # pots, A-boards and a produce table outside the shops: the pavement band 300..470 that nothing uses
+    n = 0
+    px = STREET_X0 + 340.0
+    while px < STREET_X1 - 500.0:
+        for sgn, yaw in ((-1.0, 0.0), (1.0, 180.0)):
+            if rng.random() < 0.8:
+                m = rng.choice(['SM_PotRow', 'SM_PotRow', 'SM_AFrameSign', 'SM_ShopDisplay'])
+                off = 455.0 if m != 'SM_AFrameSign' else 345.0
+                put_clear('City_Front_%s%02d_%s' % ('SN'[sgn > 0], n, m[3:]), m,
+                          px + rng.uniform(-90.0, 90.0), sgn * off, 0, yaw, slide=560.0)
+                n += 1
+        px += rng.uniform(480.0, 820.0)
+    # gullies at the kerb line - the road is 5.2 m of flat grey with nothing but manholes on it
+    for k in range(7):
+        for sgn in (-1.0, 1.0):
+            put('City_Grate_%s%d' % ('SN'[sgn > 0], k), 'SM_DrainGrate',
+                STREET_X0 + 520.0 + k * 820.0, sgn * 248.0, 0, 0)
+    # THE ALLEY TURNS THE CORNER. The first 15 m east of the cafe door is still the back lane, not a
+    # shopping street: bins and bottles, no goods out, so the player walks out of the hole-in-the-wall
+    # scene into somewhere that matches it, and the shops start further down.
+    put_clear('City_Front_Bin', 'SM_Dumpster', 2320.0, -440.0, 0, 0, slide=600.0)
+    put_clear('City_Front_Gas', 'SM_GasBottles', 1080.0, 470.0, 0, 180)
+    put_clear('City_Front_Trash', 'SM_TrashBags', 1320.0, -475.0, 0, 0)
+    put('City_Front_DuctS', 'SM_DuctRun', 900.0, -(STREET_Y - 6.0), 0, 0)
+    put('City_Front_DuctN', 'SM_DuctRun', 1180.0, STREET_Y - 6.0, 0, 180)
+
+
 # ----------------------------------------------------------------- 2. the lane the player walks
-LANE_MIX = ['SM_ShopHouse_A', 'SM_ShopHouse_B', 'SM_ShopHouse_C', 'SM_ShopHouse_A', 'SM_ShopHouse_B',
+LANE_MIX =['SM_ShopHouse_A', 'SM_ShopHouse_B', 'SM_ShopHouse_C', 'SM_ShopHouse_A', 'SM_ShopHouse_B',
             'SM_ShopHouse_A', 'SM_ShopHouse_C', 'SM_ShopHouse_B', 'SM_ShopHouse_A', 'SM_ShopHouse_B',
             'SM_ShopHouse_C', 'SM_ShopHouse_A']
 
@@ -616,7 +743,8 @@ NO_GO = [
      'the destroyed-building platforming and the beat-5 landing pad'),
 ]
 # Props that are SUPPOSED to stand in a no-go box (cafe furniture, plaza dressing, road fittings).
-ALLOWED_PREFIX = ('City_Cafe', 'City_PlazaProp', 'City_PlazaLamp', 'City_Manhole', 'City_Barrier',
+ALLOWED_PREFIX = ('City_Cafe', 'City_PlazaProp', 'City_PlazaLamp', 'City_Manhole', 'City_Grate',
+                  'City_Barrier',
                   'City_Cone', 'City_Kerb', 'City_RunTrash', 'City_RunPole', 'City_RunCable',
                   'City_CafeAwning', 'City_CafeSign', 'City_CafeMenuBoard', 'City_CafeNoren',
                   'City_CafePlanter', 'City_PlazaWall', 'City_PlazaPaving', 'City_RunWall', 'City_RoadLines',
@@ -796,6 +924,8 @@ def main():
     plaza()
     exit_run()
     street_life()      # after plaza() and exit_run(): put_clear() can only avoid what is already placed
+    back_alley()       # after street_life(): the avenue already holds trees, hedges and a scooter
+    kerb_life()
     near_skyline()
     skyline()
     doc = {
