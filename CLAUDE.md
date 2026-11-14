@@ -292,6 +292,26 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   (`MetalRHI.cpp:255-266`); an Intel Mac cannot run the Metal RHI at all (`MetalRHI.cpp:407`). Practical upshot:
   changes made only in cvars reach every machine, changes made only on the sun actor reach only the CSM machines,
   and anything that depends on ray tracing reaches neither an M1 nor a pre-2020 PC GPU.
+- **A stochastic shadow term is poison to a posterising toon shader, and RT shadows are stochastic.**
+  `MI_AnimeLook` quantises light to `Poster` = 6 steps and splits it on a `smoothstep` band only 12% wide, so a
+  shadow term that wobbles by a fraction of a percent is amplified into a whole tone step. Hardware ray-traced
+  shadows sample the sun's disc with `SamplesPerPixel` = **1** per light, which is noise by construction; TSR is
+  the only thing denoising it. Measured on `Lvl_JumpCut` from a fixed camera: the pavement swung **15-17/255**
+  between consecutive frames, and whole bands of it flipped tone. The cure is NOT more samples and NOT a
+  different anti-aliasing method - it is to stop making a penumbra at all. `LightSourceAngle` **0.5357 -> 0.05**
+  on `Sun_Main` took whole-frame instability from **2.1% -> 0.7%** of pixels and the pavement swing to **3/255**,
+  while `SamplesPerPixel` 1 -> 2 changed nothing measurable (4.3% vs 3.9%). It costs no GPU time, it is level
+  data rather than a cvar, and because VSM reads `LightSourceAngle` too it is one of the few fixes here that
+  reaches a Mac and a pre-2020 PC as well as a 5090.
+- **Do not "fix" toon flicker by turning off temporal anti-aliasing - it makes it much worse.** The tempting
+  reasoning is that TSR blends a posterised image and smears the bands; that part is true. But the post-process
+  material runs at `BL_SceneColorBeforeDOF`, which is **before** the temporal upscaler
+  (`PostProcessing.cpp:962` vs the upscaler ~line 1110), so TSR is also the denoiser for the ray-traced shadows.
+  Measured: FXAA and SMAA both removed the pavement band flip (17/255 -> 1-2/255) but raised edge instability
+  from 6.9% to **11-13%** and left the shadow penumbrae as raw stipple. Fix the noise at the source instead.
+- **`Boil` is a deliberate feature, not the flicker.** `MI_AnimeLook.Boil` (0.45 px at `BoilFps` 8) wobbles the
+  ink-line sample UVs on purpose - "drawn on threes". It is worth testing when hunting a flicker, but measured it
+  was only ~13% of the edge instability (7.9% -> 6.9% with it at zero), so do not spend the art on it.
 - **To find a flicker, capture the same camera twice and diff the pictures** (`CaptureViewport` x2, per-pixel
   difference). It shows *what* changes in one step. Auto-exposure settling after a camera turn changes half the
   picture too - that is a drift, not a flicker; let it settle before comparing.
