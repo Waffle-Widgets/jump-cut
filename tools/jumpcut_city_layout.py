@@ -507,6 +507,7 @@ def validate():
         if -380.0 - door_front < 60.0:
             problems.append('the crash car door reaches x = %.0f, within 60 cm of the driver at x = -380'
                             % door_front)
+    problems += _cafe_dress_agrees()   # the mock-up render and the level must place the identical list
     if problems:
         print('LAYOUT PROBLEMS (%d):' % len(problems))
         for p in problems:
@@ -515,6 +516,31 @@ def validate():
         print('layout checked: nothing solid stands in the road, the cafe, the arena, the gates or the exit '
               'run, and no two lane buildings overlap')
     return len(problems)
+
+
+def _cafe_dress_agrees():
+    """CAFE_DRESS_CM here vs CAFE_DRESS in Art/Blender/jumpcut_city_kit.py - same list, different units.
+
+    The cafe dressing is written down twice: here in centimetres for the level, and in the Blender kit in
+    metres for the mock-up render. They are supposed to be the identical list, and nothing kept them in step,
+    so a change made in one and not the other gives a render that quietly disagrees with the game. The counter
+    move on Fri Nov 13 touched both; this is what proves it.
+    """
+    import re
+    kit = os.path.join(ROOT, 'Art', 'Blender', 'jumpcut_city_kit.py')
+    if not os.path.exists(kit):
+        return []
+    m = re.search(r'CAFE_DRESS\s*=\s*\[(.*?)\n\]', open(kit, encoding='utf-8').read(), re.S)
+    if not m:
+        return ['could not find CAFE_DRESS in the Blender kit to compare against']
+    rx = r"\('(SM_\w+)',\s*(-?[\d.]+),\s*(-?[\d.]+),\s*(-?[\d.]+),\s*(-?\d+)\)"
+    theirs = [(g[0], round(float(g[1]) * 100, 1), round(float(g[2]) * 100, 1), round(float(g[3]) * 100, 1),
+               int(g[4])) for g in re.findall(rx, m.group(1))]
+    ours = [(r[0], round(r[1], 1), round(r[2], 1), round(r[3], 1), r[4]) for r in CAFE_DRESS_CM]
+    if len(ours) != len(theirs):
+        return ['the cafe dressing has %d rows here and %d in the Blender kit' % (len(ours), len(theirs))]
+    return ['cafe dressing row %d differs: here %s, Blender kit %s' % (i, a, b)
+            for i, (a, b) in enumerate(zip(ours, theirs)) if a != b]
 
 
 def main():

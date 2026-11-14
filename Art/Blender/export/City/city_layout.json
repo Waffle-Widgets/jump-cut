@@ -2,7 +2,7 @@
  "units": "cm",
  "note": "Unreal world coordinates for Lvl_JumpCut. Z is the actor origin; every model stands on its own origin at z = 0 except wall-mounted ones, whose geometry starts at its mounting height.",
  "generated_by": "tools/jumpcut_city_layout.py",
- "generated_at_pacific": "2026-11-13 18:52",
+ "generated_at_pacific": "2026-11-13 19:03",
  "mesh_path": "/Game/Game/Imported/City/",
  "supersedes_greybox": [
   "C1_Cafe_WallN",
