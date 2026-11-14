@@ -57,11 +57,13 @@ COLOURS = {
     # project: until now the kit's only foliage was the planter shrub and it was painted MS_CityCloth,
     # which is beige, so nothing in the city was alive. The two MS_Cafe* slots exist so the room the
     # player spends beat 1 in can be warm without repainting the whole street with it.
-    # A LIGHT green, not a realistic one. The look divides scene colour by base colour and bands the
-    # result, so the shadow band is roughly 0.6x the base: a believable leaf green (0.29, 0.46, 0.22) comes
-    # out of the shadow side as near-black, and the first street trees read as holes in the street rather
-    # than as trees. Lifted until both bands are still obviously green.
-    'MS_CityLeaf': (0.46, 0.64, 0.30), 'MS_CityLantern': (0.90, 0.26, 0.19),
+    # NOTE, and it matters if you ever want to change one of these: a value here is only read when the
+    # material is CREATED. There is no supported way to set a Material's default vector parameter from
+    # Python in UE 5.8 - there is a getter, get_material_default_vector_parameter_value, and no setter,
+    # and the 'expressions' property that would let you reach the node by hand is protected and raises.
+    # So on a machine that already has the material, editing this table does nothing at all. To change a
+    # colour for real: delete the M_* asset and re-run, or edit it in the material editor.
+    'MS_CityLeaf': (0.29, 0.46, 0.22), 'MS_CityLantern': (0.90, 0.26, 0.19),
     'MS_CafeWall': (0.93, 0.85, 0.72), 'MS_CafeFloor': (0.58, 0.39, 0.23),
 }
 EMISSIVE = ('MS_CitySignA', 'MS_CitySignB', 'MS_CityLantern')
@@ -82,15 +84,6 @@ TWO_SIDED = ('MS_CityLeaf', 'MS_CityCloth')
 # The subsurface colour is the leaf colour lifted, which is what you see when you look up through a tree.
 FOLIAGE = {'MS_CityLeaf': (0.58, 0.78, 0.38)}
 
-# ...and even that is not enough on its own. A canopy is forty-odd cards inside a 2.3 m ball, so every card
-# on the inside is shadowed by the cards outside it - and with the look's hard band, "shadowed by something"
-# and "shadowed by everything" land on the same flat tone. Measured on the first tree in the lane: pale
-# green rim, solid black core, which reads as a hole in the street rather than as a tree.
-# A small self-lit term fixes it where it is broken. The look computes its band from
-# sceneColour / baseColour, so adding a fraction of the leaf's own colour to the scene lifts the inside of
-# the canopy back over the threshold without making it glow. It is a cheat, and it is the same cheat every
-# stylised foliage shader makes.
-SOFT_EMISSIVE = {'MS_CityLeaf': 0.5}
 
 # Pieces the player is supposed to pass THROUGH. Measured, not guessed: with collision set
 # complex-as-simple (which is right for the rest of the kit) the cafe's noren became a solid 150 x 100 cm
@@ -128,39 +121,15 @@ def say(msg):
 
 
 def upgrade(mat, slot, mel, recompile=True):
-    """Bring one slot's material up to what COLOURS/TWO_SIDED/FOLIAGE currently say.
+    """Bring one slot's material up to what TWO_SIDED and FOLIAGE currently say.
 
-    Idempotent, and it repairs a material made before any of those ideas existed. Without the colour half,
-    changing a value in COLOURS did nothing at all on a machine where the material already existed, which
-    is a quiet way to spend an afternoon.
+    Idempotent, and it repairs a material made before either idea existed - which is the whole point,
+    because ensure_materials() otherwise returns early for anything that already exists and a new rule
+    never reaches an existing project. It deliberately does NOT touch base colour: see the note on
+    COLOURS for why that cannot be done from Python in 5.8.
     Returns True if it changed anything.
     """
     done = False
-    want = COLOURS.get(slot)
-    if want is not None:
-        for ex in mat.get_editor_property('expressions'):
-            if (isinstance(ex, unreal.MaterialExpressionVectorParameter)
-                    and str(ex.get_editor_property('parameter_name')) == 'BaseColor'):
-                have = ex.get_editor_property('default_value')
-                if (abs(have.r - want[0]) > 0.004 or abs(have.g - want[1]) > 0.004
-                        or abs(have.b - want[2]) > 0.004):
-                    ex.set_editor_property('default_value',
-                                           unreal.LinearColor(want[0], want[1], want[2], 1.0))
-                    done = True
-    if slot in TWO_SIDED and not mat.get_editor_property('two_sided'):
-        mat.set_editor_property('two_sided', True)
-        done = True
-    lift = SOFT_EMISSIVE.get(slot)
-    if lift is not None and want is not None:
-        named = {str(ex.get_editor_property('parameter_name')) for ex in mat.get_editor_property('expressions')
-                 if isinstance(ex, unreal.MaterialExpressionVectorParameter)}
-        if 'LeafLift' not in named:
-            em = mel.create_material_expression(mat, unreal.MaterialExpressionVectorParameter, -380, 720)
-            em.set_editor_property('parameter_name', 'LeafLift')
-            em.set_editor_property('default_value', unreal.LinearColor(want[0] * lift, want[1] * lift,
-                                                                      want[2] * lift, 1.0))
-            mel.connect_material_property(em, '', unreal.MaterialProperty.MP_EMISSIVE_COLOR)
-            done = True
     sss = FOLIAGE.get(slot)
     if sss is not None and mat.get_editor_property('shading_model') != unreal.MaterialShadingModel.MSM_TWO_SIDED_FOLIAGE:
         mat.set_editor_property('shading_model', unreal.MaterialShadingModel.MSM_TWO_SIDED_FOLIAGE)
