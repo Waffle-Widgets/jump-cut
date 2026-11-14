@@ -53,7 +53,7 @@ the plainest design of the three: no coat, no weapon, no insignia.
   jam's first night. That model is the starting point, not a
   throwaway — the question for the team is whether to keep it or re-run it against the new reference sheet.
 
-## The coworker — `CafeCoworker` (beat 1; modelled and rigged Nov 13, not yet imported into Unreal)
+## The coworker — `CafeCoworker` (beat 1; modelled and rigged Nov 13, **in Unreal since Sat Nov 14, 02:25 UTC**)
 
 The person the player saves in the demo's first beat. She exists because the beat's *lesson* needs a subject:
 the roadmap's beat 1 ends with an explosion sending shrapnel at a coworker, and the action button teaching the
@@ -89,6 +89,27 @@ seconds and her job is to be unmistakably *a colleague*, in the same cafe, in th
   [`prompts.md`](prompts.md). **Both have now been run.** Her reference sheet is
   `Art/Refs/CafeCoworker_apose.png` and her model is `Art/Blender/export/Characters/CafeCoworker/` — see
   "The coworker's model" under Hand-off.
+
+### She has a body (#5) (Sat Nov 14, 02:25 UTC, Justin's Mac mini)
+
+`SK_CafeCoworker` is imported to `/Game/Game/Imported/CafeCoworker/SK/` and `BP_Coworker` wears it.
+
+- The green box is **still there** as `CoworkerMesh`, because `CoworkerTakeHit` lays her down by rotating
+  **that** component and the variable is typed `StaticMeshComponent`. Its mesh is cleared instead, so it
+  draws nothing and still carries the death tip. The body is `CoworkerBody`, a child of it.
+- **Her FBX did not carry her texture.** `M_CafeCoworker` imported with no `DiffuseColorMap` at all, which
+  would have put a plain grey woman in the opening beat with every number still green. The PNG beside the
+  FBX is imported to `Tex/` and wired the way `M_CrashDriver` is (`DiffuseColorMap` + `DiffuseColorMapWeight`
+  1.0). **`M_CafeWalker` has the same hole** - see #7.
+- **Measured in Play-In-Editor**, because the editor viewport lies about her: live bones span
+  **z 2.2 to 151.7**, component at (300, -250, 0) at scale (1,1,1), visible. A plain `SkeletalMeshActor`
+  with the same asset measured 168 cm, so the asset and the Blueprint agree.
+- **The editor viewport shows her collapsed, and that is a stale editor pose, not the game.** Every bone of
+  the *editor* copy reads z = 0.0 - a component added to a Blueprint after an actor was placed has no pose
+  in the editor until the level is reloaded. The same actor duplicated into PIE is posed correctly. Do not
+  judge a newly added skeletal component from the viewport.
+- Not done: **nobody has played it**, she has no down pose for the failed rescue (#45), and she is still
+  idle-only - `SK_CafeCoworkerArmature_Idle` is assigned as a single-node animation.
 
 ### Built in Unreal: `BP_Coworker` + `BP_Shrapnel` (Fri Nov 13, 2026, 1:15 AM Pacific, GameStation)
 
