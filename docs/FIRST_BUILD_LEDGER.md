@@ -60,19 +60,62 @@ Frame; since G1 the driver in the cafe does.)
 - There must be exactly one live `BP_Player_C`, placed in the level with auto-possess, and the game mode must keep
   the template's player controller.
 
-## What a person must still play (from the run-through, in play order)
+## What a person must still play (in play order)
+
+> **Before you start: nothing works until you press R.** The game opens on a title screen that holds
+> `InputLocked` and `MoveLocked` on `BP_Player`, so WASD, the mouse, punch, **F**, **E**, **Q** and
+> **Left Shift** all do nothing until R (or gamepad A) is pressed. That is correct behaviour, but a
+> build that looks completely dead is the first thing it looks like - four automated test runs were
+> spent on it before the cause was found. The "pressed" test is an `IsInputKeyDown` poll on the game
+> mode's tick, so a *simulated* key cannot dismiss it either: for a script the way past is
+> `ShowTitleOnStart = false` on the `BP_JumpCutGameMode` CDO, which must be put back to `true`
+> afterwards. (GitHub issue #28.)
+
+**The five controls, on one line:** left mouse / gamepad face-left = punch, **F** / gamepad face-top =
+interact, **E** / right shoulder = Freeze Frame, **Left Shift** / gamepad B = Splice, **Q** / left
+shoulder = Rewind (parked, does nothing).
+
 1. **Title:** press R (or gamepad A). The game starts on the first press and the health bar appears. With A, does the character hop?
-2. **Cafe:** WASD and mouse work now and were dead on the title. Walk to the cyan ball by the blue driver box: it vanishes and a cyan E icon appears. Is it clear what you got and from whom?
-3. **Head for the door without visiting the driver:** you still get the power at the door. Is that what we want?
-4. **Street, left mouse / gamepad X on the goons:** three clicks give the combo with the big third hit. Do hits feel like hits? Is one combo for all three too easy by hand?
-5. **E / right shoulder:** enemies stop, cyan border, the bar drains for 10 s, the icon dims for 20 s. Do beaten goons that stay standing read as beaten?
-6. **Q / left shoulder anywhere:** nothing happens (Rewind is parked).
-7. **Checkpoint post:** the green cube shows. Do you notice it?
-8. **Plaza entry:** the gate drops behind you without touching you and the boss comes. Try turning straight back out.
-9. **Boss:** a red ball warns of each punch; he never freezes you. Beat him once with E and once without.
-10. **Lose on purpose (to the goons, then to the boss):** "CUT!" and the world holds still. R or A restarts at the right place with full health.
-11. **Exit gate and the walk beyond:** "THAT'S A WRAP".
-12. **Win screen, R or A:** back to the title with everything reset. Also hold R for a second: is the title skipped?
+2. **Cafe:** WASD and mouse work now and were dead on the title. The beat opens on the crash - the day
+   job and the latte art minigame are deliberately not built (issue #24), so there is nothing to do
+   before it.
+3. **Touch the dead driver:** walk up to the body beside the crashed car (within 220 cm) until a blue
+   prompt lights, then press **F**. That is the only source of Freeze Frame - both markers that used to
+   hand it over for walking past are switched off. Is it clear what you got, and from whom?
+4. **The explosion, 2 s later:** the world drops to quarter speed for 3.5 real seconds and a cyan
+   **PRESS E** appears. Press **E** inside that window. Did you understand what was being asked of you
+   before the window closed? This is the only place the game teaches a power.
+5. **The rescue:** with time frozen, run to the coworker and press **F** to pull her clear of the
+   shrapnel. Then do it again and *miss* on purpose: she dies once and stays dead, and the level
+   carries on. Does failing feel like a loss or like a bug?
+6. **The countdown:** at 5 seconds left on Freeze Frame a big number appears and a pop plays each
+   second, then a clapperboard crack when time resumes. **Can you hear it?** These are the game's first
+   three sounds and nobody has heard them - a silent build and a working one are indistinguishable from
+   the editor.
+7. **Out of the cafe and down the avenue:** you should walk out through the door curtain (it was a solid
+   wall until Nov 13) into a built street, not a grey corridor. Does the city read as a city?
+8. **Street, left mouse / gamepad face-left on the goons:** three clicks give the combo with the big
+   third hit. Do hits feel like hits? Is one combo for all three too easy by hand?
+9. **E / right shoulder:** enemies stop, cyan border, the bar drains for 10 s, the icon dims for 20 s.
+   Do beaten goons that stay standing read as beaten?
+10. **Q / left shoulder anywhere:** nothing happens (Rewind is parked).
+11. **Checkpoint post:** the green cube shows. Do you notice it?
+12. **Plaza entry:** the gate drops behind you without touching you and the cleaver boss comes. Try turning straight back out.
+13. **The cleaver boss:** a red ball warns of each punch; he never freezes you. Beat him once with E and
+    once without. Beating him grants **Splice** and the HUD gains a third power box.
+14. **Lose on purpose (to the goons, then to the boss):** "CUT!" and the world holds still. R or A restarts at the right place with full health.
+15. **Beat 4, the destroyed buildings:** east of the plaza exit. Gap 1 is a 250 cm hop. Gaps 2 and 3 are
+    400 cm with a collapsed slab 215 cm overhead, so a jump cannot clear them - **press Left Shift** to
+    blink across. **Nobody has pressed Left Shift.** The blink is a fixed 600 cm and does not stop at a
+    gap, so you must launch from the eastern 2 m of a 5 m platform; blink from the wrong end and you
+    land in the hole. That 2 m window is the single thing measurement cannot settle - if it reads as a
+    cliff rather than as "walk to the edge first", the fix is narrower gaps, not a change to the power.
+16. **Beat 5, the landing pad:** the Stunt Double boss, once `tools/beat5_arena.py` has been run. He
+    soaks every hit with doubles that dive in front of it, so **freeze time to land a punch**, and
+    **Splice past** the one he tags in to fight you. Note that killing him currently opens nothing
+    (issue #9's sibling finding, in `tools/beat5_graphs.py`).
+17. **Exit gate and the walk beyond:** "THAT'S A WRAP".
+18. **Win screen, R or A:** back to the title with everything reset. Also hold R for a second: is the title skipped?
 
 ## For the team to tune (checker's numbers at defaults; nothing was retuned)
 - A scripted run takes 25 to 27 s. The pitch wants 3 to 5 minutes.
