@@ -87,7 +87,7 @@ def put(label, model, x, y, z=0.0, yaw=0.0):
 # ----------------------------------------------------------------- 1. the cafe, and how it is dressed
 # These metres come straight from CAFE_DRESS in Art/Blender/jumpcut_city_kit.py, so the mock-up render and
 # the level are placing the identical list. Three lanes are kept clear and nothing is allowed into them:
-# the player's walk (0,0)->(615,0), the shrapnel's flight (-520,0)->(300,-250), and the driver's body at
+# the player's walk (0,0)->(615,0), the shrapnel's flight (-330,-60)->(-540,-161), and the driver's body at
 # (-380, 220), which the player has to be able to reach and touch.
 CAFE_DRESS_CM = [
     # The counter sits at the WEST end with the register on it, beside the wall the car comes through,
@@ -570,7 +570,7 @@ def main():
                    'greybox_material': '/Game/Game/Materials/M_GreyFloor'},
         'blueprint_meshes': BLUEPRINT_MESHES,
         'keep_clear': {'road_half_width': ROAD_HALF, 'gate_half_width': GATE_HALF,
-                       'player_walk': [[0, 0], [615, 0]], 'shrapnel': [[-520, 0], [300, -250]],
+                       'player_walk': [[0, 0], [615, 0]], 'shrapnel': [[-330, -60], [-540, -161]],
                        'driver_body': [-380, 220], 'boss_spot': [8120, 0]},
         'actors': actors,
     }

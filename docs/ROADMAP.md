@@ -178,6 +178,43 @@ anyone picks up a task:
 
 ## Open
 
+### The register move reaches Unreal, and beat 1 was unwinnable (#56) (Fri Nov 13, 11:15 PM Pacific, M Station)
+
+Justin finished for the night and the Team Owner moved his queue here. **#56 is done in the editor;
+its step 4 (a person playing beat 1) is not.** #15 and #16 went to the Team Owner instead of to a
+machine: both need fingers on a keyboard, because combat input is polled with `IsInputKeyDown` and a
+simulated press releases inside one tick. No machine can close them.
+
+What moved, verified by reloading the level from disk: the counter to (-330, -240) yaw 180, the
+espresso machine to (-430, -240), the pastry case to (-160, -238), `SM_CafeRegister` imported and
+placed at (-540, -240, 110), and `Coworker_Cafe` to (-540, -161). `JC_City` is now **246**, matching
+the layout's 246 exactly, with no duplicate labels.
+
+**Two defects the ticket did not anticipate, both of which made beat 1 impossible to win.**
+`CoworkerSafeOffset` was `(0, +320, 0)`, which from her new spot lands inside the crashed car — a
+chest-height trace stops after 61 cm. It is now `(+320, 0, 0)`, east along the aisle, clear with
+floor under it. And `ShrapnelSpawnLocation` was `(-470, 0, 185)`, level with the car, from where the
+line to her new spot is blocked by the car's own cab after 73 cm of a 200 cm flight; every flank
+spawn that does reach her is ~100 cm, which is 1.7 real seconds against a 3.5 s bullet-time window.
+It is now `(-330, -60, 370)` just under the 4.00 m ceiling: a clear 364 cm fall, 5.6 real seconds.
+`ShrapnelSpeed` is untouched at 260 — that is a feel call.
+
+The one free part: `CoworkerSpawnShrapnel` launches at `GetActorLocation + (0,0,90)`, so the
+shrapnel already aims at wherever she stands. Moving her re-aimed it; no graph edit was needed.
+
+**`jumpcut_city_place.py add` must not be run on this layout as it stands.** It matches by actor
+label, and inserting the register at index 1 renumbered the cafe block, so it would have skipped the
+counter (leaving it unmoved) and spawned 8 duplicate shelves, tables and chairs. Comparing by
+position instead showed every layout spot already had an actor on it except the register, so the
+register was placed directly. **The cafe labels in the level are still one behind the layout from
+index 3 on** — geometry correct, labels drifted. Reconciling them is ~20 actor packages and is not
+done.
+
+**Also fixed, and it had been undoing real work:** 30 assets re-import themselves on every editor
+open from sources committed beside them in `Content/`, and the copies of `T_UI_Title.png` and
+`T_UI_ToBeContinued.png` there were the old rejected pictures — so each launch silently reverted
+those assets. Both now match `Art/UI/` and both `.uasset` are saved.
+
 ### FIXED Sat Nov 14 — the player's and the goons' arms were mangled
 
 Reported by the Team Owner as *"the main character and goons arms are mangled looking"*. It was a
