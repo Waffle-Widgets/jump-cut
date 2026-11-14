@@ -280,6 +280,46 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
 - **`SlateInspector.Type` APPENDS to a textbox, it does not replace.** A leftover `stat fps` turned the next
   command into `stat fpspy /path/to/script.py`, which failed silently. Clear the box with BackSpace presses
   first. It also returns **false** for text containing double quotes - pass an unquoted path.
+- **Clear the console box with ONE BackSpace, not Cmd+A.** `SlateInspector.Type` appends, and the box
+  keeps a leftover `/` between commands, so the next command runs as `py /py /path/...` and fails with
+  "Could not load Python file". `Click` then `Cmd+A` then `Type` does **not** replace the selection -
+  it still appends. A single `PressKey("BackSpace")` before each `Type` is what works. The failure is
+  quiet from the caller's side: `Type` returns **true** either way, and the script simply never runs,
+  so check the thing the script was supposed to write (a file's mtime), never the return value.
+- **Never call `save_dirty_packages` - save your own packages by path.** It saves EVERY dirty package in
+  the project. With another lane's four read-only Blueprints dirty, that save failed, left `.tmp` files
+  in `Saved/`, and the editor stopped answering the MCP for ten minutes. Collect the assets you touched
+  (`list_assets(folder)` -> `load_asset` -> `get_outermost`) and pass those to `save_packages`.
+- **`IKRetargetBatchOperation.duplicate_and_retarget` returns package names you cannot save by.** On a
+  re-run into a folder that already holds `_SG` assets it makes `_SG1` copies and renames them, and the
+  names it hands back are the pre-rename ones - so saving by them saves nothing, and the real assets are
+  discarded later. A folder of 42 retargeted clips came back as **3** on disk twice before this was
+  understood. Retarget, then save the FOLDER by path, in the same script run.
+  **And that is not enough on its own: the same run must not call it twice into one folder.** The street
+  goon's run retargeted the clips, then retargeted the anim blueprint into the same folder, logged
+  `saved 43 packages ok True`, and left **21** assets on disk - every `MF_*`, the blend space and the
+  anim blueprint itself were gone. Do one batch per folder, into a folder that holds nothing with your
+  suffix yet, and afterwards read the folder back off the asset registry and count. Never report the
+  batch call's own return value as the result (`tools/unreal_goon_abp.py`).
+- **A mismatched anim class is SILENT, and it looks exactly like a finished job.** `BP_Goon` wore
+  `SK_StreetGoon` (76-bone Meshy Smart Rig) with Epic's `ABP_Unarmed` assigned - an anim blueprint whose
+  target skeleton is the *mannequin's*. No warning, no error, no log line: the mesh reads as correctly
+  assigned, every montage variable reads as correctly assigned, and the character stands in his reference
+  pose and never moves. **Reading the Blueprint back cannot catch this.** The only check that does is
+  reading the LIVE anim instance's class off a spawned actor in PIE
+  (`comp.get_anim_instance().get_class().get_name()` - `tools/goon_body_test.py`).
+- **The asset registry does not know about a folder a PREVIOUS editor session created.** It is on disk and
+  the Content Browser shows it, but its paths are not in the registry's index, so `does_asset_exist` and a
+  registry `ARFilter` both answer "empty" for assets that are plainly there - which silently defeated an
+  idempotence guard and re-ran a batch retarget. Call
+  `AssetRegistry.scan_paths_synchronous([folder], True)` before trusting either.
+- **`SlateInspector.FillForm` with `fieldType: textbox` REPLACES the box; `Type` appends.** This is the fix
+  for the leftover-`/` console trap below, which the one-`BackSpace` cure does not reliably solve. Use
+  `FillForm` to set the command, then `PressKey("Enter")`, then confirm the `Cmd:` line in the log says
+  what you meant - two commands came out as `py /py /Users/...` and failed silently before this.
+- **An unresponsive editor at high CPU is working, not frozen.** Compiling a freshly retargeted anim
+  blueprint stopped the game thread for **383 seconds** with nothing in the log, which looks identical to
+  the modal-dialog freeze. Check the process's `%CPU` before assuming a dialog and force-closing anything.
 - **`AssetTools.write_file` only accepts `.csv/.html/.json/.md/.py/.txt` and only under the project roots**, so
   write a capture's base64 to a `.txt` under `Saved/` and decode it outside the editor.
 - The frog's `CameraBoom` has Inherit Yaw off (that keeps the camera north while the frog turns). A spring arm
