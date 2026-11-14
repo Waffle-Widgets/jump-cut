@@ -49,6 +49,17 @@ does nothing about a double diving in front of a punch. So the ladder's rung is 
 the boss before is useful in the fight, it is just not the thing that wins it. **Neither half of this is built
 yet**: Splice does not exist, and the tagged-in double has no despawn timer.
 
+**The demo stops after power 2, and that is a scope call, not a design change** (Justin, Fri Nov 13, 4:30 PM
+Pacific). This file describes the **whole game**; the jam entry is a demo of its first half. As of the
+four-beat rescope in [`ROADMAP.md`](ROADMAP.md) the demo ends with a "to be continued" after the **Splice
+boss**, so powers 3 and 4 - Stunt Double and Director's Cut - and the Director himself are full-game design
+that the jam build does not reach. Power 3's *fight* is built and plays (the diving stand-ins, the Freeze
+Frame counter); it is a nice-to-have on the cut list, not a beat. **The two paragraphs above still describe
+the game's ladder correctly** - they are what the Stunt Double fight does when it is in - but neither is on
+the demo's critical path any more, and the Splice-past-the-bodyguard half of the second one is now the
+clearest reason the demo might want the platforming section back: Splice is handed over in the demo's last
+fight and the demo currently gives the player nowhere to press it.
+
 **Who the characters are** — the worker, the crash driver and the mob boss: [`CHARACTERS.md`](CHARACTERS.md).
 
 **Renamed, Nov 12:** power 4 was called "Final Cut" until the Team Owner called the rename. "Final Cut" is an

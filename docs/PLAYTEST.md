@@ -40,6 +40,13 @@ were spent on exactly that.
 | **Left Shift** | B | Splice - a 600 cm forward blink |
 | Q | left shoulder | Rewind - parked, does nothing |
 
+**What matters most right now:** the demo is **beats 1 to 3 plus an ending** (Justin, Fri Nov 13, 4:30 PM
+Pacific - see Decisions in [`ROADMAP.md`](ROADMAP.md)). That is the cafe, the street fight and the cleaver
+boss - steps 1 to 14 of the list below. The destroyed-building platforming and the Stunt Double boss are
+built, but they are **optional extras** now, so judge the first three beats first and hard. **Left Shift**
+is still in the table above because the boss hands it over; the gaps it exists to cross are in the optional
+part.
+
 The full step-by-step list of what to play and what to judge is in
 [`docs/FIRST_BUILD_LEDGER.md`](FIRST_BUILD_LEDGER.md), under "What a person must still play".
 
