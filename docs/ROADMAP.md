@@ -621,6 +621,24 @@ function back as printed is rejected outright ("Could not connect pin ... to sel
 `Class|BPPlayer|`.
 
 
+### The missing art for beats 1 to 3 is made; none of it is in the game (Sat Nov 14, 02:10 UTC, M Station)
+
+A read-only walkthrough of `main` at `27fdc7c` (`tools/asset_walkthrough.py`: every placed actor, what every
+Blueprint references, eighteen pictures of the route) found 26 visible placeholders, no effect or texture
+referenced by any Blueprint or widget, and three sounds. Everything with a model is waiting on the builder
+(#5, #6, #7; the set pieces, #40, went in as PR #51 while this was being made). What had no source file is now made, on M Station, as files under `Art/`:
+
+| Ticket | Made | Where |
+|---|---|---|
+| #43 sounds | 20 effects and stings, synthesized | `Art/Audio/`, `tools/make_sfx.py` `make_jumpcut_fight()` |
+| #42 effects | explosion, hit flash, focus lines, Freeze Frame overlay, Splice trail, ground ring | `Art/FX/`, `tools/make_fx.py` |
+| #49 prompts (new) | interaction prompt, attack warning, scene marker - they were engine spheres | `Art/FX/` |
+| #44 screens | title, win, lose, to-be-continued, itch.io cover, three HUD icons | `Art/UI/` |
+| #45 poses | driver slumped, coworker down, coworker flinch | `Art/Blender/export/Characters/`, `Art/Blender/pose_clip.py` |
+
+**Untested, all of it:** nobody has heard a sound or seen an effect at the game camera, and nothing has been
+imported. The builder's side is #52. Not started: the boss lot's dressing (#50) and music.
+
 ## Stretch (only if the critical path is finished)
 
 **The cafe minigame** (Manny, the Team Owner, Nov 12. Only a person moves it into Open.) Before the car comes

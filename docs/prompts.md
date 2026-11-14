@@ -175,3 +175,71 @@ that teaches Freeze Frame, that is the one collision worth designing out.
 > blade with a dark wooden handle and three rivets, one round hole near the top corner of the blade, cel shaded
 > with hard-edged shadows and a clean dark outline, flat plain white background, even lighting, no ground shadow,
 > nothing else in the picture
+
+---
+
+## Screen art (issue #44, Fri Nov 13 evening, M Station)
+
+The walkthrough of `main` at `27fdc7c` found that `WBP_Title`, `WBP_Win`, `WBP_Lose` and `WBP_HUD` reference no
+texture at all. These five are the pictures behind those screens and the itch.io cover. **None of them contains
+lettering**: generated letters are unreliable and `docs/RULES.md` 15d bans trademarks, so the game's name and every
+word are set in Unreal on top of the picture. Each prompt leaves a calm area for that text and says where.
+
+Draw them wide (the default `1664x928`), the cover at `1328x1056` and cropped to 630 x 500 afterwards:
+
+    python tools/gen_images.py UI-TITLE UI-WIN UI-LOSE UI-TBC --takes 2
+    python tools/gen_images.py UI-COVER --takes 2 --size 1328x1056
+
+### UI-TITLE
+The title card: the moment the demo is about. The upper third is kept as plain dark wall for the title text.
+
+> anime key visual illustration, cel shaded with hard-edged shadows and clean dark line art, flat areas of solid
+> colour, wide cinematic shot inside a small city coffee shop a split second after a car has crashed through the
+> wall, time is frozen, a slim young man with short messy black hair seen from behind in the lower left wearing a
+> khaki brown long-sleeve shirt and a dark green apron, in front of him hundreds of shards of glass and broken
+> bricks and coffee cups and drops of coffee hang perfectly still in mid-air, the front of a plain dark red car
+> pushed through the broken wall on the right with its headlights on, pale cyan light glowing on every frozen
+> shard, warm brown interior walls, the upper third of the picture is a calm plain dark wall with nothing on it,
+> dramatic low camera angle, strong diagonal composition, no text, no letters, no logos, no signs, no brand names
+
+### UI-WIN
+The win screen: the yard after the cleaver boss, with Splice's violet. The left half is kept calm for text.
+
+> anime key visual illustration, cel shaded with hard-edged shadows and clean dark line art, flat areas of solid
+> colour, wide cinematic shot of an empty walled city yard at dusk between tall buildings, a heavy steel meat
+> cleaver standing upright with its blade stuck in the pavement on the right side of the picture, a thin trail
+> of glowing violet light curling up from the cleaver into the sky, long shadows, tall apartment towers and
+> water tanks against an orange and violet evening sky, the left half of the picture is calm open sky and
+> plain wall with nothing on it, low camera angle, no people, no text, no letters, no logos, no signs
+
+### UI-LOSE
+The lose screen. Nobody is hurt in it (13+): the take was simply no good.
+
+> anime illustration, cel shaded with hard-edged shadows and clean dark line art, flat areas of solid colour, a
+> dark empty film studio, a single spotlight shining straight down on a dark green cloth apron lying crumpled on
+> the bare floor, a long strip of photographic film snapped in two lying beside it, deep navy darkness all around
+> the circle of light, the upper half of the picture is plain darkness with nothing in it, quiet and still, no
+> people, no blood, no text, no letters, no logos
+
+### UI-TBC
+The demo's last frame, the "to be continued" card. It carries no words, so it can be drawn before issue #17
+decides what the card says. The sky is the calm area.
+
+> anime key visual illustration, cel shaded with hard-edged shadows and clean dark line art, flat areas of solid
+> colour, a slim young man with short messy black hair seen from behind and small in the frame, wearing a khaki
+> brown shirt and a dark green apron, standing in the middle of a narrow city street lined with shop fronts and
+> hanging cables, looking up at one enormous pale white tower far away at the end of the street, on the top of
+> the tower a tiny empty folding chair under a single bright studio lamp, evening sky going from orange to deep
+> violet filling the upper half of the picture, long shadows on the road, no other people, no text, no letters,
+> no logos, no signs with writing
+
+### UI-COVER
+The itch.io cover (630 x 500). Tighter than the title card; the top quarter is kept plain for the name.
+
+> anime key visual illustration, cel shaded with hard-edged shadows and clean dark line art, flat areas of solid
+> colour, a slim young man with short messy black hair wearing a khaki brown long-sleeve shirt with the sleeves
+> pushed up and a dark green apron, seen from the waist up in three quarter view, one open hand raised toward the
+> viewer, a calm tired expression, all around him shards of glass and drops of coffee and a paper coffee cup hang
+> frozen in mid-air glowing pale cyan, behind him a broken brick wall and the headlight of a dark red car, the
+> top quarter of the picture is plain dark wall with nothing on it, strong diagonal composition, no text, no
+> letters, no logos, no brand names
