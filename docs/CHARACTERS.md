@@ -97,6 +97,24 @@ cream `SK_CafeWalker_Walk` and its `Anims` folder are still in the repo, now unu
 
 ![The player, khaki shirt and green apron](media/2026-11-13-player-khaki.png)
 
+### FIXED Sat Nov 14 — his arms and legs were on the wrong sides
+
+Reported as *"the main character and goons arms are mangled looking"*. It was not the model and not the
+skinning: `tools/unreal_retarget_meshy.py` labelled every arm and leg chain with the **opposite side**, so
+the mannequin's right-arm animation played on his left arm — and because `ALIGN=arms` aligns each chain's
+retarget pose chain-to-chain, each arm's rest pose was rotated onto the other arm's as well. That is what
+turned a mirror into a tangle: his right shoulder sat **148.3°** away from straight where the mannequin's
+source clip has **1.1°**.
+
+The rule read the sign of a bone's X against the hip's and had it inverted — Unreal is left-handed, so a
+rig facing +Y has its right side at **−X**. Both Meshy characters face +Y. All 39 `_CWM` clips were
+rebuilt; his right arm now tracks the mannequin's to within 0.07 on every axis. The same bug and the same
+fix apply to `StreetGoon` (see below). The tool now proves the rule against the mannequin's own `_l` / `_r`
+bone names before every run and refuses to retarget if it disagrees.
+`docs/devlog/2026-11-14-the-arms-were-on-the-wrong-sides.md`.
+
+**Still not played by anyone.**
+
 ## The coworker — `CafeCoworker` (beat 1; modelled and rigged Nov 13, **in Unreal since Sat Nov 14, 02:25 UTC**)
 
 The person the player saves in the demo's first beat. She exists because the beat's *lesson* needs a subject:
@@ -296,6 +314,28 @@ Stunt Double in 5), which is more screen time than any boss gets.
   the directional ones (`EnemyAnimHitBack`, `EnemyAnimDeathBack/Left/Right`). All of these are **mannequin
   montages**: when `SK_StreetGoon` goes on (issue #6) every clip in those lists needs retargeting, and its
   root-motion clips need Root Lock = AnimFirstFrame. Recipe: `tools/goon_individual_graphs.py`.
+
+### FIXED Sat Nov 14 — his arms and legs were on the wrong sides, and he had no fingers
+
+Two defects in the same retarget, both silent, both fixed by rebuilding his clips:
+
+1. **Swapped sides.** Every arm and leg chain carried the opposite side label, so the mannequin's right-arm
+   clip drove his left arm and the chain-to-chain alignment rotated each arm's rest pose onto the other
+   arm's. His right shoulder sat **141.6°** from straight against the mannequin's **1.1°**, and his right
+   upper arm pointed *backwards* where the source points out to the side. Cause: the side rule read the
+   sign of X and had it inverted — a rig facing +Y has its right at **−X**.
+2. **No finger chains.** The target rig declared none, so all ten of the mannequin's finger chains were
+   dropped and his hands held their reference pose in every clip — a splayed claw. The chain count went
+   from 9 to **19**.
+
+Rebuilt: 18 fight clips in `MeshyAnims/` (`_SG`) and 21 locomotion clips in `Loco/` (`_SGN`). His anim
+blueprint was not touched. His right arm now tracks the mannequin's to within 0.07 on every axis.
+
+**Why it survived a day of checks:** his walk was verified working on Nov 13 and genuinely was — a walk
+cycle with the legs swapped is the same walk, phase-shifted. Only an asymmetric clip shows it, and the
+first one anybody looked at was a punch. `docs/devlog/2026-11-14-the-arms-were-on-the-wrong-sides.md`.
+
+**Still not played by anyone.**
 
 ### Palette, with the numbers
 
