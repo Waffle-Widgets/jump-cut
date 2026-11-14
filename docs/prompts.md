@@ -223,6 +223,15 @@ and no customers. The second take fixed all of that but drew a 1950s American ca
 street, so the car and the street are now pinned down as modern and Japanese. The driver lies on the floor by
 the open door, not at the wheel, because that is where his body is in the level (-380, 220).
 
+THE GRILLE IS A LOST ARGUMENT, and the honest record is worth more than the prompt. "No badge, no emblem" in the
+prompt and "car badge, car emblem" in the negative were ignored outright. Describing the grille positively instead
+("a plain black horizontal mesh grille whose centre is smooth and empty") got 1 clean take in 3, then 0 in 3 - it
+cut the rate and never ended it. Six takes, one badge-free. So the wording stays (it helps) but the picked take is
+patched afterwards with `tools/promote_ui.py --patch-out`, which is deterministic. Do not spend more takes on this.
+
+The apron, by contrast, WAS fixed by the same lever: see docs/character-locks.json, "say what is there, not what
+is absent". Takes 2 and 3 drew the coworker's back exactly as the lock describes it, which no take had before.
+
 > anime key visual illustration, cel shaded with hard-edged shadows and clean dark line art, flat areas of solid
 > colour, wide cinematic shot inside a small warm wooden city coffee shop in the daytime, a modern plain dark red
 > hatchback car with smooth painted bodywork, black plastic bumpers and a plain black horizontal mesh grille
@@ -263,6 +272,15 @@ The lose screen. Nobody is hurt in it (13+): the take was simply no good.
 The demo's last frame, the "to be continued" card. It carries no words, so it can be drawn before issue #17
 decides what the card says. The sky is the calm area. Rewritten Fri Nov 13 evening: the tower was too close
 and read as a lighthouse at the end of the lane, and the apron was drawn with crossed X straps on the back.
+
+Both are fixed in the picked take. The tower now stands far beyond the end of the street, small and hazy behind the
+rooftops. The back is plain khaki shirt with one green strap at the nape - canonical. It is still mostly luck: of
+four ending-card takes after the lock was reworded, ONE drew the canonical back, one drew a single diagonal strap
+and two drew a full cross-back. Counting the title card too, 2 of 7 post-rewording takes were exactly canonical,
+against 0 of 4 before it. The rewording moved the odds; it did not settle the matter. Draw several takes and look
+at the back of every one before picking. One residual in the pick: his waist ties are
+bowed at the BACK, where the lock has them knotted at the front. Small, and the bib is not visible from behind
+anyway, but it is a difference and it is written down rather than ignored.
 
 > anime key visual illustration, cel shaded with hard-edged shadows and clean dark line art, flat areas of solid
 > colour, {CafeWalker:short} seen from behind and very small and far away at the bottom of the frame, standing
