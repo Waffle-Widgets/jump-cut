@@ -280,6 +280,75 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
 - **`SlateInspector.Type` APPENDS to a textbox, it does not replace.** A leftover `stat fps` turned the next
   command into `stat fpspy /path/to/script.py`, which failed silently. Clear the box with BackSpace presses
   first. It also returns **false** for text containing double quotes - pass an unquoted path.
+- **Clear the console box with ONE BackSpace, not Cmd+A.** `SlateInspector.Type` appends, and the box
+  keeps a leftover `/` between commands, so the next command runs as `py /py /path/...` and fails with
+  "Could not load Python file". `Click` then `Cmd+A` then `Type` does **not** replace the selection -
+  it still appends. A single `PressKey("BackSpace")` before each `Type` is what works. The failure is
+  quiet from the caller's side: `Type` returns **true** either way, and the script simply never runs,
+  so check the thing the script was supposed to write (a file's mtime), never the return value.
+- **Never call `save_dirty_packages` - save your own packages by path.** It saves EVERY dirty package in
+  the project. With another lane's four read-only Blueprints dirty, that save failed, left `.tmp` files
+  in `Saved/`, and the editor stopped answering the MCP for ten minutes. Collect the assets you touched
+  (`list_assets(folder)` -> `load_asset` -> `get_outermost`) and pass those to `save_packages`.
+- **`IKRetargetBatchOperation.duplicate_and_retarget` returns package names you cannot save by.** On a
+  re-run into a folder that already holds `_SG` assets it makes `_SG1` copies and renames them, and the
+  names it hands back are the pre-rename ones - so saving by them saves nothing, and the real assets are
+  discarded later. A folder of 42 retargeted clips came back as **3** on disk twice before this was
+  understood. Retarget, then save the FOLDER by path, in the same script run.
+  **And that is not enough on its own: the same run must not call it twice into one folder.** The street
+  goon's run retargeted the clips, then retargeted the anim blueprint into the same folder, logged
+  `saved 43 packages ok True`, and left **21** assets on disk - every `MF_*`, the blend space and the
+  anim blueprint itself were gone. Do one batch per folder, into a folder that holds nothing with your
+  suffix yet, and afterwards read the folder back off the asset registry and count. Never report the
+  batch call's own return value as the result (`tools/unreal_goon_abp.py`).
+- **A mismatched anim class is SILENT, and it looks exactly like a finished job.** `BP_Goon` wore
+  `SK_StreetGoon` (76-bone Meshy Smart Rig) with Epic's `ABP_Unarmed` assigned - an anim blueprint whose
+  target skeleton is the *mannequin's*. No warning, no error, no log line: the mesh reads as correctly
+  assigned, every montage variable reads as correctly assigned, and the character stands in his reference
+  pose and never moves. **Reading the Blueprint back cannot catch this.** The only check that does is
+  reading the LIVE anim instance's class off a spawned actor in PIE
+  (`comp.get_anim_instance().get_class().get_name()` - `tools/goon_body_test.py`).
+- **The asset registry does not know about a folder a PREVIOUS editor session created.** It is on disk and
+  the Content Browser shows it, but its paths are not in the registry's index, so `does_asset_exist` and a
+  registry `ARFilter` both answer "empty" for assets that are plainly there - which silently defeated an
+  idempotence guard and re-ran a batch retarget. Call
+  `AssetRegistry.scan_paths_synchronous([folder], True)` before trusting either.
+- **`SlateInspector.FillForm` with `fieldType: textbox` REPLACES the box; `Type` appends.** This is the fix
+  for the leftover-`/` console trap below, which the one-`BackSpace` cure does not reliably solve. Use
+  `FillForm` to set the command, then `PressKey("Enter")`, then confirm the `Cmd:` line in the log says
+  what you meant - two commands came out as `py /py /Users/...` and failed silently before this.
+- **An unresponsive editor is not necessarily frozen.** Compiling a freshly retargeted anim blueprint
+  stopped the game thread for **383 seconds** with nothing in the log, which looks identical to the
+  modal-dialog freeze, and recovered on its own. Wait before assuming a dialog and force-closing anything -
+  but tell the two apart by the log, not by `%CPU` (see the note below).
+- **`.wav` auto-imports in this project; `.png` does NOT.** `Config/DefaultEngine.ini` sets Interchange's
+  `bShowImportDialog=False`, so a `.wav` or `.fbx` dropped into `Content/` imports itself within seconds
+  (23 sounds landed that way). A dropped `.png` does **nothing at all** - it needs an explicit
+  `AssetImportTask` with `automated = True` (`tools/unreal_import_ui_fx.py`).
+- **Never copy an image into the DESTINATION `Content/` folder before importing it.** Importing a file that
+  is already inside `Content/` makes the task return an EMPTY `imported_object_paths` while still creating
+  the texture in memory - an unsaved success that reads as a clean failure. Nine FX sheets imported fine from
+  `Art/FX`; seven UI textures "failed" purely because they had been copied into `Content/Game/UI/Textures/`
+  first. Always import from `Art/`.
+- **`does_asset_exist` answers False for an imported-but-unsaved asset.** It is the wrong test for "is this
+  already here" and it silently defeats an idempotence guard. Use `load_asset` (and see the asset-registry
+  scan note above for the other half of this problem).
+- **Taking a source file back OUT of `Content/` wakes the auto-reimport watcher.** It logs
+  `AssetReimport: Attempting to delete <name> (its source file has been removed)` and then churns at high
+  CPU working through the change, which stops the MCP answering for minutes. Put the file back, or better,
+  leave the source beside its asset - which is exactly what `Content/Game/Audio` has always done with its
+  `.wav` files. (It did NOT raise a dialog and nothing was deleted; see the next note, which is how that
+  was established after guessing wrong.)
+- **Use `sample <pid>` to tell a BUSY editor from a BLOCKED one. `%CPU` cannot.** A stack in
+  `FAutoReimportManager::Tick` or a compile is a game thread that is still ticking and will recover; a
+  stack in `RunModal` is a dialog waiting for a person. Both can show a silent log and high CPU - a
+  383-second anim-blueprint compile sat at ~70%, the reimport churn at ~185%, and neither was a modal.
+  On a Mac `screencapture` needs screen-recording permission and `osascript` needs assistive access, so
+  neither can be used to look at the screen; `sample` needs nothing.
+- **An MCP call that times out on the client still RAN in the editor.** A `FillForm` that "failed" had
+  already put its text in the console box, so the next one appended and the command came out as the path
+  twice (`py <path><path>`) and silently did nothing. Recipe: `FillForm` with `""` to clear, `FillForm` the
+  command, `PressKey("Enter")`, then read the `Cmd:` line in the log to confirm what actually ran.
 - **`AssetTools.write_file` only accepts `.csv/.html/.json/.md/.py/.txt` and only under the project roots**, so
   write a capture's base64 to a `.txt` under `Saved/` and decode it outside the editor.
 - The frog's `CameraBoom` has Inherit Yaw off (that keeps the camera north while the frog turns). A spring arm

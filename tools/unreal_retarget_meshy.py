@@ -40,15 +40,45 @@ LIST = ['Unarmed/BS_Idle_Walk_Run', 'Unarmed/MM_Idle',
         'Unarmed/Walk/MF_Unarmed_Walk_Fwd', 'Unarmed/Jog/MF_Unarmed_Jog_Fwd',
         'Unarmed/Jump/MM_Jump', 'Unarmed/Jump/MM_Fall_Loop', 'Unarmed/Jump/MM_Land',
         'Unarmed/Attack/MM_Attack_01', 'Unarmed/Attack/MM_Attack_02', 'Unarmed/Attack/MM_Attack_03',
-        'Rifle/HitReact/MM_HitReact_Front_Lgt_01', 'Death/MM_Death_Front_01']
+        'Unarmed/Attack/MM_ChargedAttack',
+        # the per-hit variety PR #47 gave the goons: without these a Meshy enemy has one hit react
+        # and one death, and three of them look like one creature again
+        'Rifle/HitReact/MM_HitReact_Front_Lgt_01', 'Rifle/HitReact/MM_HitReact_Front_Lgt_02',
+        'Rifle/HitReact/MM_HitReact_Front_Lgt_03', 'Rifle/HitReact/MM_HitReact_Front_Lgt_04',
+        'Rifle/HitReact/MM_HitReact_Front_Med_01', 'Rifle/HitReact/MM_HitReact_Front_Med_02',
+        'Rifle/HitReact/MM_HitReact_Front_Hvy_01', 'Rifle/HitReact/MM_HitReact_Back_Med_01',
+        'Death/MM_Death_Front_01', 'Death/MM_Death_Front_02', 'Death/MM_Death_Front_03',
+        'Death/MM_Death_Back_01', 'Death/MM_Death_Left_01', 'Death/MM_Death_Right_01']
 
 TARGET = sys.argv[1]
 FOLDER = sys.argv[2]
 SUFFIX = sys.argv[3] if len(sys.argv) > 3 else '_MS'
 ALIGN = sys.argv[4] if len(sys.argv) > 4 else 'arms'
 
+ABP_SRC = '/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed'
+
 eal = unreal.EditorAssetLibrary
 out = []
+
+
+def save_folder(folder):
+    """Save every asset in the folder BY PATH, and never call save_dirty_packages.
+
+    Two things learned the hard way on the street goon. First, the batch operation's returned
+    package names can be the pre-rename `_SG1` ones, so saving by those names saves nothing and
+    the real assets are discarded later - a folder of 42 clips came back as 3. Second,
+    save_dirty_packages(False, True) saves EVERY dirty package in the project, which here meant
+    another lane's four read-only Blueprints: the save fails, leaves .tmp files behind, and the
+    editor stops answering for ten minutes."""
+    pkgs = []
+    for p in eal.list_assets(folder, True, False):
+        a = unreal.load_asset(p)
+        if a is not None:
+            pkgs.append(a.get_outermost())
+    pkgs = list({p.get_name(): p for p in pkgs}.values())
+    ok = unreal.EditorLoadingAndSavingUtils.save_packages(pkgs, False)
+    log('saved', len(pkgs), 'packages in', folder, 'ok', ok)
+    return ok
 
 
 def log(*a):
@@ -134,9 +164,18 @@ def work_out_chains(names, par, pos):
         raise RuntimeError('found %d arm branches, expected 2' % len(arms))
     head_chain = straight(head_root)
 
-    # a Meshy character faces +Y in Unreal, so +X is its right
-    def side(b):
-        return 'Right' if pos[b][0] > 0 else 'Left'
+    # Which way does this rig face? Read it off a foot: the toe is in front of the ankle. Then the
+    # character's right is forward x up. Do NOT read side from a clavicle's own X - the street goon's
+    # two clavicles sit at x = +3.9 and +0.4, both on the same side of zero, which made both arms
+    # "Right" and silently cost him one of them. The END of the chain (a hand, a toe) is unambiguous.
+    leg_chain = straight(legs[0])
+    ankle, toe = leg_chain[max(0, len(leg_chain) - 3)], leg_chain[-1]
+    faces_plus_y = (pos[toe][1] - pos[ankle][1]) > 0
+    right_sign = 1.0 if faces_plus_y else -1.0
+    hip_x = pos[hip][0]
+
+    def side(chain):
+        return 'Right' if (pos[chain[-1]][0] - hip_x) * right_sign > 0 else 'Left'
 
     chains, arm_bones = [], []
     chains.append(('Spine', spine[0], spine[-1]))
@@ -147,14 +186,19 @@ def work_out_chains(names, par, pos):
         chains.append(('Head', head_chain[0], head_chain[-1]))
     for b in arms:
         ch = straight(b)                      # clavicle, upperarm, lowerarm, hand...
-        s = side(b)
+        s = side(ch)
         chains.append((s + 'Clavicle', ch[0], ch[0]))
         chains.append((s + 'Arm', ch[1], ch[-1]))
         arm_bones += ch
     for b in legs:
         ch = straight(b)
-        chains.append((side(b) + 'Leg', ch[0], ch[-1]))
-    return {'root': root, 'hip': hip, 'height': round(height, 2),
+        chains.append((side(ch) + 'Leg', ch[0], ch[-1]))
+    names_used = [c[0] for c in chains]
+    dupes = sorted({n for n in names_used if names_used.count(n) > 1})
+    if dupes:
+        raise RuntimeError('two chains got the same name (%s) - the side test failed, and a duplicate '
+                           'name silently replaces the first chain' % ', '.join(dupes))
+    return {'root': root, 'hip': hip, 'height': round(height, 2), 'faces_plus_y': faces_plus_y,
             'chains': chains, 'arm_bones': arm_bones}
 
 
@@ -245,9 +289,21 @@ def run():
         assets, src_mesh, tgt_mesh, rtg, '', '', '', SUFFIX, FOLDER, False, True, True)
     for ad in res:
         log('made', ad.asset_class_path.asset_name, ad.package_name)
-    unreal.EditorLoadingAndSavingUtils.save_dirty_packages(False, True)
-    [eal.save_asset(str(ad.package_name), only_if_is_dirty=False) for ad in res]
     log('retargeted', len(res), 'assets into', FOLDER)
+
+    # The template's anim blueprint goes through the same operation, which brings its locomotion
+    # state machine AND its DefaultSlot (what makes montages play) across with every animation
+    # reference remapped. Doing it in the same run matters: see save_folder below.
+    abp = reg.get_asset_by_object_path(ABP_SRC + '.' + ABP_SRC.split('/')[-1])
+    if abp.is_valid():
+        ares = unreal.IKRetargetBatchOperation.duplicate_and_retarget(
+            [abp], src_mesh, tgt_mesh, rtg, '', '', '', SUFFIX, FOLDER, False, True, True)
+        for ad in ares:
+            log('made', ad.asset_class_path.asset_name, ad.package_name)
+    else:
+        log('ABP source missing', ABP_SRC)
+
+    save_folder(FOLDER)
 
 
 try:

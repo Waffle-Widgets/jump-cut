@@ -466,6 +466,123 @@ three actor packages left dirty by the previous lane are still unsaved in this e
 raise the Save Content modal that freezes the MCP. The 12 changed grey-box packages are on disk (`git status`
 confirms the writes), so the hide survives a reload; that is the evidence, not a reload.
 
+### The sounds and the effect sheets come into Unreal (#52, part) (Sat Nov 14, 03:50 UTC, Justin's Mac mini)
+
+**The asset half of #52 sections 1 and 3 is done. The wiring half is not, so the build is still silent.**
+
+- **Sounds: `/Game/Game/Audio` went from 3 assets to 23.** `Art/Audio/*.wav` copied into `Content/Game/Audio/`
+  and every one auto-imported within seconds. `.wav` auto-import is on in this project and simply works.
+- **Effects: nine SubUV sheets in a new `/Game/Game/FX/Textures`**, which did not exist before today. Imported
+  by `tools/unreal_import_ui_fx.py`, with no mipmaps - which matters as much for a sprite sheet as for a
+  screen, because a mipped sheet bleeds neighbouring FRAMES together.
+- **Screen art (#52 section 2): done.** Seven UI textures in a new `/Game/Game/UI/Textures`, all with
+  `TEXTUREGROUP_UI` and no mipmaps. The itch.io covers are deliberately NOT imported - they are #26, not the
+  game, and an unused 1328x1056 asset is just weight in the package.
+
+**Three traps, all silent, all now in `CLAUDE.md`.** A dropped `.png` does **not** auto-import even though a
+dropped `.wav` and `.fbx` do. Importing an image that is **already inside `Content/`** returns an empty
+`imported_object_paths` while still creating the texture in memory - an unsaved success that reads as a clean
+failure, which is exactly what happened to all seven UI textures and to none of the nine FX sheets (those came
+from `Art/FX`). And `does_asset_exist` answers **False** for an imported-but-unsaved asset, so it is the wrong
+test for "is this already here".
+
+**A correction, because the wrong version of this went into a commit message first.** Clearing the stray
+PNGs back out of `Content/Game/UI/Textures/` woke the auto-reimport watcher (`AssetReimport: Attempting to
+delete T_Icon_Rewind (its source file has been removed)`), the editor went to ~185% CPU with a silent log and
+stopped answering the MCP, and the conclusion recorded was "a Delete Assets modal is up, press Escape".
+**There was no modal.** `sample <pid>` showed the game thread in `FAutoReimportManager::Tick ->
+FAutoReimportManager::Idle` - a thread that is ticking, not one parked in `RunModal`. The watcher was simply
+working through the restored files, nothing was deleted, and the MCP answered again minutes later. Nobody
+needs to press anything. The lesson is `sample <pid>`, not `%CPU`: CPU plus a silent log produced a
+confident, committed, wrong answer. (Commit `a379bbd` / PR #59 carry the wrong version; this entry is the
+correct one.)
+
+Still leave an image source beside its asset rather than tidying it away - `Content/Game/Audio` has always
+kept its `.wav` files that way, and it is why the sounds never hit this.
+
+**What #52 still needs, and it is the expensive half:** not one sound is wired to an event, no SubUV material
+exists, and the title/win/lose textures are not in their widgets - so nothing is audible or visible yet. That is
+graph work across about ten Blueprints, four of which are currently dirty from another lane. Section 4 (the
+three poses) is untouched.
+
+### The street goon gets an anim blueprint of his own (#6) (Sat Nov 14, 03:35 UTC, Justin's Mac mini)
+
+The last of the four import tickets. **#6 is done and `BP_Goon` now animates on his own body.**
+
+**What the previous pass actually left.** It had put `SK_StreetGoon` on `BP_Goon` and wired his 19
+`AM_Goon_*` montages, and its log read `saved 43 packages ok True` - but only **21** assets were in
+`MeshyLoco`. Every `MF_*` locomotion clip, `BS_Idle_Walk_Run_SGL`, `MM_Idle_SGL` and the retargeted anim
+blueprint had been discarded by the `duplicate_and_retarget` rename trap this repo had already written down.
+So `BP_Goon` was left pointing at **Epic's `ABP_Unarmed`**, whose target skeleton is the *mannequin's*, on a
+76-bone Meshy Smart Rig.
+
+**That failure mode is the thing to remember: it is silent and it reads as finished.** A mismatched anim
+class does not warn or error. Mesh assigned, montages assigned, every value correct - and the goon stands in
+his reference pose and never moves. Goons are the enemy in beats 2 and 3, so this would have shipped as three
+statues.
+
+**`tools/unreal_goon_abp.py`** is the fix and the recipe: one batch call, the anim blueprint only, into a
+*fresh* folder (`Imported/StreetGoon/Loco`, suffix `_SGN`) because retargeting into a folder that already
+holds your suffix is what triggers the collision. Its locomotion state machine brings its own dependencies -
+blend space, idle, all 16 walk/jog clips - and Epic's `Slot 'DefaultSlot'`, so the montages keep playing with
+no graph work. **22 assets, read back off the asset registry rather than believed from the return value.**
+
+**The Meshy float, for the third character running.** 16 of the new clips rode **92.5 cm** high;
+`tools/unreal_boss_root_lock.py fix` took all 16 to **0.0**. The goon's montage sources and the player's whole
+`_CWM` set were already locked by earlier lanes and were left alone.
+
+| Checked in Play-In-Editor, three live goons | |
+|---|---|
+| mesh / anim instance | `SK_StreetGoon`, 76 bones posed / **`ABP_Unarmed_SGN_C`** |
+| feet standing | lowest bone **0.5-0.7 cm** above the street |
+| feet throughout | lowest bone stays **83-98 cm below the actor origin** every sample - no float |
+| locomotion | all three walked (46-51 samples each over 10 cm/s) |
+| montages | **9 clips** played: two punches, the feint, four hit reacts, two deaths |
+
+**Nobody has watched it.** Whether the mannequin's punches read on a Meshy body is a judgement.
+
+**One thing found and deliberately not tuned:** a heavy hit react throws a goon to **900 cm/s** and about
+**110 cm into the air** (`actor_z` 92 -> 204 on the fatal hit). His feet are correct relative to his capsule
+throughout, so he is genuinely airborne rather than floating - but whether that reads as impact or as cartoon
+is a feel call. Noted on #11 and #12; it is feature freeze and it is not a defect.
+
+**Tidy-up left for later:** `Imported/StreetGoon/MeshyLoco` still holds the abandoned partial retarget (19
+`MM_*_SGL` clips duplicating `MeshyAnims`' `MM_*_SG`, plus the IK rigs and the `RTG_` the new script reuses).
+Deleting assets opens a modal that freezes the MCP, so it was not done on freeze day with nobody at the
+keyboard.
+
+### The cast stops being mannequins (#5, #7) (Sat Nov 14, 03:00 UTC, Justin's Mac mini)
+
+Two of the four import tickets M Station moved to this Mac. **The coworker (#5)** is in `BP_Coworker`
+and **the player (#7)** is in `BP_Player`; the goon (#6) is in progress.
+
+**#7 was not the mesh swap its ticket describes.** The `SK_CafeWalker` already in Unreal is the
+`trellis_character.py` build - **23 bones with Epic's mannequin names**, with 20 retargeted clips on it -
+while the committed FBX is Meshy's Smart Rig with **69 bones called `Bone_000`**. Nothing transfers between
+them, so the new body needed its own retarget, which is the "nine chains mapped by hand" the cleaver boss
+needed and what #6 warns about.
+
+**`tools/unreal_retarget_meshy.py` is new and does that mapping by itself**, reading the skeleton and
+working out hip, spine, legs, arms and head the way `Art/Blender/meshy_character.py` does in Blender. It
+found and mapped **9 of 9** chains on the player and **9 of 9** on the goon, and it retargets the template's
+whole `ABP_Unarmed` so the locomotion state machine and its `DefaultSlot` come across and montages play
+with no graph work.
+
+| Checked in Play-In-Editor | |
+|---|---|
+| The coworker | **69 bones posed**, z 2.2 → 151.7, at (300, −250, 0), scale (1,1,1) |
+| The player | **69 bones posed**, head 162.5 cm above the feet, anim instance `ABP_Unarmed_CWM_C`, all four montage variables resolving |
+
+**Three defects worth keeping.** Every Meshy FBX in this project imports with **no texture** -
+`M_CafeCoworker` and `M_CafeWalker` both had no `DiffuseColorMap`, which puts a grey character on screen
+with every number still green. The Meshy root sits at pelvis height, so retargeted clips **float**: 86 →
+90.6 cm on the player, 92.5 on the goon, the same bug as the cleaver boss's 113 cm (#46), same one-property
+fix. And a skeletal component added to a Blueprint after an actor was placed **has no pose in the editor
+viewport** - every bone reads z = 0 - while the same actor in PIE is correct; that cost two rebuilds of a
+scale bug that did not exist.
+
+**Nobody has played any of it.** Whether the mannequin's punches read on these bodies is a judgement.
+
 ### Beat 5: the arena recipe, and the fight that has no ending (Sat Nov 14, 00:40 UTC, Justin's Mac mini)
 
 **The editor could not be reached, so this is maker work: two recipe scripts and three findings.** Unreal
