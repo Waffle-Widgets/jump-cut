@@ -159,13 +159,30 @@ lines above are the record of what it brought with it. Every other branch (`Game
 `claude/project-thread-8yvb6s`, `justin/agent-rules`, `mendezm87/anime-look`) is now behind `main` and has nothing
 `main` lacks: anyone resuming one of them merges `main` in first.
 
+**The demo is four beats now, not six** (Justin, Fri Nov 13, 4:30 PM Pacific). "Because of time, we're going
+to focus on beats 1-3 and making that first half be amazing. We might have to move beat 6 (to be continued..)
+to beat 4 and drop the current 4 and 5. Make the plan reflect that as the goal for now. The two dropped beats
+will be nice to haves." So the goal is **cafe -> street -> Splice boss -> "to be continued"**, and the
+destroyed-building platforming and the Stunt Double boss leave the goal for the cut list as nice-to-haves.
+**Nothing is deleted and nothing was removed from the level**: both are built, both are on `main`, and both
+still play. What changed is which work counts as finishing the demo. Two consequences worth reading before
+anyone picks up a task:
+
+- **The ending is now the only unbuilt beat, and it is a decision before it is a build.** It was last in the
+  queue when it was beat 6; it is the finish line now. Nobody has said what the "to be continued" is
+  (issue #17), so issue #10 cannot start.
+- **Splice is granted in beat 3 and the only place it is used is a dropped beat.** The Splice boss still
+  hands over `HasSplice` and the blink still works - but the gaps it exists to cross are now a nice-to-have,
+  so as the demo stands the player receives a power on the last fight and never presses it. That may be
+  exactly the right cliffhanger or exactly the wrong one; it is in "Still to decide", not settled here.
+
 ## Open
 
 | Day | Goal |
 |---|---|
 | Thu Nov 12 | Player + the first power (Freeze Frame) + the first fight, in grey boxes, playable start to finish |
-| Fri Nov 13 | A person plays Thursday's build (the play list in [`FIRST_BUILD_LEDGER.md`](FIRST_BUILD_LEDGER.md)). Then **everything under "Before people playtest" below**, for all six beats of the demo; making the run 3 to 5 minutes and tuning it (it is 25 to 27 s today); first packaged build. Win/lose and restart screens are built (not yet played). **Feature freeze** |
-| Sat Nov 14 | Playtests by people and iterating on what they find; model swaps; art, sound, juice (the flashy combat effects); footage |
+| Fri Nov 13 | A person plays Thursday's build (the play list in [`FIRST_BUILD_LEDGER.md`](FIRST_BUILD_LEDGER.md)). Then **everything under "Before people playtest" below** - now for **beats 1 to 3 and the ending**, not for six beats (the Fri Nov 13 4:30 PM rescope in Decisions); making the run 3 to 5 minutes and tuning it (it is 25 to 27 s today); first packaged build. Win/lose and restart screens are built (not yet played). **Feature freeze** |
+| Sat Nov 14 | Playtests by people and iterating on what they find; **the three character models go in** (`CafeWalker`, `SK_StreetGoon`, `SK_CafeCoworker` - all three are in beats 1 to 3); art, sound, juice (the flashy combat effects); footage |
 | Sun Nov 15 | Bug fixes and submission only |
 
 ### Tonight: the work moves to M Station (Fri Nov 13, 4:20 AM Pacific)
@@ -222,21 +239,41 @@ committed and waiting; she is a green box in beat 1 until someone does), putting
 `ABP_Unarmed` retargeted onto his skeleton (the player and the goons are still Epic's mannequin, and that is the
 most visible thing left in a judging video), building Splice for beat 4, and laying out beats 4 to 6.
 
-### The demo: six story beats (Justin, Nov 12, late evening)
+### The demo: four story beats (Justin, Nov 12, late evening; rescoped by Justin, Fri Nov 13, 4:30 PM Pacific)
 
-The jam entry is **a demo, not the completed game**. It ends after the last boss below.
+The jam entry is **a demo, not the completed game**. **The goal is now beats 1 to 3 made amazing, then a "to
+be continued".** That **supersedes the six-beat plan** this section used to hold (and the Nov 12 decision that
+set it): the destroyed-building platforming and the Stunt Double boss come out of the goal and become
+nice-to-haves. Neither is deleted - both are built, on `main`, and still in the level. "Because of time, we're
+going to focus on beats 1-3 and making that first half be amazing."
+
+Beats 1 to 3 are unchanged, word for word, from the plan Justin wrote on Nov 12:
 
 1. **Cafe.** A peaceful intro at the cafe, interrupted by the car crash. The first boss was driving and is already
    dead. Our protagonist, trying to help, gets his first power, **Freeze Frame**. Then an explosion sends shrapnel
    at a coworker. The action button teaches the player to use Freeze Frame to save the coworker.
 2. **Street.** Wander out to the street. Thugs to fight using the new power.
 3. **The Splice boss.** The next boss approaches, with the Splice power. Battle him and gain the new ability.
-4. **Destroyed buildings.** Platforming across destroyed buildings to get to the final boss, fighting more goons
-   along the way.
-5. **The last boss has Stunt Double.** He spawns stunt doubles of himself that throw themselves in front of
-   your attacks, so you have to Freeze Frame to land a hit on him at all, and he can tag in a double that
-   fights. Settled Fri Nov 13, 12:30 AM Pacific; built and verified the same hour (see Decisions).
-6. **Fade to a "continue"** of some type after that battle.
+
+And the ending, which was beat 6 and is now beat 4:
+
+4. **Fade to a "to be continued"** of some type after beat 3's fight. It is the only one of the four beats
+   with **nothing built** (issue #10), and *what it is* - a screen, a card, a cut to the title - is still
+   undecided (issue #17, "Still to decide" below). Under the old plan it was the last thing in the queue;
+   it is now the thing that finishes the demo.
+
+**Nice to haves (out of the goal, Fri Nov 13, 4:30 PM Pacific - built, kept, not deleted).** Both play
+today and neither is finished as a *beat*. They are also back on the cut list below:
+
+- **Destroyed buildings** (was beat 4, written Nov 12 as: *"platforming across destroyed buildings to get to
+  the final boss, fighting more goons along the way"*). The 600 cm Splice blink and the three gaps are
+  placed, saved and measured; `Marker_Win` sits east of them. **Nobody has pressed Left Shift.**
+- **The last boss has Stunt Double** (was beat 5, written Nov 12 as: *"he spawns stunt doubles of himself
+  that throw themselves in front of your attacks, so you have to Freeze Frame to land a hit on him at all,
+  and he can tag in a double that fights"* - settled Fri Nov 13, 12:30 AM Pacific and built the same hour;
+  conditional again since 4:20 AM, out of the goal since 4:30 PM). The fight, the diving stand-ins and the
+  Freeze Frame counter are built and verified; his arena is **not** placed, killing him **opens nothing**
+  (issue #36), and he has no art (issue #29).
 
 ### Before people playtest (Justin, Nov 12, late evening)
 
@@ -257,18 +294,22 @@ The queue the work-order decision creates. Take the top unfinished line.
 |---|---|
 | 1. Cafe | Crash, Freeze Frame hand-over (touch the driver), auto-freeze and the coworker rescue all work. **Missing from the Team Owner's scene: the day job, the latte art minigame, delivering the drink.** **Her model is made but not imported** (art, not code): `SK_CafeCoworker.fbx` is committed, but `BP_Coworker` is still a green box until the builder imports her |
 | 2. Street | **Done** - goons, fists, animation. Tuning only: one combo clears all three in about 1.0 s. **Their model is made but not imported** (art, not code): `SK_StreetGoon.fbx` is committed, but `BP_Goon` still wears Epic's mannequin until the builder imports him, and they are the enemy in beats 2 to 5. Designed, drawn and modelled Nov 13, see `StreetGoon` in [`CHARACTERS.md`](CHARACTERS.md#the-goons--streetgoon-beats-2-to-5) |
-| 3. Splice boss | Fight works. He hands over `HasSplice`, which **now opens the Splice blink** (below) |
-| 4. Destroyed buildings | **Built and in the level.** The **Splice power** (600 cm blink, Left Shift / gamepad B) and the **platforming section** are both done: 23 actors placed and saved in `Lvl_JumpCut` - three gaps (250 open, 400 and 400 roofed at 215), a 10x15 m landing pad for beat 5, a checkpoint and two goons. Measured after a reload from disk: walkway flush at `z=0`, jump reaches 288 cm against the 400 cm gaps, blink crosses. **Nobody has played it.** See below |
-| 5. Stunt Double boss | Fight and doubles built, and **Splice past the attack stand-in is measured, not argued** - 600.0 cm straight through `BP_StuntStandIn`, not shoved, because its capsule and mesh both ignore the Visibility channel the blink traces. **But the beat cannot be finished: `BP_StuntDouble` has no `BossExitGate` and no power hand-over, so killing him opens nothing** (read out of the assets, below). Also unbuilt: the attack stand-in's despawn timer, his arena (not placed), and his art. Recipes for the first three: `tools/beat5_graphs.py` and `tools/beat5_arena.py` |
-| 6. Fade to "continue" | **Nothing built**, and what it even is has not been decided (Still to decide, below) |
+| 3. Splice boss | Fight works. He hands over `HasSplice`, which **now opens the Splice blink** (below). **This is the last fight in the demo** as of the Fri Nov 13 4:30 PM rescope, so the ending hangs off his death - and the wiring for that already exists on him: `EnemyDefeatedHook -> BossExitGate.PlazaGateOpenForGood` |
+| 4. "To be continued" | **Nothing built, and the top unfinished line in the demo.** Was beat 6. Needs a decision on what it is (issue #17) before it can be built (issue #10). **Where the demo ends is also now open** (issue #37): `Marker_Win` is at (14400, 0, 0), on the Stunt Double's landing pad, two dropped beats east of beat 3 - see "Still to decide" |
+| ~~4~~. Destroyed buildings | **Nice to have, out of the goal (Fri Nov 13, 4:30 PM).** **Built and in the level.** The **Splice power** (600 cm blink, Left Shift / gamepad B) and the **platforming section** are both done: 23 actors placed and saved in `Lvl_JumpCut` - three gaps (250 open, 400 and 400 roofed at 215), a 10x15 m landing pad for beat 5, a checkpoint and two goons. Measured after a reload from disk: walkway flush at `z=0`, jump reaches 288 cm against the 400 cm gaps, blink crosses. **Nobody has played it.** See below |
+| ~~5~~. Stunt Double boss | **Nice to have, out of the goal (Fri Nov 13, 4:30 PM).** Fight and doubles built, and **Splice past the attack stand-in is measured, not argued** - 600.0 cm straight through `BP_StuntStandIn`, not shoved, because its capsule and mesh both ignore the Visibility channel the blink traces. **But the beat cannot be finished: `BP_StuntDouble` has no `BossExitGate` and no power hand-over, so killing him opens nothing** (read out of the assets, below). Also unbuilt: the attack stand-in's despawn timer, his arena (not placed), and his art. Recipes for the first three: `tools/beat5_graphs.py` and `tools/beat5_arena.py` |
 
-**Beat 4 is built.** Splice and the gaps it exists for are both in the level. What beat 4 still needs is a
-person to play it. Beat 5's Splice decision is no longer blocked, and its arena is the landing pad.
+**The top unfinished line is now beat 4, the ending**, and it is a decision before it is a build: nothing can
+be built until somebody says what the "to be continued" is (issue #17). Everything above it in the table is
+built; what beats 1 to 3 need is **their art in, their numbers tuned and a person playing them** - which is
+what "making that first half be amazing" means in work terms.
 
-**Beat 5 is the top unfinished line now, and it is further from done than its row used to read.** Its
-mechanics work; its *beat* does not exist. There is no arena in the level, nothing happens when the boss
-dies, and the win marker currently sits in the middle of his landing pad, so today the player wins the demo
-by walking onto the arena before the fight starts.
+**One live defect the rescope makes sharper, not softer.** `Marker_Win` is at (14400, 0, 0), in the middle of
+the Stunt Double's landing pad - beat 4's placer parked it there and its own header says it must move once
+beat 5 is placed. Under the six-beat plan that meant *the player wins early*. Under the four-beat plan it
+means **the demo's ending is sitting two dropped beats east of where the demo now ends**, so a player who
+beats the Splice boss walks out of the plaza, across the platforming and onto an empty pad to finish. Moving
+it is level work on a `.uasset`, so it is written here rather than done - see "Still to decide".
 
 ### Beat 4's platforming is built and in the level (Fri Nov 13, 23:20 UTC, Justin's Mac mini)
 
@@ -619,8 +660,35 @@ in case playtesting shows we need it. Still not something to build from: only a 
   Git history, and it shows who built what* - so this is a submission-facing detail, not tidiness. Fixing it means
   rewriting commits already pushed to `playtest`, which GameStation and at least one other chat have, so it is
   a force-push and needs saying out loud first. The alternative is to leave them and note it in the submission.
-- **What the "continue" after the last fight is** (beat 6): a screen, a card, a cut to the title?
-- **Does the player get Stunt Double in the demo**, or does it end when its boss falls?
+- **What the "to be continued" is** (now **beat 4**, was beat 6): a screen, a card, a cut to the title? This
+  was the last question in the queue and is now the **first**: it is the demo's ending and the only beat in
+  the goal with nothing built (issue #17 blocks issue #10).
+- **Where the demo ends, and what happens to the two nice-to-have beats in the level** (new, Fri Nov 13,
+  4:30 PM Pacific, from the rescope - **issue #37**). `Marker_Win` is at (14400, 0, 0) on the Stunt Double's
+  landing pad.
+  Three ways, and this is a person's call because all three are level edits on a `.uasset`:
+  1. **End at the plaza.** Move `Marker_Win` just east of the plaza exit gate, so beating the Splice boss
+     walks you into the "to be continued". Tightest demo, and the Splice boss's own
+     `BossExitGate -> PlazaGateOpenForGood` already fires on his death, so the trigger exists. The
+     platforming and the Stunt Double's pad are then built content nobody reaches.
+  2. **Keep them as a coda.** Leave `Marker_Win` east and let the platforming (and, if it gets an arena,
+     the Stunt Double) sit between beat 3 and the ending as an optional stretch. Gives Splice something to
+     do; makes the demo longer and the "first half" harder to call amazing, because the last thing a judge
+     plays is the half we deprioritised.
+  3. **Hide them.** Keep the actors, block the route east of the plaza, decide later. Cheap to undo.
+- ~~**Does the player get Stunt Double in the demo**, or does it end when its boss falls?~~ **Answered Fri
+  Nov 13, 4:30 PM Pacific** by the rescope, not by a separate decision: the boss who would hand it over is
+  out of the goal, so **the demo does not hand out Stunt Double**. If he comes back off the cut list, this
+  question comes back with him (issue #21).
+- **The GitHub beat labels keep the Nov 12 numbering** (not a decision, a note so nobody renumbers them
+  mid-jam): `beat-6` is the ending that is now beat 4, and `beat-4` / `beat-5` are the two nice-to-haves.
+  The board changes the rescope did make: #9, #29 and #36 moved to the out-of-scope milestone; #10 and #17
+  are critical-path as the ending and its blocker; #21 is closed, answered by the rescope; **#37 is new**,
+  for where the demo ends.
+- **Does Splice stay a reward with nothing to spend it on?** (new, Fri Nov 13, 4:30 PM Pacific.) See the
+  second bullet in "Where we are". Either the beat-3 hand-over *is* the cliffhanger ("you just got a new
+  power" -> to be continued, which costs nothing), or the demo needs one place inside beats 1 to 3 to press
+  Left Shift, or the platforming comes back as the coda above. Nobody has decided.
 - ~~**Where Freeze Frame is handed over:** only at the driver, or also at the cafe door?~~ **Settled Fri Nov 13,
   2:35 AM Pacific** by the Team Owner's scene: only at the driver, and only by touching him. Both markers are off.
 - **What sets off the explosion.** The Team Owner said "we can play with what sets it off". It is now a **2.0 s**
@@ -630,18 +698,27 @@ in case playtesting shows we need it. Still not something to build from: only a 
 - ~~**Is the cafe day job in the demo?**~~ **Settled Fri Nov 13, 2:55 AM Pacific**, as an ordering rather than a
   cut: the day job and the **latte art minigame** get built *after* the beats up to and including the Splice boss
   play through with their art in. Until that bar is met the demo opens on the crash. See Decisions.
+  **The Fri Nov 13 4:30 PM rescope makes that bar the whole goal**, so this is no longer a question about a
+  stretch goal at the end of a six-beat list: the minigame is the next *new* feature the moment beats 1 to 3
+  play through with their models in, and it is in the beat the rescope says to make amazing (issue #24).
 - **How long and how hard the game is at default numbers.** A scripted run takes 25 to 27 s against the 3 to 5
   minutes we want, and the fights are easy. Only people playing it can say what to change.
 
 ## Cut list (in the order we drop things)
 
-The Stunt Double boss and the Splice platforming section were numbers 2 and 3 here until Nov 12, late evening.
-They are beats 5 and 4 of the demo now (Decisions), so they are off this list.
+The Stunt Double boss and the Splice platforming section were numbers 2 and 3 here until Nov 12, late
+evening, when they became beats 5 and 4 of the demo and came off this list. **They are back on it as of Fri
+Nov 13, 4:30 PM Pacific** (Decisions), at the top, because the demo's goal is now beats 1 to 3 plus the
+ending. The difference from the first time they were listed: both are **already built**, so dropping them
+costs nothing and keeping them costs only the work of finishing them as beats (an arena, a death hand-over,
+a despawn timer, art). They are nice-to-haves, and this is the order they come back in if there is time.
 
-1. Factions with different behaviour, and factions fighting each other
-2. Dialogue: one line of text per power instead
-3. A full rewind of the world (already cut: the parked Rewind only moves the player back)
-4. More than one level
+1. The destroyed-building platforming (built; nobody has pressed Left Shift)
+2. The Stunt Double boss (built; no arena, killing him opens nothing, no art)
+3. Factions with different behaviour, and factions fighting each other
+4. Dialogue: one line of text per power instead
+5. A full rewind of the world (already cut: the parked Rewind only moves the player back)
+6. More than one level
 
 ## Later
 
@@ -649,6 +726,20 @@ _(nothing yet)_
 
 ## Decisions
 
+- **2026-11-13 (4:30 PM Pacific): the demo is four beats - 1 to 3 plus the "to be continued" - and the
+  platforming and the Stunt Double boss become nice-to-haves** (Justin). "Because of time, we're going to
+  focus on beats 1-3 and making that first half be amazing. We might have to move beat 6 (to be continued..)
+  to beat 4 and drop the current 4 and 5. Make the plan reflect that as the goal for now. The two dropped
+  beats will be nice to haves." This **supersedes the Nov 12 six-beat demo plan** (below) and **completes the
+  Fri Nov 13 4:20 AM narrowing** that had already made boss 3 conditional: he is now out of the goal
+  outright, and the platforming leaves with him. It is a **scope decision, not a deletion** - both beats are
+  built, on `main`, still in the level, and back on the cut list at positions 1 and 2, so either can return
+  if beats 1 to 3 land early. What it changes in practice: the ending moves from last in the queue to the
+  only unbuilt beat in the goal; the three committed character models (`CafeWalker`, `SK_StreetGoon`,
+  `SK_CafeCoworker`) all live in beats 1 to 3 and so are now the most valuable unfinished work in the repo;
+  the run-length problem gets harder, because the two beats that added minutes are the ones that left; and
+  Splice becomes a power handed over in the last fight with nowhere in the goal to use it. The last two are
+  open questions in "Still to decide", not answered here.
 - **2026-11-13 (12:57 PM Pacific): merge `playtest` into `main` on feature-freeze day, before any tester
   confirmed it** (Manny, the Team Owner). "merge". `CLAUDE.md` says the builder merges when testers confirm;
   nobody had played the Splice blink, none of the city had been imported, and there was no packaged build. The

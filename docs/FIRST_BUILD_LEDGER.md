@@ -104,7 +104,14 @@ shoulder = Rewind (parked, does nothing).
 13. **The cleaver boss:** a red ball warns of each punch; he never freezes you. Beat him once with E and
     once without. Beating him grants **Splice** and the HUD gains a third power box.
 14. **Lose on purpose (to the goons, then to the boss):** "CUT!" and the world holds still. R or A restarts at the right place with full health.
-15. **Beat 4, the destroyed buildings:** east of the plaza exit. Gap 1 is a 250 cm hop. Gaps 2 and 3 are
+> **Steps 15 and 16 are now optional extras, not part of the demo** (Justin, Fri Nov 13, 4:30 PM Pacific:
+> the demo is beats 1 to 3 plus a "to be continued" - see Decisions in [`ROADMAP.md`](ROADMAP.md)). They are
+> built and they play, so play them if there is time and report what you find; but **nothing in them blocks
+> the entry**, and if time is short stop after step 14 and tell us how beats 1 to 3 felt instead. The demo's
+> own ending is not built yet, and `Marker_Win` still sits east of both of these sections, so today the only
+> way to reach a win screen is to walk through them.
+
+15. **Beat 4, the destroyed buildings** (optional extra)**:** east of the plaza exit. Gap 1 is a 250 cm hop. Gaps 2 and 3 are
     400 cm with a collapsed slab 215 cm overhead, so a jump cannot clear them - **press Left Shift** to
     blink across. **Nobody has pressed Left Shift.** The blink is a fixed 600 cm and does not stop at a
     gap, so you must launch from the eastern 2 m of a 5 m platform; blink from the wrong end and you
