@@ -2,7 +2,7 @@
  "units": "cm",
  "note": "Unreal world coordinates for Lvl_JumpCut. Z is the actor origin; every model stands on its own origin at z = 0 except wall-mounted ones, whose geometry starts at its mounting height.",
  "generated_by": "tools/jumpcut_city_layout.py",
- "generated_at_pacific": "2026-11-14 01:38",
+ "generated_at_pacific": "2026-11-14 03:45",
  "mesh_path": "/Game/Game/Imported/City/",
  "supersedes_greybox": [
   "C1_Cafe_WallN",
@@ -2330,7 +2330,7 @@
   {
    "label": "City_Hedge_S5",
    "model": "SM_Hedge",
-   "x": 9140.0,
+   "x": 9110.0,
    "y": -1415.0,
    "z": 0,
    "yaw": 0
@@ -2438,6 +2438,574 @@
    "y": 430.0,
    "z": 0,
    "yaw": 200
+  },
+  {
+   "label": "City_AlleyBackN0",
+   "model": "SM_ShopHouse_C",
+   "x": -1060.0,
+   "y": 560.0,
+   "z": 0,
+   "yaw": 180
+  },
+  {
+   "label": "City_AlleyBackN1",
+   "model": "SM_BlockFiller",
+   "x": -2120.0,
+   "y": 560.0,
+   "z": 0,
+   "yaw": 180
+  },
+  {
+   "label": "City_Alley_Duct",
+   "model": "SM_DuctRun",
+   "x": -690.0,
+   "y": -430.0,
+   "z": 0,
+   "yaw": 90
+  },
+  {
+   "label": "City_Alley_Meter",
+   "model": "SM_MeterBox",
+   "x": -680.0,
+   "y": 480.0,
+   "z": 0,
+   "yaw": 90
+  },
+  {
+   "label": "City_Alley_Gas",
+   "model": "SM_GasBottles",
+   "x": -900.0,
+   "y": -430.0,
+   "z": 0,
+   "yaw": 90
+  },
+  {
+   "label": "City_Alley_Bin0",
+   "model": "SM_Dumpster",
+   "x": -1180.0,
+   "y": -46.0,
+   "z": 0,
+   "yaw": 6
+  },
+  {
+   "label": "City_Alley_Bin1",
+   "model": "SM_Dumpster",
+   "x": -1710.0,
+   "y": 460.0,
+   "z": 0,
+   "yaw": 180
+  },
+  {
+   "label": "City_Alley_Trash0",
+   "model": "SM_TrashBags",
+   "x": -1480.0,
+   "y": -48.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Alley_Trash1",
+   "model": "SM_TrashBags",
+   "x": -960.0,
+   "y": 470.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Alley_Crates",
+   "model": "SM_CrateStack",
+   "x": -1820.0,
+   "y": -54.0,
+   "z": 0,
+   "yaw": 20
+  },
+  {
+   "label": "City_Alley_DuctN",
+   "model": "SM_DuctRun",
+   "x": -1320.0,
+   "y": 545.0,
+   "z": 0,
+   "yaw": 180
+  },
+  {
+   "label": "City_Alley_DuctS",
+   "model": "SM_DuctRun",
+   "x": -1100.0,
+   "y": -96.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Alley_MeterN",
+   "model": "SM_MeterBox",
+   "x": -1680.0,
+   "y": 545.0,
+   "z": 0,
+   "yaw": 180
+  },
+  {
+   "label": "City_Alley_MeterS",
+   "model": "SM_MeterBox",
+   "x": -1480.0,
+   "y": -96.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Alley_Stair",
+   "model": "SM_FireStair",
+   "x": -2050.0,
+   "y": 470.0,
+   "z": 0,
+   "yaw": 180
+  },
+  {
+   "label": "City_Alley_Pot",
+   "model": "SM_PotRow",
+   "x": -760.0,
+   "y": 470.0,
+   "z": 0,
+   "yaw": 90
+  },
+  {
+   "label": "City_Alley_DuctN2",
+   "model": "SM_DuctRun",
+   "x": -2430.0,
+   "y": 545.0,
+   "z": 0,
+   "yaw": 180
+  },
+  {
+   "label": "City_Alley_MeterS2",
+   "model": "SM_MeterBox",
+   "x": -2240.0,
+   "y": -96.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Alley_Bin2",
+   "model": "SM_Dumpster",
+   "x": -2600.0,
+   "y": 470.0,
+   "z": 0,
+   "yaw": 176
+  },
+  {
+   "label": "City_Alley_Gas2",
+   "model": "SM_GasBottles",
+   "x": -2330.0,
+   "y": 500.0,
+   "z": 0,
+   "yaw": 180
+  },
+  {
+   "label": "City_Alley_Trash2",
+   "model": "SM_TrashBags",
+   "x": -2720.0,
+   "y": -50.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Alley_Crates2",
+   "model": "SM_CrateStack",
+   "x": -1340.0,
+   "y": 440.0,
+   "z": 0,
+   "yaw": 190
+  },
+  {
+   "label": "City_Alley_Hoard0",
+   "model": "SM_Hoarding_990",
+   "x": -1560.0,
+   "y": -96.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Alley_Hoard1",
+   "model": "SM_Hoarding_990",
+   "x": -2560.0,
+   "y": -96.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Alley_Lamp",
+   "model": "SM_StreetLamp",
+   "x": -1900.0,
+   "y": 530.0,
+   "z": 0,
+   "yaw": 180
+  },
+  {
+   "label": "City_Alley_Grate0",
+   "model": "SM_DrainGrate",
+   "x": -1150.0,
+   "y": 120.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Alley_Grate1",
+   "model": "SM_DrainGrate",
+   "x": -2600.0,
+   "y": -60.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Alley_HitBin",
+   "model": "SM_Dumpster",
+   "x": -2320.0,
+   "y": -210.0,
+   "z": 0,
+   "yaw": 28
+  },
+  {
+   "label": "City_Alley_HitCone0",
+   "model": "SM_TrafficCone",
+   "x": -1950.0,
+   "y": -150.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Alley_HitCone1",
+   "model": "SM_TrafficCone",
+   "x": -2650.0,
+   "y": 190.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Alley_HitGrate",
+   "model": "SM_DrainGrate",
+   "x": -1700.0,
+   "y": -250.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_AvenueVan0",
+   "model": "SM_KeiVan",
+   "x": -2850.0,
+   "y": 620.0,
+   "z": 0,
+   "yaw": 90
+  },
+  {
+   "label": "City_AvenueVan1",
+   "model": "SM_KeiVan",
+   "x": -3000.0,
+   "y": -660.0,
+   "z": 0,
+   "yaw": 270
+  },
+  {
+   "label": "City_Van_0",
+   "model": "SM_KeiVan",
+   "x": 1810.0,
+   "y": -345.0,
+   "z": 0,
+   "yaw": 0.0
+  },
+  {
+   "label": "City_Van_1",
+   "model": "SM_KeiVan",
+   "x": 2550.0,
+   "y": 345.0,
+   "z": 0,
+   "yaw": 180.0
+  },
+  {
+   "label": "City_Van_2",
+   "model": "SM_KeiVan",
+   "x": 5910.0,
+   "y": -345.0,
+   "z": 0,
+   "yaw": 0.0
+  },
+  {
+   "label": "City_Front_S00_ShopDisplay",
+   "model": "SM_ShopDisplay",
+   "x": 728.4,
+   "y": -455.0,
+   "z": 0,
+   "yaw": 0.0
+  },
+  {
+   "label": "City_Front_S01_PotRow",
+   "model": "SM_PotRow",
+   "x": 2009.1,
+   "y": -455.0,
+   "z": 0,
+   "yaw": 0.0
+  },
+  {
+   "label": "City_Front_N02_AFrameSign",
+   "model": "SM_AFrameSign",
+   "x": 1448.9,
+   "y": 345.0,
+   "z": 0,
+   "yaw": 180.0
+  },
+  {
+   "label": "City_Front_S03_ShopDisplay",
+   "model": "SM_ShopDisplay",
+   "x": 2231.4,
+   "y": -455.0,
+   "z": 0,
+   "yaw": 0.0
+  },
+  {
+   "label": "City_Front_N04_AFrameSign",
+   "model": "SM_AFrameSign",
+   "x": 2347.0,
+   "y": 345.0,
+   "z": 0,
+   "yaw": 180.0
+  },
+  {
+   "label": "City_Front_S05_ShopDisplay",
+   "model": "SM_ShopDisplay",
+   "x": 2946.0,
+   "y": -455.0,
+   "z": 0,
+   "yaw": 0.0
+  },
+  {
+   "label": "City_Front_N06_PotRow",
+   "model": "SM_PotRow",
+   "x": 2590.5,
+   "y": 455.0,
+   "z": 0,
+   "yaw": 180.0
+  },
+  {
+   "label": "City_Front_S07_AFrameSign",
+   "model": "SM_AFrameSign",
+   "x": 3623.7,
+   "y": -345.0,
+   "z": 0,
+   "yaw": 0.0
+  },
+  {
+   "label": "City_Front_N08_PotRow",
+   "model": "SM_PotRow",
+   "x": 3541.2,
+   "y": 455.0,
+   "z": 0,
+   "yaw": 180.0
+  },
+  {
+   "label": "City_Front_S09_AFrameSign",
+   "model": "SM_AFrameSign",
+   "x": 4012.8,
+   "y": -345.0,
+   "z": 0,
+   "yaw": 0.0
+  },
+  {
+   "label": "City_Front_N10_PotRow",
+   "model": "SM_PotRow",
+   "x": 3889.3,
+   "y": 455.0,
+   "z": 0,
+   "yaw": 180.0
+  },
+  {
+   "label": "City_Front_S11_AFrameSign",
+   "model": "SM_AFrameSign",
+   "x": 4876.6,
+   "y": -345.0,
+   "z": 0,
+   "yaw": 0.0
+  },
+  {
+   "label": "City_Front_N12_PotRow",
+   "model": "SM_PotRow",
+   "x": 4899.0,
+   "y": 455.0,
+   "z": 0,
+   "yaw": 180.0
+  },
+  {
+   "label": "City_Front_S13_ShopDisplay",
+   "model": "SM_ShopDisplay",
+   "x": 5359.7,
+   "y": -455.0,
+   "z": 0,
+   "yaw": 0.0
+  },
+  {
+   "label": "City_Front_N14_ShopDisplay",
+   "model": "SM_ShopDisplay",
+   "x": 5614.8,
+   "y": 455.0,
+   "z": 0,
+   "yaw": 180.0
+  },
+  {
+   "label": "City_Front_S15_ShopDisplay",
+   "model": "SM_ShopDisplay",
+   "x": 5901.7,
+   "y": -455.0,
+   "z": 0,
+   "yaw": 0.0
+  },
+  {
+   "label": "City_Grate_S0",
+   "model": "SM_DrainGrate",
+   "x": 1150.0,
+   "y": -248.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Grate_N0",
+   "model": "SM_DrainGrate",
+   "x": 1150.0,
+   "y": 248.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Grate_S1",
+   "model": "SM_DrainGrate",
+   "x": 1970.0,
+   "y": -248.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Grate_N1",
+   "model": "SM_DrainGrate",
+   "x": 1970.0,
+   "y": 248.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Grate_S2",
+   "model": "SM_DrainGrate",
+   "x": 2790.0,
+   "y": -248.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Grate_N2",
+   "model": "SM_DrainGrate",
+   "x": 2790.0,
+   "y": 248.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Grate_S3",
+   "model": "SM_DrainGrate",
+   "x": 3610.0,
+   "y": -248.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Grate_N3",
+   "model": "SM_DrainGrate",
+   "x": 3610.0,
+   "y": 248.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Grate_S4",
+   "model": "SM_DrainGrate",
+   "x": 4430.0,
+   "y": -248.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Grate_N4",
+   "model": "SM_DrainGrate",
+   "x": 4430.0,
+   "y": 248.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Grate_S5",
+   "model": "SM_DrainGrate",
+   "x": 5250.0,
+   "y": -248.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Grate_N5",
+   "model": "SM_DrainGrate",
+   "x": 5250.0,
+   "y": 248.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Grate_S6",
+   "model": "SM_DrainGrate",
+   "x": 6070.0,
+   "y": -248.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Grate_N6",
+   "model": "SM_DrainGrate",
+   "x": 6070.0,
+   "y": 248.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Front_Bin",
+   "model": "SM_Dumpster",
+   "x": 2740.0,
+   "y": -440.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Front_Gas",
+   "model": "SM_GasBottles",
+   "x": 1170.0,
+   "y": 470.0,
+   "z": 0,
+   "yaw": 180
+  },
+  {
+   "label": "City_Front_Trash",
+   "model": "SM_TrashBags",
+   "x": 1200.0,
+   "y": -475.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Front_DuctS",
+   "model": "SM_DuctRun",
+   "x": 900.0,
+   "y": -494.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Front_DuctN",
+   "model": "SM_DuctRun",
+   "x": 1180.0,
+   "y": 494.0,
+   "z": 0,
+   "yaw": 180
   },
   {
    "label": "City_Near_S00",
