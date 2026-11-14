@@ -57,6 +57,9 @@ the plainest design of the three: no coat, no weapon, no insignia.
 
 `BP_Player` was Epic's `SKM_Quinn_Simple` until now. It is the **khaki** `SK_CafeWalker` - the Nov 13
 remake, not the cream model that failed the colour rule.
+*(Superseded Sat Nov 14, 22:33 UTC: he now wears `SK_CafeWalkerV2` on the same skeleton — see
+"`BP_Player` now wears it" below. Everything in this section about the skeleton, the clips and the
+anim blueprint still holds, because the reskin kept all of them.)*
 
 **This was not a mesh swap, because the two CafeWalkers are different skeletons.** What was already in
 Unreal (`SK_CafeWalker_Walk`, imported Nov 12 with 20 retargeted clips and a blend space) is the
@@ -175,14 +178,41 @@ Import with `tools/unreal_import_char_v2.py` (headless: `UnrealEditor-Cmd.exe <u
 -run=pythonscript -script="<repo>/tools/unreal_import_char_v2.py save"`). It checks the skeleton by
 object identity and refuses rather than quietly building a second one.
 
-**`BP_Player` still wears the Nov 13 `SK_CafeWalker`.** Importing the body is not swapping it in;
-that is a one-property change on `BP_Player.CharacterMesh0` and it is deliberately left for a person,
-because the main character the day before submission is not something to change untested. Known
-caveats on the reskin, from #96: 18 of 21 finger bones carry weight (the shipped mesh weights all
-21), and max deformation error is 14.1 cm against the shipped mesh's 15.5 cm.
+Known caveats on the reskin, from #96: 18 of 21 finger bones carry weight (the shipped mesh weights
+all 21), and max deformation error is 14.1 cm against the shipped mesh's 15.5 cm.
 
-**Nobody has played it, and nobody has seen it under the cel shader.** The pictures above are
-Blender renders of the committed FBX with the committed texture on its own UVs.
+### Sat Nov 14, 22:33 UTC — `BP_Player` now wears it (M Station)
+
+On the Team Owner's say-so, `BP_Player.CharacterMesh0.skeletal_mesh_asset` is
+`/Game/Game/Imported/CafeWalkerV2/SK_CafeWalkerV2`. One property; `tools/unreal_player_body_v2.py`
+(`measure` | `swap`) does it and checks it.
+
+**Why it is only one property.** V2 is on the same `SK_CafeWalker_Skeleton` **object**, so the
+component's `anim_class` (`ABP_Unarmed_CWM`) and all five `AM_CafeWalker_*` montages still apply —
+the saved asset's name table still carries every one of them, with `SK_CafeWalker` gone and
+`SK_CafeWalkerV2` in its place. Both bodies are **175.0 cm with feet at z = 0**, so the component's
+`z = -90` offset seats him identically; `relative_rotation`, `relative_scale3d` and the empty
+`override_materials` are unchanged, verified before and after. The placed actor `Player_Main` carries
+**no mesh override** of its own (its external-actor package imports no skeletal mesh), so the CDO
+change reaches it.
+
+![the player in his new body](media/2026-11-14-player-wears-cafewalker-v2.jpg)
+
+**Seen in the editor under the cel shader for the first time** (top panel): the apron reads as a
+front panel with trousers down both sides, and the back is a plain shirt and two separate legs. The
+skirt is gone in the game, not just in Blender.
+
+**A control that settles #72, found by accident.** In the frame he renders with his face and shirt
+blown to near-white — but the **identical V2 mesh spawned as a plain `SkeletalMeshActor` one metre
+away, same light, same frame, keeps its eyes, eyebrows and khaki shirt** (bottom panel, left figure).
+So the washout is not the body or its texture. The difference is
+`BP_Player.CharacterMesh0.render_custom_depth = True` — a fresh component defaults to `False` — and
+the live look `MI_AnimeLook_JumpCut` holds `CharLevel 0.95`, so only custom-depth pixels get the
+character band and clip. V1 had the same component setting, so this is **not a regression from the
+swap**; it is #72, now with a clean control. The fix #72 proposes (`CharLevel` 0.55) is still the
+Team Owner's call because it restyles the character.
+
+**Nobody has played it.** The pictures are the editor rendering its own level from a scripted camera.
 
 ## The coworker — `CafeCoworker` (beat 1; modelled and rigged Nov 13, **in Unreal since Sat Nov 14, 02:25 UTC**)
 

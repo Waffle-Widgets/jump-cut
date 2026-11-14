@@ -318,6 +318,13 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   a ticket that quotes a look parameter without saying `_JumpCut` was measured on the wrong asset - including the
   12%-wide band figure above and the character-blur radius on ticket #72. Check the PostProcessVolume's
   `weightedBlendables` for the real one before touching a parameter.
+- **The cel look's `Char*` parameters only touch pixels that write custom depth, and the player is the only
+  thing that does.** `BP_Player.CharacterMesh0` has `render_custom_depth = True`; a fresh `SkeletalMeshComponent`
+  defaults to `False`. With `MI_AnimeLook_JumpCut`'s `CharLevel` at **0.95**, his light skin and khaki shirt clip
+  to near-white, while the **identical mesh spawned as a plain `SkeletalMeshActor` one metre away, in the same
+  frame and the same light, keeps its eyes and its khaki shirt** (`docs/media/2026-11-14-player-wears-cafewalker-v2.jpg`).
+  So: before blaming a character's art or its texture for washing out, **spawn the same mesh as a control**. That
+  one screenshot is what separates "the bake is wrong" from "#72 is doing this", and it costs a minute.
 - **Do not "fix" toon flicker by turning off temporal anti-aliasing - it makes it much worse.** The tempting
   reasoning is that TSR blends a posterised image and smears the bands; that part is true. But the post-process
   material runs at `BL_SceneColorBeforeDOF`, which is **before** the temporal upscaler
