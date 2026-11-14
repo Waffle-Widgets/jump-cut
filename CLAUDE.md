@@ -301,6 +301,22 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   anim blueprint itself were gone. Do one batch per folder, into a folder that holds nothing with your
   suffix yet, and afterwards read the folder back off the asset registry and count. Never report the
   batch call's own return value as the result (`tools/unreal_goon_abp.py`).
+- **Unreal is left-handed, so a character's right is `up x forward`.** `tools/unreal_retarget_meshy.py`
+  shortcut that to the sign of a bone's X against the hip's and had it **inverted**: a rig facing +Y has
+  its right side at **-X**. Both Meshy characters face +Y, so every arm and leg chain was labelled with
+  the wrong side and the mannequin's right-arm clip played on the character's left - and because
+  `ALIGN=arms` calls `auto_align_bones(CHAIN_TO_CHAIN)`, each arm's retarget pose was rotated onto the
+  **other arm's**, which is what turns a mirror into limbs folded across the body ("the arms look
+  mangled"). **A left/right swap passes every internal check there is:** chain names stay unique, all 19
+  map, the batch runs, and the assets read back as exactly what the script meant to build. Verify a
+  geometric rule against a rig whose answer you already know - `check_side_rule()` runs it on the
+  mannequin's own `_l`/`_r` bone names before every retarget and refuses if it disagrees.
+  **And a symmetric clip hides it:** the goons' walk was signed off as correct the day before and was,
+  because a walk with the legs swapped is a walk phase-shifted. Judge a retarget on an asymmetric clip.
+- **A Meshy target rig has no finger chains unless you build them**, so all ten of the mannequin's are
+  dropped and the hands hold their reference pose in every clip - a splayed claw on a body built from an
+  A-pose sheet. `finger_chains()` names the five branches off each hand (thumb = the branch that leaves
+  the palm sideways soonest) the way Epic's auto definition names the mannequin's.
 - **A mismatched anim class is SILENT, and it looks exactly like a finished job.** `BP_Goon` wore
   `SK_StreetGoon` (76-bone Meshy Smart Rig) with Epic's `ABP_Unarmed` assigned - an anim blueprint whose
   target skeleton is the *mannequin's*. No warning, no error, no log line: the mesh reads as correctly

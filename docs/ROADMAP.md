@@ -178,6 +178,19 @@ anyone picks up a task:
 
 ## Open
 
+### FIXED Sat Nov 14 — the player's and the goons' arms were mangled
+
+Reported by the Team Owner as *"the main character and goons arms are mangled looking"*. It was a
+left/right swap in `tools/unreal_retarget_meshy.py`: every arm and leg chain on both Meshy characters
+carried the **opposite** side label, so the mannequin's right-arm clip drove the character's left arm,
+and the chain-to-chain alignment rotated each arm's rest pose onto the other arm's on top of that. All
+78 clips rebuilt (39 `_CWM`, 18 `_SG`, 21 `_SGN`); both characters' right arms now track the mannequin's
+to within 0.07 on every axis. The same rebuild also brought in the finger chains the rigs had never had.
+
+**Nobody has played it.** The verification is the editor evaluating clips, not a person watching a
+punch — that is the Sat Nov 14 playtest's job, and it is the first thing to look at.
+Details: `docs/devlog/2026-11-14-the-arms-were-on-the-wrong-sides.md`.
+
 | Day | Goal |
 |---|---|
 | Thu Nov 12 | Player + the first power (Freeze Frame) + the first fight, in grey boxes, playable start to finish |
