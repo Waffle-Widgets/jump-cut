@@ -73,6 +73,99 @@ def material(name):
     return m
 
 
+# --------------------------------------------------------------------------- z-fight guard (issue #67)
+# The kit's habit is to draw a detail FLUSH with the surface it sits on: a fascia box whose front face is the
+# wall's front face, a sign's lit quad laid exactly on the face of its own casing, a glass quad across the
+# front of the posts that frame it. Two faces of different materials on one plane, facing the same way, is
+# z-fighting: the depth test ties and the tie breaks differently every time the camera moves, so the border
+# of the detail shimmers under motion and is rock steady when you stand still. Measured Sat Nov 14 on the
+# exported FBXs: 36 of the kit's models carried it, including all three objects circled on the playtest
+# screenshot (SM_CafeSign 18,900 cm2, SM_CafeShell 84,780 cm2, SM_CafePastryCase 1,656 cm2).
+# The cure is the one a sign-writer uses: the smaller face stands PROUD of the bigger one. 4 mm is invisible
+# at any distance the player reaches and is ~4 orders of magnitude more than a 32-bit reversed-Z depth
+# buffer needs at 100 m. Same-material overlaps are left alone: both faces are the same flat colour.
+PROUD = 0.004
+
+
+def _tri_overlap(a, b):
+    """Area shared by two 2D triangles (Sutherland-Hodgman)."""
+    def area(p):
+        return 0.5 * sum(p[i][0] * p[(i + 1) % len(p)][1] - p[(i + 1) % len(p)][0] * p[i][1] for i in range(len(p)))
+    if area(b) < 0:
+        b = b[::-1]
+    out = list(a)
+    for i in range(3):
+        if not out:
+            return 0.0
+        (x1, y1), (x2, y2) = b[i], b[(i + 1) % 3]
+        inp, out = out, []
+        for j in range(len(inp)):
+            c, d = inp[j], inp[(j + 1) % len(inp)]
+            sc = (x2 - x1) * (c[1] - y1) - (y2 - y1) * (c[0] - x1)
+            sd = (x2 - x1) * (d[1] - y1) - (y2 - y1) * (d[0] - x1)
+            if sc >= 0:
+                out.append(c)
+            if (sc >= 0) != (sd >= 0):
+                t = sc / (sc - sd)
+                out.append((c[0] + t * (d[0] - c[0]), c[1] + t * (d[1] - c[1])))
+    return abs(area(out)) if len(out) >= 3 else 0.0
+
+
+def stand_proud(bm, proud=PROUD):
+    """Lift every face that shares a plane with a bigger face of ANOTHER material. Returns how many moved."""
+    bm.normal_update()
+    planes = {}
+    for f in bm.faces:
+        n = f.normal
+        if n.length < 0.5 or f.calc_area() < 1e-7:
+            continue
+        key = (round(n.x, 3) + 0.0, round(n.y, 3) + 0.0, round(n.z, 3) + 0.0, round(n.dot(f.verts[0].co), 4) + 0.0)
+        planes.setdefault(key, []).append(f)
+    tris = {}
+    for loops in bm.calc_loop_triangles():
+        tris.setdefault(loops[0].face, []).append([lp.vert.co.copy() for lp in loops])
+    level, plane_of = {}, {}
+    for key, faces in planes.items():
+        if len({f.material_index for f in faces}) < 2:
+            continue
+        n = Vector(key[:3]).normalized()
+        u = n.cross(Vector((1, 0, 0)) if abs(n.x) < 0.9 else Vector((0, 1, 0))).normalized()
+        v = n.cross(u)
+        flat = {f: [[(p.dot(u), p.dot(v)) for p in t] for t in tris.get(f, [])] for f in faces}
+        box = {}
+        for f in faces:
+            pts = [p for t in flat[f] for p in t]
+            box[f] = (min(p[0] for p in pts), min(p[1] for p in pts), max(p[0] for p in pts), max(p[1] for p in pts))
+        order = sorted(faces, key=lambda f: (-f.calc_area(), f.index))      # biggest first: it stays put
+        for i, f in enumerate(order):
+            lv = 0
+            for g in order[:i]:
+                if g.material_index == f.material_index and level.get(g, 0) == 0:
+                    continue
+                if box[f][0] >= box[g][2] or box[g][0] >= box[f][2] or box[f][1] >= box[g][3] or box[g][1] >= box[f][3]:
+                    continue
+                if g.material_index == f.material_index and level.get(g, 0) <= lv:
+                    continue
+                if sum(_tri_overlap(a, c) for a in flat[f] for c in flat[g]) > 1e-5:   # 0.1 cm2
+                    lv = max(lv, level.get(g, 0) + (1 if g.material_index != f.material_index else 0))
+            if lv:
+                level[f] = lv
+            plane_of[f] = key
+    moved = {}                                             # vert -> {plane key: metres}
+    for f, lv in level.items():
+        key = plane_of[f]
+        for v in list(f.verts):
+            mates = [g for g in v.link_faces if g is not f and plane_of.get(g) == key]
+            if any(level.get(g, 0) != lv for g in mates):
+                v = bmesh.utils.face_vert_separate(f, v)   # its neighbour on this plane stays behind
+            moved.setdefault(v, {})[key] = lv * proud
+    for v, by_plane in moved.items():
+        for key, d in by_plane.items():
+            v.co += Vector(key[:3]).normalized() * d
+    bm.normal_update()
+    return len(level)
+
+
 class B:
     """A small mesh builder: boxes, quads and tubes with a material slot, a vertex colour and real-scale UVs."""
 
@@ -299,6 +392,11 @@ class B:
     def finish(self, name, weld=True):
         if weld:
             bmesh.ops.remove_doubles(self.bm, verts=list(self.bm.verts), dist=0.0008)
+        # The footprint the layout tiles with is taken BEFORE anything stands proud, so city_models.json and
+        # every placement computed from it stay byte-identical: a facade detail lifted 4 mm must not widen
+        # a building by 8 and march the whole lane along.
+        cs = [v.co.copy() for v in self.bm.verts]
+        self.proud = stand_proud(self.bm)
         me = bpy.data.meshes.new(name)
         self.bm.to_mesh(me)
         self.bm.free()
@@ -309,6 +407,10 @@ class B:
         bpy.context.scene.collection.objects.link(o)
         for s in self.slots:
             o.data.materials.append(material(s))
+        if cs:
+            o['jc_box'] = [min(c.x for c in cs), max(c.x for c in cs), min(c.y for c in cs), max(c.y for c in cs),
+                           min(c.z for c in cs), max(c.z for c in cs)]
+        o['jc_proud'] = self.proud
         return o
 
 
@@ -2955,6 +3057,9 @@ def main():
     for name, _ in MODELS:
         o = bpy.data.objects[name]
         bb = [Vector(c) for c in o.bound_box]
+        if 'jc_box' in o:                                   # the footprint before stand_proud(), see finish()
+            jb = o['jc_box']
+            bb = [Vector((jb[i], jb[2 + j], jb[4 + k])) for i in (0, 1) for j in (0, 1) for k in (0, 1)]
         boxes[name] = {
             'x': [round(min(p.x for p in bb) * 100, 1), round(max(p.x for p in bb) * 100, 1)],
             'y': [round(-max(p.y for p in bb) * 100, 1), round(-min(p.y for p in bb) * 100, 1)],
