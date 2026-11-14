@@ -317,9 +317,30 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   for the leftover-`/` console trap below, which the one-`BackSpace` cure does not reliably solve. Use
   `FillForm` to set the command, then `PressKey("Enter")`, then confirm the `Cmd:` line in the log says
   what you meant - two commands came out as `py /py /Users/...` and failed silently before this.
-- **An unresponsive editor at high CPU is working, not frozen.** Compiling a freshly retargeted anim
-  blueprint stopped the game thread for **383 seconds** with nothing in the log, which looks identical to
-  the modal-dialog freeze. Check the process's `%CPU` before assuming a dialog and force-closing anything.
+- **An unresponsive editor is not necessarily frozen.** Compiling a freshly retargeted anim blueprint
+  stopped the game thread for **383 seconds** with nothing in the log, which looks identical to the
+  modal-dialog freeze, and recovered on its own. Wait before assuming a dialog and force-closing anything -
+  but tell the two apart by the log, not by `%CPU` (see the note below).
+- **`.wav` auto-imports in this project; `.png` does NOT.** `Config/DefaultEngine.ini` sets Interchange's
+  `bShowImportDialog=False`, so a `.wav` or `.fbx` dropped into `Content/` imports itself within seconds
+  (23 sounds landed that way). A dropped `.png` does **nothing at all** - it needs an explicit
+  `AssetImportTask` with `automated = True` (`tools/unreal_import_ui_fx.py`).
+- **Never copy an image into the DESTINATION `Content/` folder before importing it.** Importing a file that
+  is already inside `Content/` makes the task return an EMPTY `imported_object_paths` while still creating
+  the texture in memory - an unsaved success that reads as a clean failure. Nine FX sheets imported fine from
+  `Art/FX`; seven UI textures "failed" purely because they had been copied into `Content/Game/UI/Textures/`
+  first. Always import from `Art/`.
+- **`does_asset_exist` answers False for an imported-but-unsaved asset.** It is the wrong test for "is this
+  already here" and it silently defeats an idempotence guard. Use `load_asset` (and see the asset-registry
+  scan note above for the other half of this problem).
+- **Taking a source file back OUT of `Content/` is as dangerous as deleting the asset.** The editor's
+  auto-reimport watcher logs `AssetReimport: Attempting to delete <name> (its source file has been removed)`
+  and raises the same **Delete Assets** modal that freezes the MCP until a person presses Escape (Escape
+  keeps the assets). Restoring the file does not dismiss a dialog that is already up. Leave the source
+  beside its asset - which is exactly what `Content/Game/Audio` has always done with its `.wav` files.
+- **High CPU alone does not mean "working".** A 383-second anim-blueprint compile sat at ~70% CPU and
+  recovered on its own; a Delete Assets modal sat at ~185% with the log completely silent and never did.
+  Judge a stalled editor by whether the **log is still ticking**, not by `%CPU`.
 - **`AssetTools.write_file` only accepts `.csv/.html/.json/.md/.py/.txt` and only under the project roots**, so
   write a capture's base64 to a `.txt` under `Saved/` and decode it outside the editor.
 - The frog's `CameraBoom` has Inherit Yaw off (that keeps the camera north while the frog turns). A spring arm
