@@ -5,6 +5,9 @@
 
 Made Fri Nov 13 on M Station. **44 models, 20,615 triangles for the whole city**, 1.2 MB of FBX, **0 Meshy
 credits and nothing uploaded anywhere.** 216 placements are worked out and checked against the real level.
+**Since then:** eleven set pieces for beats 1 to 3 (the crashed car, the boss lot's walls and floor, the
+gate, the checkpoint) — see [Set pieces](#set-pieces--the-last-grey-boxes-up-to-the-cleaver-boss-fri-nov-13-evening).
+The kit is now **55 models, 24,947 triangles**, and the layout **245 placements**.
 
 For scale: the entire city — every building, the coffee shop and its fittings, every sign, pole and vending
 machine — costs **fewer triangles than one character** (`SK_StreetGoon` is 18,000 on its own).
@@ -158,6 +161,62 @@ level".
 
 **Still not seen by a person.** Everything above is traces, counts and one editor screenshot — nobody has
 played it.
+
+## Set pieces — the last grey boxes up to the cleaver boss (Fri Nov 13, evening)
+
+The Team Owner asked for everything up to and including the Splice boss to come out of grey boxes and
+mannequins. The characters for that were already made (and are waiting on the builder: issues #5, #6, #7).
+What had **no model at all** was the scenery the first build left as boxes after the city went in. Eleven
+more models, same kit, same rules — **4,332 triangles, 0 credits, nothing uploaded**:
+
+| Model | Replaces | Notes |
+|---|---|---|
+| `SM_CrashCar` | `C1_Cafe_Car`, `C1_Cafe_CarCab` (two red boxes) | 3.88 × 1.76 × 1.43 m, nose east, bonnet sprung, front bumper hanging. **Right-hand drive with the driver's door open on the +Y side** — the side his body lies on at (−380, 220) |
+| `SM_Shrapnel` | the red bar in `BP_Shrapnel` | 79 cm torn strip of the car's own bodywork, long axis X, centred |
+| `SM_YardWall_1250` ×4, `SM_YardWall_3040` ×2 | the six `C1_Plaza_Wall*` boxes | brick yard wall, 4 m, dressed on the arena face only: shutters, barred windows, blank posters, bulkhead lamps |
+| `SM_Hoarding_990` ×2 | `C1_Run_WallN`, `C1_Run_WallS` | demolition-site hoarding — the run leads to beat 4 |
+| `SM_PlazaGate` | the scaled cube in `BP_PlazaGate` | 0.4 × 5 × 4 m roller gate, **origin at its centre** like the cube |
+| `SM_CheckpointPost`, `SM_CheckpointTaken` | `PostMesh` and `TakenSign` in `BP_Checkpoint` | a film-set light stand carrying a slate; the "taken" sign is the slate lit, with a tick |
+| `SM_PlazaPaving` | nothing — the boss lot had a grey floor | 30 × 30 m, two-tone slabs, a ring where the boss stands. **No collision** |
+| `SM_Crosswalk` ×4, `SM_RoadLines` ×8 | nothing — the lane had a grey floor | paint, 1 cm above the floor. **No collision** |
+
+**Every wall keeps the footprint of the box it replaces.** The plaza fight was tuned inside those boxes, so
+a prettier wall that stands 20 cm further in is a different arena. `jumpcut_city_layout.py` now carries a
+`REPLACES` table — label, the grey box, its centre and size from `tools/c1_layout.py` — and fails the layout
+if any replacement reaches more than 16 cm past its box into the play space. The check was proved by moving
+a wall 30 cm in and watching it fail. The car's open door is the one allowed overhang (it swings 83 cm out
+of the red box, towards the body) and is checked separately so it cannot cover the driver.
+
+**The ground.** `Floor_Base` and `C1_Floor_RunExtra` still wear `M_GreyFloor`. The placer's `hide` and `add`
+modes now put `M_CityRoof` (dark asphalt) on them, and `show` puts the grey back. Without that the white
+road paint and the paving have nothing to read against.
+
+**To put them in** (builder; the city is already placed and saved, so use `add`, which leaves the 224
+existing actors and their packages alone):
+
+1. `git pull` with Unreal **closed**, then copy the eleven new FBX from `Art/Blender/export/City/` into
+   `JumpCut/Content/Game/Imported/City/` with Unreal open.
+2. `py C:/Users/thecl/code/jump-cut/tools/jumpcut_city_place.py add` — places the 21 new actors, hides ten
+   more grey boxes (18 in all), and sets the asphalt. Look, then save.
+3. **Four meshes go inside Blueprints and the script does not touch Blueprints.** It prints them; they are
+   also in `city_layout.json` under `blueprint_meshes`:
+   - `BP_PlazaGate.GateMesh` → `SM_PlazaGate`, **relative scale back to (1, 1, 1)** (the cube was 0.4 × 5 × 4)
+   - `BP_Checkpoint.PostMesh` → `SM_CheckpointPost`, scale (1, 1, 1), z = 0
+   - `BP_Checkpoint.TakenSign` → `SM_CheckpointTaken`, scale (1, 1, 1); keep `M_CheckGreen` on its
+     `MS_CitySignB` slot if the checkpoint should stay green
+   - `BP_Shrapnel`'s bar → `SM_Shrapnel`, scale (1, 1, 1)
+
+**Checked:** all eleven FBX re-imported into a clean Blender — one mesh each, within 1.5 cm, triangle counts
+exact, every slot an existing `MS_City*` name, so **no new material is needed**. Layout regenerated: 245
+actors, no problems. Rendered from where the player stands (`city_layout_cafe_car.png`,
+`city_layout_plaza_in.png`, `city_layout_exit_run.png`, and `city_set_*.png` close-ups).
+
+**Not checked:** none of it has been in Unreal. `set_ground()` and the `add` mode were written on M Station
+and have never been run. The hidden grey boxes **keep their collision** — that is deliberate for the walls
+and the car (identical arena), but it means the car's open door has the mesh's own collision on top; if the
+player snags on it reaching the driver, switch the car to `WALK_THROUGH` and let the red box do the blocking.
+`BP_Shrapnel`'s and `BP_Checkpoint`'s current component transforms are not written down anywhere, so the
+scales above are the intent, not a measurement.
 
 ## Beat 4 — pieces made, not placed
 

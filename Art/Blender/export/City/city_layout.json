@@ -2,7 +2,7 @@
  "units": "cm",
  "note": "Unreal world coordinates for Lvl_JumpCut. Z is the actor origin; every model stands on its own origin at z = 0 except wall-mounted ones, whose geometry starts at its mounting height.",
  "generated_by": "tools/jumpcut_city_layout.py",
- "generated_at_pacific": "2026-11-13 15:33",
+ "generated_at_pacific": "2026-11-13 16:37",
  "mesh_path": "/Game/Game/Imported/City/",
  "supersedes_greybox": [
   "C1_Cafe_WallN",
@@ -12,8 +12,48 @@
   "C1_Cafe_WallE_North",
   "C1_Cafe_Counter",
   "C1_Street_BuildingN",
-  "C1_Street_BuildingS"
+  "C1_Street_BuildingS",
+  "C1_Cafe_Car",
+  "C1_Plaza_WallE_North",
+  "C1_Plaza_WallE_South",
+  "C1_Plaza_WallN",
+  "C1_Plaza_WallS",
+  "C1_Plaza_WallW_North",
+  "C1_Plaza_WallW_South",
+  "C1_Run_WallN",
+  "C1_Run_WallS",
+  "C1_Cafe_CarCab"
  ],
+ "ground": {
+  "labels": [
+   "Floor_Base",
+   "C1_Floor_RunExtra"
+  ],
+  "slot": "MS_CityRoof",
+  "greybox_material": "/Game/Game/Materials/M_GreyFloor"
+ },
+ "blueprint_meshes": {
+  "SM_PlazaGate": {
+   "blueprint": "BP_PlazaGate",
+   "component": "GateMesh",
+   "set": "static mesh; relative scale back to (1, 1, 1) - the cube was scaled 0.4 x 5 x 4 and this model is already that size, centred on its origin like the cube"
+  },
+  "SM_CheckpointPost": {
+   "blueprint": "BP_Checkpoint",
+   "component": "PostMesh",
+   "set": "static mesh; relative scale (1, 1, 1), relative location z = 0 - it stands on its origin, 229 cm tall"
+  },
+  "SM_CheckpointTaken": {
+   "blueprint": "BP_Checkpoint",
+   "component": "TakenSign",
+   "set": "static mesh; relative scale (1, 1, 1); centred on its origin, 60 x 50 cm, face on local +Y. Keep M_CheckGreen on slot MS_CitySignB if green is wanted"
+  },
+  "SM_Shrapnel": {
+   "blueprint": "BP_Shrapnel",
+   "component": "the red bar mesh",
+   "set": "static mesh; relative scale (1, 1, 1); long axis is local X, 79 cm, centred"
+  }
+ },
  "keep_clear": {
   "road_half_width": 260.0,
   "gate_half_width": 300.0,
@@ -208,6 +248,14 @@
    "yaw": 0
   },
   {
+   "label": "City_CafeCrashCar",
+   "model": "SM_CrashCar",
+   "x": -520,
+   "y": 0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
    "label": "City_LaneS_00__C",
    "model": "SM_ShopHouse_C",
    "x": 1057.0,
@@ -288,12 +336,28 @@
    "yaw": 0.0
   },
   {
+   "label": "City_RoadLines_00",
+   "model": "SM_RoadLines",
+   "x": 1030.0,
+   "y": 0.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
    "label": "City_KerbS_01",
    "model": "SM_Kerb",
    "x": 1830.0,
    "y": -260.0,
    "z": 0,
    "yaw": 0.0
+  },
+  {
+   "label": "City_RoadLines_01",
+   "model": "SM_RoadLines",
+   "x": 1830.0,
+   "y": 0.0,
+   "z": 0,
+   "yaw": 0
   },
   {
    "label": "City_KerbS_02",
@@ -304,12 +368,28 @@
    "yaw": 0.0
   },
   {
+   "label": "City_RoadLines_02",
+   "model": "SM_RoadLines",
+   "x": 2630.0,
+   "y": 0.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
    "label": "City_KerbS_03",
    "model": "SM_Kerb",
    "x": 3430.0,
    "y": -260.0,
    "z": 0,
    "yaw": 0.0
+  },
+  {
+   "label": "City_RoadLines_03",
+   "model": "SM_RoadLines",
+   "x": 3430.0,
+   "y": 0.0,
+   "z": 0,
+   "yaw": 0
   },
   {
    "label": "City_KerbS_04",
@@ -320,6 +400,14 @@
    "yaw": 0.0
   },
   {
+   "label": "City_RoadLines_04",
+   "model": "SM_RoadLines",
+   "x": 4230.0,
+   "y": 0.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
    "label": "City_KerbS_05",
    "model": "SM_Kerb",
    "x": 5030.0,
@@ -328,12 +416,28 @@
    "yaw": 0.0
   },
   {
+   "label": "City_RoadLines_05",
+   "model": "SM_RoadLines",
+   "x": 5030.0,
+   "y": 0.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
    "label": "City_KerbS_06",
    "model": "SM_Kerb",
    "x": 5830.0,
    "y": -260.0,
    "z": 0,
    "yaw": 0.0
+  },
+  {
+   "label": "City_RoadLines_06",
+   "model": "SM_RoadLines",
+   "x": 5830.0,
+   "y": 0.0,
+   "z": 0,
+   "yaw": 0
   },
   {
    "label": "City_LaneN_00__B",
@@ -462,6 +566,30 @@
    "y": 260.0,
    "z": 0,
    "yaw": 180.0
+  },
+  {
+   "label": "City_Crosswalk_0",
+   "model": "SM_Crosswalk",
+   "x": 900.0,
+   "y": 0.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Crosswalk_1",
+   "model": "SM_Crosswalk",
+   "x": 3300.0,
+   "y": 0.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_Crosswalk_2",
+   "model": "SM_Crosswalk",
+   "x": 6380.0,
+   "y": 0.0,
+   "z": 0,
+   "yaw": 0
   },
   {
    "label": "City_Pole_S00",
@@ -1456,6 +1584,14 @@
    "yaw": 0
   },
   {
+   "label": "City_CrosswalkAvenue",
+   "model": "SM_Crosswalk",
+   "x": -1900.0,
+   "y": 0.0,
+   "z": 0,
+   "yaw": 90
+  },
+  {
    "label": "City_PlazaTower",
    "model": "SM_PlazaTower",
    "x": 8120.0,
@@ -1600,6 +1736,62 @@
    "yaw": 270
   },
   {
+   "label": "City_PlazaWall_W_North",
+   "model": "SM_YardWall_1250",
+   "x": 6620.0,
+   "y": 875.0,
+   "z": 0,
+   "yaw": 270
+  },
+  {
+   "label": "City_PlazaWall_W_South",
+   "model": "SM_YardWall_1250",
+   "x": 6620.0,
+   "y": -875.0,
+   "z": 0,
+   "yaw": 270
+  },
+  {
+   "label": "City_PlazaWall_E_North",
+   "model": "SM_YardWall_1250",
+   "x": 9620.0,
+   "y": 875.0,
+   "z": 0,
+   "yaw": 90
+  },
+  {
+   "label": "City_PlazaWall_E_South",
+   "model": "SM_YardWall_1250",
+   "x": 9620.0,
+   "y": -875.0,
+   "z": 0,
+   "yaw": 90
+  },
+  {
+   "label": "City_PlazaWall_N",
+   "model": "SM_YardWall_3040",
+   "x": 8120.0,
+   "y": 1520.0,
+   "z": 0,
+   "yaw": 180
+  },
+  {
+   "label": "City_PlazaWall_S",
+   "model": "SM_YardWall_3040",
+   "x": 8120.0,
+   "y": -1520.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_PlazaPaving",
+   "model": "SM_PlazaPaving",
+   "x": 8120.0,
+   "y": 0.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
    "label": "City_RunN_A",
    "model": "SM_ShopHouse_B",
    "x": 9900.0,
@@ -1660,6 +1852,22 @@
    "model": "SM_TrashBags",
    "x": 10050.0,
    "y": -200.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_RunWall_N",
+   "model": "SM_Hoarding_990",
+   "x": 10135.0,
+   "y": 265.0,
+   "z": 0,
+   "yaw": 180
+  },
+  {
+   "label": "City_RunWall_S",
+   "model": "SM_Hoarding_990",
+   "x": 10135.0,
+   "y": -265.0,
    "z": 0,
    "yaw": 0
   },
