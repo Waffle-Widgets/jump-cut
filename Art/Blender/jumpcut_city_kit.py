@@ -363,10 +363,15 @@ def shopfront(b, x0, x1, y, h=3.0, glass='MS_CityGlass', rng=None, door=True):
 
 def parapet(b, x0, x1, y0, y1, z, h=0.95, t=0.22):
     """The low wall round a flat roof. It is what makes a roofline read as a building and not a cut-off box."""
-    b.box((x0, y0, z), (x1, y0 + t, z + h), 'MS_CityConcrete', 1.0)
-    b.box((x0, y1 - t, z), (x1, y1, z + h), 'MS_CityConcrete', 1.0)
-    b.box((x0, y0, z), (x0 + t, y1, z + h), 'MS_CityConcrete', 1.0)
-    b.box((x1 - t, y0, z), (x1, y1, z + h), 'MS_CityConcrete', 1.0)
+    # A real parapet is capped with coping, and the coping is the line you actually see: this is the building's
+    # edge against the sky, so it is the one chamfer in the kit that every building in every shot gets value
+    # from. `top=` rolls that top edge; the corner chamfer cuts INWARD so the roofline keeps its footprint.
+    cap = min(0.05, t * 0.3)
+    ch = min(0.045, t * 0.22)
+    b.cbox((x0, y0, z), (x1, y0 + t, z + h), 'MS_CityConcrete', 1.0, ch=ch, top=cap)
+    b.cbox((x0, y1 - t, z), (x1, y1, z + h), 'MS_CityConcrete', 1.0, ch=ch, top=cap)
+    b.cbox((x0, y0, z), (x0 + t, y1, z + h), 'MS_CityConcrete', 1.0, ch=ch, top=cap)
+    b.cbox((x1 - t, y0, z), (x1, y1, z + h), 'MS_CityConcrete', 1.0, ch=ch, top=cap)
     b.quad([(x0, y0, z), (x0, y1, z), (x1, y1, z), (x1, y0, z)], 'MS_CityRoof', 0.8)
 
 
@@ -381,10 +386,13 @@ def band_sides(b, x0, x1, y0, y1, z0, nfl, fh=FH, slot='MS_CityConcrete', out=0.
     """
     for fl in range(1, nfl + 1):
         z = z0 + fl * fh
-        b.box((x0 - out, y0 - out, z - t), (x1 + out, y0, z), slot, 0.92)
-        b.box((x0 - out, y1, z - t), (x1 + out, y1 + out, z), slot, 0.92)
-        b.box((x0 - out, y0, z - t), (x0, y1, z), slot, 0.92)
-        b.box((x1, y0, z - t), (x1 + out, y1, z), slot, 0.92)
+        # The band's underside is a drip edge on a real building, and a bevelled bottom gives the outline pass
+        # a second, softer line under the hard one - which is what stops a floor band reading as a glued-on slab.
+        bev = min(0.035, t * 0.18)
+        b.cbox((x0 - out, y0 - out, z - t), (x1 + out, y0, z), slot, 0.92, ch=bev, bot=bev)
+        b.cbox((x0 - out, y1, z - t), (x1 + out, y1 + out, z), slot, 0.92, ch=bev, bot=bev)
+        b.cbox((x0 - out, y0, z - t), (x0, y1, z), slot, 0.92, ch=bev, bot=bev)
+        b.cbox((x1, y0, z - t), (x1 + out, y1, z), slot, 0.92, ch=bev, bot=bev)
 
 
 def roof_clutter(b, x0, x1, y0, y1, z, rng, tank=False, n=3):
