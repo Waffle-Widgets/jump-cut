@@ -142,10 +142,22 @@ That check is not decoration. It caught **17 real collisions** that none of the 
 cause: a floor band added to the building sides widened every building by 14 cm while the layout script was
 still using a hand-kept width table. Widths are now read from the kit's own measured footprints.
 
-**Not checked.** `tools/jumpcut_city_place.py` **has never been run** — it was written on M Station, which is
-a maker and has no Unreal. The geometry and the placements are verified; the Unreal calls in that script are
-written from this repo's own existing editor scripts and have not been executed. **Expect to fix a line, not
-a layout.** Nothing has been seen in Unreal, in the cel shader, or by a person.
+~~**Not checked.** `tools/jumpcut_city_place.py` has never been run.~~ **Run for the first time on Justin's
+Mac mini, Fri Nov 13, 23:55 UTC**, and the prediction held exactly: **one line** needed fixing
+(`set_editor_property('hidden_in_game', ...)` is not an `AActor` property; it is `set_actor_hidden_in_game()`),
+and the layout itself needed none. 37 models imported, **224 actors placed and saved**, 8 grey boxes hidden,
+verified after a reload from disk. It also gained a `prepare_meshes()` step it never had: Interchange turns
+Nanite **on** and builds one auto convex hull, and both are wrong for this kit.
+
+**The layout itself needed two fixes, and neither was visible.** The committed `city_layout.json` was **eight
+actors out of date** — it predated the `City_Avenue*` block, so the New York avenue the car crashes in from
+existed in the generator and nowhere else. And `City_Landmark` stood at (12600, 0), which is inside beat 4's
+platforming run; beat 4 was placed after this layout was authored, so the checker had never heard of it. The
+checker now carries a `beat 4 run` no-go box and the tower is at x = 16200. See ROADMAP, "The city is in the
+level".
+
+**Still not seen by a person.** Everything above is traces, counts and one editor screenshot — nobody has
+played it.
 
 ## Beat 4 — pieces made, not placed
 

@@ -2,7 +2,7 @@
  "units": "cm",
  "note": "Unreal world coordinates for Lvl_JumpCut. Z is the actor origin; every model stands on its own origin at z = 0 except wall-mounted ones, whose geometry starts at its mounting height.",
  "generated_by": "tools/jumpcut_city_layout.py",
- "generated_at_pacific": "2026-11-13 11:40",
+ "generated_at_pacific": "2026-11-13 15:33",
  "mesh_path": "/Game/Game/Imported/City/",
  "supersedes_greybox": [
   "C1_Cafe_WallN",
@@ -1376,6 +1376,70 @@
    "yaw": 0
   },
   {
+   "label": "City_AvenueFar_Mid",
+   "model": "SM_BlockFiller",
+   "x": -3400.0,
+   "y": 0.0,
+   "z": 0,
+   "yaw": 270
+  },
+  {
+   "label": "City_AvenueFar_N",
+   "model": "SM_ShopHouse_C",
+   "x": -3400.0,
+   "y": 1250.0,
+   "z": 0,
+   "yaw": 270
+  },
+  {
+   "label": "City_AvenueFar_S",
+   "model": "SM_ShopHouse_A",
+   "x": -3400.0,
+   "y": -1150.0,
+   "z": 0,
+   "yaw": 270
+  },
+  {
+   "label": "City_AvenueFar_Tower",
+   "model": "SM_SetbackTower",
+   "x": -4600.0,
+   "y": 300.0,
+   "z": 0,
+   "yaw": 270
+  },
+  {
+   "label": "City_AvenueLamp",
+   "model": "SM_StreetLamp",
+   "x": -2250.0,
+   "y": 260.0,
+   "z": 0,
+   "yaw": 180
+  },
+  {
+   "label": "City_AvenuePole",
+   "model": "SM_UtilityPole",
+   "x": -2450.0,
+   "y": -380.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_AvenueCone",
+   "model": "SM_TrafficCone",
+   "x": -1500.0,
+   "y": -120.0,
+   "z": 0,
+   "yaw": 0
+  },
+  {
+   "label": "City_AvenueBarrier",
+   "model": "SM_Barrier",
+   "x": -1750.0,
+   "y": 180.0,
+   "z": 0,
+   "yaw": 90
+  },
+  {
    "label": "City_CrossLamp",
    "model": "SM_StreetLamp",
    "x": -1250.0,
@@ -1730,7 +1794,7 @@
   {
    "label": "City_Landmark",
    "model": "SM_CurtainTower",
-   "x": 12600.0,
+   "x": 16200.0,
    "y": 0.0,
    "z": 0,
    "yaw": 0

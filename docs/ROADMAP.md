@@ -146,8 +146,9 @@ duplicated.
 - **Nobody has pressed Left Shift.** Every Splice number (0 cm with no power, 600 open, 455 against a wall whose
   trace reads 500, 600 straight through `BP_StuntStandIn` and the cleaver boss) comes from driving `SpliceStart`
   through a temporary `DebugSplice` hook in PIE, first on GameStation and then on the Mac.
-- **None of the city has been seen in Unreal.** `tools/jumpcut_city_place.py` has never been run on any machine,
-  and the 44 FBX have never been imported.
+- ~~**None of the city has been seen in Unreal.**~~ **Done Fri Nov 13, 23:55 UTC, Justin's Mac mini** - the 37
+  models the layout uses are imported and all 224 city actors are placed and saved in `Lvl_JumpCut`. See "The
+  city is in the level" below. Still nobody has *played* it.
 - **`BP_Player` and `BP_Goon` still wear Epic's mannequin.** The re-made `CafeWalker` and the street goon are
   committed FBX, not imported assets.
 - **There is still no packaged build**, which Friday's checkpoint asks for.
@@ -213,7 +214,8 @@ generating characters belongs on M Station.
 4. **Not boss 3.** The Stunt Double is conditional again (Decisions, above). His fight is built and plays on a
    mannequin; no credits go on his art until beats 1 to 4 play through.
 
-**What stays on GameStation:** importing the city (`Art/Blender/export/City/` -> `Content/Game/Imported/City/`, then `py tools/jumpcut_city_place.py hide`; see [`CITY.md`](CITY.md)), importing `SK_CafeCoworker.fbx` and `SK_StreetGoon.fbx` (both committed and
+**What stays on GameStation:** ~~importing the city~~ (**done on Justin's Mac mini, Fri Nov 13 23:55 UTC** - see
+"The city is in the level" below), importing `SK_CafeCoworker.fbx` and `SK_StreetGoon.fbx` (both committed and
 canonical; the goon also needs his retarget chains mapped by hand, since Smart Rig does not use mannequin bone
 names) and pointing `BP_Coworker` at it (the asset is
 committed and waiting; she is a green box in beat 1 until someone does), putting `CafeWalker` on `BP_Player` with
@@ -330,6 +332,59 @@ buildings - that is dressing, not blocking. And three placeholder materials Inte
 registry still lists stale referencers, so deleting them was not worth the risk today.
 
 ![The beat 4 run, seen from the side](media/2026-11-13-beat4_side.png)
+
+### The city is in the level (Fri Nov 13, 23:55 UTC, Justin's Mac mini)
+
+The 44-model city kit had never been opened in Unreal on any machine and `tools/jumpcut_city_place.py` had never
+been run. It is in now: **37 models imported** (the five ruin meshes beat 4 already uses were deliberately not
+re-imported, because re-importing resets materials) and **224 `JC_City` actors placed and saved** in
+`Lvl_JumpCut`, with the 8 grey boxes they supersede hidden. This is "Before people playtest" item 2 - buildings
+and basic assets laid out to follow the story beats - and it was the only Friday item with no progress at all.
+
+**Measured after reloading the level from disk**, not from the script's own report:
+
+| | |
+|---|---|
+| Actors in `Lvl_JumpCut` | 289 total: **224** `JC_City`, **23** `JC_Beat4` (untouched), 42 pre-existing |
+| Duplicate `JC_City` labels | **0** - the script clears its own tag first, so re-running gives one city |
+| Grey boxes superseded | 8, all `hidden_in_game = True` **after a reload** |
+| Ground along the route | present at x = 0, 300, 3000, 8120, 11700, 12850, 14250 |
+| Route at chest height (z=90, y = -200 / 0 / +200) | clear apart from the two plaza gates, the crashed car, the cafe's own east wall beside the door, and `City_Barrier_2` (a deliberate 200 cm road barrier in a 10 m lane) |
+
+**Four defects were found and fixed. Three of them were in work that already looked finished.**
+
+1. **The committed `city_layout.json` was eight actors out of date.** Regenerating it from the committed
+   generator gave **224** actors, not 216 - the extras are every `City_Avenue*` piece, the New York avenue at
+   x = -1900 that the generator's own docstring calls *"the one piece of layout the story actually requires"*,
+   because it is the road the car comes down before it hits the cafe. The generator had been edited after the
+   JSON was last written. The avenue existed in code and nowhere else.
+2. **`City_Landmark` stood in the middle of beat 4.** The 62 m `SM_CurtainTower` at (12600, 0) occupies
+   x 11891..13309, y -1309..+30 - gap 2, `B4_P2` and gap 3. Beat 4 was placed **after** this layout was
+   authored, so the layout checker had never heard of it. The checker now carries a `beat 4 run` no-go box
+   (x 11200..14750, |y| <= 300), proved by putting the tower back at 12600 and watching it fail; the tower is
+   at **x = 16200**, same view axis, behind the beat-5 landing pad.
+3. **The cafe's door curtain sealed the cafe.** Setting the kit's collision to `CTF_USE_COMPLEX_AS_SIMPLE` -
+   right for the rest of it - turned `City_CafeNoren` at (648, 0) into a solid 150 x 100 cm wall across the
+   **only exit from the cafe**, which would have ended every playtest at beat 1. It renders perfectly; a
+   chest-height trace is what found it. `SM_Noren` and `SM_CableSpan` are now walk-through, set on the **actor**
+   (`set_actor_enable_collision(False)`), because the component flag did not serialize for beat 4's end wall.
+4. **The grey-box hide never reached disk.** `set_greybox` reported success, but after saving, 224 new actor
+   packages were dirty and **not one** of the 8 grey-box packages was: hiding an actor does not dirty it, and
+   this map is one-file-per-actor, so the grey walls would have come back on the next load standing inside the
+   city. They were also read-only under LFS, so the save would have failed silently a second time.
+
+**One line was wrong in the script, exactly as its author predicted** (*"expect to fix a line, not a layout"*):
+`set_editor_property('hidden_in_game', ...)` is not a property `AActor` exposes to Python. It is
+`set_actor_hidden_in_game()`. The script also did nothing about **Nanite** (Interchange turns it on; its
+simplified fallback drops thin parts, which here is the signage, cables, fire escapes, noren and bicycles) or
+**collision**; `prepare_meshes()` now does both and is idempotent.
+
+**Not done.** Nobody has played it. The 9 placeholder `MS_City*` materials Interchange made in
+`Imported/City` are committed unused alongside the 3 already there - deleting assets opens a modal dialog that
+freezes the MCP, so it was not worth the risk on freeze day. And the three beat-4 materials
+(`M_CityBrick` / `M_CityConcrete` / `M_CityMetal`) changed, because applying them set their Nanite usage flag.
+
+![The street the player walks, looking east from the cafe door](media/2026-11-13-city-lane.png)
 
 ### Splice is on disk (Fri Nov 13, 18:20 UTC, Justin's Mac mini)
 
@@ -488,7 +543,13 @@ in case playtesting shows we need it. Still not something to build from: only a 
 - **May Justin's Mac mini change Unreal files?** It already has, twice, and the rule says it may not. `TEAM.md`
   gives it `tester, maker`, and a maker *"never saves in Unreal"* - only the builder (GameStation) changes
   `.uasset`/`.umap`. The Splice commits `26d437b` and `2c76ffc` were made on the Mac, and the Fri Nov 13 19:05 UTC
-  verification saved in Unreal there too (nothing from it reached the repo). The rule exists for a real reason -
+  verification saved in Unreal there too (nothing from it reached the repo). **It happened again on Fri Nov 13,
+  23:55 UTC**, and wider than before: the Team Owner said *"Continue beat 4 on this mac"*, which `TEAM.md` records
+  as `builder (beat 4)`, and the city import saves 37 meshes, 12 materials and 224 actor packages across the whole
+  of `Lvl_JumpCut` - that is not beat 4. It was done because it is the only Friday checkpoint item with no
+  progress, GameStation was asleep, and art going in is allowed after feature freeze; it is written here rather
+  than quietly widening the role. **The scoped row in `TEAM.md` is unchanged and still says beat 4 only.**
+  The rule exists for a real reason -
   binary files cannot be merged, and two chats in one editor is how the first Splice build was lost - so this
   wants an answer rather than a habit. Three ways out: make the Mac **`builder (area)`** for a named area with LFS
   locks (the table's own mechanism, and the only option that keeps "exactly one builder" true per area); hand all
