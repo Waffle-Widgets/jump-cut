@@ -178,6 +178,30 @@ anyone picks up a task:
 
 ## Open
 
+### The cafe stops being a box, and the street grows a tree (Fri Nov 13, late Pacific, M Station)
+
+On the Team Owner's note that the assets were lacking, that the cafe should look like an anime cafe, and
+that everything outside the play area looked barren. **19 new models**, **70 new placements**, in the level
+and saved. Kit total 29,683 tris across 75 models.
+
+- **Cafe:** plank floor, rug, four pendant lamps, a chalk menu board, two groups of framed pictures, a
+  clock, a corner banquette, a window bar with two stools, two floor plants, two small pots and a
+  cup-and-saucer set on each table. Two new material slots, `MS_CafeWall` and `MS_CafeFloor`, give the room
+  its own warm cream and honey without repainting the street.
+- **Street:** street trees, paper-lantern strings across the road, shop banners, washing on the balconies,
+  parked scooters, hedges round the boss lot and billboards on the lane roofs. The avenue the player sees
+  through the hole in the west wall got trees, a hedge row and a lantern string inside the cone that hole
+  actually admits.
+- **`MS_CityLeaf` is the first green in the project.** The kit's only foliage was the planter shrub and it
+  was painted `MS_CityCloth`, which is beige, which is why the city had nothing alive in it.
+- **Found and fixed on the way:** `add` mode had created **seven duplicate cafe actors**, each a second
+  mesh at the identical transform, because it matches by actor label and the cafe's labels drifted when the
+  register was inserted. New tool `tools/jumpcut_city_dedupe.py` matches on mesh and position instead.
+- **NOT PLAYTESTED.** Every check is the editor rendering its own level from a camera I positioned.
+
+Full write-up, including the three things about foliage that do not work under this look:
+`docs/devlog/2026-11-13-the-cafe-stops-being-a-box-and-the-street-grows-a-tree.md`.
+
 ### The register move reaches Unreal, and beat 1 was unwinnable (#56) (Fri Nov 13, 11:15 PM Pacific, M Station)
 
 Justin finished for the night and the Team Owner moved his queue here. **#56 is done in the editor;

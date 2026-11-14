@@ -52,6 +52,10 @@ SLOTS = [
     'MS_CityWood',      # cafe fittings, crates
     'MS_CityRoof',      # roof deck, felt
     'MS_CityCloth',     # awning canvas, noren, bin bags
+    'MS_CityLeaf',     # foliage: street trees, hedges, house plants. The first green in the kit
+    'MS_CityLantern',  # emissive paper lantern, warm red
+    'MS_CafeWall',     # the cafe's own plaster: warm cream, not the same grey as the street
+    'MS_CafeFloor',    # the cafe's own floorboards, honey
 ]
 
 
@@ -188,6 +192,13 @@ class B:
         return o
 
 
+# Thin things - leaves, cloth, paper - are ONE quad, not two back-to-back. Two windings do not survive
+# finish(): remove_doubles welds the coincident verts and bmesh drops the duplicate face, so the mesh comes
+# out identical and the tri count does not move, which is how you can "fix" this and see no change at all.
+# What actually fixes it is the material: TWO_SIDED in tools/jumpcut_city_place.py marks MS_CityLeaf and
+# MS_CityCloth two-sided in Unreal. Until that landed, every street tree had a full canopy from the south
+# and a bare trunk from the north.
+
 # --------------------------------------------------------------------------- facade pieces
 # A floor is 3.4 m: tall enough to read as a real storey under a 180 cm character, short enough that a 5-storey
 # Tokyo pencil building still fits under the 8 m grey boxes' replacement height without dwarfing the street.
@@ -323,14 +334,14 @@ def build_cafe_shell(name='SM_CafeShell'):
     # The street only exists EAST of the cafe (the corridor runs x 630..6600); north of the cafe is the next
     # building in the row. Glazing here would look at a neighbour's brickwork one metre away. It gets a dado
     # and framed panels instead, so it is not a blank 12.6 m plane behind the seating.
-    b.box((-X, Y - WT, 0), (X, Y, H), 'MS_CityWall', 1.0, skip=('ylo',))
-    b.quad([(-X, Y - WT, 0), (X, Y - WT, 0), (X, Y - WT, H), (-X, Y - WT, H)], 'MS_CityWall', 0.95)
+    b.box((-X, Y - WT, 0), (X, Y, H), 'MS_CafeWall', 1.0, skip=('ylo',))
+    b.quad([(-X, Y - WT, 0), (X, Y - WT, 0), (X, Y - WT, H), (-X, Y - WT, H)], 'MS_CafeWall', 0.95)
     b.box((-X, Y - WT - 0.04, 0.95), (X, Y - WT, 1.03), 'MS_CityWood', 0.8)             # dado rail
     for i in range(6):
         px = -X + 0.5 + i * (2 * X - 1.0) / 6
         b.box((px, Y - WT - 0.03, 1.25), (px + (2 * X - 1.0) / 6 - 0.35, Y - WT, 2.65), 'MS_CityWood', 0.7)
     # ---- south wall: solid, the service side. Shelving goes against it.
-    b.box((-X, -Y, 0), (X, -Y + WT, H), 'MS_CityWall', 1.0)
+    b.box((-X, -Y, 0), (X, -Y + WT, H), 'MS_CafeWall', 1.0)
     # ---- east wall: the shopfront. This is the cafe's street frontage and the wall the player spends beat 1
     # looking at, because he starts at (0,0) and walks east to the door at x = 6.15. Glazing it means he can
     # see the street he is about to walk into before he gets there.
@@ -344,9 +355,9 @@ def build_cafe_shell(name='SM_CafeShell'):
                   'MS_CityGlass', 0.5 + 0.3 * rng.random())
             b.box((X - WT, by0, 0.45), (X, by0 + 0.05, 2.90), 'MS_CityTrim', 0.6)        # mullion
         b.box((X - WT, py1 - 0.05, 0.45), (X, py1, 2.90), 'MS_CityTrim', 0.6)
-        b.box((X - WT, py0, 2.90), (X, py1, H), 'MS_CityWall', 1.0)                      # wall over the glazing
+        b.box((X - WT, py0, 2.90), (X, py1, H), 'MS_CafeWall', 1.0)                      # wall over the glazing
         b.box((X - WT - 0.03, py0, 2.90), (X, py1, 3.14), 'MS_CityTrim', 0.5)            # fascia
-    b.box((X - WT, -DOOR_HW, DOOR_H), (X, DOOR_HW, H), 'MS_CityWall', 1.0)               # lintel over the door
+    b.box((X - WT, -DOOR_HW, DOOR_H), (X, DOOR_HW, H), 'MS_CafeWall', 1.0)               # lintel over the door
     b.box((X - WT, -DOOR_HW - 0.06, 0), (X, -DOOR_HW, DOOR_H + 0.06), 'MS_CityTrim', 0.55)
     b.box((X - WT, DOOR_HW, 0), (X, DOOR_HW + 0.06, DOOR_H + 0.06), 'MS_CityTrim', 0.55)
     b.box((X - WT, -DOOR_HW, DOOR_H), (X, DOOR_HW, DOOR_H + 0.06), 'MS_CityTrim', 0.55)
@@ -369,7 +380,7 @@ def build_cafe_shell(name='SM_CafeShell'):
     # ---- ceiling, with exposed beams so the room has a top edge for the outline pass.
     # Wound to face DOWN, into the room: the player is underneath it, and a ceiling whose normal points at the
     # sky is invisible from the only side anybody ever sees it from.
-    b.quad([(-X, Y, H), (X, Y, H), (X, -Y, H), (-X, -Y, H)], 'MS_CityWall', 0.7)
+    b.quad([(-X, Y, H), (X, Y, H), (X, -Y, H), (-X, -Y, H)], 'MS_CafeWall', 0.7)
     for i in range(5):
         bx = -X + (2 * X) * (i + 0.5) / 5
         b.box((bx - 0.11, -Y, H - 0.26), (bx + 0.11, Y, H), 'MS_CityWood', 0.72)
@@ -1022,13 +1033,11 @@ def build_planter(name='SM_Planter'):
     w, d, h = 1.20, 0.50, 0.62
     b.box((-w / 2, -d / 2, 0), (w / 2, d / 2, h), 'MS_CityConcrete', 0.95, skip=('zhi',))
     b.box((-w / 2 + 0.07, -d / 2 + 0.07, h - 0.1), (w / 2 - 0.07, d / 2 - 0.07, h - 0.04), 'MS_CityWood', 0.5)
-    for _ in range(11):                                     # a shrub, as crossed cards
+    for _ in range(11):                                     # a shrub, as crossed cards - MS_CityLeaf since Nov 13
         px, py = rng.uniform(-w / 2 + 0.15, w / 2 - 0.15), rng.uniform(-d / 2 + 0.1, d / 2 - 0.1)
         ph = rng.uniform(0.3, 0.62)
-        b.quad([(px - 0.18, py, h - 0.06), (px + 0.18, py, h - 0.06), (px + 0.18, py, h - 0.06 + ph),
-                (px - 0.18, py, h - 0.06 + ph)], 'MS_CityCloth', rng.uniform(0.5, 0.85))
-        b.quad([(px, py - 0.18, h - 0.06), (px, py + 0.18, h - 0.06), (px, py + 0.18, h - 0.06 + ph),
-                (px, py - 0.18, h - 0.06 + ph)], 'MS_CityCloth', rng.uniform(0.5, 0.85))
+        b.box((px - 0.15, py - 0.09, h - 0.06), (px + 0.15, py + 0.09, h - 0.06 + ph),
+              'MS_CityLeaf', rng.uniform(0.5, 0.85))
     return b.finish(name)
 
 
@@ -1544,6 +1553,404 @@ def build_road_lines(name='SM_RoadLines'):
 
 
 # =========================================================================== REGISTRY AND DRIVER
+# =========================================================================== CAFE DRESSING (the anime pass)
+# Added Fri Nov 13 (Pacific) after the Team Owner looked at the room and said the assets were lacking and the
+# cafe should read like an anime cafe. What was there: a counter, three tables, six chairs and two shelves in
+# a cream box. No light fitting, nothing on a wall, nothing on a table, nothing growing, and a flat grey
+# floor. Everything below exists to make the room read as somewhere a person works rather than as the inside
+# of a collision volume.
+#
+# Same rules as the rest of the kit: real scale, flat MS_* slots, detail in GEOMETRY because the cel pass
+# throws texture away and keeps edges, and nothing readable anywhere (section 15d). Two new slots carry the
+# warmth the room was missing: MS_CafeWall (cream plaster) and MS_CafeFloor (honey boards), and MS_CityLeaf
+# is the first green in the whole project - every plant in the kit until now was painted MS_CityCloth, which
+# is beige, which is why the street had no living thing in it.
+
+
+def build_cafe_floor_boards(name='SM_CafeFloorBoards'):
+    """A plank floor laid 2 cm over the shell's concrete slab, the full size of the room.
+
+    This is the largest single surface the player looks at in the whole of beat 1 and it was one grey quad.
+    The boards are real geometry rather than a texture for the usual reason: the outline pass draws depth
+    and normal edges, so a step between planks gives the floor a drawn grain that survives the cel band,
+    where a wood photo is flattened to one tone. Laid with the long axis along X, the direction the player
+    walks, and the end joints staggered so the room does not read as one printed sheet.
+    No collision in the level (WALK_THROUGH in the placer): the player stands on the slab underneath.
+    """
+    b = B(seed=120)
+    X, Y = CAFE_HW - WT, CAFE_HD - WT
+    bw, t = 0.26, 0.012
+    n = int((2 * Y) / bw)
+    for i in range(n):
+        y0 = -Y + i * bw
+        y1 = min(y0 + bw - 0.009, Y)
+        cut = -X + 2 * X * (0.34 + 0.32 * b.rng.random())
+        for x0, x1 in ((-X, cut - 0.008), (cut + 0.008, X)):
+            b.box((x0, y0, 0.0), (x1, y1, t), 'MS_CafeFloor', 0.7 + 0.3 * b.rng.random(),
+                  skip=('zlo', 'xlo', 'xhi'))
+    return b.finish(name)
+
+
+def build_cafe_rug(name='SM_CafeRug'):
+    """A 2.6 x 1.8 m rug with a border, 1.5 cm thick. Walk-through, like the floor it lies on."""
+    b = B(seed=121)
+    w, d = 1.30, 0.90
+    b.box((-w, -d, 0.0), (w, d, 0.008), 'MS_CityCloth', 0.62, skip=('zlo',))
+    b.box((-w + 0.09, -d + 0.09, 0.008), (w - 0.09, d - 0.09, 0.012), 'MS_CityAccent', 0.5, skip=('zlo',))
+    b.box((-w + 0.16, -d + 0.16, 0.012), (w - 0.16, d - 0.16, 0.015), 'MS_CityCloth', 0.78, skip=('zlo',))
+    return b.finish(name)
+
+
+def build_cafe_pendant(name='SM_CafePendant'):
+    """A pendant lamp on a flex. Built from its SHADE up, not from the ceiling down: everything in this kit
+    stands on its own origin, and a model whose geometry is all below z = 0 is the one shape that breaks
+    every footprint and off-ground check in tools/jumpcut_city_layout.py. Place it at
+    (ceiling height - 0.95) and the cord reaches the ceiling on its own.
+    """
+    b = B(seed=122)
+    r, sh = 0.21, 0.20
+    for i in range(10):                                  # the shade: a ring of trapezoid panels
+        a0, a1 = 2 * math.pi * i / 10, 2 * math.pi * (i + 1) / 10
+        x0, y0 = math.cos(a0) * r, math.sin(a0) * r
+        x1, y1 = math.cos(a1) * r, math.sin(a1) * r
+        b.quad([(x0, y0, 0.0), (x1, y1, 0.0), (x1 * 0.34, y1 * 0.34, sh), (x0 * 0.34, y0 * 0.34, sh)],
+               'MS_CityTrim', 0.42)
+    b.tube((0, 0, 0.015), 0.055, 0.085, 'MS_CitySignA', n=8, c=1.0)      # the bulb, lit
+    b.box((-0.012, -0.012, sh), (0.012, 0.012, 0.88), 'MS_CityTrim', 0.35)
+    b.tube((0, 0, 0.88), 0.07, 0.07, 'MS_CityTrim', n=8, c=0.45)         # ceiling rose
+    return b.finish(name)
+
+
+def build_cafe_wall_art(name='SM_CafeWallArt'):
+    """Three framed pictures hung as a group. Faces -Y, the same way every facade in this kit faces, so one
+    yaw puts it on any wall. The pictures are blocks of flat colour: abstract on purpose, because a
+    recognisable poster is a trademark and a readable word is a translation problem.
+    """
+    b = B(seed=123)
+    for fx, fw, fh, fz, slot, c in (
+            (-0.62, 0.46, 0.58, 0.10, 'MS_CitySignB', 0.70),
+            (0.00, 0.34, 0.42, 0.32, 'MS_CityAccent', 0.80),
+            (0.56, 0.52, 0.36, 0.14, 'MS_CityCloth', 0.55)):
+        x0, x1 = fx - fw / 2, fx + fw / 2
+        b.box((x0, -0.05, fz), (x1, 0.0, fz + fh), 'MS_CityWood', 0.75)          # frame
+        b.box((x0 + 0.05, -0.056, fz + 0.05), (x1 - 0.05, -0.048, fz + fh - 0.05), slot, c)
+        b.box((x0 + 0.05, -0.062, fz + 0.05 + fh * 0.42),                        # one band across the art
+              (x1 - 0.05, -0.054, fz + 0.05 + fh * 0.58), 'MS_CafeWall', 0.95)
+    return b.finish(name)
+
+
+def build_cafe_chalkboard(name='SM_CafeChalkboard'):
+    """The menu on the wall behind the counter: a framed dark board with chalk strokes on it. The strokes are
+    bars of varying length, which is what handwriting reads as at three metres and which nobody can read,
+    translate or claim. Faces -Y. Its origin is the CENTRE of the board, so it hangs from a mounting height.
+    """
+    b = B(seed=124)
+    w, h = 1.15, 0.80
+    b.box((-w - 0.05, -0.06, -h - 0.05), (w + 0.05, 0.0, h + 0.05), 'MS_CityWood', 0.7)
+    b.box((-w, -0.07, -h), (w, -0.055, h), 'MS_CityTrim', 0.18)
+    for row in range(7):
+        z = h - 0.14 - row * 0.21
+        b.box((-w + 0.12, -0.078, z - 0.015), (-w + 0.12 + b.rng.uniform(0.3, 0.9), -0.072, z + 0.015),
+              'MS_CafeWall', 0.98)
+        if b.rng.random() < 0.6:                                   # the price, right-aligned
+            b.box((w - 0.34, -0.078, z - 0.015), (w - 0.34 + 0.18, -0.072, z + 0.015), 'MS_CafeWall', 0.9)
+    b.box((-w, -0.17, -h - 0.05), (w, -0.055, -h), 'MS_CityWood', 0.62)          # chalk ledge
+    return b.finish(name)
+
+
+def build_cafe_clock(name='SM_CafeClock'):
+    """A round wall clock, origin at its centre. Faces -Y. The hands are set to ten past ten, which is what
+    every clock in every advert is set to because it looks awake."""
+    b = B(seed=125)
+    b.tube((0, 0.0, 0), -0.05, 0.17, 'MS_CityWood', n=16, c=0.72, axis='y')
+    b.tube((0, -0.05, 0), -0.012, 0.145, 'MS_CafeWall', n=16, c=1.0, axis='y')
+    for i in range(12):
+        a = 2 * math.pi * i / 12
+        cx, cz = math.cos(a) * 0.118, math.sin(a) * 0.118
+        b.box((cx - 0.008, -0.068, cz - 0.008), (cx + 0.008, -0.062, cz + 0.008), 'MS_CityTrim', 0.25)
+    for ang, ln in ((math.radians(60), 0.085), (math.radians(120), 0.11)):
+        b.box((0.0, -0.07, -0.007), (math.cos(ang) * ln, -0.064, math.sin(ang) * ln + 0.007),
+              'MS_CityTrim', 0.2)
+    return b.finish(name)
+
+
+def build_cafe_plant_tall(name='SM_CafePlantTall'):
+    """A floor plant about 1.5 m tall, in a pot. Leaves are thin BLOCKS rather than single quads, for the
+    same reason the street tree's canopy is - see build_street_tree. MS_CityLeaf is the first actually
+    green material in the project; every plant in the kit before this was painted MS_CityCloth, which is
+    beige."""
+    b = B(seed=126)
+    rng = b.rng
+    b.tube((0, 0, 0), 0.34, 0.21, 'MS_CityAccent', n=12, c=0.78)
+    b.tube((0, 0, 0.34), 0.03, 0.225, 'MS_CityAccent', n=12, c=0.62)
+    b.tube((0, 0, 0.30), 0.06, 0.19, 'MS_CityConcrete', n=10, c=0.5)             # soil
+    for k in range(9):
+        a = 2 * math.pi * k / 9 + rng.uniform(-0.2, 0.2)
+        lean = rng.uniform(0.16, 0.42)
+        z0 = 0.34 + rng.uniform(0.0, 0.25)
+        z1 = z0 + rng.uniform(0.55, 0.95)
+        tx, ty = math.cos(a) * lean, math.sin(a) * lean
+        b.box((-0.016, -0.016, z0), (0.016, 0.016, z1 - 0.1), 'MS_CityLeaf', 0.42)   # stem
+        lw = rng.uniform(0.13, 0.20)
+        b.box((tx - lw, ty - lw * 0.55, z1 - 0.26), (tx + lw, ty + lw * 0.55, z1 - 0.20),
+              'MS_CityLeaf', rng.uniform(0.6, 1.0))
+        b.box((tx - lw * 0.55, ty - lw, z1 - 0.10), (tx + lw * 0.55, ty + lw, z1 - 0.04),
+              'MS_CityLeaf', rng.uniform(0.6, 1.0))
+    return b.finish(name)
+
+
+def build_cafe_plant_small(name='SM_CafePlantSmall'):
+    """A small pot for a counter, a shelf top or a window bar. 24 cm. Thin blocks, not cards - see
+    build_street_tree."""
+    b = B(seed=127)
+    rng = b.rng
+    b.tube((0, 0, 0), 0.10, 0.055, 'MS_CityWood', n=10, c=0.8)
+    b.tube((0, 0, 0.10), 0.018, 0.062, 'MS_CityWood', n=10, c=0.66)
+    for k in range(6):
+        a = 2 * math.pi * k / 6
+        tx, ty = math.cos(a) * 0.035, math.sin(a) * 0.035
+        h = rng.uniform(0.07, 0.14)
+        b.box((tx - 0.045, ty - 0.018, 0.10), (tx + 0.045, ty + 0.018, 0.10 + h), 'MS_CityLeaf',
+              rng.uniform(0.6, 1.0))
+    return b.finish(name)
+
+
+def build_cafe_table_top(name='SM_CafeTableTop'):
+    """What is ON a table: two cups on saucers, a small vase with three stems, and a folded card. It sits at
+    the table's top height, so the table model never has to change and a bare table is still available."""
+    b = B(seed=128)
+    for cx, cy in ((-0.14, 0.09), (0.13, -0.10)):
+        b.tube((cx, cy, 0.0), 0.008, 0.072, 'MS_CafeWall', n=12, c=1.0)           # saucer
+        b.tube((cx, cy, 0.008), 0.055, 0.042, 'MS_CafeWall', n=12, c=0.96)        # cup
+        b.tube((cx, cy, 0.05), 0.004, 0.037, 'MS_CityWood', n=10, c=0.55)         # what is in it
+        b.box((cx + 0.04, cy - 0.006, 0.022), (cx + 0.062, cy + 0.006, 0.046), 'MS_CafeWall', 0.92)
+    b.tube((0.0, 0.17, 0.0), 0.10, 0.028, 'MS_CityGlass', n=10, c=0.75)           # vase
+    for k, a in enumerate((0.4, 2.3, 4.5)):
+        tx, ty = math.cos(a) * 0.05, math.sin(a) * 0.05
+        b.box((-0.005, 0.165, 0.09), (0.005, 0.175, 0.20), 'MS_CityLeaf', 0.4)
+        b.quad([(tx - 0.03, 0.17 + ty, 0.19), (tx + 0.03, 0.17 + ty, 0.19), (tx + 0.03, 0.17 + ty, 0.25),
+                (tx - 0.03, 0.17 + ty, 0.25)], 'MS_CityAccent', 0.7 + 0.1 * k)
+    b.quad([(-0.22, -0.14, 0.0), (-0.14, -0.14, 0.0), (-0.16, -0.17, 0.11), (-0.20, -0.17, 0.11)],
+           'MS_CafeWall', 0.95)                                                    # the table card
+    return b.finish(name)
+
+
+def build_cafe_stool(name='SM_CafeStool'):
+    """A bar stool for the window counter. 72 cm to the seat."""
+    b = B(seed=129)
+    for a in range(4):
+        th = math.pi / 2 * a + math.pi / 4
+        dx, dy = math.cos(th) * 0.16, math.sin(th) * 0.16
+        b.box((dx - 0.02, dy - 0.02, 0.0), (dx + 0.02, dy + 0.02, 0.70), 'MS_CityTrim', 0.45)
+    for a in range(4):
+        th = math.pi / 2 * a + math.pi / 4
+        dx, dy = math.cos(th) * 0.16, math.sin(th) * 0.16
+        nx, ny = math.cos(th + math.pi / 2) * 0.16, math.sin(th + math.pi / 2) * 0.16
+        b.box((min(dx, nx) - 0.014, min(dy, ny) - 0.014, 0.26),
+              (max(dx, nx) + 0.014, max(dy, ny) + 0.014, 0.29), 'MS_CityTrim', 0.4)
+    b.tube((0, 0, 0.70), 0.05, 0.19, 'MS_CityWood', n=14, c=0.9)
+    return b.finish(name)
+
+
+def build_cafe_bar_counter(name='SM_CafeBarCounter'):
+    """The ledge along the shopfront glass that people sit at and look out of. 2.4 m of 32 cm top at 1.05 m,
+    on three brackets. Long axis X, so yaw 90 lays it along the east window."""
+    b = B(seed=130)
+    w, d, h = 1.20, 0.32, 1.05
+    b.box((-w, -d / 2, h - 0.055), (w, d / 2, h), 'MS_CityWood', 0.9)
+    b.box((-w, -d / 2, h - 0.075), (w, d / 2 - 0.04, h - 0.055), 'MS_CityWood', 0.72)
+    for bx in (-w + 0.22, 0.0, w - 0.22):
+        b.box((bx - 0.025, -d / 2 + 0.03, 0.0), (bx + 0.025, -d / 2 + 0.08, h - 0.075), 'MS_CityTrim', 0.4)
+        b.box((bx - 0.025, -d / 2 + 0.03, h - 0.30), (bx + 0.025, d / 2 - 0.03, h - 0.26), 'MS_CityTrim', 0.4)
+    return b.finish(name)
+
+
+def build_cafe_banquette(name='SM_CafeBanquette'):
+    """A padded bench seat with a buttoned back, to put against a wall. Back on +Y, seat facing -Y, so at
+    yaw 0 it sits against the north wall looking into the room."""
+    b = B(seed=131)
+    w, d = 1.10, 0.33
+    b.box((-w, -d, 0.0), (w, d, 0.10), 'MS_CityTrim', 0.3)                        # plinth
+    b.box((-w - 0.03, -d - 0.03, 0.10), (w + 0.03, d + 0.03, 0.45), 'MS_CityAccent', 0.72)
+    b.box((-w - 0.03, d - 0.08, 0.45), (w + 0.03, d + 0.03, 1.02), 'MS_CityAccent', 0.64)
+    for i in range(5):                                                            # buttoning
+        bx = -w + 0.2 + i * (2 * w - 0.4) / 4
+        for bz in (0.62, 0.84):
+            b.box((bx - 0.02, d - 0.09, bz - 0.02), (bx + 0.02, d - 0.075, bz + 0.02), 'MS_CityAccent', 0.45)
+    b.box((-w - 0.03, d - 0.09, 1.02), (w + 0.03, d + 0.03, 1.08), 'MS_CityWood', 0.8)   # capping rail
+    for cx, slot in ((-0.62, 'MS_CityCloth'), (0.58, 'MS_CitySignB')):            # two cushions
+        b.box((cx - 0.17, d - 0.20, 0.47), (cx + 0.17, d - 0.07, 0.80), slot, 0.8)
+    return b.finish(name)
+
+
+# =========================================================================== STREET LIFE
+# The other half of the same note: "everything outside of the play area looks barren". The lane had buildings,
+# signs, poles and clutter and not one living thing - no tree, no leaf, nothing parked, nothing hanging over
+# the road, and nothing on a roof but water tanks. These are the pieces that fill the air above the street and
+# the ground beside it, which is where a dense city actually shows you that people live in it.
+
+def build_street_tree(name='SM_StreetTree'):
+    """A street tree in a grate, about 3.7 m, canopy 2.5 m across so it clears the 2.6 m walking road at
+    y = +/-260 when planted mid-pavement at y = +/-395.
+
+    THE CANOPY IS SOLID BLOCKS, NOT CROSSED CARDS, and that is the whole lesson of this model. Crossed
+    cards are the standard cheap tree and they do not work here: a card is one quad, so Unreal culls its
+    back, and the first trees in the lane had a full canopy seen from the south and a bare trunk seen from
+    the north. Marking the material two-sided fixes the culling and introduces a worse problem - Unreal
+    renders a back face with the FRONT face's normal, so every card pointing away from the sun lights as
+    if it were facing into the ground. Half the canopy came out pure black, before the cel pass, with the
+    other half correct, which looks like a hole in the street rather than like a tree.
+    Blocks have outward normals on every side by construction, so they light correctly from any angle -
+    which is exactly why SM_Hedge, built the same way, never had the problem. A block canopy is also the
+    more honest read under an outline pass: an anime tree is a few flat masses with ink round them, not a
+    cloud of leaves.
+    """
+    b = B(seed=140)
+    rng = b.rng
+    b.box((-0.55, -0.55, 0.0), (0.55, 0.55, 0.05), 'MS_CityMetal', 0.55, skip=('zlo',))   # grate
+    for i in range(5):
+        gx = -0.55 + 0.22 * (i + 0.5)
+        b.box((gx - 0.015, -0.55, 0.05), (gx + 0.015, 0.55, 0.065), 'MS_CityMetal', 0.4)
+    b.tube((0, 0, 0.04), 1.55, 0.115, 'MS_CityWood', n=8, c=0.45)
+    for k in range(3):                                                             # limbs into the canopy
+        a = 2.1 * k
+        b.box((0.0, 0.0, 1.25), (math.cos(a) * 0.5, math.sin(a) * 0.5, 1.95), 'MS_CityWood', 0.4)
+    for tier, (tz, tr, n) in enumerate(((1.80, 1.22, 6), (2.50, 1.08, 5), (3.12, 0.70, 4))):
+        for k in range(n):
+            a = 2 * math.pi * k / n + tier * 0.5
+            cx, cy = math.cos(a) * tr * 0.52, math.sin(a) * tr * 0.52
+            w = tr * rng.uniform(0.38, 0.52)
+            d = tr * rng.uniform(0.34, 0.48)
+            h = rng.uniform(0.34, 0.52)
+            b.box((cx - w, cy - d, tz - h / 2), (cx + w, cy + d, tz + h / 2), 'MS_CityLeaf',
+                  rng.uniform(0.62, 1.0))
+    b.box((-0.34, -0.30, 1.62), (0.34, 0.30, 2.22), 'MS_CityLeaf', 0.8)            # the middle of the mass
+    return b.finish(name)
+
+
+def build_hedge(name='SM_Hedge'):
+    """A clipped hedge block, 1.8 m long, for the plaza and the avenue - the two places with the most empty
+    ground in the level."""
+    b = B(seed=141)
+    rng = b.rng
+    w, d, h = 0.9, 0.33, 0.78
+    b.box((-w, -d, 0.0), (w, d, 0.16), 'MS_CityConcrete', 0.9)
+    b.box((-w + 0.04, -d + 0.04, 0.12), (w - 0.04, d - 0.04, h), 'MS_CityLeaf', 0.62)
+    for _ in range(16):                                                            # a broken top edge
+        px = rng.uniform(-w + 0.1, w - 0.16)
+        py = rng.uniform(-d + 0.08, d - 0.14)
+        s = rng.uniform(0.08, 0.17)
+        b.box((px, py, h - 0.06), (px + s, py + s * 0.8, h + rng.uniform(0.02, 0.10)), 'MS_CityLeaf',
+              rng.uniform(0.45, 1.0))
+    return b.finish(name)
+
+
+def build_lantern_string(name='SM_LanternString'):
+    """Paper lanterns strung across the lane: five on a sagging cord, 5.6 m end to end. Built upward from the
+    lowest lantern so it stands on its own origin like everything else; place it at the height you want the
+    bottom of the lanterns, not the height of the cord. Lit, so the street has something warm in it after the
+    sun has been banded flat by the cel pass."""
+    b = B(seed=142)
+    L = 2.8
+    pts = []
+    for i in range(13):
+        t = i / 12.0
+        x = -L + 2 * L * t
+        z = 0.52 - 0.17 * math.sin(math.pi * t)                                    # the sag
+        pts.append((x, z))
+    for i in range(12):
+        (x0, z0), (x1, z1) = pts[i], pts[i + 1]
+        b.box((x0, -0.012, min(z0, z1) - 0.012), (x1, 0.012, max(z0, z1) + 0.012), 'MS_CityTrim', 0.3)
+    for k in range(5):
+        t = (k + 0.5) / 5.0
+        x = -L + 2 * L * t
+        z = 0.52 - 0.17 * math.sin(math.pi * t)
+        b.box((x - 0.012, -0.012, z - 0.09), (x + 0.012, 0.012, z), 'MS_CityTrim', 0.3)
+        b.tube((x, 0, z - 0.42), 0.33, 0.145, 'MS_CityLantern', n=10, c=1.0)
+        b.tube((x, 0, z - 0.45), 0.03, 0.055, 'MS_CityTrim', n=8, c=0.3)
+        b.tube((x, 0, z - 0.09), 0.03, 0.055, 'MS_CityTrim', n=8, c=0.3)
+    return b.finish(name)
+
+
+def build_banner_flag(name='SM_BannerFlag'):
+    """A shop banner on a bracket off a facade. Faces -Y like every other wall piece, hangs 1.6 m, and says
+    nothing: three bands of colour, which is what a banner reads as from across a street."""
+    b = B(seed=143)
+    b.box((-0.03, -0.42, 1.52), (0.03, 0.0, 1.58), 'MS_CityTrim', 0.3)             # bracket arm
+    b.box((-0.03, -0.06, 1.10), (0.03, 0.0, 1.56), 'MS_CityTrim', 0.3)
+    b.box((-0.22, -0.40, 1.44), (0.22, -0.37, 1.52), 'MS_CityTrim', 0.35)          # the pole it hangs on
+    for z0, z1, slot, c in ((0.0, 0.5, 'MS_CityAccent', 0.8),
+                            (0.5, 0.92, 'MS_CityCloth', 0.9),
+                            (0.92, 1.44, 'MS_CitySignB', 0.75)):
+        b.quad([(-0.21, -0.385, z0), (0.21, -0.385, z0), (0.21, -0.385, z1), (-0.21, -0.385, z1)], slot, c)
+        b.quad([(0.21, -0.375, z0), (-0.21, -0.375, z0), (-0.21, -0.375, z1), (0.21, -0.375, z1)], slot,
+               c * 0.8)
+    for i in range(4):                                                              # a scalloped hem
+        hx = -0.21 + 0.42 * i / 4
+        b.quad([(hx, -0.38, 0.0), (hx + 0.105, -0.38, 0.0), (hx + 0.0525, -0.38, -0.07)],
+               'MS_CityAccent', 0.7)
+    return b.finish(name)
+
+
+def build_laundry_rack(name='SM_LaundryRack'):
+    """Washing out on a balcony rail: the cheapest thing in any kit that says a person lives here. Five
+    hanging cards on a pole, 1.3 m wide. Faces -Y so it goes on a facade or a balcony front."""
+    b = B(seed=144)
+    rng = b.rng
+    for sx in (-0.65, 0.65):
+        b.box((sx - 0.02, -0.26, 0.0), (sx + 0.02, -0.22, 0.62), 'MS_CityMetal', 0.6)
+    b.box((-0.67, -0.26, 0.58), (0.67, -0.22, 0.62), 'MS_CityMetal', 0.55)
+    for i in range(5):
+        px = -0.52 + i * 0.26
+        w = rng.uniform(0.07, 0.11)
+        h = rng.uniform(0.26, 0.46)
+        slot = rng.choice(['MS_CityCloth', 'MS_CitySignB', 'MS_CityAccent', 'MS_CityCloth'])
+        b.quad([(px - w, -0.24, 0.58 - h), (px + w, -0.24, 0.58 - h), (px + w, -0.24, 0.58),
+                (px - w, -0.24, 0.58)], slot, rng.uniform(0.55, 1.0))
+        b.quad([(px + w, -0.235, 0.58 - h), (px - w, -0.235, 0.58 - h), (px - w, -0.235, 0.58),
+                (px + w, -0.235, 0.58)], slot, rng.uniform(0.55, 1.0))
+        b.box((px - 0.015, -0.252, 0.58), (px + 0.015, -0.228, 0.61), 'MS_CityMetal', 0.7)
+    return b.finish(name)
+
+
+def build_scooter(name='SM_Scooter'):
+    """A parked delivery scooter on its stand, 1.75 m long. Nothing on the lane is parked at all right now,
+    which is why 60 m of shopping street reads as a film set between takes."""
+    b = B(seed=145)
+    for wx in (-0.58, 0.52):
+        b.tube((wx, 0, 0.21), 0.09, 0.21, 'MS_CityTrim', n=12, c=0.3, axis='y')
+        b.tube((wx, 0.004, 0.21), 0.082, 0.085, 'MS_CityMetal', n=8, c=0.85, axis='y')
+    b.box((-0.62, -0.13, 0.30), (0.34, 0.13, 0.52), 'MS_CityAccent', 0.85)          # body
+    b.box((-0.30, -0.145, 0.50), (0.12, 0.145, 0.60), 'MS_CityTrim', 0.3)           # seat
+    b.box((0.18, -0.10, 0.40), (0.52, 0.10, 0.96), 'MS_CityAccent', 0.78)           # front shield
+    b.box((0.30, -0.26, 0.92), (0.40, 0.26, 0.98), 'MS_CityTrim', 0.3)              # bars
+    b.tube((0.40, 0, 0.72), 0.06, 0.075, 'MS_CitySignA', n=10, c=1.0, axis='x')     # headlamp
+    b.box((-0.78, -0.21, 0.56), (-0.40, 0.21, 0.62), 'MS_CityMetal', 0.7)           # rear carrier
+    b.box((-0.76, -0.19, 0.62), (-0.42, 0.19, 0.92), 'MS_CitySignB', 0.9)           # delivery box
+    b.box((-0.44, -0.03, 0.0), (-0.36, 0.03, 0.22), 'MS_CityMetal', 0.5)            # stand
+    return b.finish(name)
+
+
+def build_roof_billboard(name='SM_RoofBillboard'):
+    """A lit panel in a steel frame, standing on a roof. The far towers are blank slabs - this is what breaks
+    their silhouette and gives the skyline something that reads at 60 m. 6.4 x 3.2 m panel on a 3 m gantry,
+    face on -Y. Blank, like every sign in this kit."""
+    b = B(seed=146)
+    w, h, z0 = 3.2, 3.2, 3.0
+    for sx in (-w + 0.3, 0.0, w - 0.3):                                             # legs and bracing
+        b.box((sx - 0.09, -0.09, 0.0), (sx + 0.09, 0.09, z0 + h), 'MS_CityTrim', 0.3)
+        b.box((sx - 0.06, 0.24, 0.0), (sx + 0.06, 0.36, z0 * 0.6), 'MS_CityTrim', 0.3)
+        b.box((sx - 0.3, 0.06, z0 * 0.6), (sx + 0.3, 0.36, z0 * 0.66), 'MS_CityTrim', 0.3)
+    for zz in (z0, z0 + h * 0.5, z0 + h):
+        b.box((-w, -0.1, zz - 0.07), (w, 0.1, zz + 0.07), 'MS_CityTrim', 0.3)
+    b.box((-w, -0.22, z0), (w, -0.1, z0 + h), 'MS_CitySignB', 0.95)
+    b.box((-w + 0.25, -0.26, z0 + h * 0.18), (w - 0.25, -0.22, z0 + h * 0.46), 'MS_CitySignA', 1.0)
+    b.box((-w + 0.25, -0.26, z0 + h * 0.58), (w * 0.2, -0.22, z0 + h * 0.78), 'MS_CitySignA', 0.8)
+    for lx in (-w * 0.6, 0.0, w * 0.6):                                             # the lamps on the gantry
+        b.box((lx - 0.22, -0.52, z0 - 0.22), (lx + 0.22, -0.3, z0 - 0.06), 'MS_CityMetal', 0.6)
+    return b.finish(name)
+
+
 GROUPS = {
     'cafe': [
         ('SM_CafeShell', build_cafe_shell), ('SM_CafeCounter', build_cafe_counter),
@@ -1575,6 +1982,20 @@ GROUPS = {
         ('SM_Awning', build_awning), ('SM_RoofTank', build_roof_tank), ('SM_Manhole', build_manhole),
         ('SM_Bench', build_bench), ('SM_Kerb', build_kerb),
     ],
+    'cafedeco': [
+        ('SM_CafeFloorBoards', build_cafe_floor_boards), ('SM_CafeRug', build_cafe_rug),
+        ('SM_CafePendant', build_cafe_pendant), ('SM_CafeWallArt', build_cafe_wall_art),
+        ('SM_CafeChalkboard', build_cafe_chalkboard), ('SM_CafeClock', build_cafe_clock),
+        ('SM_CafePlantTall', build_cafe_plant_tall), ('SM_CafePlantSmall', build_cafe_plant_small),
+        ('SM_CafeTableTop', build_cafe_table_top), ('SM_CafeStool', build_cafe_stool),
+        ('SM_CafeBarCounter', build_cafe_bar_counter), ('SM_CafeBanquette', build_cafe_banquette),
+    ],
+    'life': [
+        ('SM_StreetTree', build_street_tree), ('SM_Hedge', build_hedge),
+        ('SM_LanternString', build_lantern_string), ('SM_BannerFlag', build_banner_flag),
+        ('SM_LaundryRack', build_laundry_rack), ('SM_Scooter', build_scooter),
+        ('SM_RoofBillboard', build_roof_billboard),
+    ],
     'set': [
         ('SM_CrashCar', build_crash_car), ('SM_Shrapnel', build_shrapnel),
         ('SM_YardWall_1250', build_yard_wall_1250), ('SM_YardWall_3040', build_yard_wall_3040),
@@ -1584,7 +2005,8 @@ GROUPS = {
         ('SM_RoadLines', build_road_lines),
     ],
 }
-MODELS = [p for g in ('cafe', 'city', 'ruins', 'props', 'set') for p in GROUPS[g]]
+MODELS = [p for g in ('cafe', 'cafedeco', 'city', 'ruins', 'props', 'life', 'set')
+          for p in GROUPS[g]]
 
 # How the cafe is dressed, in metres relative to the cafe centre (which is the level origin: the cafe is built
 # around (0,0) and the player starts inside it at (0,0,100) cm). tools/jumpcut_city_place.py places exactly this
@@ -1625,8 +2047,38 @@ CAFE_DRESS = [
 ]
 
 
+# The dressing added on Fri Nov 13 (Pacific) when the Team Owner said the cafe should look like an anime cafe
+# and the room was bare. Same contract as CAFE_DRESS above: this list and CAFE_DECO_CM in
+# tools/jumpcut_city_layout.py are the identical data in different units, and the layout tool's
+# _list_agrees() proves it on every run. The three protected lanes are all still clear.
+CAFE_DECO = [
+    ('SM_CafeFloorBoards',  0.00,  0.00, 0.02,   0),
+    ('SM_CafeRug',         -4.80,  3.45, 0.03,   0),
+    ('SM_CafePendant',     -3.10,  3.10, 3.05,   0),
+    ('SM_CafePendant',      0.10,  3.45, 3.05,   0),
+    ('SM_CafePendant',      3.60,  3.10, 3.05,   0),
+    ('SM_CafePendant',     -4.30, -2.40, 3.05,   0),
+    ('SM_CafeWallArt',     -1.50,  5.00, 1.60, 180),
+    ('SM_CafeWallArt',      3.20,  5.00, 1.60, 180),
+    ('SM_CafeClock',        0.85,  5.00, 2.65, 180),
+    ('SM_CafeChalkboard',  -4.80, -5.00, 1.85,   0),
+    ('SM_CafeBanquette',   -4.80,  4.64, 0.02, 180),
+    ('SM_CafeBarCounter',   5.78, -3.30, 0.02,  90),
+    ('SM_CafeStool',        5.25, -2.70, 0.02,   0),
+    ('SM_CafeStool',        5.25, -3.90, 0.02,   0),
+    ('SM_CafePlantTall',    5.45,  4.30, 0.02,   0),
+    ('SM_CafePlantTall',    1.50, -4.45, 0.02,   0),
+    ('SM_CafePlantSmall',   5.78, -4.30, 1.07,   0),
+    ('SM_CafePlantSmall',   4.60, -4.90, 2.36,   0),
+    ('SM_CafeTableTop',    -3.10,  3.10, 0.78,   0),
+    ('SM_CafeTableTop',     0.10,  3.45, 0.78,   0),
+    ('SM_CafeTableTop',     3.60,  3.10, 0.78,   0),
+]
+
+
 # Pieces whose origin is deliberately at their centre, not on the ground (see their docstrings).
-CENTRE_ORIGIN = ('SM_PlazaGate', 'SM_Shrapnel', 'SM_CheckpointTaken')
+CENTRE_ORIGIN = ('SM_PlazaGate', 'SM_Shrapnel', 'SM_CheckpointTaken',
+                 'SM_CafeChalkboard', 'SM_CafeClock')
 
 
 def tri_count(o):
@@ -1669,7 +2121,9 @@ PREVIEW = {'MS_CityWall': (0.78, 0.75, 0.70), 'MS_CityBrick': (0.42, 0.24, 0.19)
            'MS_CityMetal': (0.55, 0.57, 0.60), 'MS_CityGlass': (0.22, 0.38, 0.47),
            'MS_CitySignA': (0.95, 0.42, 0.18), 'MS_CitySignB': (0.25, 0.72, 0.90),
            'MS_CityAccent': (0.72, 0.16, 0.20), 'MS_CityWood': (0.47, 0.31, 0.18),
-           'MS_CityRoof': (0.23, 0.23, 0.25), 'MS_CityCloth': (0.80, 0.74, 0.62)}
+           'MS_CityRoof': (0.23, 0.23, 0.25), 'MS_CityCloth': (0.80, 0.74, 0.62),
+           'MS_CityLeaf': (0.29, 0.46, 0.22), 'MS_CityLantern': (0.90, 0.26, 0.19),
+           'MS_CafeWall': (0.93, 0.85, 0.72), 'MS_CafeFloor': (0.58, 0.39, 0.23)}
 
 
 def preview_colours():
@@ -1684,6 +2138,19 @@ def preview_colours():
                     if n.startswith('MS_CitySign'):
                         bsdf.inputs['Emission Color'].default_value = (c[0], c[1], c[2], 1.0)
                         bsdf.inputs['Emission Strength'].default_value = 0.9
+
+
+def _eevee():
+    """The name of the real-time engine, which Blender renamed. 'BLENDER_EEVEE' is Blender 4.1 and earlier;
+    4.2 to 4.4 call it 'BLENDER_EEVEE_NEXT' and raise a TypeError on the old name, so every check render in
+    this file failed on a 4.4 machine while `build` carried on working - which is how a kit ships with no
+    picture of it anywhere. Asks the enum what it is called instead of hard-coding either."""
+    names = {i.identifier for i in
+             bpy.types.RenderSettings.bl_rna.properties['engine'].enum_items}
+    for n in ('BLENDER_EEVEE_NEXT', 'BLENDER_EEVEE'):
+        if n in names:
+            return n
+    return 'BLENDER_WORKBENCH'
 
 
 def _stage(total, tall, target_z=None, cam_at=None, px=1600, aspect=0.5):
@@ -1711,7 +2178,7 @@ def _stage(total, tall, target_z=None, cam_at=None, px=1600, aspect=0.5):
     ground = bpy.data.objects.new('G', gm)
     sc.collection.objects.link(ground)
     ground.location = (total / 2, 0, -0.002)
-    sc.render.engine = 'BLENDER_EEVEE'
+    sc.render.engine = _eevee()
     sc.render.resolution_x, sc.render.resolution_y = px, int(px * aspect)
     sc.render.film_transparent = False
     sc.world = bpy.data.worlds.new('W')
@@ -1741,7 +2208,7 @@ def render_cafe(path, px=1700):
         return all(c.z > CAFE_H - 0.01 for c in vs) or all(c.y < -CAFE_HD + 0.151 for c in vs)
     ceil = [p for p in shell.data.polygons if _cut(p)]
     temp = []
-    for nm, x, y, z, yaw in CAFE_DRESS:
+    for nm, x, y, z, yaw in CAFE_DRESS + CAFE_DECO:
         src = bpy.data.objects[nm]
         o = src.copy()
         o.data = src.data
@@ -1834,7 +2301,7 @@ def render_layout(px=1700):
     gmat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = gmat.diffuse_color
     gmat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value = 0.9
     gm.materials.append(gmat)
-    sc.render.engine = 'BLENDER_EEVEE'
+    sc.render.engine = _eevee()
     sc.render.film_transparent = False
     sc.world = bpy.data.worlds.new('W')
     sc.world.use_nodes = True
