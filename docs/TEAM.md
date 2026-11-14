@@ -40,7 +40,7 @@ table, commits and pushes. A computer can have more than one role (`tester, make
 | Gamestation | Manuel Mendez | Windows | builder | Unreal edits, packaging, fixes playtest issues |
 | M_Station | Manuel Mendez | Windows | maker | TRELLIS, Blender, Meshy, sounds |
 | _(Manny's Mac: hostname to add)_ | Manuel Mendez | macOS | tester | |
-| Justins-Mac-mini | Justin Catrambone | macOS | tester, maker, **builder (beat 4, beats 1-3 cleanup)** | Mac mini, Apple silicon. Full UE 5.8 (43 GB, `~/Epic Games/UE_5.8`) with the MCP plugin prebuilt for Mac, and a complete clone with all LFS objects, so it can do Unreal work. git-lfs, gh, uv and the Blender MCP set up Nov 9; Blender is 5.1.2 (team uses 5.2) |
+| Justins-Mac-mini | Justin Catrambone | macOS | tester, maker, **builder (beat 4, beats 1-3 cleanup, the beat 1-3 imports: #40, #5, #7, #6)** | Mac mini, Apple silicon. Full UE 5.8 (43 GB, `~/Epic Games/UE_5.8`) with the MCP plugin prebuilt for Mac, and a complete clone with all LFS objects, so it can do Unreal work. git-lfs, gh, uv and the Blender MCP set up Nov 9; Blender is 5.1.2 (team uses 5.2) |
 
 **Why this Mac is a builder for beat 4 only** (asked for by the Team Owner, Fri Nov 13, 22:30 UTC: *"Continue beat 4
 on this mac"*). It was `tester, maker`, and a maker never saves in Unreal - but it had already saved `.uasset`s twice
@@ -53,8 +53,15 @@ Mac share one GitHub account, so LFS locks cannot tell them apart - say which fi
 up beats 1-3"* (flicker, enemy animation, thugs that act as one, the levitating Splice boss, Chaos physics). That
 work saves `BP_EnemyBase`, `BP_Goon`, `BP_Player`, the cleaver boss's animation assets, new breakable assets and
 the beat 1-3 actors in `Lvl_JumpCut`. It is still scoped: GameStation remains the builder for everything else, and
-the character-model imports (issues #5, #6, #7) are **not** this Mac's - another chat is on the missing assets.
 Issue #19 (*may this Mac change Unreal files?*) is still open for the general answer.
+
+**Widened again on Fri Nov 13, 4:54 PM Pacific.** M Station moved the four import tickets to this Mac in a comment
+on #40 (*"Manny has moved the four import tickets to you because you have Unreal open: #40, #5, #7, #6"*), and the
+Team Owner then told this chat to do the tickets assigned to it. That **replaces** the earlier line here saying the
+character-model imports were not this Mac's. The four are: the set pieces (#40), `SK_CafeCoworker` onto
+`BP_Coworker` (#5), `SK_CafeWalker` onto `BP_Player` plus the montage retarget (#7), and `SK_StreetGoon` onto
+`BP_Goon` with its chains hand-mapped (#6). Everything outside those four, and outside beat 4 and the beats 1-3
+cleanup, is still GameStation's.
 
 **Roles**
 - **builder:** the only computer that changes Unreal files (`.uasset`, `.umap`) and commits them. It packages and publishes

@@ -432,6 +432,40 @@ freezes the MCP, so it was not worth the risk on freeze day. And the three beat-
 
 ![The street the player walks, looking east from the cafe door](media/2026-11-13-city-lane.png)
 
+### The set pieces come off the grey boxes (#40) (Sat Nov 14, 02:10 UTC, Justin's Mac mini)
+
+The eleven set-piece models M Station made in PR #39 are in the game. **11 meshes imported, 21 new `JC_City`
+actors placed, 18 grey boxes hidden, asphalt on both floors, and the four Blueprint meshes swapped** - the
+crashed car in the cafe, the six walls of the boss lot, the two run walls, the plaza paving, the crossings
+and road lines, both plaza gates, the checkpoint post and its "taken" sign, and the shrapnel.
+
+`tools/jumpcut_city_place.py add` had never been run on any machine and ran clean first time, which is the
+first time that has happened with this script.
+
+**Measured in the editor after the swap:**
+
+| | |
+|---|---|
+| New layout actors | **21 of 21** present, right mesh, placed to **0.0 cm** of the layout |
+| Duplicate labels | **0** |
+| Grey boxes hidden | 18 (12 of them newly written to disk; the other 8 were already hidden by the city import) |
+| Both plaza gates | `SM_PlazaGate` at scale (1,1,1) - and a chest-height trace **still stops at the gate** |
+| Checkpoint, shrapnel | new meshes at scale (1,1,1); `M_CheckGreen` kept on the sign's `MS_CitySignB` slot |
+| Cafe route | the player still reaches the dead driver: closest approach **134 cm**, inside the 220 cm interact range |
+| Cafe door out to the street | clear |
+
+**The placer and the chaos props were fighting over the same three meshes.** `prepare_meshes()` sets every
+city model to `CTF_USE_COMPLEX_AS_SIMPLE`, which is right for level geometry - but `SM_CafeChair`,
+`SM_TrafficCone` and `SM_TrashBags` are the knockable props from PR #48, and Unreal **refuses to simulate**
+a body with complex-as-simple collision (it says so only in the log). Running the placer silently put all
+three back, so the next save of those meshes would have killed the knockable half of the chaos physics. The
+three are restored, and the placer now carries a `SIMULATED` list so it leaves them alone.
+
+**Not done, and deliberately so:** the level was **not reloaded from disk** to re-verify. Four Blueprints and
+three actor packages left dirty by the previous lane are still unsaved in this editor, and a reload would
+raise the Save Content modal that freezes the MCP. The 12 changed grey-box packages are on disk (`git status`
+confirms the writes), so the hide survives a reload; that is the evidence, not a reload.
+
 ### Beat 5: the arena recipe, and the fight that has no ending (Sat Nov 14, 00:40 UTC, Justin's Mac mini)
 
 **The editor could not be reached, so this is maker work: two recipe scripts and three findings.** Unreal
