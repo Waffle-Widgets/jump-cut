@@ -709,6 +709,16 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   legs and two arms. If the first Rig press does not offer the remesh, use the mesh-ops button in the viewer bottom
   bar -> **Remesh** -> 30K + Quad; that standalone remesh is **also 0 credits**. The script now prints
   `MESHYCHAR-BAD-RIG` when a "smart" rig has no leg chains, so this cannot ship silently again.
+- **Meshy's current Humanoid rig has NO FINGERS, and no export setting gets them back** (Sat Nov 14). A fresh
+  `CafeWalker` remeshed to 30K Quad and Humanoid-rigged came out **28 bones**, `LeftHand -> LeftHand_End`, where
+  our shipped `SK_CafeWalker` is **69 bones with a 21-bone five-finger subtree on each hand**. Two dead ends,
+  both measured rather than assumed: the download dialog's **"Skeleton template" dropdown is inert in this path**
+  - the same asset exported as `Mixamo` and as `UE5 Mannequin` gave **byte-identical files** (5,460,508 bytes,
+  `cmp` clean, `Hips`/`Spine`/`LeftArm` names both times) - and **`Smart Rig` is now marked (Beta) with a deer,
+  an octopus and a spider as its examples**, i.e. it is the creature rigger, not the better humanoid one. So a
+  new Meshy body **cannot** drop onto our existing animation set. If a character has to be remade, transfer the
+  new mesh's weights onto the **existing** armature in Blender and keep the old skeleton; that is the only route
+  that preserves the clips, the montages and the anim blueprint. See issue #96.
 - **Look at the colours before calling a character done: `python tools/color_audit.py`.** Image to 3D bakes one
   texture for the whole body and nothing in the pipeline knows a pixel is "hair" or "sleeve", so a model can come
   back with skin-coloured hair, or a shirt the same colour as the arm inside it, and every number still reads
@@ -895,6 +905,16 @@ Full summary in `docs/RULES.md`. Warn us if a request would break one of these:
     of times and the take still looks completely correct - two of three takes drew three power rings instead of
     four and nothing about them said so. `tools/count_power_rings.py` is the pattern: give it a box, let it
     count, let it exit non-zero. It needs a box because the same cyan is also the collar and the rim light.
+  - **"Download full size image" lands in `megajam-browser/out/`, NOT `~/Downloads`.** The Meshy note below says
+    to take the newest file in `~/Downloads`; that is true of the user's own Chrome and **false of the Playwright
+    browser**, which writes to its own output directory. Taking the newest `~/Downloads` file after a Playwright
+    download gets you a stale picture from another project - exactly the trap the "never pick by filename
+    pattern" rule warns about, arriving from the other direction. Check the tool's own `Downloaded file ... to`
+    line for the real path (Sat Nov 14).
+  - **Do not judge a take from an element screenshot - the composer sits on top of it.** A full-body A-pose came
+    back looking cropped at the shins twice running, and it was not: the prompt bar overlays the bottom of the
+    `<img>`, and an element screenshot captures whatever occludes it. The downloaded full-size file had complete
+    headroom and footroom both times. Either download first, or make the window taller before looking (Sat Nov 14).
   - **Start a NEW chat for each take.** A follow-up message makes Gemini *edit* the previous picture and inherit
     whatever it got wrong, which is exactly what `docs/prompts-gemini.md` warns about.
   - It composes to fill the frame and will not reliably leave an empty band for title text; see `UI-TITLE2` in

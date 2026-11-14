@@ -27,7 +27,7 @@
    0.0,
    110.0
   ],
-  "tris": 96
+  "tris": 240
  },
  "SM_CafeEspresso": {
   "x": [
@@ -57,7 +57,7 @@
    0.0,
    74.0
   ],
-  "tris": 100
+  "tris": 196
  },
  "SM_CafeRegister": {
   "x": [
@@ -87,7 +87,7 @@
    0.0,
    233.5
   ],
-  "tris": 372
+  "tris": 1364
  },
  "SM_CafeTable": {
   "x": [
@@ -117,7 +117,7 @@
    0.0,
    92.0
   ],
-  "tris": 128
+  "tris": 532
  },
  "SM_CafeAwning": {
   "x": [
@@ -327,7 +327,7 @@
    0.0,
    105.0
   ],
-  "tris": 96
+  "tris": 288
  },
  "SM_CafeBanquette": {
   "x": [
@@ -342,7 +342,7 @@
    0.0,
    108.0
   ],
-  "tris": 192
+  "tris": 576
  },
  "SM_ShopHouse_A": {
   "x": [

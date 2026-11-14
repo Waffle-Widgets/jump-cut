@@ -486,13 +486,17 @@ def build_cafe_counter(name='SM_CafeCounter'):
     """5.00 x 0.80 x 1.10 m - the exact size of the C1_Cafe_Counter grey box it replaces."""
     b = B(seed=12)
     w, d, h = 5.0, 0.8, 1.1
-    b.box((-w / 2, -d / 2, 0), (w / 2, d / 2, h - 0.06), 'MS_CityWood', 0.85)
-    b.box((-w / 2 - 0.04, -d / 2 - 0.04, h - 0.06), (w / 2 + 0.04, d / 2 + 0.04, h), 'MS_CityConcrete', 1.0)
-    b.box((-w / 2 + 0.05, -d / 2 - 0.05, 0.08), (w / 2 - 0.05, -d / 2 - 0.02, 0.18), 'MS_CityTrim', 0.5)
+    # The body gets a kick (bot=) rather than meeting the floor on a knife edge, and the worktop gets a real
+    # bullnose (top=). A counter's rolled front edge is the single line that says 'counter' from across a room.
+    b.cbox((-w / 2, -d / 2, 0), (w / 2, d / 2, h - 0.06), 'MS_CityWood', 0.85, ch=0.03, bot=0.05)
+    b.cbox((-w / 2 - 0.04, -d / 2 - 0.04, h - 0.06), (w / 2 + 0.04, d / 2 + 0.04, h), 'MS_CityConcrete', 1.0,
+           ch=0.035, top=0.018, bot=0.012)
+    b.cbox((-w / 2 + 0.05, -d / 2 - 0.05, 0.08), (w / 2 - 0.05, -d / 2 - 0.02, 0.18), 'MS_CityTrim', 0.5, ch=0.008)
     for i in range(4):                                   # recessed panels on the customer side
         px = -w / 2 + 0.2 + i * (w - 0.4) / 4
-        b.box((px, -d / 2 - 0.015, 0.22), (px + (w - 0.4) / 4 - 0.12, -d / 2, h - 0.2), 'MS_CityWood', 0.72)
-    b.box((-w / 2 + 0.06, -d / 2 + 0.08, 0.5), (w / 2 - 0.06, d / 2 - 0.06, 0.56), 'MS_CityWood', 0.65)
+        b.cbox((px, -d / 2 - 0.015, 0.22), (px + (w - 0.4) / 4 - 0.12, -d / 2, h - 0.2), 'MS_CityWood', 0.72,
+               ch=0.014)
+    b.cbox((-w / 2 + 0.06, -d / 2 + 0.08, 0.5), (w / 2 - 0.06, d / 2 - 0.06, 0.56), 'MS_CityWood', 0.65, ch=0.012)
     return b.finish(name)
 
 
@@ -545,10 +549,10 @@ def build_cafe_espresso(name='SM_CafeEspresso'):
 def build_cafe_pastry_case(name='SM_CafePastryCase'):
     b = B(seed=14)
     w, d, h = 1.20, 0.60, 0.74
-    b.box((-w / 2, -d / 2, 0), (w / 2, d / 2, 0.1), 'MS_CityMetal', 0.9)
+    b.cbox((-w / 2, -d / 2, 0), (w / 2, d / 2, 0.1), 'MS_CityMetal', 0.9, ch=0.016, bot=0.012)
     for sx in (-w / 2, w / 2 - 0.05):                    # corner posts
-        b.box((sx, -d / 2, 0.1), (sx + 0.05, d / 2, h), 'MS_CityTrim', 0.5)
-    b.box((-w / 2, -d / 2, h - 0.05), (w / 2, d / 2, h), 'MS_CityTrim', 0.5)
+        b.cbox((sx, -d / 2, 0.1), (sx + 0.05, d / 2, h), 'MS_CityTrim', 0.5, ch=0.01)
+    b.cbox((-w / 2, -d / 2, h - 0.05), (w / 2, d / 2, h), 'MS_CityTrim', 0.5, ch=0.016, top=0.012)
     b.quad([(-w / 2, -d / 2, 0.1), (w / 2, -d / 2, 0.1), (w / 2, -d / 2, h), (-w / 2, -d / 2, h)], 'MS_CityGlass', 0.75)
     b.quad([(w / 2, d / 2, 0.1), (-w / 2, d / 2, 0.1), (-w / 2, d / 2, h), (w / 2, d / 2, h)], 'MS_CityGlass', 0.6)
     for i in range(3):                                   # trays of something
@@ -562,15 +566,19 @@ def build_cafe_shelf(name='SM_CafeShelf'):
     b = B(seed=15)
     w, d, h = 2.0, 0.34, 2.10
     for sx in (-w / 2, w / 2 - 0.06):
-        b.box((sx, -d / 2, 0), (sx + 0.06, d / 2, h), 'MS_CityWood', 0.8)
+        b.cbox((sx, -d / 2, 0), (sx + 0.06, d / 2, h), 'MS_CityWood', 0.8, ch=0.012, bot=0.008)
     for i in range(5):
         z = 0.3 + i * 0.44
-        b.box((-w / 2, -d / 2, z), (w / 2, d / 2, z + 0.045), 'MS_CityWood', 0.88)
+        b.cbox((-w / 2, -d / 2, z), (w / 2, d / 2, z + 0.045), 'MS_CityWood', 0.88, ch=0.012, top=0.007)
+        # NOTE: the RNG call COUNT below must not change. Rewriting a loop like this moved every trash bag
+        # in SM_TrashBags and grew its footprint 1.20x1.00 -> 1.57x1.31 m, which was a real collision on a
+        # 2.6 m pavement and was invisible in a render. Same number of rng calls in, same shelf dressing out.
         for j in range(b.rng.randint(3, 7)):             # cups, bags, tins
             px = b.rng.uniform(-w / 2 + 0.08, w / 2 - 0.26)
             s = b.rng.uniform(0.09, 0.2)
-            b.box((px, -d / 2 + 0.06, z + 0.045), (px + s, -d / 2 + 0.06 + min(s, d - 0.14), z + 0.045 + s * 1.2),
-                  'MS_CityAccent' if j % 2 else 'MS_CityWood', b.rng.uniform(0.6, 1.0))
+            c = b.rng.uniform(0.6, 1.0)
+            b.cbox((px, -d / 2 + 0.06, z + 0.045), (px + s, -d / 2 + 0.06 + min(s, d - 0.14), z + 0.045 + s * 1.2),
+                   'MS_CityAccent' if j % 2 else 'MS_CityWood', c, ch=min(0.012, s * 0.16), top=s * 0.05)
     return b.finish(name)
 
 
@@ -583,16 +591,23 @@ def build_cafe_table(name='SM_CafeTable'):
 
 
 def build_cafe_chair(name='SM_CafeChair'):
+    """There are SIX of these in the cafe and the player stands among them for the whole of beat 1, so this
+    is the kit's most-seen piece of furniture at eye level. It was eight axis-aligned cuboids. Every element
+    is chamfered now: a 4.4 cm square leg with a hard corner is a black ink line down its whole length, and
+    six chairs' worth of that is most of what 'blocky' means inside the cafe."""
     b = B(seed=17)
     for sx in (-0.19, 0.19):
         for sy in (-0.19, 0.19):
-            b.box((sx - 0.022, sy - 0.022, 0), (sx + 0.022, sy + 0.022, 0.44), 'MS_CityTrim', 0.5)
-    b.box((-0.22, -0.22, 0.44), (0.22, 0.22, 0.48), 'MS_CityWood', 0.9)
-    for i in range(4):                                   # slatted back
+            b.cbox((sx - 0.022, sy - 0.022, 0), (sx + 0.022, sy + 0.022, 0.44), 'MS_CityTrim', 0.5,
+                   ch=0.007, top=0.004)
+    # the seat reads as a seat because its edge is rolled, not knife-sharp
+    b.cbox((-0.22, -0.22, 0.44), (0.22, 0.22, 0.48), 'MS_CityWood', 0.9, ch=0.022, top=0.009, bot=0.007)
+    for i in range(4):                                   # slatted back, each slat with a rounded face
         z = 0.56 + i * 0.1
-        b.box((-0.21, 0.17, z), (0.21, 0.21, z + 0.06), 'MS_CityWood', 0.86)
-    for sx in (-0.19, 0.19):
-        b.box((sx - 0.022, 0.168, 0.44), (sx + 0.022, 0.212, 0.92), 'MS_CityTrim', 0.5)
+        b.cbox((-0.21, 0.17, z), (0.21, 0.21, z + 0.06), 'MS_CityWood', 0.86, ch=0.012, top=0.008, bot=0.008)
+    for sx in (-0.19, 0.19):                             # back uprights, tapering slightly as they rise
+        b.prism(b.chamfer_rect(sx - 0.022, 0.168, sx + 0.022, 0.212, 0.007), 0.44, 0.92, 'MS_CityTrim', 0.5,
+                prof1=b.chamfer_rect(sx - 0.018, 0.172, sx + 0.018, 0.208, 0.006))
     return b.finish(name)
 
 
@@ -1962,11 +1977,13 @@ def build_cafe_bar_counter(name='SM_CafeBarCounter'):
     on three brackets. Long axis X, so yaw 90 lays it along the east window."""
     b = B(seed=130)
     w, d, h = 1.20, 0.32, 1.05
-    b.box((-w, -d / 2, h - 0.055), (w, d / 2, h), 'MS_CityWood', 0.9)
-    b.box((-w, -d / 2, h - 0.075), (w, d / 2 - 0.04, h - 0.055), 'MS_CityWood', 0.72)
+    b.cbox((-w, -d / 2, h - 0.055), (w, d / 2, h), 'MS_CityWood', 0.9, ch=0.022, top=0.014)   # bullnose top
+    b.cbox((-w, -d / 2, h - 0.075), (w, d / 2 - 0.04, h - 0.055), 'MS_CityWood', 0.72, ch=0.012)
     for bx in (-w + 0.22, 0.0, w - 0.22):
-        b.box((bx - 0.025, -d / 2 + 0.03, 0.0), (bx + 0.025, -d / 2 + 0.08, h - 0.075), 'MS_CityTrim', 0.4)
-        b.box((bx - 0.025, -d / 2 + 0.03, h - 0.30), (bx + 0.025, d / 2 - 0.03, h - 0.26), 'MS_CityTrim', 0.4)
+        b.cbox((bx - 0.025, -d / 2 + 0.03, 0.0), (bx + 0.025, -d / 2 + 0.08, h - 0.075), 'MS_CityTrim', 0.4,
+               ch=0.008, bot=0.006)
+        b.cbox((bx - 0.025, -d / 2 + 0.03, h - 0.30), (bx + 0.025, d / 2 - 0.03, h - 0.26), 'MS_CityTrim', 0.4,
+               ch=0.008)
     return b.finish(name)
 
 
@@ -1975,16 +1992,22 @@ def build_cafe_banquette(name='SM_CafeBanquette'):
     yaw 0 it sits against the north wall looking into the room."""
     b = B(seed=131)
     w, d = 1.10, 0.33
-    b.box((-w, -d, 0.0), (w, d, 0.10), 'MS_CityTrim', 0.3)                        # plinth
-    b.box((-w - 0.03, -d - 0.03, 0.10), (w + 0.03, d + 0.03, 0.45), 'MS_CityAccent', 0.72)
-    b.box((-w - 0.03, d - 0.08, 0.45), (w + 0.03, d + 0.03, 1.02), 'MS_CityAccent', 0.64)
+    # Upholstery is the one thing in a room that has NO hard edge, so a padded bench built from cuboids reads
+    # as a crate with a cushion drawn on it. The seat and back carry the biggest bevels in the whole kit.
+    b.cbox((-w, -d, 0.0), (w, d, 0.10), 'MS_CityTrim', 0.3, ch=0.018, bot=0.012)              # plinth
+    b.cbox((-w - 0.03, -d - 0.03, 0.10), (w + 0.03, d + 0.03, 0.45), 'MS_CityAccent', 0.72,
+           ch=0.055, top=0.045)                                                              # seat pad
+    b.cbox((-w - 0.03, d - 0.08, 0.45), (w + 0.03, d + 0.03, 1.02), 'MS_CityAccent', 0.64,
+           ch=0.045, top=0.038)                                                              # back pad
     for i in range(5):                                                            # buttoning
         bx = -w + 0.2 + i * (2 * w - 0.4) / 4
         for bz in (0.62, 0.84):
-            b.box((bx - 0.02, d - 0.09, bz - 0.02), (bx + 0.02, d - 0.075, bz + 0.02), 'MS_CityAccent', 0.45)
-    b.box((-w - 0.03, d - 0.09, 1.02), (w + 0.03, d + 0.03, 1.08), 'MS_CityWood', 0.8)   # capping rail
+            b.cbox((bx - 0.02, d - 0.09, bz - 0.02), (bx + 0.02, d - 0.075, bz + 0.02), 'MS_CityAccent', 0.45,
+                   ch=0.007)
+    b.cbox((-w - 0.03, d - 0.09, 1.02), (w + 0.03, d + 0.03, 1.08), 'MS_CityWood', 0.8,
+           ch=0.016, top=0.012)                                                   # capping rail
     for cx, slot in ((-0.62, 'MS_CityCloth'), (0.58, 'MS_CitySignB')):            # two cushions
-        b.box((cx - 0.17, d - 0.20, 0.47), (cx + 0.17, d - 0.07, 0.80), slot, 0.8)
+        b.cbox((cx - 0.17, d - 0.20, 0.47), (cx + 0.17, d - 0.07, 0.80), slot, 0.8, ch=0.04, top=0.03, bot=0.03)
     return b.finish(name)
 
 
