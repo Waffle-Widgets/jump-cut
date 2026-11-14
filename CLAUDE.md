@@ -272,6 +272,26 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   happened, never *how often*. The on-screen red version is the useful one: it is shown for ~10 s after the last
   overflow (`VirtualShadowMapCacheManager.cpp:949`), so if it is on screen in a screenshot, one happened in the
   10 s before that frame.
+- **A movable directional light's `DynamicShadowDistanceMovableLight` is INERT while VSM is on.** We nearly
+  "fixed" the flicker by cutting it from 40,000 to 8,000, and it would have changed nothing:
+  `GetDirectionalLightDistanceFadeParameters` returns early with *"Virtual shadow maps do not use cascade distance
+  fading"* (`DirectionalLightComponent.cpp:510-516`), and `r.Shadow.DistanceScale` only scales `GetCSMMaxDistance`
+  (`DirectionalLightComponent.cpp:701-713`), which the VSM path never reads. Under VSM the clipmap's reach is
+  `GetLevelRadius(L) = 2^(L+1)` cm from `r.Shadow.Virtual.Clipmap.LastLevel` (default **22** = ~84 km over our ~150 m
+  level). That cvar is the lever; the light property is not. The light setting still matters on the SM5 fallback
+  below, so set both - just know which one is doing the work on which machine.
+- **The VSM marking-queue overflow is a PERFORMANCE fallback, not dropped shadow pages.** Read the shader before
+  blaming it for a visual bug: on overflow `VirtualShadowMapBuildPerPageDrawCommands.usf:346` takes the
+  `bIsSmallJob || bMarkingJobQueueOverflow` branch and marks every page inline in a single-threaded loop. The pages
+  still get marked - it just does it the slow way, which is why the engine's own message says *"Performance may be
+  affected."* So it is a real thing to fix, but it is not by itself an explanation for flicker.
+- **Mac M1 (and any D3D11/SM5 PC) gets neither RT nor VSM, so it runs the legacy CSM path.** `METAL_SM5` sets
+  `bSupportsNanite=false` and `bSupportsRayTracing=false` (`Mac/DataDrivenPlatformInfo.ini:54,60`), and
+  `UseVirtualShadowMaps` requires `DoesPlatformSupportNanite` (`RenderUtils.cpp:1498-1526`) - so no Nanite means no
+  VSM. `METAL_SM6` has both (`:95,104`) but needs macOS 15+ and an Apple8 GPU, i.e. **M2 or later**
+  (`MetalRHI.cpp:255-266`); an Intel Mac cannot run the Metal RHI at all (`MetalRHI.cpp:407`). Practical upshot:
+  changes made only in cvars reach every machine, changes made only on the sun actor reach only the CSM machines,
+  and anything that depends on ray tracing reaches neither an M1 nor a pre-2020 PC GPU.
 - **To find a flicker, capture the same camera twice and diff the pictures** (`CaptureViewport` x2, per-pixel
   difference). It shows *what* changes in one step. Auto-exposure settling after a camera turn changes half the
   picture too - that is a drift, not a flicker; let it settle before comparing.
