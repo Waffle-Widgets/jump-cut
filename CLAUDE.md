@@ -737,6 +737,15 @@ Full summary in `docs/RULES.md`. Warn us if a request would break one of these:
     Draw it to a canvas and `toDataURL` instead - it is same-origin so the canvas is not tainted. That yields the
     **1024-wide display copy**, which is enough to judge a take but NOT what to ship; the full-size file still
     needs the page's own "Download full size image".
+  - **Once the page settles the `blob:` is gone and the `<img>` becomes an `lh3.googleusercontent.com/gg-dl/`
+    URL.** A canvas draw on that one throws `SecurityError: Tainted canvases may not be exported`, and `curl` on
+    the URL outside the browser gets **403** - it needs the session. The way back: **click the image** to open
+    the lightbox, which mounts a fresh `blob:` copy, and canvas-grab that. An element screenshot is NOT a
+    substitute - it comes back at the displayed size with the container's rounded corners baked in.
+  - **COUNT what the picture must contain; do not eyeball it.** A model draws the right thing the wrong number
+    of times and the take still looks completely correct - two of three takes drew three power rings instead of
+    four and nothing about them said so. `tools/count_power_rings.py` is the pattern: give it a box, let it
+    count, let it exit non-zero. It needs a box because the same cyan is also the collar and the rim light.
   - **Start a NEW chat for each take.** A follow-up message makes Gemini *edit* the previous picture and inherit
     whatever it got wrong, which is exactly what `docs/prompts-gemini.md` warns about.
   - It composes to fill the frame and will not reliably leave an empty band for title text; see `UI-TITLE2` in
