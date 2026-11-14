@@ -254,7 +254,7 @@ The win screen: the yard after the cleaver boss, with Splice's violet. The left 
 The lose screen. Nobody is hurt in it (13+): the take was simply no good.
 
 > anime illustration, cel shaded with hard-edged shadows and clean dark line art, flat areas of solid colour, a
-> dark empty film studio, a single spotlight shining straight down on a dark green cloth apron lying crumpled on
+> dark empty film studio, a single spotlight shining straight down on {CafeWalker:apron} lying crumpled on
 > the bare floor, a long strip of photographic film snapped in two lying beside it, deep navy darkness all around
 > the circle of light, the upper half of the picture is plain darkness with nothing in it, quiet and still, no
 > people, no blood, no text, no letters, no logos

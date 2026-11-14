@@ -62,11 +62,13 @@ def expand(prompt, lock=None):
     def sub(m):
         name, form = m.group(1), (m.group(2) or 'prompt')
         if name not in lock: sys.exit('unknown character {%s}: not in docs/character-locks.json' % name)
-        key = 'prompt_short' if form == 'short' else 'prompt'
+        key = 'prompt' if form == 'prompt' else 'prompt_' + form
         if key not in lock[name]: sys.exit('{%s:%s}: %s has no %s in the lock' % (name, form, name, key))
         used.append(name)
         return lock[name][key]
-    out = re.sub(r'\{([A-Za-z][A-Za-z0-9_]*)(?::(short))?\}', sub, prompt)
+    # Any word is matched as a form so an unknown one (a typo) reaches sub() and is rejected there.
+    # Matching only the known forms would leave "{CafeWalker:hatt}" in the prompt as literal text.
+    out = re.sub(r'\{([A-Za-z][A-Za-z0-9_]*)(?::(\w+))?\}', sub, prompt)
     for n in used:
         if lock[n].get('never'): neg.append(lock[n]['never'])
     return out, ', '.join(neg), used

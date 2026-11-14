@@ -23,9 +23,10 @@ DOCS = ['docs/prompts.md', 'docs/prompts-gemini.md']
 # Words that belong to a locked character. Seeing one in a prompt that did not use the token means
 # somebody is describing him by hand again. Keep these specific: "green" alone would fire on a tree.
 TELLS = {
-    'CafeWalker': ['dark green apron', 'green bib apron', 'khaki brown shirt', 'khaki brown long-sleeve',
-                   'cream shirt', 'barista', 'coffee shop worker'],
-    'CafeCoworker': ['teal apron', 'white short-sleeve shirt', 'high ponytail'],
+    'CafeWalker': ['dark green apron', 'green bib apron', 'green cloth apron', 'green canvas apron',
+                   'khaki brown shirt', 'khaki brown long-sleeve', 'cream shirt', 'barista',
+                   'coffee shop worker'],
+    'CafeCoworker': ['teal apron', 'teal canvas apron', 'white short-sleeve shirt', 'high ponytail'],
     'CrashDriver': ['brown leather jacket', 'leather jacket'],
 }
 
@@ -58,7 +59,7 @@ def main():
             where.setdefault(code, i)
         for code, text in whole.items():
             low = text.lower()
-            used = set(re.findall(r'\{([A-Za-z][A-Za-z0-9_]*)(?::short)?\}', text))
+            used = set(re.findall(r'\{([A-Za-z][A-Za-z0-9_]*)(?::\w+)?\}', text))
             for name, tells in TELLS.items():
                 if name in used: continue
                 if code in lock[name].get('sheet_prompts', []): continue   # the lock's own source
