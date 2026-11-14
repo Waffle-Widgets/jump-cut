@@ -215,6 +215,68 @@ Draw them wide (the default `1664x928`), the cover at `1328x1056` and cropped to
     python tools/gen_images.py UI-TITLE UI-WIN UI-LOSE UI-TBC --takes 2
     python tools/gen_images.py UI-COVER --takes 2 --size 1328x1056
 
+### UI-TITLE4
+The title card, **third concept, and the one being built**. The Team Owner corrected the back-to-back pair on
+Sat Nov 14: *"I was thinking two halves of the main character, half barista and half director, and together they
+make one person on the screen but there is a clear split down the center. The barista half looks like he does
+normally, the director version looks powerful."*
+
+**`UI-TITLE3` drew two whole people standing beside each other.** That is a different picture and it does not do
+what the animation needs. Here there is **one** body, one head, one face, standing square to the camera dead in
+the middle of the frame, and the costume changes at the picture's exact vertical centre: his right-hand side (the
+viewer's left) is the apron, his left-hand side (the viewer's right) is the coat. Cut down that line, the first
+fade shows **half a man**, and the second completes him - which is the storyboard's own first two beats, said
+properly for the first time.
+
+**Why the composition has to be dead-on frontal and dead-on centred.** The cut is at `w // 2` and nothing moves it.
+If the figure sits 40 px left of centre, the split does not run down his nose, it runs down his cheek - the barista
+half gets a sliver of coat and the join stops reading as one person. `split_title_pair.py --one-body` measures this
+and refuses the take; see its notes. A three-quarter turn fails the same way, because a turned head has no straight
+vertical midline to cut along.
+
+**The forearm rings swap arms here, and that is staging rather than a redesign.** Only his left arm is inside the
+director half, so `{CafeWalker:director_half}` puts the three rings there. The count is the invariant - three, one
+per power - and `docs/character-locks.json` now says so in as many words.
+
+**The clear split is a costume and lighting change, not a drawn line.** A line drawn down the middle would be
+bisected by the cut and half of it would fade in with the barista, reading as a stray mark - the same trap
+`UI-TITLE3` take 1 fell into. The warm/cool lighting break and the apron-to-coat change carry it instead.
+
+    python tools/gen_images.py UI-TITLE4 --print    # the words, to paste into Gemini
+    python tools/gen_images.py UI-TITLE4 --takes 3  # or draw locally
+
+**Three takes drawn in Gemini, Sat Nov 14 06:11-06:16 UTC** (`Art/Refs/gen/gemini4/GEM4-UI-TITLE4-{1,2,3}.png`,
+gitignored; the picked take is committed as `Art/UI/T_UI_TitlePair.png`). What they settled:
+
+| | Take 1 **(picked)** | Take 2 | Take 3 |
+|---|---|---|---|
+| One body, not two people | yes | yes | yes |
+| Off the cut (limit 20 px) | **2 px** | 2 px | 3 px |
+| Halves equally wide (limit 22%) | **2%** | 2% | 4% |
+| Apron: one neck strap, square bib pocket | yes | yes | yes |
+| Three cyan forearm rings | yes | yes | yes |
+| A line drawn down his face | **no** | **yes** - top edge to collar | **yes** - top edge to chin |
+| Skin tone matches across the cut | yes | yes | **no** - the coat half's face is greyer |
+
+**The composition landed on the first take and on all three.** Every one came back as one centred frontal body
+with the costume changing at the midline, inside 3 px of the cut and inside 4% on width. That is the opposite of
+how `UI-TITLE2` went, where the first take ignored "back to back" entirely - and the reason is that this
+composition does not ask the model to hold two things true at once.
+
+**Take 1 was picked because the other two have a line drawn down his face.** Gemini's habit of drawing a divider
+between two panels survives into this composition, except here it lands *on him* - a hard black line from the top
+edge, through the hair, down the nose. Above his head it is removable (`--erase-seam 8 --erase-rows 0:17`); over
+his face it is not, because filling those columns with the background cuts a cream slot through him. Take 1 drew
+no line at all, so **the committed picture needed no retouch of any kind** - unlike the title card it replaces,
+which had a badge painted out of its grille.
+
+Drawn in **Gemini** (`Create image`, Hydrogen, 16:9), which beat the local ComfyUI/Qwen path on this kind of
+picture. **Reject a take for**, in order: two separate people instead of one body; the midline not on the picture's
+centre; a three-quarter or turned head; a cross-back apron; the two halves not joining at the shoulder; any scenery
+or lettering at all.
+
+> anime key visual illustration, cel shaded with hard-edged shadows and clean dark line art, flat areas of solid colour, only two or three large simple shadow shapes per garment, bright and light and airy, a symmetrical centred poster composition of ONE SINGLE PERSON and one person only - one body, one head, one face, one neck, two eyes, a pair of shoulders joined to each other - standing square to the camera and facing straight forward towards the viewer with his head perfectly level and not turned, shown from the waist upward with the bottom edge of the picture cutting across him at the waist, placed exactly in the middle of the frame so that the picture's own vertical centre line runs precisely down the middle of his face between his two eyes, down the bridge of his nose, through the middle of his mouth and chin, down the centre of his throat and down the centre of his chest and stomach, and this one person wears a different costume on each side of that centre line with a clean hard perfectly straight vertical boundary at the exact centre of the picture where one costume stops and the other starts, on the viewer's left of that centre line he is {CafeWalker:bust}, on the viewer's right of that centre line he is {CafeWalker:director_half}, the two sides are the two halves of the same single continuous unbroken body and they join at the centre with both shoulders at exactly the same height and the two halves of his one face meeting exactly and lining up perfectly, the viewer's left half of the picture is lit with warm flat even daylight, the viewer's right half is a little cooler and deeper with one narrow clean line of pale cyan rim light running down his outer edge on that side only, the background is one single flat plain field of warm pale cream colour that is completely empty from edge to edge, generous wide empty margins of that same flat cream at the left and right edges well clear of both of his shoulders, no second person, no twin, no duplicate, no mirror reflection, no scenery, no furniture, no walls, no windows, no clapperboard, no text, no letters, no numbers, no logos, no signs, no drawn dividing line
+
 ### UI-TITLE3
 The title card, **third concept, and the one being built**. The Team Owner asked for a title *animation* on Fri Nov 14:
 *"half of the barista fade into frame then the other half fades in as the director, then have a clapperboard fade in
