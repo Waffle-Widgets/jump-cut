@@ -111,3 +111,45 @@ are Blender measuring meshes; the new model has never been in Unreal.
 The Playwright browser's downloads land in **`megajam-browser/out/`**, not `~/Downloads`. `CLAUDE.md` says to take
 the newest file in `~/Downloads`, which is true of the user's own Chrome and false here — the newest file there was
 a stale render from another project, and it is exactly the trap that note warns about in the other direction.
+
+---
+
+## Update, 5:10 AM — the new mesh is now on the OLD skeleton, so nothing has to be re-retargeted
+
+[#96](https://github.com/Waffle-Widgets/jump-cut/issues/96)'s recommended option is done:
+`Art/Blender/reskin_to_existing_rig.py` puts the new body onto the shipped 69-bone armature. **Every clip,
+montage, blend space and `ABP_Unarmed_CWM` keeps working**, because the skeleton never changed.
+
+It needed three passes, and the reason is worth keeping:
+
+1. **`POLYINTERP_VNORPROJ`** projects along vertex normals, follows the surface, and keeps fine structure —
+   18 of 20 finger bones survive it. But it misses wherever the silhouettes differ (the new apron is a front
+   panel where the old one wrapped the legs), leaving **2,681 vertices with no weight at all**.
+2. **A KD-tree fallback** fills every missed vertex from its nearest source vertex.
+3. **A distance prune**, because pass 2 copies a source vertex's *whole* weight set. One vertex at shoe height
+   came out driven by a hand bone **82 cm above it** and swung **83.3 cm** when that hand turned — one vertex,
+   and a visible spike. Weights further than 25 cm from their bone are dropped; a vertex whose weights are
+   *all* distant is given wholly to the bone it is actually nearest (592 of those).
+
+**The three plain proximity modes are not an alternative, and I measured all of them.** `NEAREST`,
+`POLYINTERP_NEAREST` and `EDGEINTERP_NEAREST` each cover every vertex and each collapse the fingers to
+**4 bones**, because the two A-poses put the hands a few centimetres apart and a finger is about one
+centimetre thick.
+
+Verified by posing a hand bone 60° and measuring, against the same test on the model it replaces:
+
+| | shipped | naive NEAREST | this |
+|---|---|---|---|
+| max displacement | 15.5 cm | **83.3 cm** | **14.1 cm** |
+| verts moving > 20 cm | 0 | 1 | **0** |
+| unweighted vertices | — | 0 | **0** |
+| finger bones with weights | 21 + 21 | 4 + 4 | **13 + 13** |
+| boundary edges / holes | 20,451 / 1,743 | — | **345 / 31** |
+
+**Thirteen of twenty-one is worse than the twenty-one we had.** The hand is coarser and some finger joints
+carry no vertices, so this is a trade and not a clean win — but it is a trade against a mesh with 1,743 holes
+and an apron that is a skirt from behind. `docs/media/2026-11-14-cafewalker-apron-before-after.jpg` is the
+four-view comparison; the back view is the one to look at.
+
+**Still not in Unreal and still nobody has played it.** Importing it, pointing `BP_Player` at it and checking a
+punch is builder work.
