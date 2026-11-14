@@ -268,6 +268,21 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   root-motion clip of such a rig (`tools/unreal_boss_root_lock.py`); never `Zero`, which wipes the root's up-axis
   turn. And **evaluate a clip the way the game does**: `AnimPoseEvaluationOptions.extract_root_motion = True`.
   Without it every clip read 0 and looked innocent.
+  **Nov 14: the same defect was still on the player and the goons a day later, and two things hid it.** (1) That
+  tool's docstring said "the player's CafeWalker clips read 0" - true of the `_CW` clips (our Blender rig, root on
+  the floor), false of the `_CWM` clips the anim blueprint actually plays, which read 90.6. One sentence covering
+  two clip sets. (2) Its folder list was hand-written and omitted `StreetGoon/Loco`, so no run could ever find the
+  goon's 16 locomotion clips. It now scans `/Game/Game/Imported` recursively - **never hand-list folders in a
+  sweep tool**, because it reports complete success over whatever subset it was handed. And a bold note in a doc
+  saying "the goon needs this too" is not a fix: do it in the same pass or file a ticket.
+- **"The capsule lifts" and "the mesh lifts" look identical in a screenshot and need opposite fixes.** Log
+  `pawn.get_actor_location().z` beside the bone world heights. On the float bug `actor_z` never moved (94.15 for
+  four seconds) while every bone rose 90.58 cm, which ruled out root-motion translation in one reading and sent
+  the fix to `RootMotionRootLock` instead. A root lock moves the skeleton; it never moves the capsule.
+- **The reference pose is a visible failure mode on a Meshy rig, not a harmless fallback.** An anim graph that
+  outputs the ref pose for a few frames is invisible on the mannequin (root at 0) and a 90 cm float in an A-pose
+  on a Smart Rig. If a character hangs in the air *after* an action rather than during it, suspect a state with no
+  reachable pose and measure the bone **spread**: the ref pose has a characteristic one (162.0 for CafeWalker).
 - **`unreal.HitResult` is opaque in 5.8:** no `.distance`, every property "protected and cannot be read", and
   `SystemLibrary.break_hit_result` does not exist. Use `to_tuple()` / `to_dict()`, or get the distance from the
   MCP's `SceneTools.trace_world`, which just returns a number.
