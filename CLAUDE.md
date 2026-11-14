@@ -407,6 +407,16 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   off on the base class (`EnemyVary`), so bosses and stand-ins that share `BP_EnemyBase` are untouched - and read
   the flag back on every sibling. `tools/goon_individual_test.py` measures it: run it as the first script of a
   fresh PIE session and stop PIE afterwards (a session left running blocks every Blueprint edit).
+- **Props that break or get knocked about (`chaos-physics` skill, `tools/unreal_chaos_props.py`).** Breakables are
+  `GeometryCollectionActor`s tagged `JC_Break`; knockables are ordinary `StaticMeshActor`s tagged `JC_Knock`;
+  `BP_Player.PlayerSmashProps` reaches both from `PlayerPunch`. Four traps, all silent: the same radial push
+  throws one Geometry Collection's pieces 7x faster than another's (measure each; crates carry `JC_BreakSoft`);
+  a mesh with complex-as-simple collision **cannot simulate** (only the log says so); `set_simulate_physics(True)`
+  on a placed actor does not persist (write `body_instance.simulate_physics`); and a body punched into a wall is
+  thrown back out at any speed unless `max_depenetration_velocity` is capped.
+- **`write_graph_dsl` over an existing function can leave the old nodes behind.** They may hang off a shared input
+  pin, off the execution path, so `read_graph_dsl` shows one clean copy. Count with `find_nodes` (title `""`) and
+  delete what the entry node's exec chain cannot reach.
 - **The graph DSL reader does not round-trip into the writer.** It prints `Math|Vector|vector-vector` (writer wants `-`),
   `(bind _x 1.0)` (fold the literal in) and `(Character|LaunchCharacter v true true)` (the first positional lands in the
   `self` pin — name the pins: `:LaunchVelocity`, `:bXYOverride`, `:bZOverride`). Read the graph out as a backup first,

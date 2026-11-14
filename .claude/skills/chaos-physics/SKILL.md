@@ -95,3 +95,17 @@ Pictures in the Deep Archive repo: `docs/captures/55_beam_destruction_sheet.png`
   scratch folders with the editor closed.
 - The Third Person template's player spawns at the origin: keep test objects away from it.
 - `ObjectTools.set_properties` takes `values` as a JSON **string**.
+
+## In the jam game (Jump Cut, Nov 13, Justin's Mac mini)
+Worked example: `tools/unreal_chaos_props.py` (assets from our own meshes, placement, save), `tools/chaos_props_graphs.py`
+(the punch hook), `tools/chaos_props_test.py` (play test). Devlog: `docs/devlog/2026-11-13-punches-reach-the-furniture.md`.
+- **Step 2 above is now tested:** `DataflowBlueprintLibrary.override_dataflow_variable_object(gc, 'SourceStaticMesh', mesh)`
+  then `regenerate_asset_from_dataflow(gc)` cuts our own mesh and keeps its materials. The materials get dirtied
+  (the "used with Geometry Collections" flag): lock and save them too, or a packaged build shows the default material.
+- **Strain alone changes nothing you can see**: the pieces stay stacked. Strain then a push is what reads as a break.
+- **Tune the push per asset.** `add_radial_impulse(..., 350, RIF_LINEAR, True)` after strain left a crate stack at
+  2,516 cm/s and a barrier at 199 cm/s. Measure the bounds centre 0.1 s after the call.
+- **Knockable props need simple collision** (complex-as-simple refuses to simulate), `body_instance.simulate_physics`
+  written directly, CCD on and `max_depenetration_velocity` capped (120 worked).
+- Blueprint node ids: `ChaosPhysics|ApplyExternalStrain`, `Physics|AddRadialImpulse`, `Physics|AddImpulse`,
+  `Class|GeometryCollectionActor|GetGeometryCollectionComponent`, `Actor|GetAllActorsOfClasswithTag`.
