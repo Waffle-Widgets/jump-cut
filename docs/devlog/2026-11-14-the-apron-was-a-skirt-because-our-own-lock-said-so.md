@@ -153,3 +153,42 @@ four-view comparison; the back view is the one to look at.
 
 **Still not in Unreal and still nobody has played it.** Importing it, pointing `BP_Player` at it and checking a
 punch is builder work.
+
+---
+
+## Update, 5:20 AM — two shared helpers de-block every building in the kit
+
+[#81](https://github.com/Waffle-Widgets/jump-cut/issues/81) and [#82](https://github.com/Waffle-Widgets/jump-cut/issues/82) are the alley's two walls and the
+biggest raw-box things in the game. They are not fixed one at a time: **every building in the kit is assembled
+from the same two helpers**, so chamfering those two reaches all eight shells at once.
+
+- **`parapet()`** — the low wall round a flat roof. This is the building's edge **against the sky**, so it is the
+  one chamfer in the kit that every building in every shot benefits from. It now has coping: a rolled top edge
+  (`top=`) plus a corner chamfer.
+- **`band_sides()`** — the floor band that runs round every storey. A real one has a drip edge underneath, and a
+  bevelled bottom gives the outline pass a second, softer line under the hard one, which is what stops a band
+  reading as a glued-on slab.
+
+| | tris before | after |
+|---|---|---|
+| `SM_CurtainTower` | 3,266 | **5,306** |
+| `SM_SetbackTower` | 2,410 | **3,922** |
+| `SM_PlazaTower` | 2,638 | **3,782** |
+| `SM_ShopHouse_A` | 1,342 | **1,718** |
+| `SM_BlockFiller` (#82) | 938 | **1,442** |
+| `SM_CornerBlock` | 1,116 | **1,356** |
+| `SM_ShopHouse_B` | 692 | **1,196** |
+| `SM_ShopHouse_C` (#81) | 576 | **824** |
+| **total** | **12,978** | **19,546** |
+
+**All 85 footprints byte-identical again**, so nothing in `tools/jumpcut_city_layout.py` moves.
+
+**One thing I deliberately did not touch.** The shophouse's main mass is a single `b.box` with
+`skip=('ylo','zhi')` — it leaves out its own front face because the shopfront is drawn over it, and its top
+because the parapet is. `cbox` has no per-face skip, so converting it naively would **add a second surface
+behind the facade** — a coplanar pair, which is the live surviving suspect in
+[#67](https://github.com/Waffle-Widgets/jump-cut/issues/67). Not worth it for a corner chamfer on a face nobody
+sees edge-on.
+
+**Nobody has played it,** and the chamfers will not show in a top-down kit render — they are 1–5 cm, and they do
+their work at player eye height under the outline pass. That is the view to judge them from.
