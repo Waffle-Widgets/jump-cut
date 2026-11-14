@@ -466,6 +466,41 @@ three actor packages left dirty by the previous lane are still unsaved in this e
 raise the Save Content modal that freezes the MCP. The 12 changed grey-box packages are on disk (`git status`
 confirms the writes), so the hide survives a reload; that is the evidence, not a reload.
 
+### The sounds and the effect sheets come into Unreal (#52, part) (Sat Nov 14, 03:50 UTC, Justin's Mac mini)
+
+**The asset half of #52 sections 1 and 3 is done. The wiring half is not, so the build is still silent.**
+
+- **Sounds: `/Game/Game/Audio` went from 3 assets to 23.** `Art/Audio/*.wav` copied into `Content/Game/Audio/`
+  and every one auto-imported within seconds. `.wav` auto-import is on in this project and simply works.
+- **Effects: nine SubUV sheets in a new `/Game/Game/FX/Textures`**, which did not exist before today. Imported
+  by `tools/unreal_import_ui_fx.py`, with no mipmaps - which matters as much for a sprite sheet as for a
+  screen, because a mipped sheet bleeds neighbouring FRAMES together.
+- **Screen art (#52 section 2): NOT done.** The seven UI textures are imported but unsaved, for the reason
+  below, and `/Game/Game/UI/Textures` holds no asset on disk.
+
+**Three traps, all silent, all now in `CLAUDE.md`.** A dropped `.png` does **not** auto-import even though a
+dropped `.wav` and `.fbx` do. Importing an image that is **already inside `Content/`** returns an empty
+`imported_object_paths` while still creating the texture in memory - an unsaved success that reads as a clean
+failure, which is exactly what happened to all seven UI textures and to none of the nine FX sheets (those came
+from `Art/FX`). And `does_asset_exist` answers **False** for an imported-but-unsaved asset, so it is the wrong
+test for "is this already here".
+
+**The editor is wedged and needs one keypress.** Clearing the stray PNGs back out of
+`Content/Game/UI/Textures/` woke the auto-reimport watcher (`AssetReimport: Attempting to delete
+T_Icon_Rewind (its source file has been removed)`), which raises the **Delete Assets** modal that freezes the
+MCP. The sources went straight back, but that cannot dismiss a dialog already up. **Press Escape** - Escape
+keeps the assets. Lesson: leave an image source beside its asset, the way `Content/Game/Audio` has always kept
+its `.wav` files.
+
+**Nothing is at risk.** The goon's 22 assets, the 23 sounds and the nine FX sheets are saved and committed. The
+only unsaved work in that editor is the seven UI textures, which take 30 seconds to remake from `Art/UI` with
+the committed script, plus four Blueprints and three city meshes another lane left dirty before this session
+began and which this session never touched.
+
+**What #52 still needs, and it is the expensive half:** not one sound is wired to an event and no SubUV material
+exists, so nothing is audible or visible yet. That is graph work across about ten Blueprints, four of which are
+currently dirty from another lane. Sections 2 and 4 (screen art into the widgets, the three poses) are untouched.
+
 ### The street goon gets an anim blueprint of his own (#6) (Sat Nov 14, 03:35 UTC, Justin's Mac mini)
 
 The last of the four import tickets. **#6 is done and `BP_Goon` now animates on his own body.**
