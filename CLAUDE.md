@@ -401,6 +401,12 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   - Give a death montage `bEnableAutoBlendOut = false` so the body stays down, and make sure the actor lingers at
     least as long as the clip (ours removed the body at 0.6 s into a 1.1 s death).
   - **`unreal.Rotator` is `(roll, pitch, yaw)` positionally.** `Rotator(0, 180, 0)` stands a character on his head.
+- **A group that acts as one may be the attacker's fault.** Three goons flinched and died together because
+  `PlayerPunch` damaged every enemy in the arc on every punch, not because of their AI. Light hits now take the one
+  nearest target; only the finisher sweeps. For per-enemy variety, roll the numbers at spawn behind a flag that is
+  off on the base class (`EnemyVary`), so bosses and stand-ins that share `BP_EnemyBase` are untouched - and read
+  the flag back on every sibling. `tools/goon_individual_test.py` measures it: run it as the first script of a
+  fresh PIE session and stop PIE afterwards (a session left running blocks every Blueprint edit).
 - **The graph DSL reader does not round-trip into the writer.** It prints `Math|Vector|vector-vector` (writer wants `-`),
   `(bind _x 1.0)` (fold the literal in) and `(Character|LaunchCharacter v true true)` (the first positional lands in the
   `self` pin — name the pins: `:LaunchVelocity`, `:bXYOverride`, `:bZOverride`). Read the graph out as a backup first,
