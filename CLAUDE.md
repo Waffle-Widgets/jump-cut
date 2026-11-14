@@ -258,6 +258,20 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   bands every surface into lit/shadow at one hard threshold, and Lumen's bounced light sits on that threshold and
   wobbles, so whole walls flipped tone frame to frame ("flickering assets"). Do not turn Lumen back on to make an
   interior look warmer: add a small direct light instead (`Cafe_WarmFill_A/B`, 8 cd, no shadows).
+- **Ray tracing, if you ever enable it, needs the skin cache in the SAME commit.** `r.SkinCache.CompileShaders`
+  defaults to **0** (`GPUSkinCache.cpp:94`) and `RenderUtils.cpp:1045` is a **Fatal** - *"Ray tracing requires skin
+  cache to be enabled"* - so `r.RayTracing=True` on its own crashes the editor on startup, before any window opens.
+  Both are `ECVF_ReadOnly`, so they are editor-restart-only. `r.RayTracing.Shadows` is NOT read-only
+  (`LightRendering.cpp:84`), so once RT is compiled in, the A/B is a console toggle: `r.RayTracing.Shadows 0` / `1`.
+  No `.umap` edit is needed to opt a light in: `r.RayTracing.Shadows.Lights.Directional` defaults to 1 and a light's
+  `CastRaytracedShadow` defaults to `UseProjectSetting` (`LightRendering.cpp:253-272`).
+  RT **shadows** suit this look - they are hard-edged and stable, which is what the band wants. RT/Lumen **GI** does
+  not, for the reason in the Lumen note above. See branch `M_STATION/rt-shadows-test`.
+- **`[VSM] Non-Nanite Marking Job Queue overflow` is logged ONCE per session, not once per occurrence**
+  (`LoggedOverflowFlags`, `VirtualShadowMapCacheManager.cpp:765`). So grepping the log tells you *whether* it
+  happened, never *how often*. The on-screen red version is the useful one: it is shown for ~10 s after the last
+  overflow (`VirtualShadowMapCacheManager.cpp:949`), so if it is on screen in a screenshot, one happened in the
+  10 s before that frame.
 - **To find a flicker, capture the same camera twice and diff the pictures** (`CaptureViewport` x2, per-pixel
   difference). It shows *what* changes in one step. Auto-exposure settling after a camera turn changes half the
   picture too - that is a drift, not a flicker; let it settle before comparing.
