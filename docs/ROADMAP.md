@@ -475,8 +475,9 @@ confirms the writes), so the hide survives a reload; that is the evidence, not a
 - **Effects: nine SubUV sheets in a new `/Game/Game/FX/Textures`**, which did not exist before today. Imported
   by `tools/unreal_import_ui_fx.py`, with no mipmaps - which matters as much for a sprite sheet as for a
   screen, because a mipped sheet bleeds neighbouring FRAMES together.
-- **Screen art (#52 section 2): NOT done.** The seven UI textures are imported but unsaved, for the reason
-  below, and `/Game/Game/UI/Textures` holds no asset on disk.
+- **Screen art (#52 section 2): done.** Seven UI textures in a new `/Game/Game/UI/Textures`, all with
+  `TEXTUREGROUP_UI` and no mipmaps. The itch.io covers are deliberately NOT imported - they are #26, not the
+  game, and an unused 1328x1056 asset is just weight in the package.
 
 **Three traps, all silent, all now in `CLAUDE.md`.** A dropped `.png` does **not** auto-import even though a
 dropped `.wav` and `.fbx` do. Importing an image that is **already inside `Content/`** returns an empty
@@ -485,21 +486,24 @@ failure, which is exactly what happened to all seven UI textures and to none of 
 from `Art/FX`). And `does_asset_exist` answers **False** for an imported-but-unsaved asset, so it is the wrong
 test for "is this already here".
 
-**The editor is wedged and needs one keypress.** Clearing the stray PNGs back out of
-`Content/Game/UI/Textures/` woke the auto-reimport watcher (`AssetReimport: Attempting to delete
-T_Icon_Rewind (its source file has been removed)`), which raises the **Delete Assets** modal that freezes the
-MCP. The sources went straight back, but that cannot dismiss a dialog already up. **Press Escape** - Escape
-keeps the assets. Lesson: leave an image source beside its asset, the way `Content/Game/Audio` has always kept
-its `.wav` files.
+**A correction, because the wrong version of this went into a commit message first.** Clearing the stray
+PNGs back out of `Content/Game/UI/Textures/` woke the auto-reimport watcher (`AssetReimport: Attempting to
+delete T_Icon_Rewind (its source file has been removed)`), the editor went to ~185% CPU with a silent log and
+stopped answering the MCP, and the conclusion recorded was "a Delete Assets modal is up, press Escape".
+**There was no modal.** `sample <pid>` showed the game thread in `FAutoReimportManager::Tick ->
+FAutoReimportManager::Idle` - a thread that is ticking, not one parked in `RunModal`. The watcher was simply
+working through the restored files, nothing was deleted, and the MCP answered again minutes later. Nobody
+needs to press anything. The lesson is `sample <pid>`, not `%CPU`: CPU plus a silent log produced a
+confident, committed, wrong answer. (Commit `a379bbd` / PR #59 carry the wrong version; this entry is the
+correct one.)
 
-**Nothing is at risk.** The goon's 22 assets, the 23 sounds and the nine FX sheets are saved and committed. The
-only unsaved work in that editor is the seven UI textures, which take 30 seconds to remake from `Art/UI` with
-the committed script, plus four Blueprints and three city meshes another lane left dirty before this session
-began and which this session never touched.
+Still leave an image source beside its asset rather than tidying it away - `Content/Game/Audio` has always
+kept its `.wav` files that way, and it is why the sounds never hit this.
 
-**What #52 still needs, and it is the expensive half:** not one sound is wired to an event and no SubUV material
-exists, so nothing is audible or visible yet. That is graph work across about ten Blueprints, four of which are
-currently dirty from another lane. Sections 2 and 4 (screen art into the widgets, the three poses) are untouched.
+**What #52 still needs, and it is the expensive half:** not one sound is wired to an event, no SubUV material
+exists, and the title/win/lose textures are not in their widgets - so nothing is audible or visible yet. That is
+graph work across about ten Blueprints, four of which are currently dirty from another lane. Section 4 (the
+three poses) is untouched.
 
 ### The street goon gets an anim blueprint of his own (#6) (Sat Nov 14, 03:35 UTC, Justin's Mac mini)
 
