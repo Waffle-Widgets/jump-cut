@@ -149,8 +149,33 @@ def main():
         anim_path = want
         anim = unreal.EditorAssetLibrary.load_asset(anim_path)
     say('imported %s' % anim_path)
-    say('  length %.3f s, %d sampled keys, rate %s'
-        % (anim.get_play_length(), anim.get_number_of_sampled_keys(), anim.get_sampling_frame_rate()))
+    # UE 5.8's AnimSequence has NO get_number_of_sampled_keys and NO get_sampling_frame_rate in
+    # Python - both are the obvious names and both raise AttributeError. The frame count comes from
+    # unreal.AnimationLibrary instead. This is logging, so it is wrapped: a verification script that
+    # dies while REPORTING a success leaves the asset half-configured, which is how the first run of
+    # this script left the clip on RefPose.
+    def _num_frames(a):
+        for fn in ('get_num_frames', 'get_number_of_frames'):
+            f = getattr(unreal.AnimationLibrary, fn, None)
+            if f:
+                try:
+                    return '%d (AnimationLibrary.%s)' % (f(a), fn)
+                except Exception as exc:
+                    return 'unavailable (%s: %s)' % (fn, exc)
+        return 'unavailable (no AnimationLibrary frame-count function)'
+
+    def _rate(a):
+        for fn in ('get_frame_rate', 'get_sampling_frame_rate'):
+            f = getattr(unreal.AnimationLibrary, fn, None)
+            if f:
+                try:
+                    return '%s (AnimationLibrary.%s)' % (f(a), fn)
+                except Exception as exc:
+                    return 'unavailable (%s: %s)' % (fn, exc)
+        return 'unavailable'
+
+    say('  length %.3f s, frames %s, rate %s'
+        % (anim.get_play_length(), _num_frames(anim), _rate(anim)))
 
     # ROOT MOTION MUST BE OFF on an authored clip from this rig, and getting it wrong is the
     # float defect all over again. A Meshy Smart Rig's root (Bone_000) sits at PELVIS height and
@@ -173,34 +198,40 @@ def main():
     mont_path = '%s/%s' % (dest.rstrip('/'), mont_name)
     if unreal.EditorAssetLibrary.does_asset_exist(mont_path):
         unreal.EditorAssetLibrary.delete_asset(mont_path)
+    # Give the factory the source animation and it builds the slot track itself - the recipe every
+    # other montage in this project was made with (tools/unreal_fight_anims.py:make_montage).
+    # Hand-building the track is NOT possible here: FAnimSegment.StartPos is read-only to Python in
+    # UE 5.8, so seg.set_editor_property('start_pos', 0.0) raises and the montage is never made.
     factory = unreal.AnimMontageFactory()
+    factory.set_editor_property('source_animation', anim)
     factory.set_editor_property('target_skeleton', skel)
     mont = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
         mont_name, dest.rstrip('/'), unreal.AnimMontage, factory)
     if mont is None:
         say('FAILED: could not create %s' % mont_path)
         return
-
-    seg = unreal.AnimSegment()
-    seg.set_editor_property('anim_reference', anim)
-    seg.set_editor_property('start_pos', 0.0)
-    seg.set_editor_property('anim_start_time', 0.0)
-    seg.set_editor_property('anim_end_time', anim.get_play_length())
-    seg.set_editor_property('anim_play_rate', 1.0)
-    seg.set_editor_property('loop_count', 1)
-    track = unreal.AnimTrack()
-    track.set_editor_property('anim_segments', [seg])
-    slot = unreal.SlotAnimationTrack()
-    slot.set_editor_property('slot_name', 'DefaultSlot')
-    slot.set_editor_property('anim_track', track)
-    mont.set_editor_property('slot_anim_tracks', [slot])
     mont.set_editor_property('enable_auto_blend_out', False)   # a death montage holds its last pose
 
-    read = mont.get_editor_property('slot_anim_tracks')
-    say('made %s  slot=%s  segments=%d  auto_blend_out=%s'
-        % (mont_path, read[0].get_editor_property('slot_name'),
-           len(read[0].get_editor_property('anim_track').get_editor_property('anim_segments')),
+    # Read the montage back instead of trusting the factory: the segment has to point at OUR clip.
+    slot_name, segs, seg_anim, seg_end = '(unread)', -1, '(unread)', -1.0
+    for prop in ('slot_anim_tracks', 'slot_animations'):
+        try:
+            tracks = mont.get_editor_property(prop)
+            slot_name = str(tracks[0].get_editor_property('slot_name'))
+            segments = tracks[0].get_editor_property('anim_track').get_editor_property('anim_segments')
+            segs = len(segments)
+            ref = segments[0].get_editor_property('anim_reference')
+            seg_anim = ref.get_path_name() if ref else '(none)'
+            seg_end = segments[0].get_editor_property('anim_end_time')
+            break
+        except Exception:
+            continue
+    say('made %s  slot=%s  segments=%d  plays=%s  segment_end %.3f s  montage_length %.3f s  auto_blend_out=%s'
+        % (mont_path, slot_name, segs, seg_anim, seg_end,
+           mont.get_editor_property('sequence_length'),
            mont.get_editor_property('enable_auto_blend_out')))
+    if seg_anim != anim.get_path_name():
+        say('WARNING: the montage segment does not point at the clip just imported.')
     say('NOTHING WAS SAVED. Save %s and %s in the editor before committing.'
         % (anim_path, mont_path))
 
