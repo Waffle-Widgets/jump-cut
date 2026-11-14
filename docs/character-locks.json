@@ -79,7 +79,7 @@
   ],
   "CafeWalker": {
     "role": "the player character, a coffee shop worker",
-    "sheet": "Art/Refs/CafeWalker_apose.png",
+    "sheet": "Art/Refs/CafeWalker_apose_v2.png",
     "sheet_prompts": [
       "MC-APOSE",
       "GEM2-MC"
@@ -124,7 +124,7 @@
   },
   "CafeCoworker": {
     "role": "the coworker rescued in beat 1",
-    "sheet": "Art/Refs/CafeCoworker_apose.png",
+    "sheet": "Art/Refs/CafeCoworker_apose_v2.png",
     "sheet_prompts": [
       "COWORKER-APOSE",
       "GEM2-COWORKER"
@@ -144,6 +144,8 @@
     },
     "invariants": [
       "ONE neck loop, bare shirt back, ties knotted at the FRONT - the same apron pattern as CafeWalker, different colour.",
+      "HER APRON IS A FLAT NARROW FRONT PANEL, NOT A SKIRT - the same width rule as CafeWalker, and for the same reason. The panel is clearly narrower than her hips, so a strip of navy trouser shows down the OUTSIDE of each leg beside it for its whole length and she reads as two trousered legs rather than one shape. It hangs straight down, never flares, never widens toward the bottom, never wraps round the sides or back of her legs, and stops just above the knee. Added Sat Nov 14 2026 after the Nov 13 sheet gave SK_CafeCoworker the same knee-length skirt the player had.",
+      "A SINGLE FRONT VIEW IS NOT ENOUGH INPUT FOR A 3D MODEL OF HER. Meshy invented a cross-back X on SK_CafeCoworkerV2 from a front-only sheet that draws the single neck loop correctly, because a front view tells it nothing about the back and it fills the gap with the most apron-like thing it knows. Any remake must give Meshy a drawn BACK view too (its Multi-view input), or the X comes back.",
       "Her shirt is PURE WHITE, never cream, never beige, never tan.",
       "Short high ponytail, never loose hair, never a bun.",
       "Her apron is teal. It is not the player's dark green."

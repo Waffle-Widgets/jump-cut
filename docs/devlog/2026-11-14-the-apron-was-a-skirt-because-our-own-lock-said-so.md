@@ -192,3 +192,40 @@ sees edge-on.
 
 **Nobody has played it,** and the chamfers will not show in a top-down kit render — they are 1–5 cm, and they do
 their work at player eye height under the outline pass. That is the view to judge them from.
+
+---
+
+## Update, 5:25 AM — the coworker: same skirt fixed, a new defect, and the reskin does NOT work for her
+
+Her new body is in the repo at `Art/Blender/export/Characters/CafeCoworkerV2/SK_CafeCoworkerV2.fbx`
+(Meshy 7.1 Flagship from `Art/Refs/CafeCoworker_apose_v2.png`, remeshed Fixed 30K Quad → **28,277 quads**,
+Humanoid rigged, 1.65 m, 25 credits). `docs/media/2026-11-14-coworker-apron-before-after.jpg` is the comparison.
+
+**The skirt is fixed.** The shipped `SK_CafeCoworker` wraps the apron right round — its back view is a full
+skirt over both thighs, exactly the player's defect. The new one's back is plain shirt with two separate
+trouser legs.
+
+**But it has a new defect the lock forbids, and I would rather flag it than ship it quietly.** The new model's
+back shows the apron straps **crossing in an X**. `docs/character-locks.json` is explicit:
+
+> ONE neck loop... **NEVER crossed straps, NEVER an X on the back, NEVER a two-strap cross-back apron.**
+
+The reference sheet draws a single neck loop correctly. Meshy invented the cross-back, and the reason is the
+same one that produced the skirt: **a single front view tells it nothing about the back**, so it fills the gap
+with whatever is most apron-like. Meshy's `Multi-view` input is the real fix — give it a drawn back view as
+well — and that is the next thing to try on any character remade from here.
+
+**The reskin that worked for the player does NOT work for her, and the numbers say so before any eyeballing.**
+Her two A-poses are far apart where his were nearly identical:
+
+| | shipped | new |
+|---|---|---|
+| CafeWalker arm span | 1.150 m | 1.122 m | → 2.8 cm apart, transfer works |
+| **CafeCoworker arm span** | **0.760 m** | **0.490 m** | → **13.5 cm per hand** |
+
+Running the reskin anyway and measuring confirms it: posing her hand bone 60° moves **1,384 vertices on the
+shipped model and only 30 on the reskinned one**. Her new hand is 13 cm from where the old rig's hand bone is,
+so the transfer gave those vertices to the forearm — her hand would sit rigid while the arm swings. **Not
+committed.** The fix is to match the A-poses, which means asking Gemini for her arms at the same angle his are.
+
+**So she is in the repo as art and is not integration-ready**, where he is. Nobody has played either.
