@@ -215,6 +215,58 @@ Draw them wide (the default `1664x928`), the cover at `1328x1056` and cropped to
     python tools/gen_images.py UI-TITLE UI-WIN UI-LOSE UI-TBC --takes 2
     python tools/gen_images.py UI-COVER --takes 2 --size 1328x1056
 
+### UI-TITLE2
+The title card, **second concept**. The Team Owner rejected the crash scene outright on Sat Nov 14 - *"I don't
+think we want to have that as the title anyway"* - and asked instead for the main character as a film director,
+back to back with himself in the barista uniform. **Something simple**, in his words, so there is no cafe, no car,
+no street and no scenery in this one at all: one flat background, two figures, two props. `UI-TITLE` is kept below
+for the record and because its crash-scene notes are the file's best worked example of a prompt argument.
+
+This is the first prompt to use a **costume form**, `{CafeWalker:director}`. Both halves of the picture take their
+words from the same lock entry, so the face, hair, shirt, trousers and shoes are identical between them and only
+the apron and the jacket differ. That is the point: the same man twice in one frame is the hardest consistency
+test there is, and the lock is the only reason it is winnable. If his two faces disagree, the picture is rejected -
+there is no retouch for that.
+
+Both figures stand square to the viewer so the apron's single neck loop is **in frame**. See the camera-angle rule
+in `docs/character-locks.json`: drawn from behind, the model invents a cross-back apron every time, and this
+composition would be the obvious place to make that mistake.
+
+    python tools/gen_images.py UI-TITLE2 --takes 3
+    python tools/gen_images.py UI-TITLE2 --print    # the same words, to paste into Gemini
+
+**Three takes drawn in Gemini, Sat Nov 14 05:11-05:16 UTC** (`Art/Refs/gen/gemini2/GEM2-UI-TITLE2-{1,2,3}.png`,
+gitignored). What they settled:
+
+| | Take 1 | Take 2 | Take 3 |
+|---|---|---|---|
+| Back to back | **no** - side by side | yes | yes |
+| Apron: one neck loop, square pocket, front bow, towel | yes | yes | yes |
+| Clapperboard slate blank | yes | yes | yes |
+| Background flat and empty | yes | yes | yes |
+| First row of ink, measured | 14.3% down | **5.9%** | **16.3%** |
+
+**Take 1 came back side by side, and the prompt was at fault.** It asked for figures "back to back" *and* "seen
+almost straight on from the front", which cannot both be true. The model resolved the contradiction by dropping
+the back-to-back - the one thing actually asked for. Rewritten so it is physically coherent (bodies turned to the
+outer edges, heads turned to the viewer) and takes 2 and 3 both obeyed it.
+
+**The top third will not stay empty, and this is the one thing to know before using this prompt.** The title card
+needs a clear band for the game's name. "The two figures are small in the frame and stand entirely within the
+lower two thirds" was ignored twice, and take 2 came back *worse* than take 1 - the model composes to fill the
+frame. Rewriting it as a positive description of a thing that exists ("across the whole top of the picture runs a
+wide deep empty horizontal band of flat cream colour") is the repo's own say-what-is-there lever and it did move
+the number, 5.9% -> 16.3%. **It did not reach 33%.** Best measured headroom over three takes is 16.3%, so either
+the title text sits in the empty cream at the left and right of the figures, or it goes lower in the frame, or
+the picture is drawn taller and cropped. That is a composition decision, not a prompt one.
+
+**The lock held across both costumes.** Every take drew the same one neck strap, the same square bib pocket, the
+same front bow and the same grey towel - on the first take, which the local ComfyUI/Qwen path never managed in
+seven. Faces between the two figures are close but not identical; judge that one by eye on any take you pick.
+
+
+> anime key visual illustration, cel shaded with hard-edged shadows and clean dark line art, flat areas of solid colour, only two or three large simple shadow shapes per garment, bright and light and airy, a simple symmetrical centred poster composition of one single young man drawn twice as two figures of exactly the same height standing with their backs pressed flat together at the exact centre of the picture, the left figure's body turned to face the left edge and the right figure's body turned to face the right edge, each of them turning his head to look straight out at the viewer, both figures are the same one person with an identical face and identical hair, both shown full length from the top of the head down to their shoes, on the left {CafeWalker}, holding a plain white paper coffee cup upright in one hand, on the right {CafeWalker:director}, across the whole top of the picture runs a wide deep empty horizontal band of flat cream colour that fills the entire upper third of the image and is completely bare, and the two figures stand below that band in the lower part of the picture with the tops of their heads well underneath it, the background is one single flat plain field of warm pale cream colour that is completely empty, the whole top third of the picture is that same flat cream colour with nothing in it at all, a thin pale cyan rim light down the outer edge of the right figure only, generous empty margins at the left and right edges, no scenery, no furniture, no walls, no windows, no text, no letters, no logos, no signs
+
 ### UI-TITLE
 The title card: the moment the demo is about. The upper third is kept as plain dark wall for the title text.
 Rewritten Fri Nov 13 evening after the Team Owner's review: the first take had an undamaged car with no driver

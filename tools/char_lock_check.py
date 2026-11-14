@@ -25,7 +25,9 @@ DOCS = ['docs/prompts.md', 'docs/prompts-gemini.md']
 TELLS = {
     'CafeWalker': ['dark green apron', 'green bib apron', 'green cloth apron', 'green canvas apron',
                    'khaki brown shirt', 'khaki brown long-sleeve', 'cream shirt', 'barista',
-                   'coffee shop worker'],
+                   'coffee shop worker',
+                   # the director costume form, added Sat Nov 14 - a costume is still him
+                   'charcoal grey bomber jacket', 'grey bomber jacket', 'film director'],
     'CafeCoworker': ['teal apron', 'teal canvas apron', 'white short-sleeve shirt', 'high ponytail'],
     'CrashDriver': ['brown leather jacket', 'leather jacket'],
 }

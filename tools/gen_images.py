@@ -69,6 +69,9 @@ def expand(prompt, lock=None):
     # Any word is matched as a form so an unknown one (a typo) reaches sub() and is rejected there.
     # Matching only the known forms would leave "{CafeWalker:hatt}" in the prompt as literal text.
     out = re.sub(r'\{([A-Za-z][A-Za-z0-9_]*)(?::(\w+))?\}', sub, prompt)
+    # One character, several forms: the title card uses {CafeWalker} and {CafeWalker:director} in one
+    # prompt, which appended his whole NEVER list twice and doubled the negative prompt. Dedupe by name.
+    used = list(dict.fromkeys(used))
     for n in used:
         if lock[n].get('never'): neg.append(lock[n]['never'])
     return out, ', '.join(neg), used
@@ -178,6 +181,8 @@ def main():
     ap.add_argument('--text'); ap.add_argument('--neg', default=''); ap.add_argument('--cfg', type=float, default=4); ap.add_argument('--name'); ap.add_argument('--model', default='qwen_image_2512_fp8_e4m3fn.safetensors'); ap.add_argument('--lora', default=None); ap.add_argument('--lora-k', type=float, default=0.8); ap.add_argument('--takes', type=int, default=2); ap.add_argument('--seed', type=int)
     ap.add_argument('--ref', action='append', default=[], help='a style reference picture (up to 3); switches to the edit model'); ap.add_argument('--size', default='1664x928'); ap.add_argument('--steps', type=int, default=30)
     ap.add_argument('--lock-ref', action='store_true', help="also hand the model each locked character's own reference sheet (switches to the edit model)")
+    ap.add_argument('--print', dest='just_print', action='store_true',
+                    help='expand the prompt and print it instead of drawing it - this is how a locked prompt is pasted into Gemini in the browser')
     a = ap.parse_args()
     w, h = map(int, a.size.split('x'))
     jobs = [(a.name or 'custom-' + str(int(time.time())), a.text)] if a.text else [(c, find_prompt(c)) for c in a.codes]
@@ -193,6 +198,26 @@ def main():
                 sh = os.path.join(ROOT, lock[n]['sheet'].replace('/', os.sep))
                 if os.path.exists(sh) and sh not in sheets: sheets.append(sh)
         expanded.append((c, p, lneg))
+    if a.just_print:
+        # The Gemini path is a human pasting text into a browser, so a {CafeWalker} token is useless to
+        # it unless something expands it first. Without this every Gemini prompt has to describe the
+        # character by hand, which is the drift the lock exists to stop. Prints words, touches no GPU.
+        for c, pr, lneg in expanded:
+            print('=' * 100)
+            print(c + '   (paste the PROMPT below. Gemini has no negative-prompt box, so the NEVER list is what to check the take against by eye.)')
+            print('=' * 100)
+            print('')
+            print('PROMPT')
+            print('------')
+            print(pr)
+            if lneg:
+                print('')
+                print('NEVER (check the take for these by eye)')
+                print('---------------------------------------')
+                print(lneg)
+            print('')
+        return
+
     jobs = [(c, p) for c, p, _ in expanded]
     locknegs = {c: n for c, _, n in expanded}
     start_comfy()

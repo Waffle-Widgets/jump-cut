@@ -18,6 +18,12 @@
     "  saying the MODEL is wrong, so the model gets remade too - never change a lock just to match a picture",
     "  that came out differently.",
     "",
+    "A COSTUME IS A FORM, NOT A SECOND CHARACTER. Sat Nov 14: the title card needs the main character twice in one",
+    "  frame - barista and film director - so he now has {CafeWalker:director} alongside {CafeWalker}. A costume form",
+    "  REPEATS the face, hair and the garments that do not change, and swaps only what does. Never add a second",
+    "  character entry for the same person: two entries drift apart, which is the whole failure this file exists to",
+    "  stop. If two of him appear in one picture, say in the prompt that they are one person with an identical face.",
+    "",
     "SHORT FORM: write {CafeWalker:short} when the character is small or far away in the frame. It is the",
     "  same lock, shortened to the details that still read at that size - the apron's single neck loop and bare",
     "  back are kept in BOTH forms, because that is the detail that drifted.",
@@ -64,7 +70,8 @@
       "apron": "#415A45",
       "towel": "#A09880",
       "trousers": "#2D3030",
-      "shoes": "#5C5D58"
+      "shoes": "#5C5D58",
+      "director_jacket": "#383C42"
     },
     "invariants": [
       "ONE neck loop. The apron goes over the head on a single strap. The back is bare shirt.",
@@ -73,9 +80,13 @@
       "The waist ties knot at the FRONT, in a bow, under the bib. Not at the back.",
       "A pale grey bar towel hangs at his left hip.",
       "Sleeves are pushed up to below the elbow, forearms bare. Shirt is khaki brown, never cream.",
-      "The apron is below the knee, not a short waist apron."
+      "The apron is below the knee, not a short waist apron.",
+      "COSTUMES, NOT PEOPLE: {CafeWalker:director} is the SAME man as {CafeWalker}. Same hair, same face, same khaki shirt underneath, same trousers, same shoes. The apron is swapped for the charcoal jacket and nothing else about him changes.",
+      "The clapperboard's slate is one flat unbroken white panel. Its only marking is the striped clapper bar along the top edge."
     ],
-    "never": "cream shirt, white shirt, crossed apron straps, cross-back apron, X straps on the back, apron with no neck strap, short waist apron, bare chest, tie, waistcoat, glasses, beard, blond hair, hat"
+    "never": "cream shirt, white shirt, crossed apron straps, cross-back apron, X straps on the back, apron with no neck strap, short waist apron, bare chest, tie, waistcoat, glasses, beard, blond hair, hat, beret, flat cap, baseball cap, director's cap, megaphone, sunglasses, writing on the clapperboard, letters on the slate, numbers on the slate, chalk writing, handwriting",
+    "prompt_director": "the same slim young man of about twenty-five with the same short messy straight black hair falling over his forehead and covering the tops of his ears and the same thin calm tired face, dressed for a film set instead of the cafe: a charcoal grey cotton bomber jacket worn open over the same khaki brown long-sleeve collared shirt with the collar open and the sleeves pushed up to just below the elbow, the same loose charcoal grey trousers and the same grey canvas low-top sneakers with white toe caps, and a small black film clapperboard held down at his side in one hand whose slate is one flat unbroken smooth white panel and whose top edge is a plain black and white striped clapper bar",
+    "prompt_director_short": "the same young man with the same short messy black hair and the same face, in a charcoal grey bomber jacket worn open over the same khaki brown long-sleeve shirt, holding a small black film clapperboard at his side whose slate is one flat unbroken smooth white panel"
   },
   "CafeCoworker": {
     "role": "the coworker rescued in beat 1",
