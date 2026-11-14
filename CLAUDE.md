@@ -253,6 +253,13 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
 - **To find a flicker, capture the same camera twice and diff the pictures** (`CaptureViewport` x2, per-pixel
   difference). It shows *what* changes in one step. Auto-exposure settling after a camera turn changes half the
   picture too - that is a drift, not a flicker; let it settle before comparing.
+- **A character that floats only while it moves: check Root Motion Root Lock before the retarget.** Meshy's Smart
+  Rig keeps its root bone at pelvis height in the *reference pose*; retargeted clips animate it on the floor. A
+  clip with root motion on locks its root to `RefPose` by default, so the mob boss rose 87.26 x 1.2921 = 113 cm
+  whenever he walked or swung and stood correctly when idle. Set `root_motion_root_lock = AnimFirstFrame` on every
+  root-motion clip of such a rig (`tools/unreal_boss_root_lock.py`); never `Zero`, which wipes the root's up-axis
+  turn. And **evaluate a clip the way the game does**: `AnimPoseEvaluationOptions.extract_root_motion = True`.
+  Without it every clip read 0 and looked innocent.
 - **`unreal.HitResult` is opaque in 5.8:** no `.distance`, every property "protected and cannot be read", and
   `SystemLibrary.break_hit_result` does not exist. Use `to_tuple()` / `to_dict()`, or get the distance from the
   MCP's `SceneTools.trace_world`, which just returns a number.

@@ -925,7 +925,20 @@ point in the fist with the blade pointing forward and down.
 **The same chain map works for any Meshy character we make**, because `Art/Blender/meshy_character.py` numbers
 bones the same way every time. `CafeWalker` and `CrashDriver` are not wired into Blueprints yet.
 
-### OPEN DEFECT - he floats about a metre whenever he animates (found Nov 13, not fixed)
+### FIXED Nov 13 - he floated about a metre whenever he animated
+
+**Fixed on Justin's Mac mini, and the cause written below this box was wrong.** The clips were never the problem:
+in all 21 the root `Bone_000` sits on the floor. The skeleton's **reference pose** keeps that root at pelvis height
+(z = 87.26), and every root-motion clip was locking its root to the reference pose while it played
+(`root_motion_root_lock = RefPose`, the default), lifting him 87.26 x 1.2921 = 112.7 cm. All 18 root-motion clips
+now use `AnimFirstFrame`. Live on the boss: lowest bone -14.1 to 0.0 cm from the capsule bottom while asleep,
+standing, walking, cleaving and hit (`tools/boss_feet_test.py`, 96 samples). Do **not** redo the retarget. Full
+story: `docs/devlog/2026-11-13-the-boss-floated-on-his-own-reference-pose.md`. Re-check: `py
+<repo>/tools/boss_feet_test.py` as the first script of a Play session; re-apply: `py
+<repo>/tools/unreal_boss_root_lock.py fix`. **Any other Meshy Smart Rig character (the street goon) needs the same
+setting on its root-motion clips.** What follows is the original write-up, kept as measured; read its "cause" and
+"repair" paragraphs as superseded.
+
 
 The Team Owner reported after a playtest that the mob boss "sometimes floats in the air". He does, and the
 "sometimes" is the clue: **standing still he is correct, and the moment any clip plays he rises ~107-113 cm.**
@@ -945,14 +958,14 @@ half-height 115, mesh `z = -115`, scale 1.2921, `AnimationBlueprint` + `ABP_Clea
 instance override this time. The capsule stays on the ground: `MOVE_WALKING` on all 1,910 sampled frames, actor
 `Z = 117.00` throughout. **Only the mesh leaves the floor**, so it is baked into the retargeted clips.
 
-**The cause is the retarget root.** `IK_SK_CleaverBoss`'s retarget root is `Bone_001` and `IK_Mannequin_Src`'s is
+**(Superseded - see the box above.) The cause is the retarget root.** `IK_SK_CleaverBoss`'s retarget root is `Bone_001` and `IK_Mannequin_Src`'s is
 `pelvis`. In this rig `bone_000` is the real root and sits on the floor (`z = 2.00` in the idle pose), while
 `Bone_001` sits **117.6 cm above it** - and 117.6 cm is the lift we measure. The retarget writes the mannequin's
 pelvis height into `Bone_001`'s *local* transform, whose parent is already the floor-level `bone_000`, so the
 offset is applied twice and the whole skeleton rides a pelvis-height too high. The idle escapes it because
 `MM_Idle_CB` has no root translation at all (measured delta `(0,0,0)`); every clip that *does* have one is lifted.
 
-**The repair** is to re-do the retarget with the roots at matching heights - target root `bone_000` against the
+**(Superseded - not needed.) The repair** is to re-do the retarget with the roots at matching heights - target root `bone_000` against the
 mannequin's `root` - and re-bake the locomotion clips (`MF_*_CB`) and the four `MM_*_CB` montage sources. Do not
 try to cancel it with a mesh `z` offset: that would sink him into the floor whenever he is idle.
 
@@ -969,7 +982,7 @@ try to cancel it with a mesh `z` offset: that would sink him into the floor when
   his animation as designed). Measured: he hung with his lowest bone 72.9 cm up for the whole 4.6 s freeze. That
   is correct time-stop behaviour, but it compounds the float and will read as the same bug to a playtester.
 
-**How to re-check it in one command:** `py "<repo>/JumpCut/Saved/jcpy/boss_feet.py"` in the editor console during
+**How to re-check it in one command:** `py <repo>/tools/boss_feet_test.py` (the original `Saved/jcpy/boss_feet.py` only ever existed on GameStation) in the editor console during
 PIE. It wakes the boss, puts the player in front of him, and writes a per-frame table of the lowest bone's Z. A
 fixed boss reads `LIFT` near 0 while walking. Judge it by that number, not by a montage name: a montage reports
 itself as playing whether or not the pose is anywhere near the floor.
