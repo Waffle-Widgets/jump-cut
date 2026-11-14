@@ -54,3 +54,6 @@ Art/Refs/gen/
 # Python bytecode from running the tools/ scripts
 __pycache__/
 *.pyc
+
+# FBX embedded-texture extraction folders, written beside an .fbx by the Unreal importer
+*.fbm/
