@@ -53,6 +53,50 @@ the plainest design of the three: no coat, no weapon, no insignia.
   jam's first night. That model is the starting point, not a
   throwaway — the question for the team is whether to keep it or re-run it against the new reference sheet.
 
+### The player wears his own body (#7) (Sat Nov 14, 02:55 UTC, Justin's Mac mini)
+
+`BP_Player` was Epic's `SKM_Quinn_Simple` until now. It is the **khaki** `SK_CafeWalker` - the Nov 13
+remake, not the cream model that failed the colour rule.
+
+**This was not a mesh swap, because the two CafeWalkers are different skeletons.** What was already in
+Unreal (`SK_CafeWalker_Walk`, imported Nov 12 with 20 retargeted clips and a blend space) is the
+`trellis_character.py` build: **23 bones with Epic's mannequin names**. The committed FBX is the Meshy
+Smart Rig: **69 bones called `Bone_000`**. Nothing on the old skeleton transfers, so the new body needed
+its own retarget from scratch - the "nine chains mapped by hand" the cleaver boss needed, and what #6 warns
+about for the goon.
+
+**`tools/unreal_retarget_meshy.py` is new and does the hand-mapping by itself.** It reads the skeleton off
+a throwaway actor and works the chains out the way `Art/Blender/meshy_character.py` does in Blender: the
+parentless bone is the root, its child is the hip, the branch whose **end** reaches highest is the spine,
+the branches that end low are the legs, the chest is where the spine splits, and +X is the character's
+right because a Meshy character faces +Y in Unreal. It names each chain what Unreal's auto definition names
+the mannequin's, so `auto_map_chains(FUZZY)` pairs all nine with no hand work. Result for this character:
+
+| | |
+|---|---|
+| Chains found and mapped | **9 of 9** - Spine `Bone_005→Bone_002`, Neck, Head, both Clavicles, both Arms, both Legs |
+| Retarget root | `Bone_001` (the hip) |
+| Clips retargeted | **26**, including the blend space and the three attacks, hit react and death |
+| Anim blueprint | the template's `ABP_Unarmed` retargeted whole → `ABP_Unarmed_CWM`, so the locomotion state machine **and** its `DefaultSlot` come across and montages play with no graph work |
+
+**The float trap fired here too, and it is the biggest number on this page.** Meshy keeps the root bone at
+pelvis height in the reference pose, so every root-motion clip lifted him: measured **86.0 to 90.6 cm** off
+the floor before the fix, on 19 of 25 clips. `root_motion_root_lock = AnimFirstFrame` puts them at
+**−4.6 to 0**. Same cause as the cleaver boss's 113 cm (#46), same fix.
+
+**His FBX carried no texture either** - `M_CafeWalker` in the new folder imported with no `DiffuseColorMap`,
+exactly like the coworker's. Wired from the PNG beside the FBX.
+
+**Measured in Play-In-Editor:** mesh `SK_CafeWalker`, **69 bones posed**, head 162.5 cm above the feet,
+feet within 4 cm of the capsule bottom, anim instance `ABP_Unarmed_CWM_C`, and all four montage variables
+resolve to the new `AM_CafeWalker_*` assets.
+
+**Not done.** Nobody has played it, so whether the mannequin's punches read correctly on his proportions is
+unjudged. `AM_CafeWalker_Death` exists but `BP_Player` still has no death-montage variable (#14). The old
+cream `SK_CafeWalker_Walk` and its `Anims` folder are still in the repo, now unused.
+
+![The player, khaki shirt and green apron](media/2026-11-13-player-khaki.png)
+
 ## The coworker — `CafeCoworker` (beat 1; modelled and rigged Nov 13, **in Unreal since Sat Nov 14, 02:25 UTC**)
 
 The person the player saves in the demo's first beat. She exists because the beat's *lesson* needs a subject:
