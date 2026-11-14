@@ -90,8 +90,13 @@ def put(label, model, x, y, z=0.0, yaw=0.0):
 # the player's walk (0,0)->(615,0), the shrapnel's flight (-520,0)->(300,-250), and the driver's body at
 # (-380, 220), which the player has to be able to reach and touch.
 CAFE_DRESS_CM = [
-    ('SM_CafeCounter', 200.0, -380.0, 0.0, 0), ('SM_CafeEspresso', 90.0, -380.0, 104.0, 0),
-    ('SM_CafePastryCase', 350.0, -378.0, 104.0, 0), ('SM_CafeShelf', -220.0, -490.0, 2.0, 0),
+    # The counter sits at the WEST end with the register on it, beside the wall the car comes through,
+    # so the car barely misses whoever is standing at it (Team Owner, Fri Nov 13). Staff side is +Y,
+    # facing the car: counter north face y = -200, car south flank y = -100, so the gap is 100 cm and a
+    # person at the register stands about 60 cm from the wreck.
+    ('SM_CafeCounter', -330.0, -240.0, 0.0, 180), ('SM_CafeRegister', -540.0, -240.0, 110.0, 180),
+    ('SM_CafeEspresso', -430.0, -240.0, 104.0, 180),
+    ('SM_CafePastryCase', -160.0, -238.0, 104.0, 180), ('SM_CafeShelf', -220.0, -490.0, 2.0, 0),
     ('SM_CafeShelf', 460.0, -490.0, 2.0, 0),
     ('SM_CafeTable', -310.0, 310.0, 2.0, 0), ('SM_CafeChair', -310.0, 235.0, 2.0, 0),
     ('SM_CafeChair', -310.0, 385.0, 2.0, 180),

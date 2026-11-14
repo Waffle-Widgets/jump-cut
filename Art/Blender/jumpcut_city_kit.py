@@ -390,6 +390,38 @@ def build_cafe_counter(name='SM_CafeCounter'):
     return b.finish(name)
 
 
+def build_cafe_register(name='SM_CafeRegister'):
+    """0.34 x 0.43 x 0.37 m - the till that stands on the counter top.
+
+    The cafe had an espresso machine and a pastry case but no register at all, so every picture of the room
+    invented one or left it out. The Team Owner asked for the register to be near the wall the car comes
+    through, so that the car barely misses the coworker standing at it - which needs the thing to exist.
+
+    ORIENTATION: the drawer, the keys and the screen all face Blender +Y, which is the SAME side as the
+    counter's staff side (the counter puts its recessed customer panels on -Y). So the till and the counter
+    agree at any yaw: whichever way the counter faces, the operator is looking at the keys.
+
+    No brand and no readable text (MegaJam 15d): the keys are blank blocks, the screen is a lit panel.
+    """
+    b = B(seed=31)
+    w, d, h = 0.34, 0.40, 0.18
+    b.box((-w / 2, -d / 2, 0), (w / 2, d / 2, h), 'MS_CityTrim', 0.45)                                  # body
+    b.box((-w / 2 + 0.02, d / 2, 0.03), (w / 2 - 0.02, d / 2 + 0.012, 0.11), 'MS_CityMetal', 0.6)       # drawer
+    b.box((-0.04, d / 2 + 0.012, 0.06), (0.04, d / 2 + 0.03, 0.08), 'MS_CityMetal', 0.75)               # pull
+    for r in range(4):                                                        # four rows of blank keys
+        for i in range(5):
+            kx = -w / 2 + 0.045 + i * 0.052
+            ky = 0.09 - r * 0.045
+            b.box((kx, ky, h), (kx + 0.038, ky + 0.033, h + 0.012), 'MS_CityMetal', 0.55 + 0.1 * ((i + r) % 2))
+    # the screen on its stalk at the back of the till, tilted up toward the operator on +Y
+    b.box((-0.03, -0.13, h), (0.03, -0.09, h + 0.06), 'MS_CityTrim', 0.4)
+    b.box((-0.11, -0.135, h + 0.06), (0.11, -0.10, h + 0.19), 'MS_CityTrim', 0.4)
+    b.quad([(0.095, -0.098, h + 0.075), (-0.095, -0.098, h + 0.075),
+            (-0.095, -0.098, h + 0.175), (0.095, -0.098, h + 0.175)], 'MS_CitySignB', 1.0)
+    b.box((-w / 2, -d / 2, h), (w / 2, d / 2, h + 0.008), 'MS_CityTrim', 0.5)                      # top plate
+    return b.finish(name)
+
+
 def build_cafe_espresso(name='SM_CafeEspresso'):
     b = B(seed=13)
     w, d, h = 0.80, 0.52, 0.46
@@ -1516,6 +1548,7 @@ GROUPS = {
     'cafe': [
         ('SM_CafeShell', build_cafe_shell), ('SM_CafeCounter', build_cafe_counter),
         ('SM_CafeEspresso', build_cafe_espresso), ('SM_CafePastryCase', build_cafe_pastry_case),
+        ('SM_CafeRegister', build_cafe_register),
         ('SM_CafeShelf', build_cafe_shelf), ('SM_CafeTable', build_cafe_table),
         ('SM_CafeChair', build_cafe_chair), ('SM_CafeAwning', build_cafe_awning),
         ('SM_CafeMenuBoard', build_cafe_menu_board), ('SM_CafeSign', build_cafe_sign),
@@ -1561,9 +1594,19 @@ MODELS = [p for g in ('cafe', 'city', 'ruins', 'props', 'set') for p in GROUPS[g
 #   * (-5.2, 0) -> (3.0, -2.5)  the shrapnel's flight from the car to the coworker in beat 1
 #   * (-3.8, 2.2)           the crash driver's body, which the player has to be able to reach and touch
 CAFE_DRESS = [
-    ('SM_CafeCounter',    2.00, -3.80, 0.00,   0),
-    ('SM_CafeEspresso',   0.90, -3.80, 1.04,   0),
-    ('SM_CafePastryCase', 3.50, -3.78, 1.04,   0),
+    # Moved west Fri Nov 13: the Team Owner asked for the register to be near the wall the car comes
+    # through, so that the car barely misses the coworker standing at it. The counter runs along the
+    # south-west with its STAFF side (+Y) facing the car, 1.00 m from the car's flank at y = -1.00, so
+    # whoever is at the register is about 0.60 m from it. It stays clear of all three protected lanes:
+    # the walk is at y = 0, the shrapnel passes y = -0.58 at x = -3.30, and the body is on the +Y side.
+    # yaw 180: the counter puts its customer panels on Blender -Y, which the FBX export turns into Unreal
+    # +Y, so at yaw 0 the customers would stand on the car's side and the staff would be against the south
+    # wall. Turned round, the STAFF side faces the car and whoever is at the register is the one the car
+    # nearly hits, which is what was asked for. Customers queue in the 2.35 m strip behind.
+    ('SM_CafeCounter',   -3.30, -2.40, 0.00, 180),
+    ('SM_CafeRegister',  -5.40, -2.40, 1.10, 180),
+    ('SM_CafeEspresso',  -4.30, -2.40, 1.04, 180),
+    ('SM_CafePastryCase',-1.60, -2.38, 1.04, 180),
     ('SM_CafeShelf',     -2.20, -4.90, 0.02,   0),
     ('SM_CafeShelf',      4.60, -4.90, 0.02,   0),
     ('SM_CafeTable',     -3.10,  3.10, 0.02,   0),

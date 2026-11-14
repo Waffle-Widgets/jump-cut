@@ -16,6 +16,31 @@ the arms against the torso gives a 3D model with the arms fused to the chest.
 (the cel-shader demo on `mendezm87/anime-look` and the `CafeWalker` model); the team **chose** it on the evening of
 Nov 12 (`ROADMAP.md`, Decisions), so it is now the style and not a candidate.
 
+**THE CHARACTER LOCK - read this before you write a prompt with a person in it.**
+`docs/character-locks.json` holds one canonical description per character. Prompts do **not** describe a
+locked character in their own words; they write a token and `gen_images.py` substitutes the lock:
+
+    {CafeWalker}          the full description - use it when he is close and most of him is in frame
+    {CafeWalker:short}    the same lock, shortened - use it when he is small or far away
+
+Locked today: `CafeWalker`, `CafeCoworker`, `CrashDriver`. The tool also folds each character's **never**
+list into the negative prompt automatically, so you do not have to remember that his shirt must not be cream.
+
+Why: on Fri Nov 13 the title card, the "to be continued" card and the itch.io cover each drew the main
+character's apron differently - a crossed X-back, a plain bare back, and a bib with no neck strap at all. Three
+pictures of one man, three aprons. That is what gets a game called AI slop, and it happened because each prompt
+described him from memory. Now there is one description and every picture gets the same words.
+
+`python tools/char_lock_check.py` fails if a prompt starts describing a locked character by hand again. The
+A-pose prompts that **drew** the canonical sheets are exempt (they are listed as `sheet_prompts` in the lock) -
+they are its source. Changing one of those means redrawing the sheet **and** remaking the rigged model.
+
+**It is a text check, not a picture check.** It guarantees the words are identical; it cannot make the model
+obey them. Looking at the take is still the job - and `--lock-ref` hands the model the actual reference sheet,
+which is the stronger lever when words alone are not holding.
+
+---
+
 **Rules note.** No trademarks or logos, nothing above 13+ (`docs/RULES.md`). For the mob boss that means an
 invented crest or none at all, never a real family crest, and a clean blade — no blood.
 
@@ -192,16 +217,29 @@ Draw them wide (the default `1664x928`), the cover at `1328x1056` and cropped to
 
 ### UI-TITLE
 The title card: the moment the demo is about. The upper third is kept as plain dark wall for the title text.
+Rewritten Fri Nov 13 evening after the Team Owner's review: the first take had an undamaged car with no driver
+coming out of a glowing cave of glass with no street behind it, no counter or coworker near it, six floating cups
+and no customers. The second take fixed all of that but drew a 1950s American car on a small-town American
+street, so the car and the street are now pinned down as modern and Japanese. The driver lies on the floor by
+the open door, not at the wheel, because that is where his body is in the level (-380, 220).
 
 > anime key visual illustration, cel shaded with hard-edged shadows and clean dark line art, flat areas of solid
-> colour, wide cinematic shot inside a small city coffee shop a split second after a car has crashed through the
-> wall, time is frozen, a slim young man with short messy black hair seen from behind in the lower left wearing a
-> khaki brown long-sleeve shirt and a dark green apron, in front of him hundreds of shards of glass and broken
-> bricks and coffee cups and drops of coffee hang perfectly still in mid-air, the front of a plain dark red car
-> pushed through the broken wall on the right with its headlights on, pale cyan light glowing on every frozen
-> shard, warm brown interior walls, the upper third of the picture is a calm plain dark wall with nothing on it,
-> dramatic low camera angle, strong diagonal composition, no text, no letters, no logos, no signs, no brand names
-
+> colour, wide cinematic shot inside a small warm wooden city coffee shop in the daytime, a modern plain dark red
+> hatchback car with smooth painted bodywork, black plastic bumpers and a plain black horizontal mesh grille
+> whose centre is smooth and empty, which has smashed head first through the brick
+> wall on the left and stopped half inside the room, the car is badly wrecked with a crumpled buckled bonnet, a
+> cracked shattered windscreen, one smashed headlight and a dented front wing, the driver's door hangs open and
+> {CrashDriver:short} lies slumped lifeless on the floor against the open door with his head down, behind the car
+> a ragged hole torn through the red brick wall opening onto a narrow Japanese city street outside with modern
+> tiled shop fronts and hanging overhead cables clearly visible through the hole, on the right a wooden cafe
+> counter with a cash register standing close beside the car's front corner, {CafeCoworker:short} standing frozen
+> still at the register an arm's length from the car, seen from the side so the single apron strap over her shoulder is visible, {CafeWalker:short} standing with his back to us in the
+> lower left foreground with his whole head and shoulders and upper back in frame, two seated customers frozen
+> still at a table in the middle distance, time is completely frozen so many
+> small broken brick fragments and exactly three paper coffee cups and a scatter of coffee drops hang perfectly
+> motionless in mid-air, a thin pale cyan rim light on the frozen pieces only, warm daylight and brown wood and
+> cream painted walls everywhere else, the whole top third of the picture is empty plain dark brown wall with
+> nothing in it at all, dramatic low camera angle, no text, no letters, no logos, no signs
 ### UI-WIN
 The win screen: the yard after the cleaver boss, with Splice's violet. The left half is kept calm for text.
 
@@ -223,23 +261,23 @@ The lose screen. Nobody is hurt in it (13+): the take was simply no good.
 
 ### UI-TBC
 The demo's last frame, the "to be continued" card. It carries no words, so it can be drawn before issue #17
-decides what the card says. The sky is the calm area.
+decides what the card says. The sky is the calm area. Rewritten Fri Nov 13 evening: the tower was too close
+and read as a lighthouse at the end of the lane, and the apron was drawn with crossed X straps on the back.
 
 > anime key visual illustration, cel shaded with hard-edged shadows and clean dark line art, flat areas of solid
-> colour, a slim young man with short messy black hair seen from behind and small in the frame, wearing a khaki
-> brown shirt and a dark green apron, standing in the middle of a narrow city street lined with shop fronts and
-> hanging cables, looking up at one enormous pale white tower far away at the end of the street, on the top of
-> the tower a tiny empty folding chair under a single bright studio lamp, evening sky going from orange to deep
-> violet filling the upper half of the picture, long shadows on the road, no other people, no text, no letters,
-> no logos, no signs with writing
-
+> colour, {CafeWalker:short} seen from behind and very small and far away at the bottom of the frame, standing
+> in the middle of a long narrow city street lined with shop fronts and hanging cables, looking up at one
+> enormous pale white skyscraper standing far away in the far distance many blocks beyond the end of the street,
+> the tower small and hazy with distance behind the rooftops, on the very top of the distant tower a tiny empty
+> folding chair under a single bright studio lamp, evening sky going from orange to deep violet filling the
+> upper half of the picture, long shadows on the road, no other people, no text, no letters, no logos, no signs
 ### UI-COVER
 The itch.io cover (630 x 500). Tighter than the title card; the top quarter is kept plain for the name.
+Rewritten Fri Nov 13 evening: the apron bib was drawn with no neck strap and no chest pocket.
 
 > anime key visual illustration, cel shaded with hard-edged shadows and clean dark line art, flat areas of solid
-> colour, a slim young man with short messy black hair wearing a khaki brown long-sleeve shirt with the sleeves
-> pushed up and a dark green apron, seen from the waist up in three quarter view, one open hand raised toward the
-> viewer, a calm tired expression, all around him shards of glass and drops of coffee and a paper coffee cup hang
-> frozen in mid-air glowing pale cyan, behind him a broken brick wall and the headlight of a dark red car, the
-> top quarter of the picture is plain dark wall with nothing on it, strong diagonal composition, no text, no
-> letters, no logos, no brand names
+> colour, {CafeWalker} seen from the waist up in three quarter view, one open hand raised toward the viewer, a
+> calm tired expression, around him a few shards of glass and drops of coffee and one paper coffee cup hang
+> frozen in mid-air with a thin pale cyan rim light, behind him a broken red brick wall with daylight coming
+> through the hole and the dented bonnet and one smashed headlight of a dark red car, the top quarter of the
+> picture is plain dark wall with nothing on it, strong diagonal composition, no text, no letters, no logos
