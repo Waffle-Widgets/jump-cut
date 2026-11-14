@@ -246,6 +246,13 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   but World Partition loads every package in that folder, so the next map load gives you **two of everything**
   (we got 46 beat-4 actors from 23). Compare the level's own `actor.get_outermost().get_name()` list against the
   files on disk and move the extras out of `Content` before committing.
+- **Lumen is OFF on purpose (`r.DynamicGlobalIlluminationMethod=0`, `r.ReflectionMethod=0`).** `M_AnimeLook`
+  bands every surface into lit/shadow at one hard threshold, and Lumen's bounced light sits on that threshold and
+  wobbles, so whole walls flipped tone frame to frame ("flickering assets"). Do not turn Lumen back on to make an
+  interior look warmer: add a small direct light instead (`Cafe_WarmFill_A/B`, 8 cd, no shadows).
+- **To find a flicker, capture the same camera twice and diff the pictures** (`CaptureViewport` x2, per-pixel
+  difference). It shows *what* changes in one step. Auto-exposure settling after a camera turn changes half the
+  picture too - that is a drift, not a flicker; let it settle before comparing.
 - **`unreal.HitResult` is opaque in 5.8:** no `.distance`, every property "protected and cannot be read", and
   `SystemLibrary.break_hit_result` does not exist. Use `to_tuple()` / `to_dict()`, or get the distance from the
   MCP's `SceneTools.trace_world`, which just returns a number.
