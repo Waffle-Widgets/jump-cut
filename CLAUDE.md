@@ -448,6 +448,7 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   with the UE mannequin's bone names (humans) or a simple dog skeleton, weights it, and exports `SK_<Name>.fbx` and the colour
   texture to `Content/Game/Imported/<Name>/`, with rest and test-pose renders in `Art/Blender/cache/`.
   - Reference pictures come from Gemini in the user's Chrome (Claude in Chrome; the in-app browser isn't signed in).
+    **(Stale as of Sat Nov 14 - the in-app browser IS signed in. See the Gemini note below.)**
     Ask for the full body on a plain white background; for people, an A-pose with clear gaps between the arms and body.
     Never pick a download by a filename pattern: `~/Downloads` holds older Gemini images. Take the newest file.
   - Let TRELLIS simplify: `DEC=30000 TEX=2048` before `run_image_to_3d.py`. Its export rebuilds the surface from the voxel
@@ -704,3 +705,23 @@ Full summary in `docs/RULES.md`. Warn us if a request would break one of these:
 
 ## The current game
 **Jump Cut** (theme: "Directors Cut"). See `docs/PITCH.md` for the pitch, the story and the powers, and `docs/ROADMAP.md` for the build order, the cut list and the decisions.
+
+- **Gemini is reachable from the agent's own browser - the note saying it is not is stale.** `CLAUDE.md` said
+  reference pictures must come from "Gemini in the user's Chrome (Claude in Chrome; the in-app browser isn't
+  signed in)". On Sat Nov 14 the Playwright browser opened `gemini.google.com/app` already **signed in** to the
+  owner's account (Pro), with the project's own Gemini history in the sidebar. So an agent can drive Gemini end to
+  end. The steps that work, in order, all from the prompt bar: `Upload & tools` (+) -> **Create image** ->
+  **Aspect ratio** -> the ratio -> paste -> Enter. Confirm all three before sending (`Deselect Images` chip
+  present, ratio button reads what you picked, textbox length equals the prompt's) - a missed toggle wastes the
+  take and looks identical until the answer comes back as prose.
+  - **Paste, never type, a locked prompt.** `Set-Clipboard` from a file then `Control+v`, and read the textbox
+    back and compare its length. The whole point of the lock is identical words; retyping 3,000 characters by
+    hand quietly defeats it.
+  - **Getting the picture out:** the displayed `<img>` is a `blob:` URL and `fetch()` on it fails once revoked.
+    Draw it to a canvas and `toDataURL` instead - it is same-origin so the canvas is not tainted. That yields the
+    **1024-wide display copy**, which is enough to judge a take but NOT what to ship; the full-size file still
+    needs the page's own "Download full size image".
+  - **Start a NEW chat for each take.** A follow-up message makes Gemini *edit* the previous picture and inherit
+    whatever it got wrong, which is exactly what `docs/prompts-gemini.md` warns about.
+  - It composes to fill the frame and will not reliably leave an empty band for title text; see `UI-TITLE2` in
+    `docs/prompts.md` for the measured numbers.

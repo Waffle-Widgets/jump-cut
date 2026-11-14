@@ -361,3 +361,31 @@ that teach Freeze Frame.
 >
 > The background is flat pure white and completely empty. Even flat lighting from the front. No shadow on the
 > ground beneath him.
+
+---
+
+### GEM2-UI-TITLE2 — the title card, barista and director back to back
+
+Aspect ratio **16:9**.
+
+**This prompt is not written out here, on purpose.** It lives once, as `UI-TITLE2` in
+[`prompts.md`](prompts.md), because it draws the main character **twice** and both halves have to take their words
+from `docs/character-locks.json` or they will disagree with each other and with his rigged model. Copying the text
+into this file would be a second place the costume is described, which is the exact failure the lock exists to
+stop.
+
+Get the pasteable text - lock tokens already expanded, no GPU touched, no ComfyUI needed:
+
+    python tools/gen_images.py UI-TITLE2 --print
+
+Paste the **PROMPT** block into Gemini. It also prints a **NEVER** list; Gemini has no negative-prompt box, so
+that list is not something you can send - it is the checklist to hold the take against by eye. The one on this
+character that has actually gone wrong is the apron: **one** strap, looped behind the neck, back otherwise plain
+shirt.
+
+**What to reject a take for**, in order of how often it has happened locally:
+
+1. **The two faces are different people.** No retouch exists for this. Redraw.
+2. **A cross-back apron** (an X of straps on the barista's back or over his shoulders).
+3. **Writing on the clapperboard slate.** It is a blank white panel; lettering also breaks `docs/RULES.md` 15d.
+4. **Any scenery at all.** The brief was a flat background and two figures.
