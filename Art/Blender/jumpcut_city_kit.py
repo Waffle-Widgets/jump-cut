@@ -1591,14 +1591,18 @@ MODELS = [p for g in ('cafe', 'city', 'ruins', 'props', 'set') for p in GROUPS[g
 # list in Unreal, so what the check render shows and what the level gets are the same data.
 # Three lanes are kept deliberately clear and nothing is allowed into them:
 #   * (0,0) -> (6.15, 0)    the player's walk from his start point to the door
-#   * (-5.2, 0) -> (3.0, -2.5)  the shrapnel's flight from the car to the coworker in beat 1
+#   * (-3.3, -0.6) -> (-5.4, -1.61)  the shrapnel's flight from the wreck to the coworker in beat 1
 #   * (-3.8, 2.2)           the crash driver's body, which the player has to be able to reach and touch
 CAFE_DRESS = [
     # Moved west Fri Nov 13: the Team Owner asked for the register to be near the wall the car comes
     # through, so that the car barely misses the coworker standing at it. The counter runs along the
     # south-west with its STAFF side (+Y) facing the car, 1.00 m from the car's flank at y = -1.00, so
     # whoever is at the register is about 0.60 m from it. It stays clear of all three protected lanes:
-    # the walk is at y = 0, the shrapnel passes y = -0.58 at x = -3.30, and the body is on the +Y side.
+    # the walk is at y = 0, the shrapnel now falls from above the wreck straight onto her, and the body is
+    # on the +Y side. The shrapnel's start MOVED on Fri Nov 13 (M Station, #56): from (-4.70, 0, 1.85),
+    # level with the car, the flight to her new spot behind the counter was blocked by the car's own cab
+    # after 0.74 m of a 2.00 m flight, so the debris could never reach her. It now starts at
+    # (-3.30, -0.60, 3.70), just under the 4.00 m ceiling, giving a clear 3.64 m fall.
     # yaw 180: the counter puts its customer panels on Blender -Y, which the FBX export turns into Unreal
     # +Y, so at yaw 0 the customers would stand on the car's side and the staff would be against the south
     # wall. Turned round, the STAFF side faces the car and whoever is at the register is the one the car

@@ -290,6 +290,34 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   the project. With another lane's four read-only Blueprints dirty, that save failed, left `.tmp` files
   in `Saved/`, and the editor stopped answering the MCP for ten minutes. Collect the assets you touched
   (`list_assets(folder)` -> `load_asset` -> `get_outermost`) and pass those to `save_packages`.
+- **You cannot save a level actor through the MCP in this map, and three things lie about it.**
+  `Lvl_JumpCut` is One File Per Actor, so each actor owns a package under `Content/__ExternalActors__/`.
+  `SceneTools.save_actor` and `AssetTools.save_assets` both resolve that package and then save it as a
+  *registry asset*, which it is not: every actor fails with `Asset does not exist:
+  /Game/__ExternalActors__/...` (useful side effect - the error names the package path). The toolbar's
+  **Save Current Level** returns **true** and writes nothing. And `SceneTools.can_edit` returns **true**
+  for an actor whose package is read-only under LFS, where the save would fail silently anyway. Use
+  `py <repo>/tools/jc_save_actors.py <label> ...` through the console box - real `unreal`,
+  `save_packages([a.get_outermost()], False)` on only the actors you name - then confirm with
+  `git status`. If you need to know which five packages are dirty, the autosave names them in the log.
+- **The editor can open onto a `Check Out Assets` modal that freezes the MCP.** The log stops
+  mid-startup and the MCP accepts connections but never answers. It is a Slate window with no Win32
+  children, so there is no button to click: find it by title from PowerShell and `PostMessage` **WM_CLOSE**
+  (0x0010) to cancel. Cancel is correct - we coordinate with `git lfs lock` on named files, not with
+  Unreal source control, so a blanket check-out at startup is never what we want.
+- **30 assets re-import themselves on every editor open, and two of them used to undo real work.**
+  23 sounds and 7 UI textures keep their source file committed beside them inside `Content/`, and
+  `bMonitorContentDirectories=True`, so a `git checkout` touching those mtimes makes the watcher
+  re-import all 30 (this is most of the "35 Unsaved" you see on a fresh open). That is harmless only
+  while the source MATCHES: `Content/Game/UI/Textures/T_UI_Title.png` and `T_UI_ToBeContinued.png` were
+  the old rejected pictures, so every launch silently reverted those assets to them. If you update a
+  picture in `Art/UI/`, update the copy in `Content/` in the same commit, or the watcher will undo you.
+- **`jumpcut_city_place.py add` matches by ACTOR LABEL, so renumbering the layout makes duplicates.**
+  Inserting `SM_CafeRegister` at cafe index 1 shifted every row after it, so only 7 of 15 cafe labels
+  still matched: `add` would have skipped the counter (leaving it unmoved - the whole point of the
+  change) and spawned **8** duplicate shelves, tables and chairs. Before running `add`, compare the
+  layout to the level **by position**, not by label; the geometry is usually right and only the labels
+  have drifted. Fix the labels first, then `add` is safe.
 - **`IKRetargetBatchOperation.duplicate_and_retarget` returns package names you cannot save by.** On a
   re-run into a folder that already holds `_SG` assets it makes `_SG1` copies and renames them, and the
   names it hands back are the pre-rename ones - so saving by them saves nothing, and the real assets are
