@@ -38,7 +38,7 @@ table, commits and pushes. A computer can have more than one role (`tester, make
 | Computer (`hostname`) | Person | OS | Role | Notes |
 |---|---|---|---|---|
 | Gamestation | Manuel Mendez | Windows | builder | Unreal edits, packaging, fixes playtest issues |
-| M_Station | Manuel Mendez | Windows | maker | TRELLIS, Blender, Meshy, sounds |
+| M_Station | Manuel Mendez | Windows | maker, **builder** (see the claim rule below) | TRELLIS, Blender, Meshy, sounds, ComfyUI on the 3090, the Gemini browser. UE 5.8 installed and the project has been opened here |
 | _(Manny's Mac: hostname to add)_ | Manuel Mendez | macOS | tester | |
 | Justins-Mac-mini | Justin Catrambone | macOS | tester, maker, **builder (beat 4, beats 1-3 cleanup, the beat 1-3 imports: #40, #5, #7, #6)** | Mac mini, Apple silicon. Full UE 5.8 (43 GB, `~/Epic Games/UE_5.8`) with the MCP plugin prebuilt for Mac, and a complete clone with all LFS objects, so it can do Unreal work. git-lfs, gh, uv and the Blender MCP set up Nov 9; Blender is 5.1.2 (team uses 5.2) |
 
@@ -63,6 +63,32 @@ character-model imports were not this Mac's. The four are: the set pieces (#40),
 `BP_Goon` with its chains hand-mapped (#6). Everything outside those four, and outside beat 4 and the beats 1-3
 cleanup, is still GameStation's.
 
+**M Station is a builder too, as of Fri Nov 14** (Team Owner: *"M Station can be a builder too but we need to make
+sure it doesn't try to build or modify any blueprints that are being worked on by another chat or computer."*). The
+role is not scoped to an area - the condition is the sentence after the "but", and it is a hard gate, not advice.
+
+**The claim rule: before M Station opens ANY `.uasset` to change it.** Three different chats and three computers are
+now in this repo at once, and the usual guard does not work here - GameStation and M Station share one GitHub account,
+so an LFS lock held by "mendezm87" could be either of them. So check all four, in this order, and stop at the first
+one that says someone else is in there:
+
+1. `git lfs locks` - any lock on the file at all, by anyone, means stop. Do not assume a lock under Manny's name is
+   your own; it is more likely GameStation's.
+2. `git fetch --all && git log --all --since=6.hours --name-only -- <the file>` - if another machine has touched it
+   today, it is theirs until they say otherwise.
+3. The open issue for that area. If a ticket naming that Blueprint is assigned to another machine, the Blueprint is
+   that machine's, even if nothing is locked yet - Justin's import queue (#52, #56) is the live example.
+4. The `[COLLAB]` board the chats share. A sibling chat quoting work in that file is a claim.
+
+**And when it does go in: take the lock first, say so, and release it.** `git lfs lock <file>` before the editor
+opens it, the file list in the push message so the other machines can tell which "mendezm87" did it, and
+`git lfs unlock` after the push. Never two chats in one Blueprint, which is the rule that already existed for
+`builder (area)` and is the one this change could break.
+
+**What this does NOT change.** GameStation is still the single builder of record for packaging and for the Windows
+build the jam wants. M Station building is for work nobody else is holding - the title screen widget is the first
+of it - not a second queue competing with Justin's imports.
+
 **Roles**
 - **builder:** the only computer that changes Unreal files (`.uasset`, `.umap`) and commits them. It packages and publishes
   test builds and works through the playtest issues (`playtest-issues` skill). Exactly **one** at a time, on Windows
@@ -84,7 +110,7 @@ the lock) edits its `.uasset` files.
 | Level layout | | `Content/Game/Maps/` (One File Per Actor: lock the actors you move) |
 | Player character | | `Content/Game/Blueprints/BP_<Player>*` |
 | Obstacles / enemies | | |
-| UI (title, HUD, end screen) | | `Content/Game/UI/` |
+| UI (title, HUD, end screen) | M Station (title screen), Justin's Mac (the #52 texture imports) | `Content/Game/UI/` - `WBP_Title` and its animation are M Station's; the rest is unclaimed |
 | Audio | | `Content/Game/Audio/`, `tools/make_sfx.py` |
 | Art made outside Unreal | | `Art/Blender/`, imported by the level owner |
 | Devlog, video, submission | Manuel Mendez | `docs/devlog/`, the zip |

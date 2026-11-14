@@ -26,8 +26,12 @@ TELLS = {
     'CafeWalker': ['dark green apron', 'green bib apron', 'green cloth apron', 'green canvas apron',
                    'khaki brown shirt', 'khaki brown long-sleeve', 'cream shirt', 'barista',
                    'coffee shop worker',
-                   # the director costume form, added Sat Nov 14 - a costume is still him
-                   'charcoal grey bomber jacket', 'grey bomber jacket', 'film director'],
+                   # the director costume form, added Sat Nov 14 - a costume is still him.
+                   # Redesigned Fri Nov 14: the bomber jacket became a long charcoal black coat with
+                   # cyan power-light, so the coat's own words are tells now too.
+                   'charcoal grey bomber jacket', 'grey bomber jacket', 'film director',
+                   'charcoal black coat', 'long charcoal coat', 'director of reality',
+                   'cyan rings', 'cyan forearm rings'],
     'CafeCoworker': ['teal apron', 'teal canvas apron', 'white short-sleeve shirt', 'high ponytail'],
     'CrashDriver': ['brown leather jacket', 'leather jacket'],
 }

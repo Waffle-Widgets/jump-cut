@@ -215,6 +215,78 @@ Draw them wide (the default `1664x928`), the cover at `1328x1056` and cropped to
     python tools/gen_images.py UI-TITLE UI-WIN UI-LOSE UI-TBC --takes 2
     python tools/gen_images.py UI-COVER --takes 2 --size 1328x1056
 
+### UI-TITLE3
+The title card, **third concept, and the one being built**. The Team Owner asked for a title *animation* on Fri Nov 14:
+*"half of the barista fade into frame then the other half fades in as the director, then have a clapperboard fade in
+over them, snap, then transition through them to the background."* He chose the expensive version of it - the two
+halves drawn as separate images so the seam is real - and then solved its own worst problem himself: *"see if you can
+do the characters in one shot [so they look as] they would look after fading in so you can just do an easy split. They
+only really need to show the torso up."*
+
+**That is why this is one prompt and not two.** Two independently drawn halves would not line up: the shoulder line,
+the head height and the lighting would all disagree at the seam, and no amount of prompt wording fixes that. Drawn
+together in one picture and cut down the exact centre afterwards, the seam is guaranteed, because both halves came off
+the same drawing. `tools/split_title_pair.py` does the cut and checks it.
+
+**So the composition is doing a job, not just looking nice.** Every clause about the centre line is there because the
+cut has to land on it: the two figures' backs meet along one straight vertical line at the exact horizontal centre, and
+nothing of either figure - hair, shoulder, arm, hand - crosses it. If something crosses, the halves tear when they fade
+in one at a time. Both figures are the same height with their heads at the same level, so neither half looks wrong
+alone, which is exactly how the first second of the animation shows it.
+
+**The headroom problem is gone, and worth understanding rather than inheriting.** `UI-TITLE2` below fought the model
+for an empty top third to put the game's name in and never got past 16.3%. An animation does not need it: the lettering
+lands on the clapper snap, over the background, after the figures have wiped away. So this prompt asks for no empty band
+at all and spends the whole frame on the two of them - which is also what "torso up" buys.
+
+**The clapperboard is not in this picture.** It fades in over both figures as its own element, so a board in his hand
+would have put two in the shot. It is drawn by code, not generated - `tools/make_clapperboard.py` - because it is a
+geometric object with a flat blank slate, and a blank slate is the one thing the model keeps writing on. That is also
+why the director costume's clapperboard moved out to `{CafeWalker:director_board}`; this prompt uses the plain
+`{CafeWalker:director}`.
+
+**The director costume is new.** The Team Owner: *"You can give the main character a whole new outfit if it works, just
+get the point across that he becomes a director of reality when all powers have been collected."* The charcoal bomber
+jacket became a long open charcoal black coat with one line of pale cyan power-light down each open edge and **three
+cyan rings on his right forearm, one per power collected**. The three rings are the whole point of the picture: they are
+how the shot says "all of them" without a word of text, which `docs/RULES.md` 15d would ban anyway.
+
+    python tools/gen_images.py UI-TITLE3 --print    # the words, to paste into Gemini
+    python tools/gen_images.py UI-TITLE3 --takes 3  # or draw locally
+
+Drawn in **Gemini** (`Create image`, Hydrogen, 16:9), which beat the local ComfyUI/Qwen path on exactly this kind of
+picture - see `UI-TITLE2`'s notes. Judge every take on three things before anything else: **the two faces must be the
+same man**, the apron's single neck loop must be visible on the left figure, and **nothing may cross the centre line**.
+
+**Three takes drawn in Gemini, Fri Nov 14 05:49-05:58 UTC** (`Art/Refs/gen/gemini3/GEM3-UI-TITLE3-{1,2,3}.png`,
+gitignored; the picked take is committed as `Art/UI/T_UI_TitlePair.png`). What they settled:
+
+| | Take 1 | Take 2 **(picked)** | Take 3 |
+|---|---|---|---|
+| Same man, both halves | yes | yes | yes |
+| Apron: one neck loop, square bib pocket | yes | yes | ambiguous - reads as two shoulder straps |
+| Three cyan forearm rings | yes | yes | yes |
+| Clear of the centre cut | yes, but a drawn divider line sits on it | **yes, a clean 7 px gap** | **no - the coat crosses the centre** |
+| Heads level | 0 px | 0 px | 0 px |
+
+**The lock held on the first take, in both costumes, three times running.** Single neck loop, square bib pocket,
+same face, same hair - and exactly three rings every time. For contrast, the local ComfyUI/Qwen path needed seven
+takes to draw that apron correctly twice. The positively-worded strap clause (see the say-what-is-there rule in
+`docs/character-locks.json`) is doing the work in both paths.
+
+**Take 2 was picked over take 1 only because of the centre.** Gemini likes to draw a thin vertical divider between
+two figures that are presented as a pair - take 1 has one, three pixels wide, running the full height. Left in, half
+of that line fades in with each half and reads as a stray mark down the middle of the screen. `split_title_pair.py
+--erase-seam 7` removes it cleanly, and take 1 passes every check with it, so it is a usable fallback. Take 2 simply
+did not draw one.
+
+**Take 3 is the composition to avoid and is kept as the counter-example.** The director's coat crosses the centre
+and overlaps the barista. It looks fine as a picture and is useless here: cut it in half and the coat loses a panel
+to the other image, so the first fade shows a man with a slice taken out of him. The splitter fails it rather than
+writing it, which is the check earning its place.
+
+> anime key visual illustration, cel shaded with hard-edged shadows and clean dark line art, flat areas of solid colour, only two or three large simple shadow shapes per garment, bright and light and airy, a symmetrical centred poster composition of one single young man drawn twice as two figures of exactly the same height whose backs are pressed flat together along one perfectly straight vertical line at the exact horizontal centre of the picture, the left figure's body turned to face the left edge and the right figure's body turned to face the right edge, each of them turning his head to look straight out at the viewer, both figures are the same one person with an identical face and identical hair and their two heads are at exactly the same height, both figures are shown from the middle of the chest upward only and the bottom edge of the picture cuts across them at mid-chest, the whole of the left figure is inside the left half of the picture and the whole of the right figure is inside the right half of the picture and the vertical line down the exact centre of the picture is the clean straight join between their two backs, on the left {CafeWalker:bust}, on the right {CafeWalker:director_bust}, the background is one single flat plain field of warm pale cream colour that is completely empty from edge to edge, a thin pale cyan rim light down the outer edge of the right figure only, generous empty margins of that same flat cream at the left and right edges, no scenery, no furniture, no walls, no windows, no clapperboard, no text, no letters, no logos, no signs
+
 ### UI-TITLE2
 The title card, **second concept**. The Team Owner rejected the crash scene outright on Sat Nov 14 - *"I don't
 think we want to have that as the title anyway"* - and asked instead for the main character as a film director,
