@@ -113,6 +113,10 @@ def cafe():
     put('City_CafeMenuBoard', 'SM_CafeMenuBoard', 780, 260, 0, 200)
     put('City_CafeNoren', 'SM_Noren', 648, 0, 0, 90)
     put('City_CafePlanter', 'SM_Planter', 760, -300, 0, 0)
+    # The car that came through the west wall, on the exact spot of the two red boxes it replaces
+    # (C1_Cafe_Car is centred on (-520, 0) and 400 x 200). Nose east, into the room; the open driver's door
+    # is on the +Y side, which is the side his body lies on at (-380, 220).
+    put('City_CafeCrashCar', 'SM_CrashCar', -520, 0, 0, 0)
 
 
 # ----------------------------------------------------------------- 2. the lane the player walks
@@ -144,8 +148,13 @@ def lane():
         while kx < STREET_X1 - 400.0:
             put('City_Kerb%s_%02d' % (tag, n), 'SM_Kerb', kx + 400.0,
                 -ROAD_HALF if side == 0 else ROAD_HALF, 0, 0.0 if side == 0 else 180.0)
+            if side == 0:                                 # one strip of painted lines per 8 m of road
+                put('City_RoadLines_%02d' % n, 'SM_RoadLines', kx + 400.0, 0.0, 0, 0)
             kx += 800.0
             n += 1
+    # Zebra crossings: outside the cafe door, half-way down, and where the lane meets the boss lot.
+    for k, zx in enumerate((900.0, 3300.0, 6380.0)):
+        put('City_Crosswalk_%d' % k, 'SM_Crosswalk', zx, 0.0, 0, 0)
 
 
 def lane_props():
@@ -249,6 +258,8 @@ def crossing():
     put('City_AvenueBarrier', 'SM_Barrier', -1750.0, 180.0, 0, 90)
     put('City_CrossLamp', 'SM_StreetLamp', -1250.0, 520.0, 0, 180)
     put('City_CrossPole', 'SM_UtilityPole', -1300.0, -480.0, 0, 0)
+    # the crossing itself, laid across the avenue on the axis the hole looks down
+    put('City_CrosswalkAvenue', 'SM_Crosswalk', AVENUE_X, 0.0, 0, 90)
 
 
 # ----------------------------------------------------------------- 4. the plaza, and the exit
@@ -269,6 +280,18 @@ def plaza():
         for sgn in (-1.0, 1.0):
             put('City_PlazaLamp_%d%s' % (k, 'SN'[sgn > 0]), 'SM_StreetLamp', lx, sgn * 1380.0, 0,
                 90 if sgn < 0 else 270)
+    # The lot's own walls. One model per grey box, on the same centre, so the arena the fight was tuned
+    # in does not move: REPLACES below checks each of these against the box it stands in for.
+    # A yard wall's dressed face is its local +Y. Yaw 270 turns that to +X (the west walls face east,
+    # into the lot), yaw 90 to -X, yaw 180 to -Y.
+    put('City_PlazaWall_W_North', 'SM_YardWall_1250', 6620.0, 875.0, 0, 270)
+    put('City_PlazaWall_W_South', 'SM_YardWall_1250', 6620.0, -875.0, 0, 270)
+    put('City_PlazaWall_E_North', 'SM_YardWall_1250', 9620.0, 875.0, 0, 90)
+    put('City_PlazaWall_E_South', 'SM_YardWall_1250', 9620.0, -875.0, 0, 90)
+    put('City_PlazaWall_N', 'SM_YardWall_3040', 8120.0, PLAZA_Y, 0, 180)
+    put('City_PlazaWall_S', 'SM_YardWall_3040', 8120.0, -PLAZA_Y, 0, 0)
+    # and its floor: a picture of paving laid 1 cm over the real floor, with no collision of its own
+    put('City_PlazaPaving', 'SM_PlazaPaving', 8120.0, 0.0, 0, 0)
 
 
 def exit_run():
@@ -282,6 +305,9 @@ def exit_run():
     put('City_RunPole', 'SM_UtilityPole', 9800.0, 210.0, 0, 0)
     put('City_RunCable', 'SM_CableSpan', 10200.0, 210.0, 640, 0)
     put('City_RunTrash', 'SM_TrashBags', 10050.0, -200.0, 0, 0)
+    # the corridor's own walls: site hoarding, because the run leads to beat 4's demolition
+    put('City_RunWall_N', 'SM_Hoarding_990', 10135.0, 265.0, 0, 180)
+    put('City_RunWall_S', 'SM_Hoarding_990', 10135.0, -265.0, 0, 0)
 
 
 # ----------------------------------------------------------------- 5. the skyline
@@ -365,7 +391,47 @@ NO_GO = [
 ALLOWED_PREFIX = ('City_Cafe', 'City_PlazaProp', 'City_PlazaLamp', 'City_Manhole', 'City_Barrier',
                   'City_Cone', 'City_Kerb', 'City_RunTrash', 'City_RunPole', 'City_RunCable',
                   'City_CafeAwning', 'City_CafeSign', 'City_CafeMenuBoard', 'City_CafeNoren',
-                  'City_CafePlanter')
+                  'City_CafePlanter', 'City_PlazaWall', 'City_PlazaPaving', 'City_RunWall', 'City_RoadLines',
+                  'City_Crosswalk')
+
+# Set pieces that stand in for a grey box one-for-one: label -> (the box's label, centre x, centre y,
+# size x, size y), straight out of BOXES in tools/c1_layout.py. They are exempt from the no-go check
+# above for the same reason the boxes were - a plaza wall is SUPPOSED to stand at the edge of the plaza
+# - so they get a stricter one instead: the model may not reach further INTO the play space than
+# REPLACE_SLACK past the box it replaces. The fight was tuned inside those boxes.
+REPLACE_SLACK = 16.0
+REPLACES = {
+    'City_CafeCrashCar': ('C1_Cafe_Car', -520.0, 0.0, 400.0, 200.0),
+    'City_PlazaWall_W_North': ('C1_Plaza_WallW_North', 6620.0, 875.0, 40.0, 1250.0),
+    'City_PlazaWall_W_South': ('C1_Plaza_WallW_South', 6620.0, -875.0, 40.0, 1250.0),
+    'City_PlazaWall_E_North': ('C1_Plaza_WallE_North', 9620.0, 875.0, 40.0, 1250.0),
+    'City_PlazaWall_E_South': ('C1_Plaza_WallE_South', 9620.0, -875.0, 40.0, 1250.0),
+    'City_PlazaWall_N': ('C1_Plaza_WallN', 8120.0, 1520.0, 3040.0, 40.0),
+    'City_PlazaWall_S': ('C1_Plaza_WallS', 8120.0, -1520.0, 3040.0, 40.0),
+    'City_RunWall_N': ('C1_Run_WallN', 10135.0, 265.0, 990.0, 30.0),
+    'City_RunWall_S': ('C1_Run_WallS', 10135.0, -265.0, 990.0, 30.0),
+}
+# The car's open door is the one deliberate overhang: it swings out of the red box on the +Y side,
+# towards the driver's body. What it could get in the way of is checked by name instead (see validate).
+REPLACE_OVERHANG_OK = {'City_CafeCrashCar': 'y1'}
+CAR_DOOR_FRONT = 56.0       # the door's hinge is this far ahead of the car's origin; nothing of it is further
+
+# Models that are not placed by this layout at all, because they belong INSIDE a Blueprint. Listed here
+# so the placer prepares them (Nanite off, collision) with the rest, and so the builder has the swap in
+# one place: Blueprint, component, what to set.
+BLUEPRINT_MESHES = {
+    'SM_PlazaGate': {'blueprint': 'BP_PlazaGate', 'component': 'GateMesh',
+                     'set': 'static mesh; relative scale back to (1, 1, 1) - the cube was scaled 0.4 x 5 x 4 '
+                            'and this model is already that size, centred on its origin like the cube'},
+    'SM_CheckpointPost': {'blueprint': 'BP_Checkpoint', 'component': 'PostMesh',
+                          'set': 'static mesh; relative scale (1, 1, 1), relative location z = 0 - it '
+                                 'stands on its origin, 229 cm tall'},
+    'SM_CheckpointTaken': {'blueprint': 'BP_Checkpoint', 'component': 'TakenSign',
+                           'set': 'static mesh; relative scale (1, 1, 1); centred on its origin, 60 x 50 cm, '
+                                  'face on local +Y. Keep M_CheckGreen on slot MS_CitySignB if green is wanted'},
+    'SM_Shrapnel': {'blueprint': 'BP_Shrapnel', 'component': 'the red bar mesh',
+                    'set': 'static mesh; relative scale (1, 1, 1); long axis is local X, 79 cm, centred'},
+}
 
 
 def footprint(a, boxes):
@@ -412,6 +478,30 @@ def validate():
             if rows[i][0][1] > rows[i + 1][0][0] + 1.0:
                 problems.append('%s overlaps %s on the %s side of the lane'
                                 % (rows[i][1]['label'], rows[i + 1][1]['label'], side))
+    # one-for-one replacements must not reach further into the play space than the box they replace
+    by_label = {a['label']: a for a in actors}
+    for label, (box, cx, cy, sx, sy) in REPLACES.items():
+        a = by_label.get(label)
+        if a is None:
+            problems.append('replacement %s for %s is not in the layout' % (label, box))
+            continue
+        if a['model'] not in boxes:
+            continue
+        x0, x1, y0, y1, _ = footprint(a, boxes)
+        over = {'x0': (cx - sx / 2) - x0, 'x1': x1 - (cx + sx / 2), 'y0': (cy - sy / 2) - y0,
+                'y1': y1 - (cy + sy / 2)}
+        for side, d in over.items():
+            if d > REPLACE_SLACK and REPLACE_OVERHANG_OK.get(label) != side:
+                problems.append('%s reaches %.1f cm past %s on its %s side (slack is %.0f)'
+                                % (label, d, box, side, REPLACE_SLACK))
+    # the car's open door must leave the driver's body reachable: he lies at (-380, 220) and the player
+    # has to get within 220 cm of him and press F, so keep a body's width between him and the door
+    car = by_label.get('City_CafeCrashCar')
+    if car is not None:
+        door_front = car['x'] + CAR_DOOR_FRONT
+        if -380.0 - door_front < 60.0:
+            problems.append('the crash car door reaches x = %.0f, within 60 cm of the driver at x = -380'
+                            % door_front)
     if problems:
         print('LAYOUT PROBLEMS (%d):' % len(problems))
         for p in problems:
@@ -440,7 +530,14 @@ def main():
         'mesh_path': '/Game/Game/Imported/City/',
         'supersedes_greybox': ['C1_Cafe_WallN', 'C1_Cafe_WallS', 'C1_Cafe_WallW', 'C1_Cafe_WallE_South',
                                'C1_Cafe_WallE_North', 'C1_Cafe_Counter', 'C1_Street_BuildingN',
-                               'C1_Street_BuildingS'],
+                               'C1_Street_BuildingS'] + sorted({v[0] for v in REPLACES.values()})
+                              + ['C1_Cafe_CarCab'],
+        # The level's two floor slabs wear M_GreyFloor. The placer's "hide" puts this slot's material on
+        # them instead (and "show" puts the grey back) - dark asphalt, which is what makes the painted
+        # lines, the crossings and the plaza paving read at all.
+        'ground': {'labels': ['Floor_Base', 'C1_Floor_RunExtra'], 'slot': 'MS_CityRoof',
+                   'greybox_material': '/Game/Game/Materials/M_GreyFloor'},
+        'blueprint_meshes': BLUEPRINT_MESHES,
         'keep_clear': {'road_half_width': ROAD_HALF, 'gate_half_width': GATE_HALF,
                        'player_walk': [[0, 0], [615, 0]], 'shrapnel': [[-520, 0], [300, -250]],
                        'driver_body': [-380, 220], 'boss_spot': [8120, 0]},

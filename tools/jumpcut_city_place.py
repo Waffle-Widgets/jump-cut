@@ -28,6 +28,10 @@ existing editor scripts and have not been executed. Expect to fix a line, not a 
     py ... jumpcut_city_place.py hide       place it, and hide the grey boxes it replaces
     py ... jumpcut_city_place.py clear      remove every JC_City actor and stop
     py ... jumpcut_city_place.py show       un-hide the grey boxes and stop
+    py ... jumpcut_city_place.py add        place ONLY the layout actors that are not in the level yet, then
+                                            hide. Use this when the city is already placed and saved and
+                                            the layout has grown: it leaves the existing JC_City actors and
+                                            their packages alone instead of deleting and re-making all of them
 """
 import json
 import os
@@ -58,7 +62,9 @@ EMISSIVE = ('MS_CitySignA', 'MS_CitySignB')
 # demo between beat 1 and beat 2. It renders correctly, so nothing about it looks wrong.
 # Collision is switched off on the ACTOR, not on the shared mesh asset: bActorEnableCollision is an actor
 # property and serializes, where the component-level flag silently came back after a reload in beat 4.
-WALK_THROUGH = {'SM_Noren', 'SM_CableSpan'}
+# The three painted pieces (paving, crossings, road lines) are pictures laid 1 cm over the real floor:
+# with collision on, the player would be standing on a second floor the fight was never tuned on.
+WALK_THROUGH = {'SM_Noren', 'SM_CableSpan', 'SM_PlazaPaving', 'SM_Crosswalk', 'SM_RoadLines'}
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LAYOUT = os.path.join(REPO, 'Art', 'Blender', 'export', 'City', 'city_layout.json')
@@ -162,6 +168,36 @@ def set_greybox(eas, hidden, labels):
     return n
 
 
+def set_ground(eas, doc, mats, city):
+    """Put the asphalt on the level's floor slabs (city=True) or the grey-box floor back (city=False).
+
+    Written on M Station, which has no builder role, so like the rest of this file it has never been run
+    there. The floor actors are found by label; anything missing is reported and skipped, never guessed.
+    Same serialization trap as set_greybox: a material set on a placed actor's component does not dirty
+    its package on a one-file-per-actor map, so the transform is re-set and the package saved by hand.
+    """
+    g = doc.get('ground')
+    if not g:
+        return 0
+    mat = mats.get(g['slot']) if city else unreal.load_asset(g['greybox_material'])
+    if mat is None:
+        say('ground: no material for %s - floor left as it is' % (g['slot'] if city else g['greybox_material']))
+        return 0
+    labels, pkgs = set(g['labels']), []
+    for a in list(eas.get_all_level_actors()):
+        if a.get_actor_label() in labels and isinstance(a, unreal.StaticMeshActor):
+            a.static_mesh_component.set_material(0, mat)
+            a.set_actor_transform(a.get_actor_transform(), False, False)
+            pkgs.append(a.get_outermost())
+            labels.discard(a.get_actor_label())
+    if labels:
+        say('ground: could not find %s' % ', '.join(sorted(labels)))
+    if pkgs:
+        unreal.EditorLoadingAndSavingUtils.save_packages(pkgs, False)
+    say('ground: %s on %d floor actors' % (mat.get_name(), len(pkgs)))
+    return len(pkgs)
+
+
 def prepare_meshes(models):
     """Interchange turns Nanite ON and builds an auto convex hull. Both are wrong for this kit.
 
@@ -220,15 +256,31 @@ def main():
         return
     if mode == 'show':
         set_greybox(eas, False, set(doc['supersedes_greybox']))
+        set_ground(eas, doc, {}, False)
         return
 
-    clear(eas)
-    prepare_meshes({a['model'] for a in doc['actors']})
+    existing = set()
+    if mode == 'add':
+        existing = {a.get_actor_label() for a in eas.get_all_level_actors()
+                    if unreal.Name(TAG) in a.get_editor_property('tags')}
+        say('add: %d %s actors already in the level are left alone' % (len(existing), TAG))
+    else:
+        clear(eas)
+    # The Blueprint meshes (gate, checkpoint, shrapnel) are not placed by this script - they go inside
+    # Blueprints, see 'blueprint_meshes' in the layout - but they need the same Nanite and collision
+    # treatment, and the gate in particular is a wall: without collision the player walks out of the fight.
+    bp_meshes = {m for m in doc.get('blueprint_meshes', {})
+                 if unreal.EditorAssetLibrary.does_asset_exist(MESHES + m)}
+    for m in sorted(set(doc.get('blueprint_meshes', {})) - bp_meshes):
+        say('Blueprint mesh not imported yet, skipped: %s' % m)
+    prepare_meshes({a['model'] for a in doc['actors']} | bp_meshes)
     mats = ensure_materials()
 
     placed, missing, by_model = 0, {}, {}
     cache = {}
     for a in doc['actors']:
+        if a['label'] in existing:
+            continue
         path = MESHES + a['model'] + '.' + a['model']
         mesh = cache.get(path, 'nope')
         if mesh == 'nope':
@@ -260,8 +312,11 @@ def main():
         for m in sorted(missing):
             say('   %s  (%d placements waiting on it)' % (m, missing[m]))
 
-    if mode == 'hide':
+    if mode in ('hide', 'add'):
         set_greybox(eas, True, set(doc['supersedes_greybox']))
+        set_ground(eas, doc, mats, True)
+        for m, how in sorted(doc.get('blueprint_meshes', {}).items()):
+            say('STILL TO DO BY HAND: %s -> %s.%s (%s)' % (m, how['blueprint'], how['component'], how['set']))
     else:
         say('grey boxes left visible. Run with "hide" to hide the %d they replace: %s'
             % (len(doc['supersedes_greybox']), ', '.join(doc['supersedes_greybox'])))

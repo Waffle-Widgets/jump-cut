@@ -1103,6 +1103,414 @@ def build_kerb(name='SM_Kerb'):
     return b.finish(name)
 
 
+# =========================================================================== SET PIECES (beats 1 to 3)
+# Made Fri Nov 13 (evening) to take the last grey boxes out of everything up to and including the cleaver boss:
+# the crashed car (two red boxes), the shrapnel (a red bar), the boss lot's six walls, the exit run's two
+# walls, both plaza gates (a scaled cube), the checkpoint (a post and a green sign) and the ground itself.
+# Same rules as the rest of the kit: real scale, flat MS_City* slots, detail in geometry, no trademarks.
+# Every wall and the gate keep the EXACT footprint of the grey box they replace, because the fight was tuned
+# inside those boxes and a prettier wall that is 20 cm further in is a different arena.
+
+def hexa(b, bot, top, slot, c=1.0):
+    """A six-sided solid from two rings of four points. bot and top go round the same way: anticlockwise seen
+    from above, starting at the low-x low-y corner - the order B.box uses, so the faces point outwards."""
+    for i in range(4):
+        j = (i + 1) % 4
+        b.quad([bot[i], bot[j], top[j], top[i]], slot, c)
+    b.quad([top[0], top[1], top[2], top[3]], slot, c)
+    b.quad([bot[0], bot[3], bot[2], bot[1]], slot, c)
+
+
+def _slice(b, x0, z00, z01, hw0, x1, z10, z11, hw1, slot, c=1.0):
+    """One length of car body between two stations: (x, z bottom, z top, half width) at each end."""
+    hexa(b, [(x0, -hw0, z00), (x1, -hw1, z10), (x1, hw1, z10), (x0, hw0, z00)],
+         [(x0, -hw0, z01), (x1, -hw1, z11), (x1, hw1, z11), (x0, hw0, z01)], slot, c)
+
+
+def build_crash_car(name='SM_CrashCar'):
+    """The car that came through the cafe wall. Replaces C1_Cafe_Car and C1_Cafe_CarCab.
+
+    4.0 x 1.76 x 1.43 m, standing on its origin, NOSE TOWARDS +X - it came down the avenue from the west and
+    stopped inside the room. It stays inside the 4 x 2 m footprint of the red box it replaces, so the level's
+    measured clear routes are unchanged. Right-hand drive, like the lane it crashed in: the driver's door is
+    open on the Unreal +Y side, because that is the side the driver's body lies on, at (-380, 220), and a door
+    hanging open next to a body is the whole story of beat 1 told without a word.
+    """
+    b = B(seed=81)
+    P, G, T, M = 'MS_CityAccent', 'MS_CityGlass', 'MS_CityTrim', 'MS_CityMetal'
+    # ---- lower body, tail to nose. The nose is short: the crash ate half a metre of it.
+    st = [(-1.98, 0.34, 0.80, 0.80), (-1.80, 0.30, 0.90, 0.86), (-1.00, 0.30, 0.92, 0.88),
+          (0.55, 0.30, 0.90, 0.88), (1.05, 0.30, 0.76, 0.87), (1.42, 0.32, 0.80, 0.84),
+          (1.62, 0.36, 0.66, 0.80), (1.74, 0.40, 0.56, 0.72)]
+    for (x0, a0, a1, w0), (x1, c0, c1, w1) in zip(st, st[1:]):
+        _slice(b, x0, a0, a1, w0, x1, c0, c1, w1, P, 1.0)
+    b.box((-1.80, -0.80, 0.18), (1.55, 0.80, 0.30), T, 0.4)                               # floor pan
+    # ---- the glasshouse: one glass block, then a painted roof and pillars over it
+    gs = [(-1.40, 0.90, 0.93, 0.82), (-0.90, 0.90, 1.39, 0.67), (0.00, 0.90, 1.39, 0.67), (0.60, 0.90, 0.93, 0.82)]
+    for (x0, a0, a1, w0), (x1, c0, c1, w1) in zip(gs, gs[1:]):
+        _slice(b, x0, a0, a1, w0, x1, c0, c1, w1, G, 0.6)
+    b.box((-0.94, -0.70, 1.38), (0.04, 0.70, 1.43), P, 1.0)                               # roof
+    for sy in (-1.0, 1.0):
+        def pillar(xb0, xb1, xt0, xt1):
+            yb0, yb1 = sorted((sy * 0.775, sy * 0.835))
+            yt0, yt1 = sorted((sy * 0.63, sy * 0.69))
+            hexa(b, [(xb0, yb0, 0.90), (xb1, yb0, 0.90), (xb1, yb1, 0.90), (xb0, yb1, 0.90)],
+                 [(xt0, yt0, 1.41), (xt1, yt0, 1.41), (xt1, yt1, 1.41), (xt0, yt1, 1.41)], P, 0.95)
+        pillar(0.50, 0.63, -0.08, 0.04)                                                   # A
+        pillar(-0.46, -0.37, -0.46, -0.37)                                                # B
+        pillar(-1.43, -1.25, -0.94, -0.80)                                                # C
+    # ---- the bonnet, sprung open on its hinges over a crushed engine bay
+    hexa(b, [(0.56, -0.78, 0.91), (1.36, -0.76, 1.19), (1.36, 0.76, 1.25), (0.56, 0.78, 0.91)],
+         [(0.55, -0.78, 0.94), (1.35, -0.76, 1.22), (1.35, 0.76, 1.28), (0.55, 0.78, 0.94)], P, 0.92)
+    b.box((0.70, -0.55, 0.76), (1.30, 0.45, 0.90), T, 0.35)                               # engine, dark
+    b.box((0.85, -0.30, 0.90), (1.15, 0.10, 0.97), M, 0.8)
+    # ---- bumpers and lamps. The front bumper hangs off one corner.
+    b.box((-2.02, -0.84, 0.32), (-1.92, 0.84, 0.54), T, 0.45)
+    hexa(b, [(1.70, -0.82, 0.38), (1.82, -0.82, 0.38), (1.86, 0.80, 0.06), (1.74, 0.80, 0.06)],
+         [(1.70, -0.82, 0.54), (1.82, -0.82, 0.54), (1.86, 0.80, 0.22), (1.74, 0.80, 0.22)], T, 0.45)
+    b.box((1.735, -0.68, 0.46), (1.765, -0.40, 0.56), 'MS_CitySignA', 1.0)                # the lamp still lit
+    b.box((1.735, 0.40, 0.46), (1.76, 0.68, 0.56), T, 0.3)                                # the one that is not
+    for sy in (-1.0, 1.0):
+        y0, y1 = sorted((sy * 0.48, sy * 0.80))
+        b.box((-2.00, y0, 0.62), (-1.965, y1, 0.74), 'MS_CitySignA', 0.9)                 # tail lamps
+    b.box((-2.005, -0.26, 0.40), (-1.99, 0.26, 0.52), 'MS_CityWall', 0.9)                 # a blank plate
+    # ---- wheels: 62 cm, the front pair shoved back by the impact
+    for wx in (-1.22, 1.08):
+        for sy in (-1.0, 1.0):
+            y = 0.70 if sy > 0 else -0.90
+            b.tube((wx, y, 0.31), 0.20, 0.31, T, n=12, c=0.3, axis='y')
+            b.tube((wx, y - 0.01 if sy < 0 else y + 0.19, 0.31), 0.02, 0.17, M, n=10, c=0.9, axis='y')
+    # ---- the driver's door, open. Blender -Y is Unreal +Y, the side his body is on.
+    hx, hy, ang, dl, dt = 0.50, -0.88, math.radians(55), 1.00, 0.06
+    ux, uy = -math.cos(ang), -math.sin(ang)             # along the door, hinge to latch
+    nx, ny = -uy, ux                                    # across its thickness
+    def door(z0, z1, slot, c, l0=0.0, l1=dl, t=dt):
+        p = [(hx + ux * l0, hy + uy * l0), (hx + ux * l1, hy + uy * l1),
+             (hx + ux * l1 + nx * t, hy + uy * l1 + ny * t), (hx + ux * l0 + nx * t, hy + uy * l0 + ny * t)]
+        ring = [p[1], p[0], p[3], p[2]]
+        hexa(b, [(q[0], q[1], z0) for q in ring], [(q[0], q[1], z1) for q in ring], slot, c)
+    door(0.33, 0.90, P, 0.95)
+    door(0.90, 1.34, T, 0.5, 0.0, 0.05)                                                   # window frame
+    door(0.90, 1.34, T, 0.5, dl - 0.05, dl)
+    door(1.30, 1.34, T, 0.5)
+    door(0.90, 1.30, G, 0.55, 0.05, dl - 0.05, 0.02)
+    b.box((-0.50, -0.885, 0.34), (0.50, -0.86, 0.89), T, 0.2)                             # the doorway, dark
+    b.box((-0.30, -0.80, 0.42), (0.18, -0.40, 0.56), 'MS_CityCloth', 0.6)                 # the seat he left
+    return b.finish(name)
+
+
+def build_shrapnel(name='SM_Shrapnel'):
+    """What flies at the coworker in beat 1: a torn strip of the car's own bodywork, 78 cm long.
+
+    Long axis on X, centred on its origin so it can spin about its middle. BP_Shrapnel is 'a red bar' today;
+    this is the same thing with a shape - red paint outside, bare metal where it tore, jagged at both ends,
+    so that when Freeze Frame stops it in mid-air there is something worth looking at.
+    """
+    b = B(seed=82)
+    P, M = 'MS_CityAccent', 'MS_CityMetal'
+    # a twisted strip in three lengths: each station is (x, y centre, z centre, half width, roll in degrees)
+    st = [(-0.26, 0.00, 0.00, 0.10, -28), (-0.08, 0.02, 0.02, 0.13, -8), (0.10, -0.01, 0.03, 0.12, 16),
+          (0.27, 0.01, -0.01, 0.08, 40)]
+    t = 0.012
+
+    def ring(s, dz):
+        x, y, z, hw, roll = s
+        r = math.radians(roll)
+        cy, cz = math.cos(r), math.sin(r)
+        return [(x, y - hw * cy - dz * cz, z - hw * cz + dz * cy), (x, y + hw * cy - dz * cz, z + hw * cz + dz * cy)]
+
+    for s0, s1 in zip(st, st[1:]):
+        a0, a1 = ring(s0, -t), ring(s0, t)
+        c0, c1 = ring(s1, -t), ring(s1, t)
+        b.quad([a1[0], c1[0], c1[1], a1[1]], P, 0.95)                                     # painted face
+        b.quad([a0[1], c0[1], c0[0], a0[0]], M, 0.7)                                      # torn bare back
+        b.quad([a0[0], c0[0], c1[0], a1[0]], M, 0.9)
+        b.quad([a1[1], c1[1], c0[1], a0[1]], M, 0.9)
+    # jagged ends: bare metal teeth, wound both ways because the shard spins and Unreal culls back faces
+    for s, d in ((st[0], -1.0), (st[-1], 1.0)):
+        e0, e1 = ring(s, 0.0)
+        mid = ((e0[0] + e1[0]) / 2, (e0[1] + e1[1]) / 2, (e0[2] + e1[2]) / 2)
+        for k, (f0, f1, ln) in enumerate(((0.0, 0.45, 0.13), (0.4, 0.75, 0.07), (0.7, 1.0, 0.11))):
+            p0 = tuple(e0[i] + (e1[i] - e0[i]) * f0 for i in range(3))
+            p1 = tuple(e0[i] + (e1[i] - e0[i]) * f1 for i in range(3))
+            tip = ((p0[0] + p1[0]) / 2 + d * ln, (p0[1] + p1[1]) / 2 + 0.02 * (k - 1), (p0[2] + p1[2]) / 2)
+            b.quad([p0, p1, tip], M, 0.85)
+            b.quad([p1, p0, tip], M, 0.7)         # same slot both ways: two materials on one plane z-fight
+        _ = mid
+    # a bent bracket still riveted to it, so it does not read as a ruler
+    b.box((-0.05, -0.03, 0.02), (0.02, 0.03, 0.10), M, 0.75)
+    b.box((-0.05, -0.03, 0.09), (0.09, 0.03, 0.105), M, 0.8)
+    return b.finish(name, weld=False)
+
+
+YARD_T = 0.40          # the plaza's grey walls are 40 cm thick and 4 m high: these are too
+YARD_H = 4.00
+
+
+def _yard_wall(b, L):
+    """A brick yard wall L metres long, centred on its origin, standing on z = 0, body on y = -0.2..0.2.
+
+    The dressed face is Blender -Y (Unreal +Y at yaw 0), the same way every building in this kit faces, so
+    the layout turns it towards the arena with the yaws it already uses. Nothing on that face stands more
+    than 15 cm proud of the wall, because the arena's keep-clear box starts 40 cm inside the wall line.
+    The outside face gets piers and a coping and nothing else: nobody ever stands on that side.
+    """
+    rng = b.rng
+    t, H = YARD_T / 2, YARD_H
+    BR, CO, TR, ME = 'MS_CityBrick', 'MS_CityConcrete', 'MS_CityTrim', 'MS_CityMetal'
+    b.box((-L / 2, -t, 0.5), (L / 2, t, H - 0.2), BR, 1.0)
+    b.box((-L / 2, -t - 0.04, 0), (L / 2, t + 0.04, 0.5), CO, 0.9)                        # plinth
+    b.box((-L / 2, -t - 0.06, H - 0.2), (L / 2, t + 0.06, H), CO, 1.0)                    # coping
+    nb = max(2, int(round(L / 3.1)))
+    bay = L / nb
+    for i in range(nb + 1):                                                               # piers
+        px = -L / 2 + i * bay
+        x0, x1 = max(-L / 2, px - 0.28), min(L / 2, px + 0.28)
+        b.box((x0, -t - 0.10, 0.5), (x1, t + 0.08, H - 0.2), BR, 0.88)
+        b.box((x0 - 0.0, -t - 0.13, H - 0.32), (x1, t + 0.10, H - 0.2), CO, 0.95)
+    kinds = ['shutter', 'posters', 'window', 'lamp', 'sign', 'window', 'shutter', 'posters', 'lamp', 'sign']
+    for i in range(nb):
+        cx = -L / 2 + (i + 0.5) * bay
+        kind = kinds[(i + b.rng.randrange(2)) % len(kinds)] if nb > 4 else kinds[i % len(kinds)]
+        f = -t                                           # the wall face; everything below sits just proud of it
+        if kind == 'shutter':                            # a roller shutter: the yard's back doors
+            w, h = min(2.2, bay - 0.9), 2.7
+            b.box((cx - w / 2 - 0.08, f - 0.06, 0.5), (cx + w / 2 + 0.08, f, 0.5 + h + 0.3), TR, 0.5)
+            b.box((cx - w / 2, f - 0.075, 0.5), (cx + w / 2, f - 0.02, 0.5 + h), ME, 0.85)
+            for k in range(int(h / 0.22)):
+                b.box((cx - w / 2, f - 0.088, 0.56 + k * 0.22), (cx + w / 2, f - 0.07, 0.60 + k * 0.22), ME, 0.6)
+            b.box((cx - w / 2, f - 0.10, 0.5), (cx + w / 2, f - 0.02, 0.62), 'MS_CityAccent', 0.9)
+        elif kind == 'posters':                          # fly-posters: blank paper, no words (section 15d)
+            x = cx - bay / 2 + 0.55
+            while x < cx + bay / 2 - 1.0:
+                w, h = rng.uniform(0.5, 0.8), rng.uniform(0.7, 1.1)
+                z0 = rng.uniform(1.0, 1.6)
+                slot = rng.choice(['MS_CityCloth', 'MS_CityWall', 'MS_CitySignB', 'MS_CityCloth'])
+                b.box((x, f - 0.015, z0), (x + w, f, z0 + h), slot, rng.uniform(0.7, 1.0))
+                b.box((x + 0.08, f - 0.02, z0 + h * 0.55), (x + w - 0.08, f, z0 + h - 0.08), 'MS_CityAccent', 0.8)
+                x += w + rng.uniform(0.06, 0.3)
+        elif kind == 'window':                           # a barred window, high up
+            w, h, z0 = 1.5, 1.0, 2.25
+            b.box((cx - w / 2 - 0.07, f - 0.05, z0 - 0.07), (cx + w / 2 + 0.07, f, z0 + h + 0.07), CO, 0.95)
+            b.box((cx - w / 2, f - 0.06, z0), (cx + w / 2, f - 0.02, z0 + h), 'MS_CityGlass', rng.uniform(0.4, 0.8))
+            for k in range(6):
+                bx = cx - w / 2 + (k + 0.5) * w / 6
+                b.box((bx - 0.015, f - 0.09, z0), (bx + 0.015, f - 0.06, z0 + h), TR, 0.4)
+            b.box((cx - w / 2 - 0.12, f - 0.12, z0 - 0.13), (cx + w / 2 + 0.12, f, z0 - 0.07), CO, 1.0)
+        elif kind == 'lamp':                             # a bulkhead lamp over a service box
+            b.box((cx - 0.05, f - 0.12, 3.02), (cx + 0.05, f, 3.10), TR, 0.5)
+            b.box((cx - 0.16, f - 0.15, 2.84), (cx + 0.16, f - 0.03, 3.02), 'MS_CitySignA', 1.0)
+            b.box((cx - 0.19, f - 0.15, 3.02), (cx + 0.19, f - 0.02, 3.05), TR, 0.5)
+            b.box((cx + 0.5, f - 0.12, 0.9), (cx + 1.05, f, 1.75), ME, 0.75)
+            b.box((cx + 0.53, f - 0.13, 1.25), (cx + 1.02, f - 0.12, 1.29), TR, 0.4)
+            b.tube((cx + 0.78, f - 0.05, 1.75), H - 0.2 - 1.75, 0.03, ME, n=6, c=0.7)
+        else:                                            # a lit sign panel, blank
+            w, h, z0 = min(2.0, bay - 1.0), 0.9, 2.5
+            b.box((cx - w / 2 - 0.05, f - 0.07, z0 - 0.05), (cx + w / 2 + 0.05, f, z0 + h + 0.05), TR, 0.45)
+            b.box((cx - w / 2, f - 0.085, z0), (cx + w / 2, f - 0.06, z0 + h),
+                  rng.choice(['MS_CitySignA', 'MS_CitySignB']), 1.0)
+            for k in range(3):                           # an invented glyph block, not a word
+                gx = cx - w / 2 + 0.2 + k * (w - 0.4) / 3
+                b.box((gx, f - 0.095, z0 + 0.2), (gx + (w - 0.4) / 3 - 0.12, f - 0.085, z0 + h - 0.2),
+                      'MS_CityTrim', 0.3)
+
+
+def build_yard_wall_1250(name='SM_YardWall_1250'):
+    """12.5 m. Replaces each of the four short plaza walls either side of the two gates."""
+    b = B(seed=83)
+    _yard_wall(b, 12.50)
+    return b.finish(name)
+
+
+def build_yard_wall_3040(name='SM_YardWall_3040'):
+    """30.4 m. Replaces C1_Plaza_WallN and C1_Plaza_WallS."""
+    b = B(seed=84)
+    _yard_wall(b, 30.40)
+    return b.finish(name)
+
+
+def build_hoarding_990(name='SM_Hoarding_990'):
+    """9.9 m of site hoarding, 4 m high, 30 cm deep at its base. Replaces C1_Run_WallN and C1_Run_WallS.
+
+    The run past the exit gate leads to beat 4's destroyed buildings, so the wall that funnels you there is
+    the fence round a demolition site. Dressed on both faces: the player runs between two of them.
+    """
+    b = B(seed=85)
+    L, H = 9.90, 4.00
+    CO, TR, ME = 'MS_CityConcrete', 'MS_CityTrim', 'MS_CityMetal'
+    hexa(b, [(-L / 2, -0.15, 0), (L / 2, -0.15, 0), (L / 2, 0.15, 0), (-L / 2, 0.15, 0)],
+         [(-L / 2, -0.09, 0.62), (L / 2, -0.09, 0.62), (L / 2, 0.09, 0.62), (-L / 2, 0.09, 0.62)], CO, 0.95)
+    b.box((-L / 2, -0.03, 0.62), (L / 2, 0.03, H - 0.06), ME, 0.8)                        # the sheet
+    n = int(L / 0.30)
+    for k in range(n):                                                                    # corrugation
+        x = -L / 2 + (k + 0.5) * L / n
+        c = 0.9 if k % 2 else 0.68
+        b.box((x - 0.05, -0.05, 0.62), (x + 0.05, 0.05, H - 0.06), ME, c)
+    for k in range(5):                                                                    # posts
+        x = -L / 2 + 0.06 + k * (L - 0.12) / 4
+        b.box((x - 0.06, -0.075, 0.0), (x + 0.06, 0.075, H), TR, 0.5)
+    b.box((-L / 2, -0.065, H - 0.10), (L / 2, 0.065, H), TR, 0.5)                         # top rail
+    b.box((-L / 2, -0.06, 2.3), (L / 2, 0.06, 2.38), TR, 0.5)
+    nb = 22
+    for k in range(nb):                                                                   # hazard band
+        x0 = -L / 2 + k * L / nb
+        b.box((x0, -0.068, 1.05), (x0 + L / nb, 0.068, 1.33),
+              'MS_CityAccent' if k % 2 else 'MS_CityWall', 0.95)
+    return b.finish(name)
+
+
+def build_plaza_gate(name='SM_PlazaGate'):
+    """The plaza's roller gate: 0.4 x 5 x 4 m, exactly the scaled cube in BP_PlazaGate.
+
+    ORIGIN AT ITS CENTRE, thin on X and wide on Y - unlike everything else in this kit - because that is how
+    the cube it replaces sits: BP_PlazaGate is placed at z = 200 and slides GateMesh up by GateOpenHeight.
+    Swap the mesh, set GateMesh's scale back to 1, and nothing about the gate's logic or placement moves.
+    Dressed on both faces: the player sees one going in and the other when it shuts behind him.
+    """
+    b = B(seed=86)
+    TR, ME = 'MS_CityTrim', 'MS_CityMetal'
+    for sy in (-1.0, 1.0):                                                                # the two guides
+        y0, y1 = sorted((sy * 2.28, sy * 2.50))
+        b.box((-0.20, y0, -2.0), (0.20, y1, 2.0), TR, 0.5)
+    b.box((-0.20, -2.50, 1.55), (0.20, 2.50, 2.0), ME, 0.75)                              # the roll housing
+    b.box((-0.215, -2.50, 1.52), (0.215, 2.50, 1.58), TR, 0.45)
+    b.box((-0.07, -2.28, -1.78), (0.07, 2.28, 1.55), ME, 0.85)                            # the curtain
+    for k in range(13):                                                                   # slats
+        z = -1.70 + k * 0.25
+        b.box((-0.085, -2.28, z), (0.085, 2.28, z + 0.05), ME, 0.6)
+    for k in range(10):                                                                   # hazard bottom bar
+        y0 = -2.28 + k * 0.456
+        b.box((-0.10, y0, -2.0), (0.10, y0 + 0.456, -1.78), 'MS_CityAccent' if k % 2 else 'MS_CityTrim', 0.9)
+    for sx in (-1.0, 1.0):                                                                # a warning lamp each face
+        x0, x1 = sorted((sx * 0.20, sx * 0.235))
+        b.box((x0, -0.5, 1.70), (x1, 0.5, 1.86), 'MS_CitySignA', 1.0)
+    return b.finish(name)
+
+
+def build_checkpoint_post(name='SM_CheckpointPost'):
+    """BP_Checkpoint's PostMesh: a film-set light stand, 2.3 m, standing on its origin.
+
+    The game is called Jump Cut and every power is an edit, so the thing that marks 'the take restarts here'
+    is a piece of set equipment: a tripod stand carrying a small lamp head and a slate.
+    """
+    b = B(seed=87)
+    TR, ME = 'MS_CityTrim', 'MS_CityMetal'
+    for k in range(3):                                                                    # tripod feet
+        a = math.radians(90 + k * 120)
+        ex, ey = math.cos(a) * 0.55, math.sin(a) * 0.55
+        px, py = -math.sin(a) * 0.022, math.cos(a) * 0.022
+        hexa(b, [(ex - px, ey - py, 0.0), (ex + px, ey + py, 0.0), (ex * 0.9 + px, ey * 0.9 + py, 0.0),
+                 (ex * 0.9 - px, ey * 0.9 - py, 0.0)],
+             [(-px, -py, 0.62), (px, py, 0.62), (px, py, 0.68), (-px, -py, 0.68)], TR, 0.5)
+    b.tube((0, 0, 0.40), 1.55, 0.028, ME, n=8, c=0.85)
+    b.tube((0, 0, 0.60), 0.10, 0.045, TR, n=8, c=0.5)
+    b.tube((0, 0, 1.30), 0.08, 0.04, TR, n=8, c=0.5)
+    b.box((-0.03, -0.20, 1.93), (0.03, 0.20, 1.97), TR, 0.5)                              # yoke
+    b.box((-0.16, -0.17, 1.97), (0.16, 0.17, 2.29), TR, 0.45)                             # lamp head
+    b.box((-0.13, -0.19, 2.00), (0.13, -0.17, 2.26), 'MS_CitySignA', 1.0)                 # its lens
+    for k in range(4):                                                                    # barn doors
+        z = 2.00 + k * 0.07
+        b.box((-0.15, -0.22, z), (0.15, -0.19, z + 0.015), TR, 0.4)
+    # the slate, hung on the stand at chest height
+    b.box((-0.24, -0.06, 1.02), (0.24, -0.04, 1.36), TR, 0.35)
+    b.box((-0.24, -0.065, 1.36), (0.24, -0.035, 1.43), 'MS_CityWall', 0.95)
+    for k in range(5):
+        x0 = -0.24 + k * 0.096
+        if k % 2 == 0:
+            b.box((x0, -0.07, 1.36), (x0 + 0.096, -0.03, 1.43), TR, 0.3)
+    for k in range(3):                                                                    # blank chalk lines
+        b.box((-0.19, -0.066, 1.08 + k * 0.08), (0.19 - 0.1 * k, -0.06, 1.10 + k * 0.08), 'MS_CityWall', 0.9)
+    return b.finish(name)
+
+
+def build_checkpoint_taken(name='SM_CheckpointTaken'):
+    """BP_Checkpoint's TakenSign: the same slate, shut and lit, with a tick on it. Shown once the take is saved.
+
+    Centred on its origin (60 x 50 cm), facing Blender -Y. Its face is MS_CitySignB; if the builder would
+    rather keep the checkpoint green, put M_CheckGreen on that one slot.
+    """
+    b = B(seed=88)
+    TR = 'MS_CityTrim'
+    b.box((-0.30, -0.02, -0.25), (0.30, 0.02, 0.17), TR, 0.35)
+    b.box((-0.27, -0.035, -0.22), (0.27, -0.02, 0.14), 'MS_CitySignB', 1.0)
+    b.box((-0.30, -0.03, 0.17), (0.30, 0.03, 0.25), 'MS_CityWall', 0.95)
+    for k in range(6):
+        if k % 2 == 0:
+            b.box((-0.30 + k * 0.1, -0.035, 0.17), (-0.20 + k * 0.1, 0.035, 0.25), TR, 0.3)
+    # the tick: a short stroke down to the corner, a long one up from it, each a 5 cm bar
+    def stroke(x0, z0, x1, z1, w=0.03):
+        dx, dz = x1 - x0, z1 - z0
+        ln = math.hypot(dx, dz)
+        px, pz = -dz / ln * w, dx / ln * w
+        b.quad([(x0 - px, -0.045, z0 - pz), (x0 + px, -0.045, z0 + pz), (x1 + px, -0.045, z1 + pz),
+                (x1 - px, -0.045, z1 - pz)], 'MS_CityWall', 1.0)
+        b.quad([(x1 - px, -0.045, z1 - pz), (x1 + px, -0.045, z1 + pz), (x0 + px, -0.045, z0 + pz),
+                (x0 - px, -0.045, z0 - pz)], 'MS_CityWall', 1.0)
+    stroke(-0.17, -0.02, -0.06, -0.15)
+    stroke(-0.08, -0.15, 0.17, 0.09)
+    return b.finish(name)
+
+
+def build_plaza_paving(name='SM_PlazaPaving'):
+    """The boss lot's floor: 30 x 30 m of two-tone slabs inside a brick border, 1 cm above the level floor.
+
+    Top faces only, and NO COLLISION in the level (the placer switches it off): it is a picture of a floor
+    laid on the real one, so the fight's footing does not change by a millimetre. A ring is set into it at
+    the centre, which is where the boss stands - the arena tells you where to look before he moves.
+    """
+    b = B(seed=89)
+    S, z, n = 15.0, 0.010, 12
+    step = 2 * (S - 0.9) / n
+
+    def flat(x0, y0, x1, y1, slot, c=1.0, dz=0.0):
+        b.quad([(x0, y0, z + dz), (x1, y0, z + dz), (x1, y1, z + dz), (x0, y1, z + dz)], slot, c)
+
+    flat(-S, -S, S, -S + 0.9, 'MS_CityBrick')
+    flat(-S, S - 0.9, S, S, 'MS_CityBrick')
+    flat(-S, -S + 0.9, -S + 0.9, S - 0.9, 'MS_CityBrick')
+    flat(S - 0.9, -S + 0.9, S, S - 0.9, 'MS_CityBrick')
+    for i in range(n):
+        for j in range(n):
+            x0, y0 = -S + 0.9 + i * step, -S + 0.9 + j * step
+            flat(x0, y0, x0 + step, y0 + step, 'MS_CityConcrete' if (i + j) % 2 else 'MS_CityWall',
+                 0.9 if (i + j) % 2 else 1.0)
+    seg = 28                                              # the ring, 2.6 m radius, laid just above the slabs
+    for k in range(seg):
+        a0, a1 = 2 * math.pi * k / seg, 2 * math.pi * (k + 1) / seg
+        r0, r1 = 2.35, 2.75
+        b.quad([(math.cos(a0) * r0, math.sin(a0) * r0, z + 0.004), (math.cos(a0) * r1, math.sin(a0) * r1, z + 0.004),
+                (math.cos(a1) * r1, math.sin(a1) * r1, z + 0.004), (math.cos(a1) * r0, math.sin(a1) * r0, z + 0.004)],
+               'MS_CityBrick', 0.9)
+    return b.finish(name, weld=False)
+
+
+def build_crosswalk(name='SM_Crosswalk'):
+    """A zebra crossing, 3 m along the road by 5 m across it, painted 1 cm above the floor. No collision."""
+    b = B(seed=90)
+    for k in range(6):
+        y0 = -2.225 + k * 0.80
+        b.quad([(-1.5, y0, 0.01), (1.5, y0, 0.01), (1.5, y0 + 0.45, 0.01), (-1.5, y0 + 0.45, 0.01)],
+               'MS_CityWall', 1.0)
+    return b.finish(name, weld=False)
+
+
+def build_road_lines(name='SM_RoadLines'):
+    """8 m of the lane's painted edge lines, at y = +/-2.1 m, 1 cm above the floor. No collision.
+
+    The lane is 4.9 m between kerb stones (they stand at y = +/-2.44), which in Tokyo is a street with no centre line and a solid line down
+    each side to mark where people walk. Laid end to end it is what turns a floor into a road.
+    """
+    b = B(seed=91)
+    for sy in (-1.0, 1.0):
+        y0, y1 = sorted((sy * 2.05, sy * 2.17))
+        b.quad([(-4.0, y0, 0.01), (4.0, y0, 0.01), (4.0, y1, 0.01), (-4.0, y1, 0.01)], 'MS_CityWall', 1.0)
+    for k in range(4):                                    # worn dashes, off-centre: where the bikes go
+        x0 = -3.6 + k * 2.0
+        b.quad([(x0, -0.06, 0.01), (x0 + 0.9, -0.06, 0.01), (x0 + 0.9, 0.06, 0.01), (x0, 0.06, 0.01)],
+               'MS_CityConcrete', 0.9)
+    return b.finish(name, weld=False)
+
+
 # =========================================================================== REGISTRY AND DRIVER
 GROUPS = {
     'cafe': [
@@ -1134,8 +1542,16 @@ GROUPS = {
         ('SM_Awning', build_awning), ('SM_RoofTank', build_roof_tank), ('SM_Manhole', build_manhole),
         ('SM_Bench', build_bench), ('SM_Kerb', build_kerb),
     ],
+    'set': [
+        ('SM_CrashCar', build_crash_car), ('SM_Shrapnel', build_shrapnel),
+        ('SM_YardWall_1250', build_yard_wall_1250), ('SM_YardWall_3040', build_yard_wall_3040),
+        ('SM_Hoarding_990', build_hoarding_990), ('SM_PlazaGate', build_plaza_gate),
+        ('SM_CheckpointPost', build_checkpoint_post), ('SM_CheckpointTaken', build_checkpoint_taken),
+        ('SM_PlazaPaving', build_plaza_paving), ('SM_Crosswalk', build_crosswalk),
+        ('SM_RoadLines', build_road_lines),
+    ],
 }
-MODELS = [p for g in ('cafe', 'city', 'ruins', 'props') for p in GROUPS[g]]
+MODELS = [p for g in ('cafe', 'city', 'ruins', 'props', 'set') for p in GROUPS[g]]
 
 # How the cafe is dressed, in metres relative to the cafe centre (which is the level origin: the cafe is built
 # around (0,0) and the player starts inside it at (0,0,100) cm). tools/jumpcut_city_place.py places exactly this
@@ -1160,6 +1576,10 @@ CAFE_DRESS = [
     ('SM_CafeChair',      3.60,  2.35, 0.02,   0),
     ('SM_CafeChair',      3.60,  3.85, 0.02, 180),
 ]
+
+
+# Pieces whose origin is deliberately at their centre, not on the ground (see their docstrings).
+CENTRE_ORIGIN = ('SM_PlazaGate', 'SM_Shrapnel', 'SM_CheckpointTaken')
 
 
 def tri_count(o):
@@ -1361,6 +1781,12 @@ def render_layout(px=1700):
     ground = bpy.data.objects.new('G', gm)
     sc.collection.objects.link(ground)
     ground.location = (50, 0, -0.01)
+    gmat = bpy.data.materials.new('G_Asphalt')       # the level floor wears MS_CityRoof once the placer has run
+    gmat.diffuse_color = (PREVIEW['MS_CityRoof'][0], PREVIEW['MS_CityRoof'][1], PREVIEW['MS_CityRoof'][2], 1.0)
+    gmat.use_nodes = True
+    gmat.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = gmat.diffuse_color
+    gmat.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value = 0.9
+    gm.materials.append(gmat)
     sc.render.engine = 'BLENDER_EEVEE'
     sc.render.film_transparent = False
     sc.world = bpy.data.worlds.new('W')
@@ -1377,6 +1803,11 @@ def render_layout(px=1700):
         ('lane_back', (62.0, 0.0, 1.70),    (10.0, 0.0, 4.0),    28, 0.56),
         ('cafe_west', (3.0, 0.0, 1.60),     (-30.0, 2.0, 3.0),   30, 0.56),
         ('plaza',     (69.5, 0.0, 1.80),    (85.0, 0.0, 9.0),    30, 0.56),
+        # the set pieces, from where the player stands: the car from inside the cafe, the boss lot from just
+        # inside its entry gate, and the exit run from the exit gate
+        ('cafe_car',  (2.6, 2.6, 1.60),     (-5.2, 0.0, 0.8),    30, 0.56),
+        ('plaza_in',  (67.2, 4.0, 1.70),    (84.0, -4.0, 2.0),   26, 0.56),
+        ('exit_run',  (96.6, 0.0, 1.70),    (106.0, 0.0, 2.0),   26, 0.56),
         ('overview',  (36.0, -205.0, 150.0), (52.0, 4.0, 6.0),  48, 0.42),
     ]
     for nm, pos, look, lens, asp in shots:
@@ -1419,6 +1850,59 @@ def render_group(group, path, px=1600):
         o.hide_render = False
 
 
+def render_set_pieces():
+    """Close check renders of the set pieces. render_group lays a group out in one row, which is right for
+    props and useless here: a 30 m floor and a 78 cm shard in the same frame shows you the floor."""
+    shots = [
+        # (file, [(model, x, y, yaw degrees)], camera, target)
+        ('city_set_car_door.png', [('SM_CrashCar', 0, 0, 0)], (3.6, -5.2, 2.3), (0.0, -0.2, 0.7)),
+        ('city_set_car_far.png', [('SM_CrashCar', 0, 0, 0)], (4.6, 4.4, 2.6), (0.0, 0.0, 0.6)),
+        ('city_set_wall.png', [('SM_YardWall_1250', 0, 0, 0)], (2.0, -11.5, 3.2), (0.0, 0.0, 1.9)),
+        ('city_set_wall_long.png', [('SM_YardWall_3040', 0, 0, 0)], (-9.0, -15.0, 4.5), (2.0, 0.0, 1.8)),
+        ('city_set_gate_run.png', [('SM_PlazaGate', 0, 0, 2.0), ('SM_Hoarding_990', 5.2, -2.65, 0),
+                                   ('SM_Hoarding_990', 5.2, 2.65, 0), ('SM_CheckpointPost', -2.2, -1.2, 60)],
+         (-9.5, -3.4, 2.4), (1.0, 0.0, 1.9)),
+        ('city_set_small.png', [('SM_CheckpointPost', 0, 0, 0), ('SM_CheckpointTaken', 0.9, 0, 1.3),
+                                ('SM_Shrapnel', -0.9, 0, 1.2)], (0.6, -4.2, 1.7), (0.0, 0.0, 1.15)),
+        ('city_set_shrapnel.png', [('SM_Shrapnel', 0, 0, 0.6)], (0.75, -0.95, 1.05), (0.0, 0.0, 0.6)),
+        ('city_set_ground.png', [('SM_PlazaPaving', 0, 0, 0), ('SM_Crosswalk', -18.5, 0, 0),
+                                 ('SM_RoadLines', -24.0, 0, 0)], (-30.0, -16.0, 13.0), (-4.0, 0.0, 0.0)),
+    ]
+    sc = bpy.context.scene
+    used = {n for n, _ in GROUPS['set']}
+    for fn, items, cam_at, target in shots:
+        for o in sc.objects:
+            o.hide_render = True
+        extra = []
+        seen = set()
+        for it in items:
+            m, x, y, third = it
+            o = bpy.data.objects[m]
+            if m in seen:                                   # a second copy of the same model in one shot
+                o = o.copy()
+                sc.collection.objects.link(o)
+                extra.append(o)
+            seen.add(m)
+            o.hide_render = False
+            if m in CENTRE_ORIGIN:
+                o.location, o.rotation_euler = (x, y, third), (0, 0, 0)
+            else:
+                o.location, o.rotation_euler = (x, y, 0.0), (0, 0, math.radians(third))
+        cam, sun, ground = _stage(8.0, 3.0, px=1500, aspect=0.6)
+        ground.location = (0, 0, -0.002)
+        cam.location = cam_at
+        cam.rotation_euler = (Vector(target) - Vector(cam_at)).to_track_quat('-Z', 'Y').to_euler()
+        sc.render.filepath = os.path.join(CACHE, fn)
+        bpy.ops.render.render(write_still=True)
+        for o in [cam, sun, ground] + extra:
+            bpy.data.objects.remove(o)
+        print('rendered ' + fn)
+    for o in sc.objects:
+        o.hide_render = False
+        if o.name in used:
+            o.location, o.rotation_euler = (0, 0, 0), (0, 0, 0)
+
+
 def main():
     argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
     mode = argv[0] if argv else 'build'
@@ -1445,13 +1929,19 @@ def main():
         f.write('\n')
     print('CITY_KIT_REPORT ' + __import__('json').dumps(report))
     print('CITY_KIT_TOTALS models=%d tris=%d' % (len(report), sum(r['tris'] for r in report.values())))
-    bad = {n: r for n, r in report.items() if abs(r['z_min']) > 0.13}
+    bad = {n: r for n, r in report.items() if abs(r['z_min']) > 0.13 and n not in CENTRE_ORIGIN}
     print('CITY_KIT_OFFGROUND ' + __import__('json').dumps(bad))
+    if 'set' in argv:
+        preview_colours()
+        render_set_pieces()
     if 'sheets' in argv or mode == 'sheets':
         preview_colours()
         for g in GROUPS:
+            if g == 'set':
+                continue                                    # see render_set_pieces
             render_group(g, os.path.join(CACHE, 'city_%s.png' % g))
             print('rendered ' + g)
+        render_set_pieces()
         render_cafe(os.path.join(CACHE, 'city_cafe_interior.png'))
         print('rendered cafe_interior')
     if 'layout' in argv or mode == 'layout':
