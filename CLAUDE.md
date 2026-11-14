@@ -402,6 +402,23 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   it still appends. A single `PressKey("BackSpace")` before each `Type` is what works. The failure is
   quiet from the caller's side: `Type` returns **true** either way, and the script simply never runs,
   so check the thing the script was supposed to write (a file's mtime), never the return value.
+- **A mesh fixed in the kit is NOT a mesh fixed in the game, and nothing anywhere says so.** Two de-blocking
+  passes were built, committed, reviewed and merged on Sat Nov 14 and touched **zero `.uasset` files**, so
+  14 meshes - all six chamfered cafe pieces and all eight building shells - were still the old boxes on
+  screen. Run **`py <repo>/tools/unreal_city_mesh_audit.py`** after any kit change: it compares each
+  model's triangle count in `city_models.json` against the Unreal asset and names what is stale.
+  `reimport` mode fixes them. A kit commit that changes geometry MUST also carry the re-imported `.uasset`.
+- **The `Check Out Assets` modal also fires from the AUTO-IMPORT WATCHER, not just an explicit import** -
+  so it can appear minutes after you copied an FBX into `Content/`, with no command of yours running, and
+  it freezes the game thread and the MCP with it. It fires even on a file you have already made writable.
+  **The screen cannot be photographed on this machine** (a `CopyFromScreen` of the dialog comes back pure
+  black - the session is not rendering to a visible desktop), so find it by enumerating the editor's
+  window titles. `chat-tools/dismiss_modal.ps1` does that and posts ESC, which is Cancel. **Cancel is
+  always correct: this repo uses git LFS, not Unreal source control.**
+- **Qualify the "a timed-out MCP call still ran" note.** That holds for a call the editor *received*. A
+  `FillForm`/`PressKey` that times out because a modal is blocking the game thread never reaches it at all,
+  and the console box keeps whatever was in it. The editor's own `Cmd:` log line is the only reliable
+  evidence that a script ran - check it before believing either outcome.
 - **A component's `override_materials` BEATS the mesh asset's own material slot, and nothing warns you.**
   `BP_Goon.CharacterMesh0` carried `override_materials = [M_Goon]` - a flat skin-tone placeholder from the
   grey-box build - so the goons rendered as naked orange silhouettes while their correct 2048 texture was

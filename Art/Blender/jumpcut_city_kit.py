@@ -271,6 +271,31 @@ class B:
         elif cap_hi:
             self.poly(prof, z1, slot, c, up=True)
 
+    def lobe(self, cx, cy, cz, rx, ry, h, slot, c=1.0, n=6, yaw=0.0, waist=0.55, pinch=0.62):
+        """A faceted convex BLOB - the foliage primitive.
+
+        Foliage here cannot be crossed cards (see build_street_tree) and an axis-aligned box reads as a
+        slab, so the canopy came out as a stack of green bricks. A lobe is the middle ground that keeps the
+        one property blocks have and cards do not: every face points OUTWARD, so it lights correctly from
+        any angle. It is an n-gon profile, rotated by `yaw` so no two lobes share an edge direction, lofted
+        in three bands - pinched at the bottom, full at the waist, pinched again at the top - which gives a
+        rounded clump whose silhouette under the outline pass is a curve rather than three straight lines.
+
+        n=6 costs 32 triangles. cz is the CENTRE of the lobe, not its base.
+        """
+        prof = []
+        for i in range(n):
+            a = 2.0 * math.pi * i / n + yaw
+            prof.append((cx + math.cos(a) * rx, cy + math.sin(a) * ry))
+        small = [(cx + (px - cx) * pinch, cy + (py - cy) * pinch) for (px, py) in prof]
+        z0, z1 = cz - h / 2.0, cz + h / 2.0
+        zw0, zw1 = z0 + h * (1.0 - waist) / 2.0, z1 - h * (1.0 - waist) / 2.0
+        self.poly(small, z0, slot, c * 0.86, up=False)
+        self.loft(small, z0, prof, zw0, slot, c * 0.94)
+        self.loft(prof, zw0, prof, zw1, slot, c)
+        self.loft(prof, zw1, small, z1, slot, c * 1.0)
+        self.poly(small, z1, slot, c * 0.96, up=True)
+
     def finish(self, name, weld=True):
         if weld:
             bmesh.ops.remove_doubles(self.bm, verts=list(self.bm.verts), dist=0.0008)
@@ -2051,16 +2076,19 @@ def build_street_tree(name='SM_StreetTree'):
     for k in range(3):                                                             # limbs into the canopy
         a = 2.1 * k
         b.box((0.0, 0.0, 1.25), (math.cos(a) * 0.5, math.sin(a) * 0.5, 1.95), 'MS_CityWood', 0.4)
-    for tier, (tz, tr, n) in enumerate(((1.80, 1.22, 6), (2.50, 1.08, 5), (3.12, 0.70, 4))):
+    # The tiers OVERLAP on purpose. Spaced apart they read as three stacked discs - a layer cake, which is
+    # the blocky problem in a different shape. Each lobe is taller than the gap to the tier above it and its
+    # centre is jittered in z, so the union is one rounded mass with bumps rather than three plates.
+    for tier, (tz, tr, n) in enumerate(((1.95, 1.20, 7), (2.45, 1.06, 6), (2.88, 0.74, 5))):
         for k in range(n):
-            a = 2 * math.pi * k / n + tier * 0.5
-            cx, cy = math.cos(a) * tr * 0.52, math.sin(a) * tr * 0.52
-            w = tr * rng.uniform(0.38, 0.52)
-            d = tr * rng.uniform(0.34, 0.48)
-            h = rng.uniform(0.34, 0.52)
-            b.box((cx - w, cy - d, tz - h / 2), (cx + w, cy + d, tz + h / 2), 'MS_CityLeaf',
-                  rng.uniform(0.62, 1.0))
-    b.box((-0.34, -0.30, 1.62), (0.34, 0.30, 2.22), 'MS_CityLeaf', 0.8)            # the middle of the mass
+            a = 2 * math.pi * k / n + tier * 0.42
+            lean = tr * rng.uniform(0.40, 0.52)
+            cx, cy = math.cos(a) * lean, math.sin(a) * lean
+            b.lobe(cx, cy, tz + rng.uniform(-0.12, 0.12),
+                   tr * rng.uniform(0.38, 0.50), tr * rng.uniform(0.34, 0.46),
+                   rng.uniform(0.80, 1.05), 'MS_CityLeaf', rng.uniform(0.62, 1.0),
+                   n=6, yaw=rng.uniform(0.0, 1.05), waist=rng.uniform(0.40, 0.58))
+    b.lobe(0.0, -0.02, 2.22, 0.52, 0.48, 1.30, 'MS_CityLeaf', 0.8, n=6, yaw=0.4)   # the middle of the mass
     return b.finish(name)
 
 
@@ -2073,11 +2101,11 @@ def build_hedge(name='SM_Hedge'):
     b.box((-w, -d, 0.0), (w, d, 0.16), 'MS_CityConcrete', 0.9)
     b.box((-w + 0.04, -d + 0.04, 0.12), (w - 0.04, d - 0.04, h), 'MS_CityLeaf', 0.62)
     for _ in range(16):                                                            # a broken top edge
-        px = rng.uniform(-w + 0.1, w - 0.16)
-        py = rng.uniform(-d + 0.08, d - 0.14)
-        s = rng.uniform(0.08, 0.17)
-        b.box((px, py, h - 0.06), (px + s, py + s * 0.8, h + rng.uniform(0.02, 0.10)), 'MS_CityLeaf',
-              rng.uniform(0.45, 1.0))
+        px = rng.uniform(-w + 0.14, w - 0.14)
+        py = rng.uniform(-d + 0.10, d - 0.10)
+        s = rng.uniform(0.07, 0.13)
+        b.lobe(px, py, h + 0.01, s, s * 0.8, rng.uniform(0.10, 0.20), 'MS_CityLeaf',
+               rng.uniform(0.45, 1.0), n=6, yaw=rng.uniform(0.0, 1.05), waist=0.5)
     return b.finish(name)
 
 
