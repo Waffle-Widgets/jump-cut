@@ -303,18 +303,65 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   while `SamplesPerPixel` 1 -> 2 changed nothing measurable (4.3% vs 3.9%). It costs no GPU time, it is level
   data rather than a cvar, and because VSM reads `LightSourceAngle` too it is one of the few fixes here that
   reaches a Mac and a pre-2020 PC as well as a 5090.
+  **Nov 14 corrections to this entry.** (a) Every percentage above was produced with the invalid two-capture
+  harness described in the flicker note below, so treat them as VOID. The `LightSourceAngle` change is still worth
+  keeping - it was also confirmed by eye, clean hard shadows where there had been visible stipple - but the
+  "2.1% -> 0.7%" figure is not evidence of anything. (b) It did **not** fix the reported border flicker: that
+  survives with the look material removed entirely (see the elimination entry below). (c) The material named here
+  is the WRONG ONE - see the next bullet.
+- **The look material actually in `Lvl_JumpCut` is `MI_AnimeLook_JumpCut`, NOT `MI_AnimeLook`.** They are two
+  different assets with different numbers, and `docs/FIRST_BUILD_DESIGN.md:883` has said so all along. Live values
+  read off the volume's single blendable: `Boil` **0.30** (not 0.45), `ShadowT` **0.30** (not 0.80), `Smooth`
+  **2.0** (not 5.0), `CharSmooth` **3.0** (not 2.5), `InkOpacity` **0.95** (not 0.92). A day of parameter A/Bs was
+  run against `MI_AnimeLook` and therefore turned a dial connected to nothing. Any claim in this file, a devlog or
+  a ticket that quotes a look parameter without saying `_JumpCut` was measured on the wrong asset - including the
+  12%-wide band figure above and the character-blur radius on ticket #72. Check the PostProcessVolume's
+  `weightedBlendables` for the real one before touching a parameter.
 - **Do not "fix" toon flicker by turning off temporal anti-aliasing - it makes it much worse.** The tempting
   reasoning is that TSR blends a posterised image and smears the bands; that part is true. But the post-process
   material runs at `BL_SceneColorBeforeDOF`, which is **before** the temporal upscaler
   (`PostProcessing.cpp:962` vs the upscaler ~line 1110), so TSR is also the denoiser for the ray-traced shadows.
   Measured: FXAA and SMAA both removed the pavement band flip (17/255 -> 1-2/255) but raised edge instability
   from 6.9% to **11-13%** and left the shadow penumbrae as raw stipple. Fix the noise at the source instead.
-- **`Boil` is a deliberate feature, not the flicker.** `MI_AnimeLook.Boil` (0.45 px at `BoilFps` 8) wobbles the
-  ink-line sample UVs on purpose - "drawn on threes". It is worth testing when hunting a flicker, but measured it
-  was only ~13% of the edge instability (7.9% -> 6.9% with it at zero), so do not spend the art on it.
-- **To find a flicker, capture the same camera twice and diff the pictures** (`CaptureViewport` x2, per-pixel
-  difference). It shows *what* changes in one step. Auto-exposure settling after a camera turn changes half the
-  picture too - that is a drift, not a flicker; let it settle before comparing.
+  **Nov 14: those percentages came from the invalid two-capture harness below and are void**, and the reasoning
+  was separately tested in a real playtest - `r.AntiAliasingMethod 2` (FXAA) did **not** remove the reported border
+  flicker. The advice "do not reach for an AA change first" survives; the measurements do not.
+- **`Boil` is a deliberate feature, not the flicker.** `Boil` (`MI_AnimeLook_JumpCut`: **0.30** px at `BoilFps` 8;
+  the `MI_AnimeLook` copy says 0.45) wobbles the ink-line sample UVs on purpose - "drawn on threes". Do not spend
+  art time on it when hunting a flicker. **Nov 14: the "~13% of the edge instability (7.9% -> 6.9%)" figure this
+  entry used to carry is void twice over** - it came from the invalid two-capture harness, and it was measured on
+  `MI_AnimeLook`, which is not in the level. The conclusion stands; the number does not.
+- **To find a flicker, DUMP REAL GAMEPLAY FRAMES - do NOT diff two viewport captures.** `r.DumpingMovie N` in the
+  PIE console writes N lossless PNGs to `Saved/Screenshots/WindowsEditor/` and counts itself down
+  (`ConsoleManager.cpp:3792`, `UnrealClient.cpp:285-288`), so there is nothing to remember to switch off. 300 frames
+  is about 1.1 GB. It is `ECVF_Cheat` (fine in PIE, not in a shipping build) and it suppresses on-screen debug text
+  while it runs (`UnrealEngine.cpp:13630`), so the red VSM banner will not appear in the frames.
+  **Nov 14: the two-capture method this entry used to describe is INVALID and cost a day of work.** Passing
+  `captureTransform` to `CaptureViewport` renders a *fresh scene view with no TSR history*, so every frame you get
+  back is frame one of the temporal upscaler. It manufactures its own noise: it reported 36-51% edge instability on
+  a scene whose true figure is 1.7%, and five A/B arms (`Boil` 0, ink lines off, the whole look bypassed) all came
+  back at 32-51% regardless - the signature of a broken instrument, not a scene property. **Any flicker number in
+  this file, in a devlog or on a ticket that was produced that way is void.**
+  Even done correctly (`captureTransform: null`, see below), the editor viewport cannot reproduce a motion artifact:
+  TSR fully reconverges in the latency between the camera move and the capture, so the editor measured 1.7-2.2% on
+  a scene where a PIE dump of the same walk measured 28-85% frame to frame. If it only happens while the player
+  moves, you need the dump. Auto-exposure settling after a camera turn changes half the picture too - that is a
+  drift, not a flicker.
+  Decoding the dump: this machine has **no numpy and no Pillow**, and pure-Python PNG decoding runs ~20 s/frame (100
+  minutes for 300). Build a decoder against GDI+ with the `csc.exe` that ships under `C:/Windows/Microsoft.NET/`
+  instead - 0.07 s/frame, and nothing gets installed on the artist's machine.
+- **The border flicker on ticket #67 is NOT the cel shader, the lighting, or the upscaler - all of that is
+  eliminated, by test, on real hardware.** Nov 14 playtest on GAMESTATION (RTX 5090), reported each time as "still
+  there": `r.ScreenPercentage 100` (so it is not the 62.5% default upscale - and note a manual value DOES beat the
+  PIE override, `LegacyScreenPercentageDriver.cpp:216`); `r.AntiAliasingMethod 2` (not TSR ghosting);
+  `r.PostProcessing.DisableMaterials 1` (not the look material at all - the volume holds exactly ONE blendable, so
+  that command removes the cel shader and nothing else, `PostProcessMaterial.cpp:1008-1014`); and finally
+  `viewmode unlit`, which strips lighting, shadows, GI and reflections - **and it still flickered.** That kills ink
+  lines, the light band, `Boil`, screen percentage, temporal AA, RT shadows, VSM and Lumen in one go. What is left
+  is geometry: coplanar z-fighting (`City_CafeSign` and `City_CafeAwning` are both placed at **x = 630** in
+  `tools/jumpcut_city_layout.py` and their bounds interpenetrate over a ~154 x 20 cm patch; the road pieces sit 1 cm
+  over the floor) or LOD popping. Start there, not in the shader. Full evidence and the per-frame dump analysis are
+  on https://github.com/Waffle-Widgets/jump-cut/issues/67 - read it before re-running anything above.
 - **A character that floats only while it moves: check Root Motion Root Lock before the retarget.** Meshy's Smart
   Rig keeps its root bone at pelvis height in the *reference pose*; retargeted clips animate it on the floor. A
   clip with root motion on locks its root to `RefPose` by default, so the mob boss rose 87.26 x 1.2921 = 113 cm
@@ -483,7 +530,12 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   inspector, then `CaptureViewport` with a camera transform; `CaptureEditorImage` shows the game camera as the player sees it.
 - Save captures without pulling the picture through the chat: inside `execute_tool_script`, write the capture's base64
   `data` to a `.txt` under `Saved/` with `AssetTools.write_file`, then decode it in PowerShell. `CaptureViewport` needs
-  `captureTransform` and an all-zero `annotations` even when they're unused; `CaptureEditorImage` comes back 1280 px wide.
+  both `captureTransform` and `annotations` to be PRESENT - but pass them as **`null`**, not as values:
+  `captureTransform: null` plus `annotations: null` uses the viewport's own camera *with its accumulated TSR history*,
+  which is the only form that measures anything real. Omitting either key errors out, which is how this entry came to
+  say it "needs a camera transform" - and that wording is what produced the invalid flicker measurements described in
+  the flicker note above. Supply a transform only to frame a shot you intend to look at, never to one you intend to
+  measure. `CaptureEditorImage` comes back 1280 px wide.
 - Check the game's scale before comparing art with it. The practice city is built at **0.405**: the pedestrians' Man and
   Dog meshes are scaled 0.405 and the car meshes are modelled small (the RAV4 is 186 cm long).
 
