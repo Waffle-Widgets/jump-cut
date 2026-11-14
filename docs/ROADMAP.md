@@ -908,6 +908,28 @@ _(nothing yet)_
 
 ## Decisions
 
+- **2026-11-13 (10:30 PM Pacific): the director's power rings are FOUR, not three** (Team Owner).
+  *"take 1 is fine but we should have 4 rings since it takes all 4 powers to unlock the director look."* The
+  director of reality is what collecting Freeze Frame, Rewind, Splice and Director's Cut buys, and the rings are
+  the only thing in the picture that says so - §15d forbids saying it in words. Three rings contradicted the
+  game's own structure in the first thing a judge sees. The rings are on his arm, so this was a redraw, not an
+  edit: `docs/character-locks.json` says FOUR in every director form, and `T_UI_TitlePair.png` and both halves
+  are replaced in place. **#64 still does not change shape** - same three filenames, same canvas, same stack at
+  0,0 - but the background cream has moved again to **`#F8F0DC`** (measured as the picture's modal colour, not
+  sampled from a corner), superseding the `#FBF0DA` in the entry below.
+  - **Two of three takes drew three rings and looked perfectly correct.** The count is now machine-checked:
+    `tools/count_power_rings.py --region <box> --expect 4` exits non-zero on the wrong number. It reported 3 on
+    the already-committed picture, which is how we know it can fail.
+  - **All three takes drew Gemini's divider line down his face**, so the picked take was repaired rather than
+    re-rolled: `split_title_pair.py --repair-seam 6` stretches each half's own nearest clean column over the
+    line. `--erase-seam` cannot do this - it fills with background and cuts a cream slot through his face.
+    Declared as a retouch in `PREJAM.md`.
+  - **A prompt fix that did not work, recorded so nobody repeats it:** forbidding the divider *positively*
+    (the say-what-is-there lever that fixed the car badge and the apron straps) did not stop the line.
+  - **The dates on this evening's records were a day out.** `character-locks.json`, `prompts.md` and
+    `PREJAM.md` labelled tonight's work "Sat Nov 14" from UTC; in Pacific it is all **Fri Nov 13**. Corrected.
+    The three devlog filenames from this evening keep their UTC date so links do not break.
+
 - **2026-11-14 (10:20 PM Pacific): the title is ONE man split down the centre, not two men side by side**
   (Team Owner). The back-to-back pair merged an hour earlier was the wrong picture, and he said so plainly:
   *"I was thinking two halves of the main character, half barista and half director, and together they make one

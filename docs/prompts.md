@@ -217,7 +217,7 @@ Draw them wide (the default `1664x928`), the cover at `1328x1056` and cropped to
 
 ### UI-TITLE4
 The title card, **third concept, and the one being built**. The Team Owner corrected the back-to-back pair on
-Sat Nov 14: *"I was thinking two halves of the main character, half barista and half director, and together they
+Fri Nov 13: *"I was thinking two halves of the main character, half barista and half director, and together they
 make one person on the screen but there is a clear split down the center. The barista half looks like he does
 normally, the director version looks powerful."*
 
@@ -235,8 +235,14 @@ and refuses the take; see its notes. A three-quarter turn fails the same way, be
 vertical midline to cut along.
 
 **The forearm rings swap arms here, and that is staging rather than a redesign.** Only his left arm is inside the
-director half, so `{CafeWalker:director_half}` puts the three rings there. The count is the invariant - three, one
-per power - and `docs/character-locks.json` now says so in as many words.
+director half, so `{CafeWalker:director_half}` puts the rings there. The count is the invariant; the arm is
+whichever one the camera can see, and `docs/character-locks.json` says so in as many words.
+
+**The count is FOUR, corrected by the Team Owner on Fri Nov 13 at 10:30 PM:** *"we should have 4 rings since it
+takes all 4 powers to unlock the director look."* Freeze Frame, Rewind, Splice and Director's Cut - four powers,
+four rings, and the director look is what having all four buys. Every director picture drawn before that moment
+(`UI-TITLE2`, `UI-TITLE3`, and takes 1-3 of this prompt) has three and is superseded; the take tables below are
+kept as the record of what was drawn, not as the current design.
 
 **The clear split is a costume and lighting change, not a drawn line.** A line drawn down the middle would be
 bisected by the cut and half of it would fade in with the barista, reading as a stray mark - the same trap
@@ -245,7 +251,45 @@ bisected by the cut and half of it would fade in with the barista, reading as a 
     python tools/gen_images.py UI-TITLE4 --print    # the words, to paste into Gemini
     python tools/gen_images.py UI-TITLE4 --takes 3  # or draw locally
 
-**Three takes drawn in Gemini, Sat Nov 14 06:11-06:16 UTC** (`Art/Refs/gen/gemini4/GEM4-UI-TITLE4-{1,2,3}.png`,
+**THE FOUR-RING REDRAW, Fri Nov 13, 10:31-10:38 PM Pacific** (`Art/Refs/gen/gemini5/GEM5-UI-TITLE4-{1,2,3}.png`,
+gitignored). The ring count changed from three to four, so the whole picture had to be drawn again - the rings are
+on his arm, not something that can be edited in. Three takes:
+
+| | Take 1 **(picked)** | Take 2 | Take 3 |
+|---|---|---|---|
+| Four cyan rings (`tools/count_power_rings.py`) | **4** | 3 | 3 |
+| One body, centred on the cut | yes, 1 px off | yes | yes |
+| Apron: one neck strap, square bib pocket | yes | yes | yes |
+| A line drawn down his face | yes - repaired, see below | yes | yes |
+| Skin tone matches across the cut | yes | yes | **no** - the coat half's face is greyer |
+
+**The count is the thing a model gets wrong silently, so it is now measured, not eyeballed.**
+`tools/count_power_rings.py` counts the cyan bands inside a box you give it and exits 1 on the wrong number. Two
+of three takes came back with three rings and *look* perfectly good; nothing else in the picture is wrong with
+them. Run it on the committed picture before promoting a take:
+
+    python tools/count_power_rings.py Art/UI/T_UI_TitlePair.png --region 600,330,720,470 --expect 4
+
+It needs a region because the coat's edge light, the standing collar and the rim light are the same cyan at about
+the same spacing - no colour test can tell a ring from a collar, but a box around his arm can.
+
+**All three takes drew the divider line down his face, so this round it was repaired rather than re-rolled.**
+`split_title_pair.py --repair-seam 6` replaces the six columns on the cut by stretching each half's own nearest
+clean column inward. That is not the same operation as `--erase-seam`, which fills with the background and would
+cut a cream slot through his face - the reason the earlier round had to reject two takes outright. Nothing crosses
+the cut: the left columns come from the left half and the right columns from the right half, so the two costumes
+cannot bleed into each other, and the halves are split on that same line a moment later anyway. Measured on take
+1: the line sat on x=511-512 with its halo on 509-510 and 513-514, over a face whose flat skin reads ~195; the
+repair takes x=508 and x=515, both clean.
+
+**One prompt change that did NOT work, recorded so nobody tries it twice.** Take 3 used a rewritten ending - the
+divider forbidden positively ("his nose drawn once as one whole shape", "the only vertical line anywhere in the
+picture is the edge of his own clothing") instead of "no drawn dividing line". That is this file's own
+say-what-is-there lever, the one that got the badge off the car grille and the apron straps right. It did not stop
+the line: take 3 drew it anyway. The rewritten clause is kept, because it is no worse and it is the better way to
+say it, but **the fix for this failure is the repair tool, not the prompt.**
+
+**Three takes drawn in Gemini, Fri Nov 13, 10:11-10:16 PM Pacific** (`Art/Refs/gen/gemini4/GEM4-UI-TITLE4-{1,2,3}.png`,
 gitignored; the picked take is committed as `Art/UI/T_UI_TitlePair.png`). What they settled:
 
 | | Take 1 **(picked)** | Take 2 | Take 3 |
@@ -275,10 +319,10 @@ picture. **Reject a take for**, in order: two separate people instead of one bod
 centre; a three-quarter or turned head; a cross-back apron; the two halves not joining at the shoulder; any scenery
 or lettering at all.
 
-> anime key visual illustration, cel shaded with hard-edged shadows and clean dark line art, flat areas of solid colour, only two or three large simple shadow shapes per garment, bright and light and airy, a symmetrical centred poster composition of ONE SINGLE PERSON and one person only - one body, one head, one face, one neck, two eyes, a pair of shoulders joined to each other - standing square to the camera and facing straight forward towards the viewer with his head perfectly level and not turned, shown from the waist upward with the bottom edge of the picture cutting across him at the waist, placed exactly in the middle of the frame so that the picture's own vertical centre line runs precisely down the middle of his face between his two eyes, down the bridge of his nose, through the middle of his mouth and chin, down the centre of his throat and down the centre of his chest and stomach, and this one person wears a different costume on each side of that centre line with a clean hard perfectly straight vertical boundary at the exact centre of the picture where one costume stops and the other starts, on the viewer's left of that centre line he is {CafeWalker:bust}, on the viewer's right of that centre line he is {CafeWalker:director_half}, the two sides are the two halves of the same single continuous unbroken body and they join at the centre with both shoulders at exactly the same height and the two halves of his one face meeting exactly and lining up perfectly, the viewer's left half of the picture is lit with warm flat even daylight, the viewer's right half is a little cooler and deeper with one narrow clean line of pale cyan rim light running down his outer edge on that side only, the background is one single flat plain field of warm pale cream colour that is completely empty from edge to edge, generous wide empty margins of that same flat cream at the left and right edges well clear of both of his shoulders, no second person, no twin, no duplicate, no mirror reflection, no scenery, no furniture, no walls, no windows, no clapperboard, no text, no letters, no numbers, no logos, no signs, no drawn dividing line
+> anime key visual illustration, cel shaded with hard-edged shadows and clean dark line art, flat areas of solid colour, only two or three large simple shadow shapes per garment, bright and light and airy, a symmetrical centred poster composition of ONE SINGLE PERSON and one person only - one body, one head, one face, one neck, two eyes, a pair of shoulders joined to each other - standing square to the camera and facing straight forward towards the viewer with his head perfectly level and not turned, shown from the waist upward with the bottom edge of the picture cutting across him at the waist, placed exactly in the middle of the frame so that the picture's own vertical centre line runs precisely down the middle of his face between his two eyes, down the bridge of his nose, through the middle of his mouth and chin, down the centre of his throat and down the centre of his chest and stomach, and this one person wears a different costume on each side of that centre line, the two costumes meeting edge to edge exactly on the picture's centre line where one garment stops and the other starts, while his face and his neck and his hair are drawn straight through that centre as one single continuous unbroken surface of skin and hair, his nose drawn once as one whole shape, his mouth drawn once as one whole shape, the skin of his face running smoothly and uninterrupted from his left cheek across to his right cheek, on the viewer's left of that centre line he is {CafeWalker:bust}, on the viewer's right of that centre line he is {CafeWalker:director_half}, the two sides are the two halves of the same single continuous unbroken body and they join at the centre with both shoulders at exactly the same height and the two halves of his one face meeting exactly and lining up perfectly, the viewer's left half of the picture is lit with warm flat even daylight, the viewer's right half is a little cooler and deeper with one narrow clean line of pale cyan rim light running down his outer edge on that side only, the background is one single flat plain field of warm pale cream colour that is completely empty from edge to edge, generous wide empty margins of that same flat cream at the left and right edges well clear of both of his shoulders, no second person, no twin, no duplicate, no mirror reflection, no scenery, no furniture, no walls, no windows, no clapperboard, no text, no letters, no numbers, no logos, no signs, and the only vertical line anywhere in the picture is the edge of his own clothing where the two costumes meet, every other part of him drawn as whole continuous unbroken shapes
 
 ### UI-TITLE3
-The title card, **third concept, and the one being built**. The Team Owner asked for a title *animation* on Fri Nov 14:
+The title card, **third concept, and the one being built**. The Team Owner asked for a title *animation* on Fri Nov 13:
 *"half of the barista fade into frame then the other half fades in as the director, then have a clapperboard fade in
 over them, snap, then transition through them to the background."* He chose the expensive version of it - the two
 halves drawn as separate images so the seam is real - and then solved its own worst problem himself: *"see if you can
@@ -320,7 +364,7 @@ Drawn in **Gemini** (`Create image`, Hydrogen, 16:9), which beat the local Comfy
 picture - see `UI-TITLE2`'s notes. Judge every take on three things before anything else: **the two faces must be the
 same man**, the apron's single neck loop must be visible on the left figure, and **nothing may cross the centre line**.
 
-**Three takes drawn in Gemini, Fri Nov 14 05:49-05:58 UTC** (`Art/Refs/gen/gemini3/GEM3-UI-TITLE3-{1,2,3}.png`,
+**Three takes drawn in Gemini, Fri Nov 13, 9:49-9:58 PM Pacific** (`Art/Refs/gen/gemini3/GEM3-UI-TITLE3-{1,2,3}.png`,
 gitignored; the picked take is committed as `Art/UI/T_UI_TitlePair.png`). What they settled:
 
 | | Take 1 | Take 2 **(picked)** | Take 3 |
@@ -350,7 +394,7 @@ writing it, which is the check earning its place.
 > anime key visual illustration, cel shaded with hard-edged shadows and clean dark line art, flat areas of solid colour, only two or three large simple shadow shapes per garment, bright and light and airy, a symmetrical centred poster composition of one single young man drawn twice as two figures of exactly the same height whose backs are pressed flat together along one perfectly straight vertical line at the exact horizontal centre of the picture, the left figure's body turned to face the left edge and the right figure's body turned to face the right edge, each of them turning his head to look straight out at the viewer, both figures are the same one person with an identical face and identical hair and their two heads are at exactly the same height, both figures are shown from the middle of the chest upward only and the bottom edge of the picture cuts across them at mid-chest, the whole of the left figure is inside the left half of the picture and the whole of the right figure is inside the right half of the picture and the vertical line down the exact centre of the picture is the clean straight join between their two backs, on the left {CafeWalker:bust}, on the right {CafeWalker:director_bust}, the background is one single flat plain field of warm pale cream colour that is completely empty from edge to edge, a thin pale cyan rim light down the outer edge of the right figure only, generous empty margins of that same flat cream at the left and right edges, no scenery, no furniture, no walls, no windows, no clapperboard, no text, no letters, no logos, no signs
 
 ### UI-TITLE2
-The title card, **second concept**. The Team Owner rejected the crash scene outright on Sat Nov 14 - *"I don't
+The title card, **second concept**. The Team Owner rejected the crash scene outright on Fri Nov 13 - *"I don't
 think we want to have that as the title anyway"* - and asked instead for the main character as a film director,
 back to back with himself in the barista uniform. **Something simple**, in his words, so there is no cafe, no car,
 no street and no scenery in this one at all: one flat background, two figures, two props. `UI-TITLE` is kept below
@@ -369,7 +413,7 @@ composition would be the obvious place to make that mistake.
     python tools/gen_images.py UI-TITLE2 --takes 3
     python tools/gen_images.py UI-TITLE2 --print    # the same words, to paste into Gemini
 
-**Three takes drawn in Gemini, Sat Nov 14 05:11-05:16 UTC** (`Art/Refs/gen/gemini2/GEM2-UI-TITLE2-{1,2,3}.png`,
+**Three takes drawn in Gemini, Fri Nov 13, 9:11-9:16 PM Pacific** (`Art/Refs/gen/gemini2/GEM2-UI-TITLE2-{1,2,3}.png`,
 gitignored). What they settled:
 
 | | Take 1 | Take 2 | Take 3 |

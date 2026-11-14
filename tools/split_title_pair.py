@@ -112,6 +112,16 @@ def main():
                          '--one-body: there, the divider runs over the background ABOVE his head and then '
                          'into his hair, and erasing the full height would fill a cream slot straight down '
                          'his face. Erase only the rows where the line has nothing behind it but background')
+    ap.add_argument('--repair-seam', type=int, default=0, metavar='N',
+                    help='repair N columns centred on the cut by STRETCHING the nearest clean column of each half '
+                         'column outward-in, instead of filling them with the background. This is the one that '
+                         'works on --one-body: the divider Gemini draws runs the full height, straight down his '
+                         'face, and --erase-seam would cut a cream slot through him. Columns left of the cut are '
+                         'taken from the left half only and columns right of it from the right half only, so no '
+                         'pixel ever crosses the cut and the two costumes cannot bleed into each other. Use the '
+                         'smallest N that covers the line and its anti-aliasing - check with --repair-dump')
+    ap.add_argument('--repair-dump', default=None, metavar='PNG',
+                    help='write the repaired full picture here, so the repair can be looked at before the split')
     ap.add_argument('--one-body', dest='one_body', action='store_true',
                     help='UI-TITLE4: one person split down his own midline, not two people. Checks that he is CENTRED on the cut and squarely frontal instead of checking two separate figures')
     ap.add_argument('--force', action='store_true', help='write the halves even if a check fails')
@@ -129,6 +139,29 @@ def main():
     print('background : rgb(%d,%d,%d), corners agree to %d' % (bg[0], bg[1], bg[2], spread))
     if spread > BG_TOL:
         bad.append('background is not flat - corners differ by %d (limit %d); the key will tear' % (spread, BG_TOL))
+
+    if a.repair_seam:
+        # The line sits ON the cut, which is also where the two halves separate. So each side's own
+        # neighbouring column is the honest source: it is the same costume, the same lighting and the same
+        # flat cel colour that the line is painted over. Nothing is invented and nothing crosses the cut.
+        n = a.repair_seam
+        half = n // 2
+        x0, x1 = seam - half, seam - half + n
+        src_l, src_r = x0 - 1, x1
+        if src_l < 0 or src_r >= w:
+            print('--repair-seam %d runs off the edge of the picture' % n); return 2
+        rgb = rgb.copy()
+        for x in range(x0, seam):
+            rgb[:, x] = rgb[:, src_l]
+        for x in range(seam, x1):
+            rgb[:, x] = rgb[:, src_r]
+        alpha, bg, spread = key_background(rgb)
+        seam_note = 'repaired'
+        print('repaired   : x %d..%d - left columns stretched from x=%d, right columns from x=%d '
+              '(the divider line Gemini draws down the middle)' % (x0, x1 - 1, src_l, src_r))
+        if a.repair_dump:
+            Image.fromarray(rgb).save(a.repair_dump)
+            print('repair dump: %s' % a.repair_dump)
 
     if a.erase_seam:
         half = a.erase_seam // 2
