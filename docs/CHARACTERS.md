@@ -224,6 +224,13 @@ Stunt Double in 5), which is more screen time than any boss gets.
   at FBX export by `meshy_character.py`'s `tris` argument.
 - **One model, used three times.** Every goon is the same skeletal mesh, so variety — if anyone ever wants it —
   is a material swap, not a second character.
+- **Three goons, three fighters (Fri Nov 13).** `BP_Goon` sets `EnemyVary`, so each goon rolls its own speed,
+  wind-up, health, aggro range, stand-off distance and size (0.93 to 1.08) at spawn, keeps apart from the others,
+  circles while it waits, feints (`EnemyAnimTaunts`), and only one winds up at a time (`EnemyMaxAttackers`).
+  Punch, hit-react and death clips are picked per hit from `EnemyAnimPunchAlts` / `HitAlts` / `DeathAlts` plus
+  the directional ones (`EnemyAnimHitBack`, `EnemyAnimDeathBack/Left/Right`). All of these are **mannequin
+  montages**: when `SK_StreetGoon` goes on (issue #6) every clip in those lists needs retargeting, and its
+  root-motion clips need Root Lock = AnimFirstFrame. Recipe: `tools/goon_individual_graphs.py`.
 
 ### Palette, with the numbers
 
