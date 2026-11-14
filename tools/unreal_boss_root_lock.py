@@ -7,9 +7,16 @@ and the default "Root Motion Root Lock" is RefPose - so the root went back up to
 skeleton with it: 87.26 x his 1.2921 mesh scale = 112.7 cm. Idle, hit react and death have root motion off, which
 is why he only floated "sometimes".
 
-The player's CafeWalker clips (_CW) came through the same retarget, so they are measured in the same pass. They
-read 0: his rig (our own Blender skeleton with the mannequin's bone names) keeps its root on the floor in the
-reference pose, so RefPose and the first frame agree. Only clips that measure more than 5 units high are changed.
+Two sets of player clips exist and only ONE of them is innocent, which is how this bug survived (Nov 14).
+The _CW clips (CafeWalker/Anims) ride on our own Blender skeleton, whose root IS on the floor in the reference
+pose, so RefPose and the first frame agree and they measure 0.0. The _CWM clips (CafeWalker/MeshyAnims) are the
+ones ABP_Unarmed_CWM actually plays, they ride on the Meshy rig, and they measure 90.6. An earlier docstring here
+said "the player's CafeWalker clips read 0" - true of _CW, false of _CWM - and the player was left floating for a
+day. Only clips that measure more than 5 units high are changed, which keeps the floor-rooted rigs untouched.
+
+The folder list is now the whole of /Game/Game/Imported, scanned recursively. It used to be four hand-listed
+folders, and StreetGoon/Loco (the goon's 16 locomotion clips) and StreetGoon/MeshyLoco (4 attacks) were not among
+them, so no run could ever have found them. Never hand-list the folders again.
 
 The fix is one property per clip: root_motion_root_lock = AnimFirstFrame (the first frame has the root on the
 floor with its correct rotation). NOT Zero: Bone_000 carries the rig's 90-degree up-axis turn, and Zero wipes it.
@@ -24,9 +31,7 @@ import json, os, sys, traceback
 import unreal
 
 OUT = os.path.join(unreal.Paths.project_saved_dir(), 'jcpy', 'boss_root_lock.json')
-FOLDERS = [a for a in sys.argv[1:] if a.startswith('/Game')] or [
-    '/Game/Game/Imported/CleaverBoss/Anims', '/Game/Game/Imported/CafeWalker/Anims',
-    '/Game/Game/Imported/CafeWalker/MeshyAnims', '/Game/Game/Imported/StreetGoon/MeshyAnims']
+FOLDERS = [a for a in sys.argv[1:] if a.startswith('/Game')] or ['/Game/Game/Imported']
 R = {'mode': 'fix' if 'fix' in sys.argv[1:] else 'measure', 'clips': {}}
 
 
@@ -45,7 +50,7 @@ def lift(an):
 
 try:
     ar = unreal.AssetRegistryHelpers.get_asset_registry()
-    f = unreal.ARFilter(package_paths=FOLDERS, class_paths=[unreal.TopLevelAssetPath('/Script/Engine', 'AnimSequence')])
+    f = unreal.ARFilter(package_paths=FOLDERS, recursive_paths=True, class_paths=[unreal.TopLevelAssetPath('/Script/Engine', 'AnimSequence')])
     changed = []
     for ad in sorted(ar.get_assets(f), key=lambda a: str(a.asset_name)):
         an = ad.get_asset()

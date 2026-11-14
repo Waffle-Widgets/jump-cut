@@ -1070,8 +1070,21 @@ now use `AnimFirstFrame`. Live on the boss: lowest bone -14.1 to 0.0 cm from the
 standing, walking, cleaving and hit (`tools/boss_feet_test.py`, 96 samples). Do **not** redo the retarget. Full
 story: `docs/devlog/2026-11-13-the-boss-floated-on-his-own-reference-pose.md`. Re-check: `py
 <repo>/tools/boss_feet_test.py` as the first script of a Play session; re-apply: `py
-<repo>/tools/unreal_boss_root_lock.py fix`. **Any other Meshy Smart Rig character (the street goon) needs the same
-setting on its root-motion clips.** What follows is the original write-up, kept as measured; read its "cause" and
+<repo>/tools/unreal_boss_root_lock.py fix`. **DONE for every other Meshy Smart Rig character on Fri Nov 14** (it had been
+left as this sentence for a day while the player and the goons floated). `root_motion_root_lock = AnimFirstFrame`
+is now set on **44** more clips: 20 CafeWalker `_CWM` (16 locomotion + 4 attack), 16 StreetGoon `_SGN`
+locomotion, 4 goon `_SG` attacks and 4 orphaned `_SGL` attacks. Max lift **90.6 -> 0.0** on all 44; reference-pose
+root heights are CafeWalker **90.58**, StreetGoon **92.46**, CleaverBoss 87.26. Verified live in PIE: `bone0_z`
+holds 4.15 constant through a punch and through walking at full speed, with `actor_z` unchanged at 94.15 - the
+capsule never moved, so this was always a *mesh* lift, not a capsule one. The 16 `_CW` clips measure 0.0 (our own
+Blender skeleton roots on the floor) and are correctly untouched. Story:
+`docs/devlog/2026-11-14-the-player-and-the-goons-floated-on-the-same-reference-pose.md`.
+
+**Still broken, and a different bug: the jump.** During the fall and for ~0.45 s after landing, `ABP_Unarmed_CWM`
+outputs the **reference pose** (bone spread 161.1 against the ref pose's 162.0, `bone0` at exactly ref height),
+then blends to idle over ~0.35 s - so the body hangs in an A-pose after you land. The jump/fall/land clips are
+innocent: root motion off, correct skeleton, real poses with `Bone_000` at 0.0. The fault is in the `MainStates`
+state machine (183 nodes) not reaching them. Tracked on #69; do not re-apply the root-lock tool for this. What follows is the original write-up, kept as measured; read its "cause" and
 "repair" paragraphs as superseded.
 
 
