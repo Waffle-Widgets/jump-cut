@@ -69,10 +69,18 @@ The clip's own asset preview — real mesh, real clip — reads as a clean backw
 legs folding. Beside it, the retargeted `AM_CafeWalker_Death` reads as a hunched fold with the arms wrapped
 across the body. That contrast is the case for #103 in one picture.
 
+| ours, authored in Blender on Fable 5.2 | Epic's mannequin, retargeted |
+|---|---|
+| ![authored death clip](../media/2026-11-14-death-clip-authored.png) | ![retargeted death clip](../media/2026-11-14-death-clip-retargeted.png) |
+
 **The level viewport is another story.** Every `CaptureViewport` of the player in the cafe — alive, dead, mid-
 clip — shows a ~50 cm crumpled ball of his clothing at the component origin, while the coworker standing three
 metres away renders correctly. It is **not** the authored clip: the retargeted clip, and the reference pose
 with no animation at all, look exactly the same.
+
+![the player, alive and standing, rendered in the level viewport](../media/2026-11-14-player-crumpled-in-viewport.png)
+
+That is him **alive**, with no montage playing, from 1.4 m away.
 
 What was ruled out, each by test rather than by argument:
 
@@ -85,7 +93,7 @@ What was ruled out, each by test rather than by argument:
   completely, the ball did not.
 - **A stale frame:** every capture hashes differently, so each is a fresh render.
 
-Filed as its own issue. It may yet be an artefact of capturing an editor viewport on Metal rather than
+Filed as **#109**. It may yet be an artefact of capturing an editor viewport on Metal rather than
 anything a player would see — and that question is settled by a person looking at the screen, which is exactly
 the check this project keeps finding it cannot automate.
 
