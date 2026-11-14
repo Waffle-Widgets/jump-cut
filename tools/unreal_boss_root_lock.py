@@ -24,7 +24,9 @@ import json, os, sys, traceback
 import unreal
 
 OUT = os.path.join(unreal.Paths.project_saved_dir(), 'jcpy', 'boss_root_lock.json')
-FOLDERS = ['/Game/Game/Imported/CleaverBoss/Anims', '/Game/Game/Imported/CafeWalker/Anims']
+FOLDERS = [a for a in sys.argv[1:] if a.startswith('/Game')] or [
+    '/Game/Game/Imported/CleaverBoss/Anims', '/Game/Game/Imported/CafeWalker/Anims',
+    '/Game/Game/Imported/CafeWalker/MeshyAnims', '/Game/Game/Imported/StreetGoon/MeshyAnims']
 R = {'mode': 'fix' if 'fix' in sys.argv[1:] else 'measure', 'clips': {}}
 
 
