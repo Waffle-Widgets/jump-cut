@@ -599,6 +599,33 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   captures from the game camera **and** a side angle. Toolset traps: new ribbons have no material, DirectionalBurst
   systems run once for 1 s, number ribbon points with `ExecIndex()`. Effects are art: build them during the jam.
 
+- **Putting a Blender-authored clip into Unreal (Nov 14, #103/#14).** `tools/unreal_import_authored_clip.py` does it
+  end to end and refuses to finish unless the imported clip's skeleton is the same OBJECT as the one in the game.
+  Three API traps cost real time and all three look like your own mistake:
+  - UE 5.8's `AnimSequence` has **no** `get_number_of_sampled_keys` and **no** `get_sampling_frame_rate` in Python.
+    Both are the obvious names; both raise `AttributeError`. Frame count comes from
+    `unreal.AnimationLibrary.get_num_frames(anim)`. Wrap any such REPORTING call in try/except: the first run died
+    while logging a success and left the clip on `RefPose`, the float defect from `7ef73e1`.
+  - `FAnimSegment.StartPos` is **read-only to Python**, so hand-building a montage track
+    (`seg.set_editor_property('start_pos', 0.0)`) raises and no montage is made. Give
+    `AnimMontageFactory` a `source_animation` and it builds the slot track itself - the recipe
+    `tools/unreal_fight_anims.py:make_montage` has always used.
+- **The graph DSL does not round-trip bool parameters, and the failure is silent (Nov 14).** `read_graph_dsl` prints
+  an own-function call as `(CallFunction|PlayerStopAllEnemies true)` - positionally. Write that back and the literal
+  binds to nothing: the pin reverts to its default and `PlayerLose` quietly stopped stopping the enemies. The pin is
+  named, so write `(CallFunction|PlayerStopAllEnemies :Stopped true)`. **Reading a graph and writing it straight back
+  can change behaviour.** Same family as the `HudShowIf :Target` trap. After every `write_graph_dsl`, read the PINS
+  (`find_nodes` + `get_node_infos`), not the printed DSL - the printed form is what lied in the first place.
+- **Never call `EditorLoadingAndSavingUtils.reload_packages` from the MCP (Nov 14).** With anything dirty it goes
+  `PackageTools::ReloadPackages -> PromptUserForDirtyPackages -> FMessageDialog::Open -> EditorAddModalWindow` and the
+  game thread sits in a modal nobody can see, with every MCP call timing out. There is no way back without a human
+  click: `osascript` keystrokes need Accessibility permission this machine has not granted, so the editor had to be
+  killed. Same family as driving editor shutdown or asset deletion through the MCP. To discard unwanted in-memory
+  actor changes, close the editor and choose Don't Save instead.
+- **`CaptureViewport` during PIE renders the level viewport, editor sprites and all** - it is not a player's-eye view,
+  and `CaptureAssetImage` on a clip (the asset's own preview, real mesh + real clip) is the cheaper and more honest
+  way to LOOK at an animation. See the Nov 14 devlog for a render that could not be explained from either.
+
 ## AI-generated 3D models (Hunyuan3D 2.1 and TRELLIS.2, both local)
 - **TRELLIS.2** (Microsoft, MIT licence, `D:\AI\TRELLIS2` on the main PC, `C:\AI\TRELLIS2` on GameStation) is the one to use: one photo with the background cut out ->
   `venv\Scripts\python.exe run_image_to_3d.py <cutout.png> out\<name> 1024_cascade` (about 5 minutes on the 3090) -> a GLB
