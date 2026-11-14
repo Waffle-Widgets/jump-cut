@@ -402,6 +402,22 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   it still appends. A single `PressKey("BackSpace")` before each `Type` is what works. The failure is
   quiet from the caller's side: `Type` returns **true** either way, and the script simply never runs,
   so check the thing the script was supposed to write (a file's mtime), never the return value.
+- **A component's `override_materials` BEATS the mesh asset's own material slot, and nothing warns you.**
+  `BP_Goon.CharacterMesh0` carried `override_materials = [M_Goon]` - a flat skin-tone placeholder from the
+  grey-box build - so the goons rendered as naked orange silhouettes while their correct 2048 texture was
+  bound, sampled by 100%-occupancy UVs, and discarded. The mesh, the texture, the UVs and the import material
+  all measured perfect. **Check the override before blaming the asset.** And put a character's material on the
+  SkeletalMesh ASSET slot, not on an actor: goons are spawned at runtime by `BP_GoonSpawner`, so there is no
+  placed actor to override. `tools/unreal_char_materials.py measure` prints every character's slot and what
+  parents it.
+- **Every field of a `HitResult` is PROTECTED in UE 5.8 Python.** `hit.get_editor_property('location')` raises
+  *"Property 'Location' ... is protected and cannot be read"*, `'hit_actor'` raises *"Failed to find
+  property"*, and there is **no** `GameplayStatics.break_hit_result` in the Python API. The only route that
+  works is **`hit.to_dict()`**, which returns all 18 fields including `location`, `hit_actor`,
+  `hit_component` and `initial_overlap`. `to_tuple()` works too (location is [4], hit_actor [9]).
+- **A capsule sweep that starts inside geometry returns `initial_overlap` and a stop at the START point**,
+  which reads exactly like "blocked immediately" if you only look at the hit location. Read `initial_overlap`
+  from `to_dict()` and start the sweep at `floor_z + half_height + 2`, not at a round number.
 - **Never call `save_dirty_packages` - save your own packages by path.** It saves EVERY dirty package in
   the project. With another lane's four read-only Blueprints dirty, that save failed, left `.tmp` files
   in `Saved/`, and the editor stopped answering the MCP for ten minutes. Collect the assets you touched

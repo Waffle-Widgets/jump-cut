@@ -921,6 +921,16 @@ Done, by Claude driving the Unreal MCP on GameStation with the editor open. The 
 | `SK_CleaverBoss.fbx` | `/Game/Game/Imported/CleaverBoss/SK/SK_CleaverBoss` + `_Skeleton`, `_PhysicsAsset`, `SK_CleaverBossArmature_Walk`, `SK_CleaverBossArmature_Idle` | **178.0 cm**, 142 cm arm span (vs the driver's 126) | `MI_CleaverBoss` |
 | `SM_Cleaver.fbx` | `/Game/Game/Imported/Cleaver/SM_Cleaver` | 35.0 × 11.3 × **0.85 cm**, 954 triangles, Nanite off | `MI_Cleaver` |
 
+> **Updated Sat Nov 14 2026.** All five characters the game actually uses are now on `M_AnimeChar`:
+> `MI_CrashDriver`, `MI_CleaverBoss`, and the three added that day - **`MI_StreetGoon`**,
+> **`MI_CafeCoworker`** and **`MI_CafeWalker_Meshy`**. They are set on the **SkeletalMesh asset slot**, which
+> is the only place that covers a character spawned at runtime. The goons were rendering as flat orange
+> silhouettes because `BP_Goon.CharacterMesh0` overrode all of it with `M_Goon`, a grey-box placeholder; that
+> override is now `MI_StreetGoon`. `SK_CafeWalker_Walk` (the old Blender-rig walk mesh, unused) is
+> deliberately left on its Interchange import material. See
+> `docs/devlog/2026-11-14-the-goons-were-naked-because-a-blueprint-overrode-them.md` and
+> `tools/unreal_char_materials.py`.
+
 Each `MI_` is a new instance of **`M_AnimeChar`** with its one parameter, `Tex`, pointed at the character's own
 base-colour texture — the same shape as `MI_CafeWalker`. The FBX was dropped into its own folder under
 `Content/Game/Imported/` and Interchange auto-imported mesh, skeleton, **both** animations and the texture
