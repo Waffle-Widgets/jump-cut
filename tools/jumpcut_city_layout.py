@@ -62,6 +62,26 @@ _FALLBACK_WIDTH = {'SM_ShopHouse_A': 614.0, 'SM_ShopHouse_B': 414.0, 'SM_ShopHou
                    'SM_BlockFiller': 1218.0, 'SM_SetbackTower': 1618.0, 'SM_CurtainTower': 1418.0,
                    'SM_PlazaTower': 2018.0, 'SM_CornerBlock': 1400.0}
 GAP = 20.0          # a hand's width between neighbours, so nothing ever shares a wall plane
+PROP_WALL_Y = 470.0 # the pavement line the prop clumps sit on, hard against the shopfronts
+
+# A prop that mounts ON a wall is placed on that wall's own plane, so two faces of different
+# materials end up in the depth buffer at the identical depth. The tie breaks differently every
+# frame the camera moves, which is the border flicker in issue #67 - the between-actor twin of the
+# intra-mesh ties stand_proud() fixed inside the kit in PR #111. Lift each mounted prop 4 mm off
+# the plane it hangs on, the same 0.4 cm stand_proud() uses.
+STAND_OFF = 0.4
+# These three kit models already carry a stand_proud() lift of STAND_OFF on the very face that
+# mounts against the wall (PR #111 lifted it inside the mesh). Moving one of them a single
+# stand-off just lands the lifted face on the plane the flat one left, and the pair goes on
+# tying - measured on SM_DuctRun: 7680 cm2 at zero, 890 cm2 at one stand-off, 0 at two.
+DOUBLE_LIFT = ('SM_DuctRun', 'SM_ACUnit', 'SM_FireEscape')
+# What counts as a structure for the 'keep GAP apart' check in validate(). Props are not on this list:
+# a bicycle leaning on a planter is dressing, two buildings sharing a wall plane is a bug.
+# The check is a bounding-box one, so it cannot see that SM_CornerBlock is an L and has a notch a thin
+# prop can legitimately stand in - which is why poles are not on the list even though two of them did
+# turn out to be buried in one.
+STRUCTURE_MODELS = ('SM_ShopHouse_A', 'SM_ShopHouse_B', 'SM_ShopHouse_C', 'SM_CornerBlock',
+                   'SM_BlockFiller', 'SM_SetbackTower', 'SM_CurtainTower')
 
 
 def _load_widths():
@@ -515,7 +535,7 @@ def lane():
 def lane_props():
     """The clutter, in clumps rather than evenly. Everything sits between the kerb and the facade."""
     rng = random.Random(77)
-    wall = 470.0                  # hard against the shopfronts
+    wall = PROP_WALL_Y            # hard against the shopfronts
     mid = 380.0                   # mid-pavement
     edge = 285.0                  # just inside the kerb
     n = 0
@@ -593,7 +613,10 @@ def crossing():
     put('City_CornerSW', 'SM_CornerBlock', AVENUE_X - 700.0, -1500.0, 0, 90)
     put('City_AvenueTowerA', 'SM_SetbackTower', AVENUE_X - 1500.0, 3400.0, 0, 180)
     put('City_AvenueTowerB', 'SM_CurtainTower', AVENUE_X - 1800.0, -3600.0, 0, 0)
-    put('City_AvenueFillA', 'SM_BlockFiller', AVENUE_X - 300.0, 2900.0, 0, 180)
+    # y was 2900, which buried its south end 209 cm inside City_CornerNW and tied 4 m2 of ground slab
+    # with it; 3129 clears the block by GAP. The extra STAND_OFF in x is because clearing CornerNW
+    # slid it onto a wall plane of City_AvenueTowerA instead - 126 cm2 at z = 1354.
+    put('City_AvenueFillA', 'SM_BlockFiller', AVENUE_X - 62.0, 3129.0, 0, 180)
     put('City_AvenueFillB', 'SM_BlockFiller', AVENUE_X - 300.0, -2900.0, 0, 0)
     # the lane's own back wall: the buildings that close the view north and south of the cafe
     put('City_CafeNeighbourN', 'SM_ShopHouse_C', -200.0, 560.0, 0, 180)
@@ -604,11 +627,13 @@ def crossing():
     # whole of beat 1 looking through a hole at flat grey. These are the far side of the avenue, ON that axis -
     # which is also simply what you see when you look across a street: the building opposite.
     put('City_AvenueFar_Mid', 'SM_BlockFiller', -3400.0, 0.0, 0, 270)
-    put('City_AvenueFar_N', 'SM_ShopHouse_C', -3400.0, 1250.0, 0, 270)
+    put('City_AvenueFar_N', 'SM_ShopHouse_C', -3400.0, 1038.0, 0, 270)
     put('City_AvenueFar_S', 'SM_ShopHouse_A', -3400.0, -1150.0, 0, 270)
     put('City_AvenueFar_Tower', 'SM_SetbackTower', -4600.0, 300.0, 0, 270)
     put('City_AvenueLamp', 'SM_StreetLamp', -2250.0, 260.0, 0, 180)
-    put('City_AvenuePole', 'SM_UtilityPole', -2450.0, -380.0, 0, 0)
+    # was x = -2450, which stood the whole pole inside City_CornerSW's footprint: invisible except for
+    # 100 cm2 of its casing tying with the block's wall at z = 684. -2850 is the nearest clear line.
+    put('City_AvenuePole', 'SM_UtilityPole', -2850.0, -380.0, 0, 0)
     put('City_AvenueCone', 'SM_TrafficCone', -1500.0, -120.0, 0, 0)
     put('City_AvenueBarrier', 'SM_Barrier', -1750.0, 180.0, 0, 90)
     put('City_CrossLamp', 'SM_StreetLamp', -1250.0, 520.0, 0, 180)
@@ -639,10 +664,13 @@ def plaza():
     # in does not move: REPLACES below checks each of these against the box it stands in for.
     # A yard wall's dressed face is its local +Y. Yaw 270 turns that to +X (the west walls face east,
     # into the lot), yaw 90 to -X, yaw 180 to -Y.
-    put('City_PlazaWall_W_North', 'SM_YardWall_1250', 6620.0, 875.0, 0, 270)
-    put('City_PlazaWall_W_South', 'SM_YardWall_1250', 6620.0, -875.0, 0, 270)
-    put('City_PlazaWall_E_North', 'SM_YardWall_1250', 9620.0, 875.0, 0, 90)
-    put('City_PlazaWall_E_South', 'SM_YardWall_1250', 9620.0, -875.0, 0, 90)
+    # The four short walls butt into the two long ones at the plaza corners, and a butt joint is a
+    # shared plane: 3300 cm2 of exactly-tied face per corner. Stand each one STAND_OFF off both of
+    # the long wall's planes - in toward the plaza in x, out along its own run in y.
+    put('City_PlazaWall_W_North', 'SM_YardWall_1250', 6620.0 + STAND_OFF, 875.0 + STAND_OFF, 0, 270)
+    put('City_PlazaWall_W_South', 'SM_YardWall_1250', 6620.0 + STAND_OFF, -875.0 - STAND_OFF, 0, 270)
+    put('City_PlazaWall_E_North', 'SM_YardWall_1250', 9620.0 - STAND_OFF, 875.0 + STAND_OFF, 0, 90)
+    put('City_PlazaWall_E_South', 'SM_YardWall_1250', 9620.0 - STAND_OFF, -875.0 - STAND_OFF, 0, 90)
     put('City_PlazaWall_N', 'SM_YardWall_3040', 8120.0, PLAZA_Y, 0, 180)
     put('City_PlazaWall_S', 'SM_YardWall_3040', 8120.0, -PLAZA_Y, 0, 0)
     # and its floor: a picture of paving laid 1 cm over the real floor, with no collision of its own
@@ -653,9 +681,9 @@ def exit_run():
     """The 10 m alley past the exit gate, 5 m wide. Close it in: the demo ends on a fade, and a canyon
     reads better for that than an open field does."""
     put('City_RunN_A', 'SM_ShopHouse_B', 9900.0, 430.0, 0, 180)
-    put('City_RunN_B', 'SM_ShopHouse_A', 10400.0, 430.0, 0, 180)
-    put('City_RunS_A', 'SM_ShopHouse_A', 9930.0, -430.0, 0, 0)
-    put('City_RunS_B', 'SM_ShopHouse_B', 10420.0, -430.0, 0, 0)
+    put('City_RunN_B', 'SM_ShopHouse_A', 10434.0, 430.0, 0, 180)
+    put('City_RunS_A', 'SM_ShopHouse_A', 9977.0, -430.0, 0, 0)
+    put('City_RunS_B', 'SM_ShopHouse_B', 10511.0, -430.0, 0, 0)
     put('City_RunTower', 'SM_CurtainTower', 10900.0, 1400.0, 0, 180)
     put('City_RunPole', 'SM_UtilityPole', 9800.0, 210.0, 0, 0)
     put('City_RunCable', 'SM_CableSpan', 10200.0, 210.0, 640, 0)
@@ -718,8 +746,12 @@ def skyline():
     # the cafe door, and 62 m tall so it still reads from the lane) but behind the landing pad.
     put('City_Landmark', 'SM_CurtainTower', 16200.0, 0.0, 0, 0)
     put('City_LandmarkB', 'SM_SetbackTower', 11900.0, -2200.0, 0, 0)
-    for k, (rx, ry) in enumerate([(1800.0, -2500.0), (4200.0, 2600.0), (7900.0, -3000.0), (-800.0, 3100.0)]):
-        put('City_SkyTank_%d' % k, 'SM_RoofTank', rx, ry, 1900.0, 0)
+    # Tank 0 was at z = 1900 like the rest, which put it INSIDE City_Near_S00 - a 46 m setback tower -
+    # rather than on top of anything, and 7200 cm2 of its wall tied with the tower's at z = 2153. It now
+    # sits on that tower's actual roof, sunk STAND_OFF into it so the two surfaces do not share a plane.
+    for k, (rx, ry, rz) in enumerate([(1800.0, -2500.0, 4615.0 - STAND_OFF), (4200.0, 2600.0, 1900.0),
+                                      (7900.0, -3000.0, 1900.0), (-800.0, 3100.0, 1900.0)]):
+        put('City_SkyTank_%d' % k, 'SM_RoofTank', rx, ry, rz, 0)
 
 
 # ----------------------------------------------------------------- 6. checking it, instead of squinting at it
@@ -826,6 +858,29 @@ def validate():
             if x1 > bx0 and x0 < bx1 and y1 > by0 and y0 < by1:
                 problems.append('%s (%s) at (%.0f, %.0f) is inside "%s" - %s'
                                 % (a['label'], a['model'], a['x'], a['y'], nm, why))
+    # EVERY pair of structures must keep GAP between them, not just the lane rows. The old check below
+    # only looked at City_Lane* actors on one side at a time, which is how City_RunN_A/B came to
+    # interpenetrate by 14 cm, City_RunS_A to sit 27 cm inside the plaza wall, City_AvenueFar_N to be
+    # buried 189 cm in City_CornerNW and City_AvenuePole to stand entirely inside City_CornerSW - all of
+    # them hand-placed, all of them outside the rows this validator was reading. Two structures that
+    # interpenetrate put two faces of different materials at the same depth, and that tie is the border
+    # flicker in issue #67. The skyline tier is exempt: it is placed at four jittered depths on purpose
+    # and is 100 m past anything the player can reach.
+    structures = [(footprint(a, boxes), a) for a in actors
+                  if a['model'] in STRUCTURE_MODELS and not a['label'].startswith('City_Sky')]
+    for i in range(len(structures)):
+        (ax0, ax1, ay0, ay1, _), a = structures[i]
+        for j in range(i + 1, len(structures)):
+            (bx0, bx1, by0, by1, _), b = structures[j]
+            ox = min(ax1, bx1) - max(ax0, bx0)
+            oy = min(ay1, by1) - max(ay0, by0)
+            sep = -min(ox, oy)                 # negative overlap = a real gap
+            if sep < GAP - 0.001:
+                problems.append('%s (%s) and %s (%s) are %s: structures must keep GAP = %.0f cm apart, '
+                                'or two walls end up on one plane and the border flickers (issue #67)'
+                                % (a['label'], a['model'], b['label'], b['model'],
+                                   ('overlapping by %.0f cm' % -sep) if sep < 0
+                                   else ('only %.0f cm apart' % sep), GAP))
     # buildings on the lane must not overlap each other along x on the same side
     for side, yv in (('S', -STREET_Y), ('N', STREET_Y)):
         rows = sorted([(footprint(a, boxes), a) for a in actors
@@ -916,6 +971,41 @@ def _cafe_dress_agrees():
             for i, (a, b) in enumerate(zip(ours, theirs)) if a != b]
 
 
+def stand_off():
+    """Lift every wall-mounted prop 4 mm off the wall plane it was placed on.
+
+    This runs AFTER all placement, deliberately. Doing it at the call sites instead moves the props
+    before put_clear() runs its collision search, and a sub-centimetre move there is enough to flip a
+    slide decision: when it was tried that way City_Front_S00_ShopDisplay jumped 4.8 m down the street
+    and City_Front_Trash stopped clearing at all. A post-pass cannot perturb the solver.
+
+    Direction matters and is not the same for all of them:
+      * shop signs and pavement clumps move TOWARD the street, so they stand in front of the
+        shopfront rather than behind it;
+      * the two street ducts move INTO the wall, because their body already pokes past the
+        shopfront pane and standing them proud would re-tie them against that pane 1 mm away;
+      * the cafe clock moves into the room, off the north wall it hangs on.
+    """
+    moved = 0
+    for a in actors:
+        out = STAND_OFF if a['y'] > 0 else -STAND_OFF      # +1 away from the street, -1 toward it
+        if a['model'] in DOUBLE_LIFT:
+            out *= 2.0
+        if a['label'].startswith(('City_Sign_', 'City_Laundry_', 'City_FireEscape_', 'City_AC_')):
+            a['y'] -= out
+        elif a['label'] in ('City_Front_DuctS', 'City_Front_DuctN'):
+            a['y'] += out
+        elif a['label'] == 'City_CafeDeco_08_CafeClock':
+            a['y'] -= STAND_OFF
+        elif a['label'].startswith('City_Prop_') and abs(a['y']) == PROP_WALL_Y:
+            a['y'] -= out
+        else:
+            continue
+        a['y'] = round(a['y'], 3)
+        moved += 1
+    print('stood %d wall-mounted props %.1f cm off the plane they mount on' % (moved, STAND_OFF))
+
+
 def main():
     cafe()
     lane()
@@ -928,6 +1018,7 @@ def main():
     kerb_life()
     near_skyline()
     skyline()
+    stand_off()        # last: a 4 mm move must not perturb put_clear()'s search
     doc = {
         'units': 'cm',
         'note': 'Unreal world coordinates for Lvl_JumpCut. Z is the actor origin; every model stands on its '
