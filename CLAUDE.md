@@ -804,6 +804,25 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   new Meshy body **cannot** drop onto our existing animation set. If a character has to be remade, transfer the
   new mesh's weights onto the **existing** armature in Blender and keep the old skeleton; that is the only route
   that preserves the clips, the montages and the anim blueprint. See issue #96.
+- **Meshy's remesh DISCARDS the texture, so a rigged Meshy body has NO colour map to download** (Sat Nov 14).
+  Rigging runs on the remeshed asset, and that asset is genuinely untextured - it renders plain grey in Meshy's
+  own viewer and its FBX export embeds only `texture_0_normal.png`, a tangent-space normal map. Do not go hunting
+  for a download setting; there is no colour on that asset. The colour IS on the pre-remesh high-poly asset, and
+  its **glb** export carries it (glTF image `texture_0` -> `baseColorTexture`) where the **fbx** export of the same
+  asset does not - but the remesh regenerated the UVs, so that map and the rigged mesh are in **different UV
+  spaces**. Dropping it on the rigged mesh renders as camouflage noise: a plausible atlas, a ruined character, and
+  nothing errors. **Bake it instead**: `blender -b --factory-startup --python Art/Blender/bake_meshy_basecolor.py
+  -- <textured.glb> <rigged.fbx> <out.png>` does the high-poly -> low-poly EMIT bake, 0 credits. The two exports
+  are not in the same units or origin (1.902 m centred vs 1.75 m feet-on-floor), so it aligns them first and
+  prints the residual - read that number, a bad align gives bald patches, not an error.
+- **The armature OBJECT's name becomes the root bone of the Unreal skeleton, so it must match or the import is
+  refused** (Sat Nov 14). `SK_CafeWalkerV2_oldrig.fbx` had all 69 bone names and parents identical to the shipped
+  rig and Interchange still failed with *"cannot merge bone tree with the existing skeleton"*, because the reskin
+  script had left its armature object called `OLD_Armature` where the shipped one is `Armature`. A bone-name diff
+  shows nothing - the mismatch is one level above the bones. Rename the armature object AND its data to match
+  before exporting. Worse, the failure is not fatal: the SkeletalMesh is still created and still reports the
+  skeleton you asked for, so every scripted check passes and only the error line in the log says otherwise.
+  **Read the `Warning/Error Summary` at the end of an import log, not just the script's own output.**
 - **Look at the colours before calling a character done: `python tools/color_audit.py`.** Image to 3D bakes one
   texture for the whole body and nothing in the pipeline knows a pixel is "hair" or "sleeve", so a model can come
   back with skin-coloured hair, or a shirt the same colour as the arm inside it, and every number still reads

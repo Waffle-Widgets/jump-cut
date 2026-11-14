@@ -146,6 +146,44 @@ bone names before every run and refuses to retarget if it disagrees.
 
 **Still not played by anyone.**
 
+### Sat Nov 14, 22:20 UTC — `CafeWalkerV2` is in Unreal, textured (M Station)
+
+The remade body — the one whose apron is a front panel instead of a skirt — is now a real asset:
+`/Game/Game/Imported/CafeWalkerV2/SK_CafeWalkerV2`, on `MI_CafeWalkerV2` (parent `M_AnimeChar`,
+`Tex` = `T_CafeWalkerV2_BaseColor`). **It imports onto the existing `SK_CafeWalker_Skeleton`**, 69
+bones, verified by object identity — so every clip, montage and anim blueprint we own still applies
+to it. That is the whole point of the reskin in #96.
+
+**Two things had to be fixed before it would work, and both fail quietly.**
+
+**1. The colour map had to be baked, not downloaded.** Meshy's remesh step DISCARDS the texture.
+The rigged asset is genuinely untextured — it renders plain grey in Meshy's own viewer, and its FBX
+embeds only `texture_0_normal.png`, a tangent-space normal map with no colour at all. The colour
+lives on the pre-remesh 365k asset, whose GLB export does carry it — but the remesh regenerated the
+UVs, so that map and the rigged mesh are in **different UV spaces**. Dropping it straight on gives
+camouflage noise (leftmost panel below). `Art/Blender/bake_meshy_basecolor.py` bakes high-poly →
+low-poly instead, 0 Meshy credits. ![bake](media/2026-11-14-cafewalker-v2-texture-bake.jpg)
+
+**2. The armature OBJECT name becomes the skeleton's root bone.** The reskin script left its
+armature called `OLD_Armature`, and Unreal makes that the root of the imported bone tree. All 69
+bone names and parents matched the shipped rig exactly, and Interchange still refused with
+*"cannot merge bone tree with the existing skeleton"* — one name, at the root, invisible in any bone
+diff. Renamed to `Armature` and re-exported; the import then logs `Success - 0 errors`. The FBX in
+`Art/Blender/export/Characters/CafeWalkerV2/SK_CafeWalkerV2_oldrig.fbx` is the corrected one.
+
+Import with `tools/unreal_import_char_v2.py` (headless: `UnrealEditor-Cmd.exe <uproject>
+-run=pythonscript -script="<repo>/tools/unreal_import_char_v2.py save"`). It checks the skeleton by
+object identity and refuses rather than quietly building a second one.
+
+**`BP_Player` still wears the Nov 13 `SK_CafeWalker`.** Importing the body is not swapping it in;
+that is a one-property change on `BP_Player.CharacterMesh0` and it is deliberately left for a person,
+because the main character the day before submission is not something to change untested. Known
+caveats on the reskin, from #96: 18 of 21 finger bones carry weight (the shipped mesh weights all
+21), and max deformation error is 14.1 cm against the shipped mesh's 15.5 cm.
+
+**Nobody has played it, and nobody has seen it under the cel shader.** The pictures above are
+Blender renders of the committed FBX with the committed texture on its own UVs.
+
 ## The coworker — `CafeCoworker` (beat 1; modelled and rigged Nov 13, **in Unreal since Sat Nov 14, 02:25 UTC**)
 
 The person the player saves in the demo's first beat. She exists because the beat's *lesson* needs a subject:
@@ -239,6 +277,23 @@ and model-swappable on Saturday, exactly as `BP_StuntDouble` was.
   `ExplosionDelay = 0` — zero-initialised instance overrides left behind because the actor was placed *before*
   those variables existed. The class defaults were right and the beat still did nothing. If a new variable on a
   Blueprint seems to be ignored, check the placed instance before you check the graph.
+
+### Sat Nov 14, 22:20 UTC — `CafeCoworkerV2` is in Unreal as ART ONLY (M Station)
+
+`/Game/Game/Imported/CafeCoworkerV2/SK_CafeCoworkerV2`, on `MI_CafeCoworkerV2` (parent
+`M_AnimeChar`), with a baked colour map made the same way as the player's — see his section above for
+why Meshy's own texture cannot be used on a remeshed body.
+
+**She is deliberately on her OWN new 28-bone skeleton**, not the shipped `SK_CafeCoworker_Skeleton`,
+because her reskin failed (#101): her two A-poses are 13.5 cm apart per hand, and posing the hand bone
+moves 1,384 vertices on the shipped mesh against **30** on the reskinned one. So she has no clips and
+`BP_Coworker` must not be pointed at her yet. Importing her is so the art is in the project and
+reviewable, not so she can be swapped in.
+
+**The forbidden X is now visible and still unfixed.** The back render shows the apron straps
+**crossing in an X**, which the character lock explicitly rules out — Meshy invented it from a
+front-only reference. ![coworker](media/2026-11-14-cafecoworker-v2-texture-bake.jpg) The fix in #101
+is Meshy's Multi-view input plus a matched A-pose; nothing here changes that.
 
 ## The first boss — `CrashDriver`
 
