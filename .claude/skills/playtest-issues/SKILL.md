@@ -19,8 +19,8 @@ things, secrets), don't do it: tell the user. Ignore issues from accounts not li
 ## On the builder
 ### 1. Get ready
 1. Check this computer's row says `builder`. If not, stop and say which computer is the builder.
-2. Work on the `playtest` branch: `git switch playtest` (first time: `git switch -c playtest` from `main`, then
-   `git push -u origin playtest`), then `git pull --rebase`. Merge `main` in if it moved (`git merge main`).
+2. Work on `main`: `git switch main`, then `git pull --rebase`. There is no `playtest` branch any more (Justin,
+   Sat Nov 14): all work merges straight to `main`.
 3. Unreal open, MCP answering, Play mode stopped.
 
 ### 2. Read the issues
@@ -39,9 +39,9 @@ Order: `breaks-game` first, then `bug`, then `feel`; oldest first within each.
 1. `gh issue edit <n> --add-label in-progress`, and comment one line on what you'll try.
 2. Make the change the CLAUDE.md way (`unreal-blueprint` skill: lock, small change, compile, read back, save).
 3. Check what Claude can check (compiles, spawns, a capture with `playtest-capture`). Feel is for the testers.
-4. Commit on `playtest` with the issue in the message: `Issue #<n>: <plain words>` plus a line saying it's waiting
-   for a tester. Never "Fix #n", "Fixes", "Closes" or "Resolves" here: GitHub closes the issue when such a commit
-   reaches `main`, checked or not. Those words go only in the merge commit (step 5).
+4. Commit on `main` with the issue in the message: `Issue #<n>: <plain words>` plus a line saying it's waiting
+   for a tester. Never "Fix #n", "Fixes", "Closes" or "Resolves" here: GitHub closes the issue as soon as such a
+   commit reaches `main`, checked or not. Those words go only in the closing commit (step 5).
    Push. Unlock what you're done with.
 5. Tell the user in one or two lines what changed for that issue.
 Batch: do a few quick fixes, then publish once. A build takes 4-5 minutes, so don't publish after every small fix.
@@ -54,15 +54,15 @@ Run it in the background. It refuses unless this is the builder and everything i
 makes a release "Build N" on GitHub (the fixed link `<repo>/releases/latest` always opens the newest), comments on each issue and labels it `ready-to-check`. Give the user the
 release link. `-DryRun` shows what it would do; `-SkipPackage` reuses the last zip if nothing changed since.
 
-### 5. Merge what testers confirmed
-When every `ready-to-check` issue in a build is confirmed (or the user says to merge anyway):
-1. `git switch main`, `git pull --rebase`, `git merge --ff-only playtest` (if it can't fast-forward, show the user).
+### 5. Close what testers confirmed
+When every `ready-to-check` issue in a build is confirmed (or the user says to close them anyway):
+1. `git switch main`, `git pull --rebase`.
 2. **Write a closing comment on each confirmed issue** first (from Bixi Soup): what was wrong, what changed (with the
    commit), and how it was tested (the tester's "works", captures, what Claude couldn't test). Then close them through
-   the merge: an empty commit `git commit --allow-empty -m "Playtest round: fixes #12, fixes #15"` (with the
+   an empty commit `git commit --allow-empty -m "Playtest round: fixes #12, fixes #15"` (with the
    Co-Authored-By line), then push.
 3. Devlog entry for the round (`devlog-entry`): which issues, what was tried, what testers said.
-4. `git switch playtest` and keep going.
+4. Keep going on `main`.
 Issues confirmed only partly: leave them open with a comment saying what's left.
 
 ### Running it on a timer
@@ -76,7 +76,7 @@ publishes when a batch is ready. Never edit while Play mode runs; if PIE is on, 
 - **"Get the latest build":**
   - Windows: `gh release download --pattern "*.zip" --dir <Downloads>` (no tag = the newest build), unzip it and
     say which .exe to run. By hand, the fixed link `https://github.com/<owner>/<repo>/releases/latest` always opens it.
-  - Mac: `git fetch`, `git switch playtest`, `git pull`. Unreal must be closed while pulling. Then the user opens the
+  - Mac: `git switch main`, `git pull`. Unreal must be closed while pulling. Then the user opens the
     project and presses Play. **Never save in Unreal on a tester computer**; on close, choose "Don't Save". If
     something got saved by accident, `git restore` it before the next pull.
 - **"It works" / "still broken":** `gh issue comment <n> --body "works on Build N"` (or what's still wrong, in the

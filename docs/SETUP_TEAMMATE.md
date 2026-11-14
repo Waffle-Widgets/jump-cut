@@ -70,7 +70,7 @@ yet: tell the Team Owner what happens at each step. Do sections 1-7 with these c
   - TRELLIS.2 (needs an NVIDIA GPU). Meshy works in any browser.
   - Making the jam repo (`tools/bootstrap/`).
 - **Your role:** a Mac is a **tester** (and can be a **maker**), never the builder. To playtest, Claude switches
-  the repo to the `playtest` branch; you press Play and never save.
+  the repo to `main` and pulls; you press Play and never save.
 - **First test:** open the project, press Play, and ask Claude "Is the Unreal MCP answering?" If the Model Context
   Protocol plugin doesn't load on Mac, tell the Team Owner; you can still design, test and make art.
 

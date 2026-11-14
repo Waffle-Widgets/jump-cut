@@ -122,13 +122,13 @@ of it - not a second queue competing with Justin's imports.
 **Roles**
 - **builder:** the only computer that changes Unreal files (`.uasset`, `.umap`) and commits them. It packages and publishes
   test builds and works through the playtest issues (`playtest-issues` skill). Exactly **one** at a time, on Windows
-  (the jam wants a Windows build). It works on the `playtest` branch and merges into `main` once testers confirm.
+  (the jam wants a Windows build). It works on `main` and merges finished work straight into it (no `playtest` branch since Nov 14).
 - **builder (area):** e.g. `builder (UI)`. A second person may change Unreal files in that one area only (its folder
   in "Who owns what" below), with LFS locks. Use it when one builder can't keep up; never two in the same Blueprint.
 - **maker:** makes things outside Unreal (Blender, Meshy, TRELLIS, `tools/make_sfx.py`) and commits FBX, textures,
   sounds and scripts. It never saves in Unreal; the builder imports what it makes.
 - **tester:** plays test builds and files GitHub issues (`docs/PLAYTEST.md`). Windows: downloads the build from the
-  repo's Releases. Mac: pulls the `playtest` branch and presses Play in Unreal, never saving.
+  repo's Releases. Mac: pulls `main` and presses Play in Unreal, never saving.
 - Everyone may edit docs and scripts (text files merge normally).
 
 ## Who owns what this jam

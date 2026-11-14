@@ -969,6 +969,13 @@ _(nothing yet)_
 
 ## Decisions
 
+- **2026-11-14 (2:18 PM Pacific): no more `playtest` branch; all work merges straight to `main`** (Justin).
+  *"Lets merge playtest to main, and moving forward any work done should just be merged to main. No playtest
+  branch."* `playtest` was fast-forwarded into `main` at `c3d1baa` the same minute, so the two were identical when
+  the rule changed. `CLAUDE.md`, the `playtest-issues` skill, `HOW_WE_WORK.md`, `PLAYTEST.md`, `SETUP_TEAMMATE.md`
+  and `TEAM.md` were updated to match. The `playtest` branch is still on GitHub; deleting it is a separate question.
+  Earlier entries in this file that say "on `playtest`" are history and were left as they were.
+
 - **2026-11-14 (3:30 AM Pacific): the cafe is a CORNER UNIT on an L-shaped back lane** (M Station, acting
   on the Team Owner's account of beat 1 — *"a car comes bursting through the back wall of the store leading
   to the alley… the player then goes out to the alley and the thugs get in the way"*).

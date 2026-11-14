@@ -28,13 +28,14 @@ A Mac can be a tester or a maker, not the builder (the jam wants a Windows build
  reply "works"  <-  Build N+1 published, issues marked "ready-to-check"
 ```
 - **Get the game:** "Get me the latest build." Windows downloads it from the repo's Releases (the link
-  `.../releases/latest` always opens the newest build: bookmark it); a Mac pulls the
-  `playtest` branch and you press Play in Unreal (never save).
+  `.../releases/latest` always opens the newest build: bookmark it); a Mac pulls
+  `main` and you press Play in Unreal (never save).
 - **Report:** "File an issue: on Build 14 the frog fell through the road, it breaks the game." Or use the
   **Playtest report** form on GitHub (Issues > New issue), also in the GitHub phone app. One problem per issue.
 - **Check a fix:** issues labelled **ready-to-check** name the build with the fix. Play it, then reply `works` or
   say what's still wrong ("Issue 12 works").
-- **On the builder:** "Work through the playtest issues." Confirmed fixes go into `main`, which closes the issues.
+- **On the builder:** "Work through the playtest issues." All work goes straight to `main`; a confirmed fix
+  gets its issue closed.
 
 Full guide: [`PLAYTEST.md`](PLAYTEST.md).
 

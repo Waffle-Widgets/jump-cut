@@ -49,7 +49,8 @@ Your job, in every chat from Nov 11 to Nov 15:
 ## Which computer am I on? (check at the start of every chat)
 Run `hostname` and find this computer's row in the **Computers** table in `docs/TEAM.md`, and do only what its role allows:
 - **builder:** the only role that saves or commits Unreal files (`.uasset`, `.umap`) and publishes test builds. Work on
-  the `playtest` branch; merge into `main` when testers confirm (`playtest-issues` skill). `builder (Area)` = only that area.
+  `main` and merge finished work straight into it: there is no `playtest` branch any more (Justin, Nov 14).
+  The `playtest-issues` skill still runs the issue loop. `builder (Area)` = only that area.
 - **maker:** Blender, Meshy, TRELLIS, sounds, scripts. Never save in Unreal, even if it's open: hand the files to the builder.
 - **tester:** help play, file and check issues (`docs/PLAYTEST.md`). If Unreal is open to play, never save in it.
 - Any role may edit docs and scripts.
