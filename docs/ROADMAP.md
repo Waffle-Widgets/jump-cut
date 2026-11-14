@@ -908,6 +908,29 @@ _(nothing yet)_
 
 ## Decisions
 
+- **2026-11-14 (9:30 PM Pacific): the title screen is an animation, not a card, and M Station is a builder**
+  (Team Owner). He rejected the crash-scene title outright, then rejected the back-to-back still as well, and
+  described what he wanted instead: *"half of the barista fade into frame then the other half fades in as the
+  director, then have a clapperboard fade in over them, snap, then transition through them to the background."*
+  Asked which version to build, he took the expensive one - *"I say we go the expensive version and get it done
+  right"* - and in the same breath removed its worst risk: *"see if you can do the characters in one shot [as]
+  they would look after fading in so you can just do an easy split. They only really need to show the torso up."*
+  So the pair is drawn as ONE picture and cut at the centre, which is the only way two halves can be guaranteed to
+  line up at the seam. Art is merged (`e93490f`, PR #63); the widget is **#64**, on M Station.
+  - **This settles the headroom problem** that `UI-TITLE` and `UI-TITLE2` both lost to. Gemini will not leave a
+    clear top third for the game's name (best of three takes: 16.3%). An animation does not need one - the
+    lettering lands on the clapper snap, over the background, after the figures have wiped.
+  - **The director costume was redesigned** on his instruction: *"You can give the main character a whole new
+    outfit if it works, just get the point across that he becomes a director of reality when all powers have been
+    collected."* Long open charcoal coat, a line of cyan power-light down each open edge, three cyan forearm rings
+    - one per power. Editing a lock is normally forbidden; allowed here only because **no rigged model of the
+    director costume exists yet** to be contradicted. He noted one may be made later, at which point the rule
+    applies to this entry too.
+  - **M Station became a builder** with the condition attached: *"we need to make sure it doesn't try to build or
+    modify any blueprints that are being worked on by another chat or computer."* `docs/TEAM.md` carries a
+    four-step claim rule, because GameStation and M Station share one GitHub account and an LFS lock cannot tell
+    them apart. GameStation is still the single builder of record for packaging.
+
 - **2026-11-13 (6:40 PM Pacific): every character gets a lock, and prompts may not describe a character in
   their own words** (Team Owner). He reviewed the screen art and found the main character's apron drawn three
   different ways across three pictures - a crossed X-back on the ending card, a bare shirt back on the title
