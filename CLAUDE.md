@@ -311,6 +311,16 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
 - `ObjectTools.set_properties` on a placed actor doesn't mark the level as changed, so saving writes nothing. Re-set the
   actor's full transform afterwards, then save and check `git status`.
 - To test untested `.uasset` work on another PC, push it to a branch (`<name>/<topic>`), play it there, then merge.
+- **A maker or tester computer can look at the level without saving anything:** `tools/asset_walkthrough.py`
+  lists every placed actor's mesh and materials, what each Blueprint and widget references (asset registry), and
+  takes pictures along the route. Launch it with `-ExecCmds="py <script>"`, not `-ExecutePythonScript`: that
+  flag quits the editor the moment the script returns, before a single frame is drawn, so no screenshot is
+  ever taken. The script counts editor ticks itself and calls `quit_editor()`. Restore `DefaultEngine.ini`
+  afterwards (opening the editor writes a generated token into it).
+- **Importing a rigged FBX into Blender applies the pose it was exported in** (ours: frame 0 of Walk) to the
+  pose bones, even with `use_anim=False`. Reset every pose bone before measuring or posing, or the work is
+  built on a walking stride (`Art/Blender/pose_clip.py`). `ignore_leaf_bones=True` also drops real end bones
+  (the head, the fingertips) on rigs exported without leaf bones.
 
 - More Unreal patterns live in the skills: keyboard/gamepad input without wiring, effects without Niagara and
   light levels (`unreal-blueprint`), Meshy rigging and prop baking (`asset-import`), full-size game-camera shots with

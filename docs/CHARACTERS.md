@@ -838,6 +838,29 @@ side-on reference drawing. The blade is right; the handle is thinner than a real
 a hand, that will not show — seen edge-on it will.
 
 
+### Pose clips for beat 1 — 2026-11-13 evening, Blender on M Station, 0 credits (issue #45)
+
+`CrashDriver` and `CafeCoworker` shipped with Walk and Idle only, and beat 1 needs each in a state neither
+covers. `Art/Blender/pose_clip.py` reads the committed `SK_<Name>.fbx`, poses the **same** skeleton and writes a
+separate one-clip FBX beside it (mesh + rig + one action), so the original file does not change:
+
+| File | Clip | What it is |
+|---|---|---|
+| `CrashDriver/SK_CrashDriver_Slumped.fbx` | `Slumped`, 30 frames held | Sitting on the ground, back against the car's sill under the open door, one knee up, chin on his chest. Footprint 98 x 112 cm, 100 cm tall, hips over the origin, facing -Y like the rest pose |
+| `CafeCoworker/SK_CafeCoworker_Down.fbx` | `Down`, 30 frames held | On her back, head toward +Y, one knee bent, one arm out, head rolled aside. 83 x 161 cm, 43 cm tall. No wound (13+) |
+| `CafeCoworker/SK_CafeCoworker_Flinch.fbx` | `Flinch`, rest to pose in 5 frames, then held | Ducking with both forearms over her face. Optional; plays once when the explosion goes off |
+
+    blender -b --factory-startup --python Art/Blender/pose_clip.py -- CrashDriver Slumped
+
+**Checked** by reading each FBX back: same bone names and count (45 / 68), rest pose within 0.0001 cm of the
+original, 30,000 triangles, the clip present under its name, lowest vertex on z = 0 (the coworker's ponytail is
+allowed 2 cm into the floor). **Not checked:** anything in Unreal. With the driver posed, `BP_CrashDriver`'s
+-78 degree pitch and lift come off; he sits upright against the car instead.
+
+**The trap this found:** importing a rigged FBX into Blender applies the pose it was *exported* in (frame 0
+of Walk) to the pose bones, even with animation import off. Clear the pose bones first, or everything is
+built on a walking stride. `pose_clip.py` does; the first version did not, and the coworker hovered 20 cm up.
+
 ## Colour audit — Thu Nov 12 evening
 
 Run `python tools/color_audit.py`. It renders each finished model's **baked base colour unlit** (front and back),

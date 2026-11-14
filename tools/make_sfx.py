@@ -234,12 +234,158 @@ def make_jumpcut(folder):
     write(os.path.join(folder, "SFX_BulletTime.wav"), mix(swoop, noise(0.8, 0.22, 0.05, 1.4)))
 
 
+def _delay(dur, track):
+    return silence(dur) + track
+
+
+def _thud(freq, dur, vol=0.9, drop=0.55):
+    """A body hit: a sine that falls in pitch fast, the way a kick drum does."""
+    return tone(lambda x: freq * (1.0 - drop * min(1.0, x * 3.0)), dur, math.sin, vol, attack=0.001, decay_pow=2.4)
+
+
+def _swell(dur, vol, lowpass):
+    """Air moving past: noise that rises and falls with no hard start, so it never reads as a hit."""
+    n = int(dur * RATE)
+    air = noise(dur, 1.0, lowpass=lowpass, decay_pow=0.0)
+    return [air[i] * math.sin(math.pi * i / n) ** 2 * vol for i in range(n)]
+
+
+def make_jumpcut_fight(folder):
+    """Every sound beats 1 to 3 were missing (issue #43): the fight, the crash, the powers, the screens.
+
+    Same rules as make_jumpcut(): sine, square, triangle and noise only, so they are ours and need no
+    CREDITS.md entry. Each name is the Unreal asset name the builder assigns to a Blueprint variable.
+
+        python tools/make_sfx.py <folder> jumpcut
+    """
+    def w(name, samples):
+        write(os.path.join(folder, name + ".wav"), samples)
+
+    # --- the fight -------------------------------------------------------------------------------
+    # SFX_PunchWhoosh - air moving, no contact.
+    w("SFX_PunchWhoosh", _swell(0.16, 0.6, 0.35))
+
+    # SFX_PunchHit1/2/3 - the combo. Each is a click (bright noise) on a falling thud. The third is
+    # the finisher: lower, longer, with a second body under it, so the ear hears the combo end.
+    w("SFX_PunchHit1", mix(noise(0.05, 0.8, 0.85, 3.0), _thud(190.0, 0.13, 0.9)))
+    w("SFX_PunchHit2", mix(noise(0.05, 0.8, 0.80, 3.0), _thud(165.0, 0.14, 0.95)))
+    w("SFX_PunchHit3", mix(noise(0.09, 1.0, 0.70, 2.4), _thud(120.0, 0.30, 1.0), _thud(62.0, 0.42, 0.8, 0.4),
+                           _delay(0.03, noise(0.25, 0.35, 0.10, 2.0))))
+
+    # SFX_PlayerHit - the player takes one. Duller than his own punches and with a short falling
+    # square "ugh", so it is never confused with a hit he landed.
+    w("SFX_PlayerHit", mix(noise(0.06, 0.6, 0.45, 3.0), _thud(140.0, 0.18, 0.9),
+                           tone(lambda x: 300.0 * (1.0 - 0.45 * x), 0.16, square, 0.10, attack=0.002, decay_pow=1.5)))
+    # SFX_GoonHit - a goon takes one: lighter and higher than the punch that caused it.
+    w("SFX_GoonHit", mix(noise(0.04, 0.5, 0.6, 3.0), _thud(230.0, 0.10, 0.6)))
+    # SFX_GoonDown - body to pavement: a low thud, then a softer second one as he settles.
+    w("SFX_GoonDown", mix(_thud(95.0, 0.28, 1.0, 0.5), noise(0.12, 0.5, 0.25, 2.5),
+                          _delay(0.19, mix(_thud(75.0, 0.22, 0.55, 0.4), noise(0.10, 0.25, 0.2, 2.5)))))
+
+    # SFX_CleaverSwing - a blade, so the whoosh carries a thin falling whistle the fists do not have.
+    w("SFX_CleaverSwing", mix(_swell(0.26, 0.55, 0.55),
+                              tone(lambda x: 2600.0 * (1.0 - 0.5 * x), 0.26, math.sin, 0.12, attack=0.05, decay_pow=1.5)))
+    # SFX_BossDown - the boss falls. The goon's fall, twice the size, plus the cleaver ringing on
+    # the ground a beat later (two high sines that are not in tune with each other).
+    ring = mix(tone(lambda x: 1870.0, 0.9, math.sin, 0.16, attack=0.001, decay_pow=2.5),
+               tone(lambda x: 2495.0, 0.7, math.sin, 0.10, attack=0.001, decay_pow=2.5),
+               noise(0.03, 0.4, 0.9, 3.0))
+    w("SFX_BossDown", mix(_thud(70.0, 0.55, 1.0, 0.45), _thud(48.0, 0.7, 0.8, 0.3), noise(0.3, 0.6, 0.15, 2.0),
+                          _delay(0.42, ring)))
+
+    # --- beat 1: the crash and the explosion -------------------------------------------------------
+    # SFX_CarCrash - the car comes through the cafe wall: an engine rising for a third of a second,
+    # the impact, then glass - a spray of very short high sine pings at random times.
+    engine = tone(lambda x: 70.0 + 110.0 * x, 0.34, square, 0.16, attack=0.05, decay_pow=0.0)
+    engine = [engine[i] * (i / len(engine)) for i in range(len(engine))]
+    impact = mix(noise(0.5, 1.0, 0.5, 2.0), _thud(80.0, 0.5, 1.0, 0.5), noise(0.9, 0.5, 0.06, 1.5))
+    glass = []
+    for _k in range(26):
+        f = random.uniform(2400.0, 6200.0)
+        glass.append(_delay(0.05 + random.uniform(0.0, 0.75) ** 1.5,
+                            tone(lambda x, f=f: f, random.uniform(0.03, 0.09), math.sin, random.uniform(0.05, 0.16),
+                                 attack=0.001, decay_pow=2.0)))
+    w("SFX_CarCrash", seq(engine, mix(impact, *glass)))
+
+    # SFX_Explosion - the blast that starts the quick time event. A crack, a very low boom that
+    # keeps falling, and a long dull noise tail. No high tail: SFX_BulletTime plays over the end of it.
+    w("SFX_Explosion", mix(noise(0.08, 1.0, 0.95, 3.0),
+                           tone(lambda x: 85.0 * (1.0 - 0.6 * x), 1.3, math.sin, 1.0, attack=0.002, decay_pow=1.6),
+                           tone(lambda x: 43.0 * (1.0 - 0.4 * x), 1.5, tri, 0.7, attack=0.004, decay_pow=1.4),
+                           noise(1.5, 0.75, 0.07, 1.8), _delay(0.02, noise(0.5, 0.5, 0.3, 2.0))))
+
+    # --- the powers ---------------------------------------------------------------------------------
+    # SFX_PowerFreezeFrame - taking the first power from the driver. Cold: a pure rising fifth with
+    # a shimmer two octaves up, pale like the power's cyan. Ends on a held note, as if it stopped.
+    w("SFX_PowerFreezeFrame", mix(
+        seq(tone(lambda x: note(69), 0.16, math.sin, 0.35, decay_pow=0.6),
+            tone(lambda x: note(76), 0.16, math.sin, 0.35, decay_pow=0.6),
+            tone(lambda x: note(81), 0.95, math.sin, 0.40, decay_pow=1.6)),
+        _delay(0.32, tone(lambda x: note(93) * (1.0 + 0.004 * math.sin(40.0 * x)), 0.95, math.sin, 0.10, decay_pow=1.8)),
+        _delay(0.32, tone(lambda x: note(88), 0.95, tri, 0.08, decay_pow=1.8))))
+    # SFX_FreezeFrameOn - pressing E. The world stops: a hard low click and a tone that is cut
+    # dead rather than fading (decay_pow 0 = no fade), because time did not slow down, it stopped.
+    w("SFX_FreezeFrameOn", seq(mix(noise(0.03, 0.9, 0.9, 2.0), _thud(110.0, 0.09, 0.8)),
+                               mix(tone(lambda x: note(81), 0.22, math.sin, 0.30, attack=0.002, decay_pow=0.0),
+                                   tone(lambda x: note(88), 0.22, tri, 0.14, attack=0.002, decay_pow=0.0))))
+
+    # SFX_PowerSplice - taking the second power from the boss. Splice is the cut, so it is two
+    # halves that do not join smoothly: a phrase, a tape-splice click, the same phrase a tritone up.
+    def half(base):
+        return seq(tone(lambda x: note(base), 0.11, square, 0.16, decay_pow=0.5),
+                   tone(lambda x: note(base + 7), 0.11, square, 0.16, decay_pow=0.5),
+                   tone(lambda x: note(base + 12), 0.20, square, 0.16, decay_pow=1.2))
+    w("SFX_PowerSplice", seq(half(62), noise(0.02, 0.8, 0.95, 2.0), half(68),
+                             tone(lambda x: note(80), 0.6, math.sin, 0.30, decay_pow=1.8)))
+    # SFX_SpliceBlink - the blink itself (Left Shift). Very short: a rising zip that is CUT, a
+    # click, and a falling zip on the other side - leave, cut, arrive. 0.2 s, because it is spammed.
+    w("SFX_SpliceBlink", seq(tone(lambda x: 500.0 + 2600.0 * x * x, 0.07, tri, 0.38, attack=0.001, decay_pow=0.0),
+                             noise(0.012, 0.9, 0.95, 1.0),
+                             tone(lambda x: 3100.0 - 2300.0 * x, 0.11, tri, 0.34, attack=0.001, decay_pow=1.4)))
+
+    # --- the level ----------------------------------------------------------------------------------
+    # SFX_Checkpoint - a film slate: the clap, then two soft confirming notes.
+    w("SFX_Checkpoint", seq(noise(0.05, 0.7, 0.9, 4.0),
+                            tone(lambda x: note(79), 0.10, math.sin, 0.30, decay_pow=1.0),
+                            tone(lambda x: note(84), 0.32, math.sin, 0.30, decay_pow=1.6)))
+    # SFX_GateOpen - a heavy roller gate: a low rattling square that climbs slowly, ending in a clunk.
+    n = int(0.9 * RATE)
+    rattle = tone(lambda x: 38.0 + 22.0 * x, 0.9, square, 0.22, attack=0.03, decay_pow=0.0)
+    grit = noise(0.9, 0.45, 0.3, 0.0)
+    w("SFX_GateOpen", seq([(rattle[i] + grit[i] * (0.5 + 0.5 * math.sin(2 * math.pi * 14.0 * i / RATE))) *
+                           min(1.0, 4.0 * (1.0 - i / n)) for i in range(n)],
+                          mix(_thud(90.0, 0.25, 1.0), noise(0.06, 0.7, 0.6, 3.0))))
+
+    # --- the screens --------------------------------------------------------------------------------
+    def chord(notes, dur, vol):
+        return mix(*[tone(lambda x, f=note(k): f, dur, tri, vol, attack=0.01, decay_pow=1.5) for k in notes])
+
+    def run(notes, dur):
+        return seq(*[tone(lambda x, f=note(k): f, dur, tri, 0.30, decay_pow=0.6) for k in notes])
+
+    # SFX_TitleSting - the title card. A rising run into an open fifth: A with no third at the end,
+    # so it sounds like a question the game has yet to answer.
+    w("SFX_TitleSting", seq(run((57, 60, 64, 69), 0.09),
+                            mix(chord((45, 57, 64, 69), 1.6, 0.22),
+                                tone(lambda x: note(81), 1.6, math.sin, 0.12, decay_pow=2.0))))
+    # SFX_WinSting - major, rising, resolved.
+    w("SFX_WinSting", seq(run((60, 64, 67), 0.10),
+                          mix(chord((48, 60, 64, 67, 72), 1.4, 0.2),
+                              tone(lambda x: note(84), 1.4, math.sin, 0.12, decay_pow=2.0))))
+    # SFX_LoseSting - three falling notes into a low minor chord, like a reel running down.
+    w("SFX_LoseSting", seq(run((67, 63, 60), 0.16),
+                           mix(chord((36, 48, 51, 55), 1.5, 0.22),
+                               tone(lambda x: note(48) * (1.0 - 0.06 * x), 1.5, square, 0.05, decay_pow=1.5))))
+
+
 if __name__ == "__main__":
     folder = sys.argv[1] if len(sys.argv) > 1 else "sfx"
     which = sys.argv[2] if len(sys.argv) > 2 else "all"
     os.makedirs(folder, exist_ok=True)
     if which == "jumpcut":
         make_jumpcut(folder)
+        make_jumpcut_fight(folder)
     else:
         make_all(folder)
         make_jumpcut(folder)
+        make_jumpcut_fight(folder)

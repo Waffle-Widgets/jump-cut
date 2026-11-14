@@ -1,0 +1,194 @@
+{
+ "T_FX_Explosion_6x6": {
+  "file": "Art/FX/T_FX_Explosion_6x6.png",
+  "cols": 6,
+  "rows": 6,
+  "frames": 36,
+  "frame_px": [
+   256,
+   256
+  ],
+  "sheet_px": [
+   1536,
+   1536
+  ],
+  "for": "Beat 1: the blast at the crashed car that opens the bullet-time window",
+  "notes": "36 frames. Unlit, masked or translucent. Play once at ~30 fps on a camera-facing quad about 450 cm wide, centred ~150 cm above the car. Pairs with SFX_Explosion."
+ },
+ "T_FX_HitFlash_4x4": {
+  "file": "Art/FX/T_FX_HitFlash_4x4.png",
+  "cols": 4,
+  "rows": 4,
+  "frames": 16,
+  "frame_px": [
+   256,
+   256
+  ],
+  "sheet_px": [
+   1024,
+   1024
+  ],
+  "for": "Beats 2-3: a punch landing (player on goon, goon on player, the boss)",
+  "notes": "16 frames. Play once at ~40 fps on a camera-facing quad ~120 cm wide at the hit point. Scale 1.6 and tint amber for the combo finisher. Pairs with SFX_PunchHit1/2/3."
+ },
+ "T_FX_SpeedLines_4x2": {
+  "file": "Art/FX/T_FX_SpeedLines_4x2.png",
+  "cols": 4,
+  "rows": 2,
+  "frames": 8,
+  "frame_px": [
+   960,
+   540
+  ],
+  "sheet_px": [
+   3840,
+   1080
+  ],
+  "for": "The combo finisher (and optionally the Splice blink): a full-screen overlay",
+  "notes": "8 frames of 960x540. A UMG Image stretched full-screen or a post-process blend; cycle at 12-15 fps for 0.25 s. White with some dark wedges; the centre 60% of the screen is clear."
+ },
+ "T_FX_FreezeFrame_Overlay": {
+  "file": "Art/FX/T_FX_FreezeFrame_Overlay.png",
+  "cols": 1,
+  "rows": 1,
+  "frames": 1,
+  "frame_px": [
+   1920,
+   1080
+  ],
+  "sheet_px": [
+   1920,
+   1080
+  ],
+  "for": "Freeze Frame is on: the look of stopped time",
+  "notes": "1920x1080, straight alpha, mostly transparent. A full-screen UMG Image shown while FreezeActive; fade in over 0.1 s. Pairs with SFX_FreezeFrameOn."
+ },
+ "T_FX_SpliceTrail_2x4": {
+  "file": "Art/FX/T_FX_SpliceTrail_2x4.png",
+  "cols": 2,
+  "rows": 4,
+  "frames": 8,
+  "frame_px": [
+   512,
+   128
+  ],
+  "sheet_px": [
+   1024,
+   512
+  ],
+  "for": "Beat 3 onward: the Splice blink, and the moment the boss hands it over",
+  "notes": "8 frames of 512x128. A quad stretched from the blink start to the blink end (600 cm long, ~90 cm tall), facing the camera, played once at ~24 fps. Pairs with SFX_SpliceBlink."
+ },
+ "T_FX_WarnRing": {
+  "file": "Art/FX/T_FX_WarnRing.png",
+  "cols": 1,
+  "rows": 1,
+  "frames": 1,
+  "frame_px": [
+   1024,
+   1024
+  ],
+  "sheet_px": [
+   1024,
+   1024
+  ],
+  "for": "The cleaver boss's attack area on the ground (FreezeRing)",
+  "notes": "White on alpha, 10% fill inside. Unlit translucent on a flat plane or decal just above the ground, tinted with the warning colour; rotate it slowly so the dashes move."
+ },
+ "T_FX_SceneMarker": {
+  "file": "Art/FX/T_FX_SceneMarker.png",
+  "cols": 1,
+  "rows": 1,
+  "frames": 1,
+  "frame_px": [
+   512,
+   512
+  ],
+  "sheet_px": [
+   512,
+   512
+  ],
+  "for": "BP_SceneMarker GiftMesh (five visible spheres on the route)",
+  "notes": "White with a dark rim. A camera-facing quad ~60 cm, tinted, bobbing; or hide the marker entirely where it only exists for the script."
+ },
+ "T_FX_Prompt_4x2": {
+  "file": "Art/FX/T_FX_Prompt_4x2.png",
+  "cols": 4,
+  "rows": 2,
+  "frames": 8,
+  "frame_px": [
+   256,
+   256
+  ],
+  "sheet_px": [
+   1024,
+   512
+  ],
+  "for": "Interaction prompt over the crash driver (F) and the coworker (rescue)",
+  "notes": "8 frames of 256. White disc with a dark inner rim and a closing ring; loop at 8 fps, tint with the power colour, put the key letter on the disc with a TextRender (dark text). Replaces the blue and cyan engine spheres."
+ },
+ "T_FX_Telegraph_4x2": {
+  "file": "Art/FX/T_FX_Telegraph_4x2.png",
+  "cols": 4,
+  "rows": 2,
+  "frames": 8,
+  "frame_px": [
+   256,
+   256
+  ],
+  "sheet_px": [
+   1024,
+   512
+  ],
+  "for": "Enemy attack telegraph (BP_EnemyBase WarnSign, the sphere over each head)",
+  "notes": "8 frames of 256. Frames 0-3 pop in, 4-7 hold with a pulse; play once at 20 fps and hold the last frame through the windup. Camera-facing quad ~55 cm above the head. Colour is baked in."
+ },
+ "T_Icon_FreezeFrame": {
+  "file": "Art/UI/T_Icon_FreezeFrame.png",
+  "cols": 1,
+  "rows": 1,
+  "frames": 1,
+  "frame_px": [
+   256,
+   256
+  ],
+  "sheet_px": [
+   256,
+   256
+  ],
+  "for": "WBP_HUD FreezeBox icon (E)",
+  "notes": "256 px, readable at 64. Pale cyan on a dark tile."
+ },
+ "T_Icon_Splice": {
+  "file": "Art/UI/T_Icon_Splice.png",
+  "cols": 1,
+  "rows": 1,
+  "frames": 1,
+  "frame_px": [
+   256,
+   256
+  ],
+  "sheet_px": [
+   256,
+   256
+  ],
+  "for": "WBP_HUD SpliceBox icon (Left Shift)",
+  "notes": "256 px. Violet film strip cut on the diagonal."
+ },
+ "T_Icon_Rewind": {
+  "file": "Art/UI/T_Icon_Rewind.png",
+  "cols": 1,
+  "rows": 1,
+  "frames": 1,
+  "frame_px": [
+   256,
+   256
+  ],
+  "sheet_px": [
+   256,
+   256
+  ],
+  "for": "WBP_HUD RewindBox icon (Q)",
+  "notes": "256 px. Amber double triangle pointing left. Rewind is parked for the demo; the icon is here so the three boxes match if it comes back."
+ }
+}
