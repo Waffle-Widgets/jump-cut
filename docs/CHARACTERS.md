@@ -92,8 +92,39 @@ feet within 4 cm of the capsule bottom, anim instance `ABP_Unarmed_CWM_C`, and a
 resolve to the new `AM_CafeWalker_*` assets.
 
 **Not done.** Nobody has played it, so whether the mannequin's punches read correctly on his proportions is
-unjudged. `AM_CafeWalker_Death` exists but `BP_Player` still has no death-montage variable (#14). The old
-cream `SK_CafeWalker_Walk` and its `Anims` folder are still in the repo, now unused.
+unjudged. Two death clips now exist — the retargeted `AM_CafeWalker_Death` and the authored one below — and
+`BP_Player` still has no death-montage variable pointing at either (#14). The old cream `SK_CafeWalker_Walk`
+and its `Anims` folder are still in the repo, now unused.
+
+### Sat Nov 14 — his death is the first clip we authored ourselves (#103, #14)
+
+`Art/Blender/death_clip.py` animates the player's death on his own 69-bone rig and writes
+`Art/Blender/export/Characters/CafeWalker/SK_CafeWalker_Death.fbx` — mesh + rig + one action `Death`, 60
+frames at 30 fps. Authored in Blender 5.3.0 by **Fable 5.2** (`claude-fable-5-2`), which is the team rule for
+animation work; Blender tracks the current release and is not pinned (`docs/TEAM.md` → Versions we pin).
+
+Run it headless, from the committed FBX and never from a previous export of itself:
+
+    blender -b --factory-startup --python Art/Blender/death_clip.py
+
+It is built by solving every one of the 60 frames rather than interpolating between key poses — pelvis path,
+body pitch, spine, head and IK foot/hand targets are keyed, then each frame is solved and every bone keyed.
+That is what keeps a planted foot on the same world point instead of skating. A floor pass then pushes any
+part that would be under `z = 0` back up onto it, never down.
+
+Verified by a read-back that shares no code with the script: 69 bones with identical names and 0.00008 cm max
+rest drift, 26,852 verts / 30,000 polys unchanged, exactly one action, lowest vertex **+0.031 cm** on any
+frame, held pose still to **0.0 cm** across frames 52–60. Check sheets are in `docs/media/`; `Art/Blender/cache/`
+is gitignored.
+
+**Two traps it carries into Unreal.** Root motion must be **off**: the root `Bone_000` is at pelvis height and
+carries skin weight, so the fall is keyed on it, and extracting it as root motion with
+`RootMotionRootLock = AnimFirstFrame` pins the pelvis at standing height and hangs the body in the air. And
+FBX on this project goes through **Interchange**, not the legacy importer, so pinning the skeleton via
+`FbxImportUI` is not the lever — see `tools/unreal_import_authored_clip.py`, which configures the Interchange
+pipeline and refuses to finish if the imported clip's skeleton is not the same object as the one in the game.
+
+**Not in the game.** The clip is not imported, no montage exists for it, and nobody has seen the player die.
 
 ![The player, khaki shirt and green apron](media/2026-11-13-player-khaki.png)
 
