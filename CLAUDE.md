@@ -358,10 +358,34 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   that command removes the cel shader and nothing else, `PostProcessMaterial.cpp:1008-1014`); and finally
   `viewmode unlit`, which strips lighting, shadows, GI and reflections - **and it still flickered.** That kills ink
   lines, the light band, `Boil`, screen percentage, temporal AA, RT shadows, VSM and Lumen in one go. What is left
-  is geometry: coplanar z-fighting (`City_CafeSign` and `City_CafeAwning` are both placed at **x = 630** in
-  `tools/jumpcut_city_layout.py` and their bounds interpenetrate over a ~154 x 20 cm patch; the road pieces sit 1 cm
-  over the floor) or LOD popping. Start there, not in the shader. Full evidence and the per-frame dump analysis are
-  on https://github.com/Waffle-Widgets/jump-cut/issues/67 - read it before re-running anything above.
+  is geometry. **Nov 14: found, and it was NOT either of the two suspects this entry used to name.**
+  `City_CafeSign` and `City_CafeAwning` are **122 cm apart** at their nearest parallel overlapping faces (the
+  awning canvas passes THROUGH the sign's post - cosmetic, not a depth tie), and the road pieces 1 cm over the
+  floor have a depth margin of at least **37,000x** anywhere a player stands. Raising them to 2-3 cm or making
+  them decals - the fix this ticket recommended for a day - would have changed nothing.
+  **The tie is INSIDE the meshes:** `Art/Blender/jumpcut_city_kit.py` drew a detail flush with the surface it
+  sits on (the sign's lit `MS_CitySignA` quads exactly on its own `MS_CityTrim` casing faces; the shopfront
+  fascia's street face exactly on the `MS_CafeWall` plane; the pastry case's glass exactly on the trim posts).
+  Two faces of **different materials on one plane facing the same way** tie in the depth test, and the tie
+  breaks differently every frame the camera moves - a shimmering border under motion, steady when still.
+  41 of 85 kit models carried it, 2.66 m2 of tied face area, the three worst being exactly the three objects
+  the playtester circled. Cure: `stand_proud()` in the kit's `finish()` lifts the smaller face **0.4 cm** along
+  its normal (tied area 2,658,947 -> 9,294 cm2); same-material overlaps are left alone.
+  **A bounding box proves volumes overlap, not that faces are coplanar** - that is why this hid for a day.
+  Full evidence and the per-frame dump analysis are on
+  https://github.com/Waffle-Widgets/jump-cut/issues/67 - read it before re-running anything above.
+- **`unreal_city_mesh_audit.py` CANNOT see a vertex-only kit change, and will tell you the level is in step
+  while every patched mesh on screen is the old one.** It compares **triangle counts**; `stand_proud` changes
+  no triangle, no vertex count and no bounds the audit reads, and `city_models.json` comes out **byte-identical**
+  (md5 `ac639be6211f07fbb295358063cce647` committed, base rebuild and patched rebuild alike). Force the
+  re-import **by name** with `py <repo>/tools/unreal_city_reimport_by_name.py apply @<file of names>`, which
+  records each mesh's material slot list **in order**, collision, Nanite, LODs and triangle count, re-imports,
+  reads them back and refuses to save if any of it moved. Slot ORDER is the invariant that matters: every
+  `City_*` actor carries per-component material **overrides indexed by slot INDEX, not by name**, so a
+  re-import that reordered slots would swap the cafe shell's brick and glass while every triangle count
+  still matched. Its "NO-OP: bounds unchanged but Blender says this mesh grew" rule fires on a mesh you
+  already re-imported in a previous run - withhold `/tmp/jc67_expect.json` for that pass rather than
+  weakening any of the other guards.
 - **A character that floats only while it moves: check Root Motion Root Lock before the retarget.** Meshy's Smart
   Rig keeps its root bone at pelvis height in the *reference pose*; retargeted clips animate it on the floor. A
   clip with root motion on locks its root to `RefPose` by default, so the mob boss rose 87.26 x 1.2921 = 113 cm
