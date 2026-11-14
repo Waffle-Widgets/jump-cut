@@ -66,6 +66,13 @@ EMISSIVE = ('MS_CitySignA', 'MS_CitySignB')
 # with collision on, the player would be standing on a second floor the fight was never tuned on.
 WALK_THROUGH = {'SM_Noren', 'SM_CableSpan', 'SM_PlazaPaving', 'SM_Crosswalk', 'SM_RoadLines'}
 
+# Models that must KEEP simple collision, because something simulates them. Chaos physics (PR #48,
+# tools/unreal_chaos_props.py) gives these three a box and CTF_USE_DEFAULT so a punch can shove them:
+# Unreal refuses to simulate a body whose collision is complex-as-simple, and says so only in the log.
+# Running this placer after that silently put all three back to complex-as-simple, which would have
+# killed the knockable props the next time anything saved them. Keep the two lists in step.
+SIMULATED = {'SM_CafeChair', 'SM_TrafficCone', 'SM_TrashBags'}
+
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LAYOUT = os.path.join(REPO, 'Art', 'Blender', 'export', 'City', 'city_layout.json')
 
@@ -226,7 +233,9 @@ def prepare_meshes(models):
             nanite_off.append(n)
             changed = True
         bs = mesh.get_editor_property('body_setup')
-        if bs is not None:
+        if bs is not None and n in SIMULATED:
+            pass          # leave it alone - see SIMULATED above
+        elif bs is not None:
             flag = unreal.CollisionTraceFlag.CTF_USE_COMPLEX_AS_SIMPLE
             if bs.get_editor_property('collision_trace_flag') != flag:
                 bs.set_editor_property('collision_trace_flag', flag)

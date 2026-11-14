@@ -229,6 +229,14 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   lived in memory and the grey walls would have come back standing inside the city. Re-set the full transform to
   dirty it, then `EditorLoadingAndSavingUtils.save_packages([a.get_outermost()], False)` - and `git lfs lock`
   them first, because a committed actor package is read-only and the save fails **silently**.
+- **Two scripts can both be right about one asset and silently undo each other.** `jumpcut_city_place.py`
+  sets every city model to `CTF_USE_COMPLEX_AS_SIMPLE`; `unreal_chaos_props.py` gives three of those same
+  models a simple box and `CTF_USE_DEFAULT`, because a body with complex-as-simple collision **cannot
+  simulate** and only the log says so. Running the placer after the chaos pass put `SM_CafeChair`,
+  `SM_TrafficCone` and `SM_TrashBags` back, which would have stopped every knockable prop the next time
+  those meshes were saved. Nothing looks wrong at any point. When a tool writes a property across a whole
+  kit, give it an exceptions list (`SIMULATED` in the placer) the moment one member of that kit is used for
+  something else, and read the other tool's list rather than trusting the names.
 - **`CTF_USE_COMPLEX_AS_SIMPLE` is right for level geometry and wrong for cloth.** Setting it across the city kit
   turned the cafe's noren - a hanging door curtain - into a solid 150 x 100 cm wall across the cafe's only exit.
   It renders perfectly and nothing looks wrong; only a chest-height trace along the route finds it. Keep a

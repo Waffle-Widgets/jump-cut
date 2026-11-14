@@ -164,6 +164,15 @@ played it.
 
 ## Set pieces — the last grey boxes up to the cleaver boss (Fri Nov 13, evening)
 
+> **In the game as of Sat Nov 14, 02:10 UTC** (issue #40, Justin's Mac mini). All eleven are imported; the
+> seven that are level geometry are placed as 21 `JC_City` actors by `jumpcut_city_place.py add`, and the
+> four Blueprint meshes are swapped in at scale (1,1,1). 18 grey boxes hidden, asphalt on both floors, both
+> gates still block, and the player still reaches the driver with 134 cm to spare. Nobody has played it.
+>
+> **Keep `SIMULATED` in `tools/jumpcut_city_place.py` in step with `KNOCK` in `tools/unreal_chaos_props.py`.**
+> `SM_CafeChair`, `SM_TrafficCone` and `SM_TrashBags` must keep simple collision or the chaos props stop
+> being knockable, and the placer used to overwrite them.
+
 The Team Owner asked for everything up to and including the Splice boss to come out of grey boxes and
 mannequins. The characters for that were already made (and are waiting on the builder: issues #5, #6, #7).
 What had **no model at all** was the scenery the first build left as boxes after the city went in. Eleven
