@@ -333,14 +333,22 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
 - **`does_asset_exist` answers False for an imported-but-unsaved asset.** It is the wrong test for "is this
   already here" and it silently defeats an idempotence guard. Use `load_asset` (and see the asset-registry
   scan note above for the other half of this problem).
-- **Taking a source file back OUT of `Content/` is as dangerous as deleting the asset.** The editor's
-  auto-reimport watcher logs `AssetReimport: Attempting to delete <name> (its source file has been removed)`
-  and raises the same **Delete Assets** modal that freezes the MCP until a person presses Escape (Escape
-  keeps the assets). Restoring the file does not dismiss a dialog that is already up. Leave the source
-  beside its asset - which is exactly what `Content/Game/Audio` has always done with its `.wav` files.
-- **High CPU alone does not mean "working".** A 383-second anim-blueprint compile sat at ~70% CPU and
-  recovered on its own; a Delete Assets modal sat at ~185% with the log completely silent and never did.
-  Judge a stalled editor by whether the **log is still ticking**, not by `%CPU`.
+- **Taking a source file back OUT of `Content/` wakes the auto-reimport watcher.** It logs
+  `AssetReimport: Attempting to delete <name> (its source file has been removed)` and then churns at high
+  CPU working through the change, which stops the MCP answering for minutes. Put the file back, or better,
+  leave the source beside its asset - which is exactly what `Content/Game/Audio` has always done with its
+  `.wav` files. (It did NOT raise a dialog and nothing was deleted; see the next note, which is how that
+  was established after guessing wrong.)
+- **Use `sample <pid>` to tell a BUSY editor from a BLOCKED one. `%CPU` cannot.** A stack in
+  `FAutoReimportManager::Tick` or a compile is a game thread that is still ticking and will recover; a
+  stack in `RunModal` is a dialog waiting for a person. Both can show a silent log and high CPU - a
+  383-second anim-blueprint compile sat at ~70%, the reimport churn at ~185%, and neither was a modal.
+  On a Mac `screencapture` needs screen-recording permission and `osascript` needs assistive access, so
+  neither can be used to look at the screen; `sample` needs nothing.
+- **An MCP call that times out on the client still RAN in the editor.** A `FillForm` that "failed" had
+  already put its text in the console box, so the next one appended and the command came out as the path
+  twice (`py <path><path>`) and silently did nothing. Recipe: `FillForm` with `""` to clear, `FillForm` the
+  command, `PressKey("Enter")`, then read the `Cmd:` line in the log to confirm what actually ran.
 - **`AssetTools.write_file` only accepts `.csv/.html/.json/.md/.py/.txt` and only under the project roots**, so
   write a capture's base64 to a `.txt` under `Saved/` and decode it outside the editor.
 - The frog's `CameraBoom` has Inherit Yaw off (that keeps the camera north while the frog turns). A spring arm
