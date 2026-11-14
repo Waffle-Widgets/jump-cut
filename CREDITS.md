@@ -31,8 +31,9 @@ go in the table above instead. This list is also what goes in the itch.io form's
 - Tripo (tripo3d.ai, a jam partner) — image-to-3D for the `CafeWalker` hero made on the jam's first night, its
   A-pose redraw and retopology (the model is in the table above).
 - TRELLIS.2 (Microsoft, MIT) — image-to-3D models, run locally
-- Blender 5.2 — rigging and clean-up, run by script, and driven by Claude through Blender's official MCP (Blender
-  Lab's `blender_mcp`)
+- Blender — rigging, clean-up and animation, run by script, and driven by Claude through Blender's official MCP
+  (Blender Lab's `blender_mcp`). We run the current release rather than a pinned one: 5.3.0 on Justin's Mac mini
+  from Nov 14, 5.2 on M Station
 - Unreal Engine 5.8 (Epic Games) with Epic's Unreal MCP plugin — the engine the game is built in, and how Claude drives
   the editor (Blueprints, levels, materials, Play-mode checks)
 

@@ -40,7 +40,24 @@ table, commits and pushes. A computer can have more than one role (`tester, make
 | Gamestation | Manuel Mendez | Windows | builder | Unreal edits, packaging, fixes playtest issues |
 | M_Station | Manuel Mendez | Windows | maker, **builder** (see the claim rule below) | TRELLIS, Blender, Meshy, sounds, ComfyUI on the 3090, the Gemini browser. UE 5.8 installed and the project has been opened here |
 | _(Manny's Mac: hostname to add)_ | Manuel Mendez | macOS | tester | |
-| Justins-Mac-mini | Justin Catrambone | macOS | tester, maker, **builder (beat 4, beats 1-3 cleanup, the beat 1-3 imports: #40, #5, #7, #6)** | Mac mini, Apple silicon. Full UE 5.8 (43 GB, `~/Epic Games/UE_5.8`) with the MCP plugin prebuilt for Mac, and a complete clone with all LFS objects, so it can do Unreal work. git-lfs, gh, uv and the Blender MCP set up Nov 9; Blender is 5.1.2 (team uses 5.2) |
+| Justins-Mac-mini | Justin Catrambone | macOS | tester, maker, **builder (beat 4, beats 1-3 cleanup, the beat 1-3 imports: #40, #5, #7, #6)** | Mac mini, Apple silicon. Full UE 5.8 (43 GB, `~/Epic Games/UE_5.8`) with the MCP plugin prebuilt for Mac, and a complete clone with all LFS objects, so it can do Unreal work. git-lfs, gh, uv and the Blender MCP set up Nov 9; **Blender 5.3.0** (the current release, upgraded Nov 14 - see *Versions we pin* below) |
+
+**Versions we pin**
+
+- **Blender: whatever the current release is.** Not pinned (Team Owner, Sat Nov 14 14:18 UTC: *"We can use the
+  latest Blender version"*), which replaces the older "team uses 5.2" note. This Mac went 5.1.2 -> **5.3.0** on
+  Nov 14 and the existing authoring path was checked on it before anything else was done: `SK_CafeWalker.fbx`
+  round-trips unchanged (69 bones, 26,852 verts, 30,000 polys, both `Idle` and `Walk` actions kept), and
+  `Art/Blender/pose_clip.py` rebuilds `CrashDriver Slumped` with 45 of 45 bones, the same bone names, 30,000
+  tris and **0.0001 cm** max rest drift. Keep that check in mind when a machine upgrades: run `pose_clip.py`
+  once and read its `verify` block before trusting a new Blender with a clip.
+- **One Blender gotcha found on 5.3, and it is version-independent:** the FBX exporter re-prefixes action names
+  on every round trip - `Armature|Armature|Idle` comes back as `Armature|Armature|Armature|Armature|Idle`.
+  Export a clip, re-import it, export again and the name grows, which breaks the Unreal import naming. Author
+  from the committed `SK_<Name>.fbx` each time rather than from a previous export.
+- **Fable: 5.2, and only 5.2** (`claude-fable-5-2`) (Team Owner, same message: *"Fable needs to be version
+  5.2"*). This is the model pin, not a Blender version - the two got conflated when issue #103 was first
+  written. Animation authoring (#103) runs on Fable 5.2; say in the ticket or PR which model did the work.
 
 **Why this Mac is a builder for beat 4 only** (asked for by the Team Owner, Fri Nov 13, 22:30 UTC: *"Continue beat 4
 on this mac"*). It was `tester, maker`, and a maker never saves in Unreal - but it had already saved `.uasset`s twice

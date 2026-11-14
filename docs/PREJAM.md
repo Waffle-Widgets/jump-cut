@@ -230,6 +230,6 @@ at it than have §7h's "Epic may ask for your Git history" meet one squashed com
 - [ ] Move any new helper script written *during* the jam into the "made during the jam" section, not the pre-jam one.
 - [ ] Paste the short version above into the itch.io submission's pre-jam declaration.
 - [ ] Fill the "Tools you used" field: Claude Code (Anthropic), Gemini (Google), ComfyUI + Qwen-Image (local),
-      Meshy (meshy.ai), TRELLIS.2 (Microsoft, MIT, local), Tripo (tripo3d.ai), Blender 5.2, Unreal Engine 5.8
+      Meshy (meshy.ai), TRELLIS.2 (Microsoft, MIT, local), Tripo (tripo3d.ai), Blender (5.2 / 5.3), Unreal Engine 5.8
       and Epic's Unreal MCP.
 - [ ] Check `CREDITS.md` is still complete.
