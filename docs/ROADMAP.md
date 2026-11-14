@@ -895,6 +895,21 @@ _(nothing yet)_
 
 ## Decisions
 
+- **2026-11-13 (6:40 PM Pacific): every character gets a lock, and prompts may not describe a character in
+  their own words** (Team Owner). He reviewed the screen art and found the main character's apron drawn three
+  different ways across three pictures - a crossed X-back on the ending card, a bare shirt back on the title
+  card, a bib with no neck strap on the cover - none of them the apron on the reference sheet his rigged model
+  was built from. His reason: *"We need to have a way of making sure characters don't change details like this
+  between generations, else the game be labeled AI slop."* So `docs/character-locks.json` now holds one
+  canonical description per character, taken from the sheet the 3D model came from, and `tools/gen_images.py`
+  substitutes it for a `{CafeWalker}` / `{CafeWalker:short}` token - every picture sends identical words, and
+  each character's `never` list goes into the negative prompt automatically. `tools/char_lock_check.py` fails
+  if a prompt starts describing a locked character by hand again; the A-pose prompts that *drew* the sheets
+  are exempt as the lock's source. **The honest limit:** this removes drift caused by us, not drift caused by
+  the model - three takes still drew the coworker's apron cross-back with the no-crossed-straps sentence in the
+  prompt. The two further levers are posing the character so the detail is in frame, and `--lock-ref`, which
+  hands the model the reference sheet itself. **Changing a lock means the model is wrong**, so the sheet gets
+  redrawn and the character remade - a lock is never edited to match a picture that came out differently.
 - **2026-11-13 (4:30 PM Pacific): the demo is four beats - 1 to 3 plus the "to be continued" - and the
   platforming and the Stunt Double boss become nice-to-haves** (Justin). "Because of time, we're going to
   focus on beats 1-3 and making that first half be amazing. We might have to move beat 6 (to be continued..)

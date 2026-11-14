@@ -90,8 +90,13 @@ def put(label, model, x, y, z=0.0, yaw=0.0):
 # the player's walk (0,0)->(615,0), the shrapnel's flight (-520,0)->(300,-250), and the driver's body at
 # (-380, 220), which the player has to be able to reach and touch.
 CAFE_DRESS_CM = [
-    ('SM_CafeCounter', 200.0, -380.0, 0.0, 0), ('SM_CafeEspresso', 90.0, -380.0, 104.0, 0),
-    ('SM_CafePastryCase', 350.0, -378.0, 104.0, 0), ('SM_CafeShelf', -220.0, -490.0, 2.0, 0),
+    # The counter sits at the WEST end with the register on it, beside the wall the car comes through,
+    # so the car barely misses whoever is standing at it (Team Owner, Fri Nov 13). Staff side is +Y,
+    # facing the car: counter north face y = -200, car south flank y = -100, so the gap is 100 cm and a
+    # person at the register stands about 60 cm from the wreck.
+    ('SM_CafeCounter', -330.0, -240.0, 0.0, 180), ('SM_CafeRegister', -540.0, -240.0, 110.0, 180),
+    ('SM_CafeEspresso', -430.0, -240.0, 104.0, 180),
+    ('SM_CafePastryCase', -160.0, -238.0, 104.0, 180), ('SM_CafeShelf', -220.0, -490.0, 2.0, 0),
     ('SM_CafeShelf', 460.0, -490.0, 2.0, 0),
     ('SM_CafeTable', -310.0, 310.0, 2.0, 0), ('SM_CafeChair', -310.0, 235.0, 2.0, 0),
     ('SM_CafeChair', -310.0, 385.0, 2.0, 180),
@@ -502,6 +507,7 @@ def validate():
         if -380.0 - door_front < 60.0:
             problems.append('the crash car door reaches x = %.0f, within 60 cm of the driver at x = -380'
                             % door_front)
+    problems += _cafe_dress_agrees()   # the mock-up render and the level must place the identical list
     if problems:
         print('LAYOUT PROBLEMS (%d):' % len(problems))
         for p in problems:
@@ -510,6 +516,31 @@ def validate():
         print('layout checked: nothing solid stands in the road, the cafe, the arena, the gates or the exit '
               'run, and no two lane buildings overlap')
     return len(problems)
+
+
+def _cafe_dress_agrees():
+    """CAFE_DRESS_CM here vs CAFE_DRESS in Art/Blender/jumpcut_city_kit.py - same list, different units.
+
+    The cafe dressing is written down twice: here in centimetres for the level, and in the Blender kit in
+    metres for the mock-up render. They are supposed to be the identical list, and nothing kept them in step,
+    so a change made in one and not the other gives a render that quietly disagrees with the game. The counter
+    move on Fri Nov 13 touched both; this is what proves it.
+    """
+    import re
+    kit = os.path.join(ROOT, 'Art', 'Blender', 'jumpcut_city_kit.py')
+    if not os.path.exists(kit):
+        return []
+    m = re.search(r'CAFE_DRESS\s*=\s*\[(.*?)\n\]', open(kit, encoding='utf-8').read(), re.S)
+    if not m:
+        return ['could not find CAFE_DRESS in the Blender kit to compare against']
+    rx = r"\('(SM_\w+)',\s*(-?[\d.]+),\s*(-?[\d.]+),\s*(-?[\d.]+),\s*(-?\d+)\)"
+    theirs = [(g[0], round(float(g[1]) * 100, 1), round(float(g[2]) * 100, 1), round(float(g[3]) * 100, 1),
+               int(g[4])) for g in re.findall(rx, m.group(1))]
+    ours = [(r[0], round(r[1], 1), round(r[2], 1), round(r[3], 1), r[4]) for r in CAFE_DRESS_CM]
+    if len(ours) != len(theirs):
+        return ['the cafe dressing has %d rows here and %d in the Blender kit' % (len(ours), len(theirs))]
+    return ['cafe dressing row %d differs: here %s, Blender kit %s' % (i, a, b)
+            for i, (a, b) in enumerate(zip(ours, theirs)) if a != b]
 
 
 def main():

@@ -666,6 +666,30 @@ Only one machine should have a given person's working copy of the project open a
 - Log setup problems and things that broke too, not just successes. Those are the most useful parts.
 - When the editor is open, save a screenshot to `docs/media/` and link it from the entry.
 
+## Drawing a character (the character lock)
+**Never describe one of our characters in a prompt in your own words.** `docs/character-locks.json` holds one
+canonical description each, taken from the reference sheet the rigged model was built from. Write a token and
+`tools/gen_images.py` substitutes it:
+
+    {CafeWalker}          full - when he is close and most of him is in frame
+    {CafeWalker:short}    shortened - when he is small or far away
+
+Run `python tools/char_lock_check.py` before committing a prompt change; it fails if a prompt starts describing
+a locked character by hand. The A-pose prompts that *drew* the sheets are exempt (`sheet_prompts` in the lock).
+
+**Why**: on Fri Nov 13 the title card, the ending card and the itch.io cover each drew the main character's
+apron differently, because each prompt described him from memory and six words left the apron's construction
+free. The Team Owner's reason for the rule: *"else the game be labeled AI slop."*
+
+**Two things this does not do.** It makes the words identical; it does not make the model obey them - three
+takes running still drew a cross-back apron with the no-crossed-straps sentence in the prompt. And it cannot
+see the picture. So: pose the character so the detail that drifts is actually **in frame** (a detail on a
+surface the camera cannot see gets invented), use `--lock-ref` to hand the model the sheet itself, and look at
+the take.
+
+**A lock is changed only when the MODEL is wrong**, which means redrawing the sheet and remaking the rig. Never
+edit a lock to match a picture that came out differently.
+
 ## Assets and credits
 - When we import an asset we didn't make (Fab, AI-generated, sound libraries), remind us to add it to `CREDITS.md` with its source and license.
 

@@ -1,0 +1,133 @@
+{
+  "_README": [
+    "THE CHARACTER LOCK. One place that says what each character looks like, so two pictures of the same",
+    "person cannot disagree. Nothing else in this repo is allowed to describe a locked character in prose.",
+    "",
+    "HOW IT IS USED",
+    "  docs/prompts.md writes {CafeWalker} inside a '> ' prompt line. tools/gen_images.py replaces that token",
+    "  with 'prompt' below before it sends anything to the model, so every picture gets the SAME words.",
+    "  tools/char_lock_check.py fails if a prompt writes a locked character out by hand instead.",
+    "",
+    "WHY IT EXISTS",
+    "  Fri Nov 13: the title card, the 'to be continued' card and the itch.io cover each drew the main",
+    "  character's apron differently - a crossed X-back, a plain shirt back, and a bib with no neck strap at",
+    "  all. Three pictures, three aprons. A player reads that as AI slop, correctly.",
+    "",
+    "THE RULE FOR CHANGING ONE",
+    "  'sheet' is the drawing the rigged 3D model was made from. It is the truth. If you change a lock you are",
+    "  saying the MODEL is wrong, so the model gets remade too - never change a lock just to match a picture",
+    "  that came out differently.",
+    "",
+    "SHORT FORM: write {CafeWalker:short} when the character is small or far away in the frame. It is the",
+    "  same lock, shortened to the details that still read at that size - the apron's single neck loop and bare",
+    "  back are kept in BOTH forms, because that is the detail that drifted.",
+    "",
+    "'sheet_prompts' are the prompt codes that DREW the canonical sheet. They are the lock's own source,",
+    "  so char_lock_check.py lets them describe the character in their own words. Nothing else may.",
+    "  Changing one of those prompts means redrawing the sheet AND remaking the rigged model.",
+    "",
+    "CAMERA ANGLE IS PART OF THE LOCK. If the detail that drifts lives on a surface the camera cannot see, the",
+    "  model will invent that surface. The apron's single neck loop is the clearest example: drawn from directly",
+    "  behind, the model reaches for the cross-back apron it has seen a thousand times and the words do not stop",
+    "  it (three takes, three cross-backs). Pose a locked character so the distinguishing detail is IN FRAME -",
+    "  side or three-quarter for this apron - or use --lock-ref and hand the model the sheet itself.",
+    "",
+    "SAY WHAT IS THERE, NOT WHAT IS ABSENT. Sat Nov 14: the title card kept drawing a manufacturer badge on the",
+    "  car through 'no badge, no emblem' in the prompt AND 'car badge' in the negative, and stopped the moment the",
+    "  grille was described positively ('a plain black horizontal mesh grille whose centre is smooth and empty').",
+    "  The apron straps were failing the same way - 'leaving his back bare with no crossed straps' is an absence,",
+    "  and the model dropped it four takes running. Both straps clauses are now written as a positive description",
+    "  of what the back actually looks like. THIS IS A REWORDING, NOT A CHANGE TO THE GARMENT: the apron is the",
+    "  same single-neck-loop bib apron the rigged models wear. The rule still stands - if a lock ever has to change",
+    "  what a character IS, the sheet is redrawn and the model remade instead.",
+    "",
+    "GARMENT-ONLY FORM: {CafeWalker:apron} is the apron on its own, for a picture where the garment appears",
+    "  without the person in it - the lose screen is his apron lying on a studio floor. Without this the lose",
+    "  screen described the apron by hand and nothing was guarding it."
+  ],
+  "CafeWalker": {
+    "role": "the player character, a coffee shop worker",
+    "sheet": "Art/Refs/CafeWalker_apose.png",
+    "sheet_prompts": [
+      "MC-APOSE",
+      "GEM2-MC"
+    ],
+    "model": "Art/Blender/export/Characters/CafeWalker/SK_CafeWalker.fbx",
+    "height_cm": 175,
+    "prompt": "a slim young man of about twenty-five with short messy straight black hair falling over his forehead and covering the tops of his ears, a thin calm tired face, wearing a khaki brown long-sleeve collared button shirt with the sleeves pushed up to just below the elbow and the collar open, over it a plain dark green bib apron held up by one single strap that rises from the two top corners of the bib and meets in a loop high behind his neck, so that seen from behind the whole of his back is plain khaki shirt with nothing on it except that one strap at the neck and the two waist ties passing round his waist to the front, one square patch pocket on the chest of the bib, the long apron waist ties brought round and knotted in a simple bow at the front of his waist just under the bib, a pale grey bar towel tucked into the waist tie at his left hip, the apron reaching below his knees, loose charcoal grey trousers and grey canvas low-top sneakers with white toe caps",
+    "prompt_short": "a slim young man with short messy black hair, wearing a khaki brown long-sleeve shirt with the sleeves pushed up and a dark green bib apron held up by one single strap that meets in a loop high behind his neck, his back otherwise plain khaki shirt with only the waist ties passing round it to a knot at the front",
+    "prompt_apron": "a plain dark green bib apron with one single strap looped to go over the head, a square patch pocket on the bib, and long waist ties",
+    "colours": {
+      "hair": "#0A0A0A",
+      "skin": "#E7C6A1",
+      "shirt": "#887048",
+      "apron": "#415A45",
+      "towel": "#A09880",
+      "trousers": "#2D3030",
+      "shoes": "#5C5D58"
+    },
+    "invariants": [
+      "ONE neck loop. The apron goes over the head on a single strap. The back is bare shirt.",
+      "NEVER crossed straps, NEVER an X on the back, NEVER a two-strap cross-back apron.",
+      "The bib has one square chest pocket.",
+      "The waist ties knot at the FRONT, in a bow, under the bib. Not at the back.",
+      "A pale grey bar towel hangs at his left hip.",
+      "Sleeves are pushed up to below the elbow, forearms bare. Shirt is khaki brown, never cream.",
+      "The apron is below the knee, not a short waist apron."
+    ],
+    "never": "cream shirt, white shirt, crossed apron straps, cross-back apron, X straps on the back, apron with no neck strap, short waist apron, bare chest, tie, waistcoat, glasses, beard, blond hair, hat"
+  },
+  "CafeCoworker": {
+    "role": "the coworker rescued in beat 1",
+    "sheet": "Art/Refs/CafeCoworker_apose.png",
+    "sheet_prompts": [
+      "COWORKER-APOSE",
+      "GEM2-COWORKER"
+    ],
+    "model": "Art/Blender/export/Characters/CafeCoworker/SK_CafeCoworker.fbx",
+    "height_cm": 165,
+    "prompt": "a young woman of about twenty-four with dark brown hair pulled back into a short high ponytail and a loose fringe, wearing a pure white short-sleeve collared shirt and over it a plain teal bib apron held up by one single strap that rises from the two top corners of the bib and meets in a loop high behind her neck, so that seen from behind the whole of her back is plain white shirt with nothing on it except that one strap at the neck and the two waist ties passing round her waist to the front, the apron waist ties knotted in a bow at the front of her waist, dark navy trousers and plain black flat shoes",
+    "prompt_short": "a young woman with dark brown hair in a short high ponytail, wearing a pure white short-sleeve shirt and a teal bib apron held up by one single strap that meets in a loop high behind her neck, her back otherwise plain white shirt with only the waist ties passing round it",
+    "prompt_apron": "a plain teal bib apron with one single strap looped to go over the head and long waist ties",
+    "colours": {
+      "hair": "#3A2A20",
+      "skin": "#F0CCA8",
+      "shirt": "#FFFFFF",
+      "apron": "#1F6E70",
+      "trousers": "#23283A",
+      "shoes": "#1A1A1A"
+    },
+    "invariants": [
+      "ONE neck loop, bare shirt back, ties knotted at the FRONT - the same apron pattern as CafeWalker, different colour.",
+      "Her shirt is PURE WHITE, never cream, never beige, never tan.",
+      "Short high ponytail, never loose hair, never a bun.",
+      "Her apron is teal. It is not the player's dark green."
+    ],
+    "never": "cream shirt, beige shirt, tan shirt, crossed apron straps, cross-back apron, loose hair, bun, green apron, long sleeves"
+  },
+  "CrashDriver": {
+    "role": "boss 1, already dead in the wrecked car; touching him grants Freeze Frame",
+    "sheet": "Art/Refs/CrashDriver_apose.png",
+    "sheet_prompts": [
+      "BOSS1-APOSE",
+      "GEM2-BOSS1"
+    ],
+    "model": "Art/Blender/export/Characters/CrashDriver/SK_CrashDriver.fbx",
+    "height_cm": 180,
+    "prompt": "a heavy-set man in his fifties with short grey-streaked dark hair, wearing a worn dark brown leather jacket over a black shirt, dark brown trousers and heavy black boots",
+    "prompt_short": "a heavy middle-aged man in a worn brown leather jacket and dark trousers",
+    "colours": {
+      "hair": "#2A2420",
+      "skin": "#E2BE98",
+      "jacket": "#584848",
+      "shirt": "#1C1C1C",
+      "trousers": "#483838",
+      "boots": "#141414"
+    },
+    "invariants": [
+      "Brown leather jacket, never black leather.",
+      "No blood and no wounds anywhere - the game is rated 13+."
+    ],
+    "never": "blood, wound, gore, injury, black leather jacket, young man, uniform, helmet"
+  }
+}

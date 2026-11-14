@@ -43,6 +43,37 @@ def find_prompt(code):
     return None
 
 
+LOCKS = os.path.join(ROOT, 'docs', 'character-locks.json')
+
+
+def locks():
+    """The character lock: docs/character-locks.json. One place that says what each character looks like."""
+    if not os.path.exists(LOCKS): return {}
+    return {k: v for k, v in json.load(open(LOCKS, encoding='utf-8')).items() if not k.startswith('_')}
+
+
+def expand(prompt, lock=None):
+    """Replace {CafeWalker} with the locked description, and collect what must NEVER be drawn.
+
+    This is the whole anti-drift mechanism: no prompt writes a character out by hand, so two pictures of
+    the same person get byte-identical words. Returns (prompt, negatives, names used).
+    """
+    lock, used, neg = lock if lock is not None else locks(), [], []
+    def sub(m):
+        name, form = m.group(1), (m.group(2) or 'prompt')
+        if name not in lock: sys.exit('unknown character {%s}: not in docs/character-locks.json' % name)
+        key = 'prompt' if form == 'prompt' else 'prompt_' + form
+        if key not in lock[name]: sys.exit('{%s:%s}: %s has no %s in the lock' % (name, form, name, key))
+        used.append(name)
+        return lock[name][key]
+    # Any word is matched as a form so an unknown one (a typo) reaches sub() and is rejected there.
+    # Matching only the known forms would leave "{CafeWalker:hatt}" in the prompt as literal text.
+    out = re.sub(r'\{([A-Za-z][A-Za-z0-9_]*)(?::(\w+))?\}', sub, prompt)
+    for n in used:
+        if lock[n].get('never'): neg.append(lock[n]['never'])
+    return out, ', '.join(neg), used
+
+
 def api(path, data=None):
     req = urllib.request.Request(URL + path, data=json.dumps(data).encode() if data is not None else None, headers={'Content-Type': 'application/json'})
     with urllib.request.urlopen(req, timeout=30) as r: return r.read()
@@ -146,13 +177,26 @@ def main():
     ap.add_argument('codes', nargs='*')
     ap.add_argument('--text'); ap.add_argument('--neg', default=''); ap.add_argument('--cfg', type=float, default=4); ap.add_argument('--name'); ap.add_argument('--model', default='qwen_image_2512_fp8_e4m3fn.safetensors'); ap.add_argument('--lora', default=None); ap.add_argument('--lora-k', type=float, default=0.8); ap.add_argument('--takes', type=int, default=2); ap.add_argument('--seed', type=int)
     ap.add_argument('--ref', action='append', default=[], help='a style reference picture (up to 3); switches to the edit model'); ap.add_argument('--size', default='1664x928'); ap.add_argument('--steps', type=int, default=30)
+    ap.add_argument('--lock-ref', action='store_true', help="also hand the model each locked character's own reference sheet (switches to the edit model)")
     a = ap.parse_args()
     w, h = map(int, a.size.split('x'))
     jobs = [(a.name or 'custom-' + str(int(time.time())), a.text)] if a.text else [(c, find_prompt(c)) for c in a.codes]
     for c, p in jobs:
         if not p: sys.exit(f'no prompt found for {c} (looked for "### {c}" in the prompt docs)')
+    lock, sheets = locks(), []
+    expanded = []
+    for c, p in jobs:
+        p, lneg, used = expand(p, lock)
+        if used: print('%s: locked characters %s' % (c, ', '.join(used)))
+        if a.lock_ref:
+            for n in used:
+                sh = os.path.join(ROOT, lock[n]['sheet'].replace('/', os.sep))
+                if os.path.exists(sh) and sh not in sheets: sheets.append(sh)
+        expanded.append((c, p, lneg))
+    jobs = [(c, p) for c, p, _ in expanded]
+    locknegs = {c: n for c, _, n in expanded}
     start_comfy()
-    refs = [upload(r) for r in a.ref]
+    refs = [upload(r) for r in a.ref + sheets]
     if refs:   # the edit model draws from the references; the pixel-art add-on is for the other model
         a.lora = None
         if a.model.startswith('qwen_image_2512'): a.model = 'qwen_image_edit_2511_fp8mixed.safetensors'
@@ -160,7 +204,8 @@ def main():
     for code, prompt in jobs:
         if a.lora and not prompt.startswith('Pixel Art'): prompt = 'Pixel Art, ' + prompt   # the add-on's trigger words
         print(code)
-        for k in range(a.takes): generate(prompt, f'{code}-{k + 1}', seed + k, w, h, a.steps, a.neg, a.cfg, model=a.model, lora=a.lora, lora_k=a.lora_k, refs=refs)
+        neg = ', '.join(x for x in (a.neg, locknegs.get(code, '')) if x)
+        for k in range(a.takes): generate(prompt, f'{code}-{k + 1}', seed + k, w, h, a.steps, neg, a.cfg, model=a.model, lora=a.lora, lora_k=a.lora_k, refs=refs)
 
 
 if __name__ == '__main__':
