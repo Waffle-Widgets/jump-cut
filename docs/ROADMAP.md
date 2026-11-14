@@ -259,11 +259,16 @@ The queue the work-order decision creates. Take the top unfinished line.
 | 2. Street | **Done** - goons, fists, animation. Tuning only: one combo clears all three in about 1.0 s. **Their model is made but not imported** (art, not code): `SK_StreetGoon.fbx` is committed, but `BP_Goon` still wears Epic's mannequin until the builder imports him, and they are the enemy in beats 2 to 5. Designed, drawn and modelled Nov 13, see `StreetGoon` in [`CHARACTERS.md`](CHARACTERS.md#the-goons--streetgoon-beats-2-to-5) |
 | 3. Splice boss | Fight works. He hands over `HasSplice`, which **now opens the Splice blink** (below) |
 | 4. Destroyed buildings | **Built and in the level.** The **Splice power** (600 cm blink, Left Shift / gamepad B) and the **platforming section** are both done: 23 actors placed and saved in `Lvl_JumpCut` - three gaps (250 open, 400 and 400 roofed at 215), a 10x15 m landing pad for beat 5, a checkpoint and two goons. Measured after a reload from disk: walkway flush at `z=0`, jump reaches 288 cm against the 400 cm gaps, blink crosses. **Nobody has played it.** See below |
-| 5. Stunt Double boss | Fight and doubles built. **Splice past the attack stand-in is now measured, not just argued** - 600.0 cm straight through `BP_StuntStandIn` with the stand-in not shoved, and its capsule and mesh both ignore the Visibility channel the blink traces, so it needed no code in the fight at all. Still unbuilt: the attack stand-in's despawn timer |
+| 5. Stunt Double boss | Fight and doubles built, and **Splice past the attack stand-in is measured, not argued** - 600.0 cm straight through `BP_StuntStandIn`, not shoved, because its capsule and mesh both ignore the Visibility channel the blink traces. **But the beat cannot be finished: `BP_StuntDouble` has no `BossExitGate` and no power hand-over, so killing him opens nothing** (read out of the assets, below). Also unbuilt: the attack stand-in's despawn timer, his arena (not placed), and his art. Recipes for the first three: `tools/beat5_graphs.py` and `tools/beat5_arena.py` |
 | 6. Fade to "continue" | **Nothing built**, and what it even is has not been decided (Still to decide, below) |
 
 **Beat 4 is built.** Splice and the gaps it exists for are both in the level. What beat 4 still needs is a
 person to play it. Beat 5's Splice decision is no longer blocked, and its arena is the landing pad.
+
+**Beat 5 is the top unfinished line now, and it is further from done than its row used to read.** Its
+mechanics work; its *beat* does not exist. There is no arena in the level, nothing happens when the boss
+dies, and the win marker currently sits in the middle of his landing pad, so today the player wins the demo
+by walking onto the arena before the fight starts.
 
 ### Beat 4's platforming is built and in the level (Fri Nov 13, 23:20 UTC, Justin's Mac mini)
 
@@ -385,6 +390,59 @@ freezes the MCP, so it was not worth the risk on freeze day. And the three beat-
 (`M_CityBrick` / `M_CityConcrete` / `M_CityMetal`) changed, because applying them set their Nanite usage flag.
 
 ![The street the player walks, looking east from the cafe door](media/2026-11-13-city-lane.png)
+
+### Beat 5: the arena recipe, and the fight that has no ending (Sat Nov 14, 00:40 UTC, Justin's Mac mini)
+
+**The editor could not be reached, so this is maker work: two recipe scripts and three findings.** Unreal
+was running on this Mac with the level loaded, but its MCP server never bound its port -
+`LogHttpListener: Error: HttpListener unable to bind to 127.0.0.1:8000` in the editor log at startup,
+because the previous editor process was still holding the port as this one came up. The server is only
+started once, at launch, so nothing short of restarting the editor brings it back - and an MCP server
+cannot be attached to a chat that has already started either. **Nothing in beat 5 reached Unreal.**
+
+**Three findings, read out of the committed `.uasset` name tables - not inferred:**
+
+| | |
+|---|---|
+| `BP_BossFreeze.uasset` | contains `BossExitGate` **and** `PlazaGateOpenForGood` |
+| `BP_EnemyBase.uasset` | contains neither |
+| `BP_StuntDouble.uasset` | contains neither, and no `BP_PlazaGate` reference anywhere |
+| `BP_StuntStandIn.uasset` | contains `StandInFights` and no other variable of its own |
+
+1. **Beat 5 has no ending.** The cleaver boss opens the plaza's exit gate when he dies
+   (`EnemyDefeatedHook` -> `BossExitGate.PlazaGateOpenForGood`), and that wiring lives on `BP_BossFreeze`.
+   `BP_StuntDouble` is a `BP_EnemyBase` child, so it has none of it: kill him and nothing opens and nothing
+   is handed over. This was never noticed because the fight was verified by calling functions and reading
+   health back, which is exactly the check that passes while a beat is unfinishable.
+2. **The despawn timer is genuinely unbuilt** (issue #9) - `BP_StuntStandIn` has one variable of its own.
+3. **`Marker_Win` is in the wrong place right now.** `tools/beat4_platforming.py` parked it at
+   (14400, 0, 0), the middle of the landing pad, with its own header noting it must move again when beat 5
+   is placed. It has not moved, so the demo can be won by arriving at beat 5.
+
+**`tools/beat5_arena.py`** places the arena on the pad beat 4 ends at, in the same shape as
+`beat4_platforming.py` (tagged `JC_Beat5`, idempotent, `clear` and `report` modes, never saves):
+`Gate_Beat5Entry` at x 13800 open and closing behind the player with `GateEnemyToWake` -> the boss;
+`Boss_StuntDouble` at x 14300 facing west; `Gate_Beat5Exit` at x 14650 closed; `Marker_Win` moved east of
+the exit gate to x 14720. The entry gate sits on the pad's west lip and not further in because
+`BP_PlazaGate`'s opening is 5 m against a 15 m pad - at the lip the only way in is gap 3's single 500 cm
+slab, so 5 m seals it. Its `report` prints the one number the script cannot settle: `Marker_Win`'s trigger
+radius, which is a component property, not a Blueprint variable - at 200 cm it would reach back west of the
+closed exit gate and let the player win through it.
+
+**`tools/beat5_graphs.py`** is the Blueprint recipe: `FighterIdleTimeout` / `FighterIdleLeft` plus
+`BossTickFighter`, and the `BossExitGate` variable with the `EnemyDefeatedHook` line that opens it. **The
+despawn timer goes on the boss, not on the stand-in**, which is the one real design decision here. The soak
+doubles *are* `BP_StuntStandIn` with `StandInFights` false, and they stand still with nothing in range to
+attack by design - the exact condition the timer fires on - so a timer living on the stand-in would delete
+the boss's whole damage shield seconds into every fight. Scoped to the boss's `FighterRef` it cannot touch
+them, and it keeps `FighterRef` consistent so he can tag another double in afterwards. He deliberately hands
+over **no power**: whether the player ever gets Stunt Double is still open (issue #21).
+
+**Unlike `tools/splice_graphs.py`, this recipe has not been compiled.** Its design and its findings are
+solid; its node ids were written from the assets and are a proposal to read back and correct. The ids most
+likely to be wrong are flagged in the file, including the one that matters: calling
+`EnemyDistToPlayer` on *another* actor, where a positional argument lands in the `self` pin and silently
+measures the boss's own distance instead of the fighter's.
 
 ### Splice is on disk (Fri Nov 13, 18:20 UTC, Justin's Mac mini)
 

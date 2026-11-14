@@ -20,6 +20,29 @@ Just ask Claude on your computer: **"Get me the latest build."**
   to the `playtest` branch and pulls. Open the project and press **Play**. **Never save** on a tester computer; if
   Unreal asks when you close it, choose **Don't Save**.
 
+## Starting the game: press R first, or it looks broken
+
+**The game opens on a title screen that switches every control off.** Until you press **R** (or gamepad
+**A**), WASD, the mouse, punch, F, E, Q and Left Shift all do nothing. That is deliberate - the title
+screen holds the player's input locked - but the first thing it looks like is a build that has crashed on
+load. Press R, the health bar appears, and everything comes alive.
+
+Please don't file "the controls are broken" without pressing R first. Four of our own automated test runs
+were spent on exactly that.
+
+**The five controls:**
+
+| Key | Gamepad | What it does |
+|---|---|---|
+| Left mouse | face-left (X) | Punch - a three-hit combo |
+| **F** | face-top (Y) | Interact: touch the driver, pull the coworker clear |
+| **E** | right shoulder | Freeze Frame |
+| **Left Shift** | B | Splice - a 600 cm forward blink |
+| Q | left shoulder | Rewind - parked, does nothing |
+
+The full step-by-step list of what to play and what to judge is in
+[`docs/FIRST_BUILD_LEDGER.md`](FIRST_BUILD_LEDGER.md), under "What a person must still play".
+
 ## Report something
 Pick whichever is fastest:
 - **Tell Claude:** "File an issue: on Build 14 the frog fell through the road on lane two, it breaks the game."
