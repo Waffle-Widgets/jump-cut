@@ -3,6 +3,8 @@
 # broken, when standing still" - owner, Nov 15), the apron bones were never driven (it clipped into him while he stood),
 # and the ankles sat where the A-pose model rests them, 6 cm BEHIND the hip joints, so from the side his legs slanted
 # and bowed.
+# The stance is tuned against photographs of people standing idle (owner, Nov 15) with Art/Blender/posture_check.py:
+# ear, shoulder, hip and ankle on one vertical line, knees straight, arms hanging beside the body, head level.
 #   blender -b --factory-startup --python Art/Blender/clip_idle.py [-- noexport norender]
 #   STUDY=1 ... writes a 4-frame 'IdleStudy' clip of stance variants instead, to look at side by side.
 import math, os, sys
@@ -18,16 +20,18 @@ FOOT_FWD = T('FOOT_FWD', 0.0)      # the feet stay where every other clip plants
 STAGGER = T('STAGGER', 2.5)        # cm: left foot ahead, right foot behind
 TOE_OUT = T('TOE_OUT', 11.0)
 PEL_DX = T('PEL_DX', -1.6)         # weight a little onto his right leg
-PEL_DZ = T('PEL_DZ', -0.8)         # barely unlocked knees
+PEL_DZ = T('PEL_DZ', 0.6)          # straight legs: the knees measured 29 degrees bent at -0.8, 19 here (the bones' own kink)
 PEL_FWD = T('PEL_FWD', -6.5)       # cm: the PELVIS moves back over the ankles instead. The model rests with its ankles
                                    # 6 cm behind its hip joints; standing like that, his legs slant and bow from the side.
-PEL_PITCH = T('PEL_PITCH', 0.0)
+PEL_PITCH = T('PEL_PITCH', 5.0)    # brings the shoulders forward over the hips: they sat 5-8 cm BEHIND them
 TILT = T('TILT', 1.6)
-SPINE = T('SPINE', -1.5)
-HEAD = T('HEAD', -2.0)
-ARM_REACH = T('ARM_REACH', 0.99)   # of the arm's length: 0.965 bent the elbow 30 degrees
-HAND_OUT = T('HAND_OUT', 8.0)
-HAND_FWD = T('HAND_FWD', 2.0)
+SPINE = T('SPINE', -3.0)
+HEAD = T('HEAD', -14.0)           # head LEVEL: at -2 it tipped 12 degrees down and he stared at the floor
+ARM_REACH = T('ARM_REACH', 0.985)  # of the arm's length: 0.965 bent the elbow 30 degrees; this is a relaxed 15
+HAND_OUT = T('HAND_OUT', 2.0)      # arms hang beside the body, not out in an A (they were 13-17 cm outside the hips)
+HAND_FWD = T('HAND_FWD', 5.0)      # the hand rests a little in front of the hip, as in every reference photo
+CLAV_UP = T('CLAV_UP', 24.0)       # 28 squares the shoulders but reads as a shrug when he is doing nothing
+CLAV_BACK = T('CLAV_BACK', 6.0)    # shoulders back, chest open
 PRON = T('PRON', 55.0)
 CURL = T('CURL', 0.34)
 
@@ -41,6 +45,7 @@ def pose(u, foot_fwd=FOOT_FWD, dz=PEL_DZ, reach=ARM_REACH, pfwd=PEL_FWD, pitch=P
     C.foot('L', x=10.5, fwd=foot_fwd + STAGGER, yaw=TOE_OUT)
     C.foot('R', x=-10.5, fwd=foot_fwd - STAGGER, yaw=TOE_OUT)
     for s in 'LR':
+        C.clav(s, up=CLAV_UP, back=CLAV_BACK)
         C.hand(s, out=HAND_OUT, fwd=HAND_FWD, up=-C.ARMLEN[s] * reach + 0.25 * br, pron=PRON, curl=CURL, elbow=(0.3, -1.0, 0.0))
 
 

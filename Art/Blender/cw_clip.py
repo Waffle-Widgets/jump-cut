@@ -501,6 +501,25 @@ if APRON:                                                   # the front surface 
             _v = _p - _fold_point(_s2, 0.0)
             _r2[_s2] = math.degrees(math.atan2(_v.dot(_pf) + 1.5, -_v.dot(_pu)))
         LEGPTS.append((_b, _pl, _r1, _r2))
+    # WHERE THE SKIRT ITSELF HANGS. "No closer than at rest" is only right for a point that was UNDER the skirt at
+    # rest. The model rests with its legs spread wider than the skirt, so the outer thighs sat beside it and further
+    # forward than its surface; brought together in a stand they were still allowed that far forward, and a thigh
+    # came through the bottom corner (it read as a ragged hem). So no point is ever allowed further forward than the
+    # back face of the panel it is under: the angle of that panel's own vertices, seen from its hinge, less a margin.
+    _back = {}
+    for _k, _names, _which in ((2, APRON, 0), (3, APRON2, 1)):
+        for _s2 in APRON:
+            if _s2 not in _names: continue
+            _vi = [i for i, d in enumerate(_domb) if d == _names[_s2]]
+            if not _vi: continue
+            _h = (_mid + _px * (SGN[_s2] * 8.0)) if _which == 0 else _fold_point(_s2, 0.0)
+            _ang = [math.degrees(math.atan2((Vector(V0[i]) - _h).dot(_pf), -(Vector(V0[i]) - _h).dot(_pu))) for i in _vi
+                    if -(Vector(V0[i]) - _h).dot(_pu) > 10.0]            # near the hinge an angle means nothing
+            if _ang: _back[(_k, _s2)] = float(np.percentile(_ang, 30)) - 1.0
+    for _e in LEGPTS:
+        for (_k, _s2), _lim in _back.items():
+            _e[_k][_s2] = min(_e[_k][_s2], _lim)
+    log['apron_back_face_deg'] = {'%s%s' % (s_, '' if k_ == 2 else '2'): round(v_, 1) for (k_, s_), v_ in _back.items()}
     log['apron_leg_points'] = len(LEGPTS)
 body(); foot('L'); foot('R'); apply_pose(); _V = world_verts()
 for _s in 'LR': DROP[_s] = float(_V[SHOE[_s], 2].min()) - 0.05

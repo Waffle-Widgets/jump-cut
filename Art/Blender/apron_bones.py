@@ -78,6 +78,17 @@ zone = (V[:, 2] > 40) & (V[:, 2] < TIE_HI + 6) & front & (np.abs(V[:, 0]) < 24)
 for _ in range(3):                                           # close the holes dark seams and stains leave in the mask
     vote = np.array([np.mean(cloth[n]) if n else 0.0 for n in NB])
     cloth = (cloth | (vote >= 0.6)) & zone
+# THE HEM. The strict colour test misses the darker, shaded green along the bottom edge and beside the towel, and a
+# vertex left out of the skirt stays on the body while its neighbours swing: the hem came out ragged, like torn cloth.
+# So grow the mask into anything next to it that is at least greenish (or towel-pale), a few steps.
+loose = ((col[:, 1] > col[:, 0] * 1.02) & (col[:, 1] > col[:, 2] * 1.02)) | ((col.min(1) > 0.42) & ((col.max(1) - col.min(1)) < 0.16))
+grown = 0
+for _ in range(4):
+    near = np.array([bool(np.any(cloth[n])) if n else False for n in NB])
+    add = near & loose & zone & ~cloth & (V[:, 2] < TIE_HI)
+    grown += int(add.sum())
+    cloth = cloth | add
+print('APRON hem: %d shaded vertices added to the skirt' % grown)
 n_cloth = int(cloth.sum())
 print('APRON cloth vertices: %d (green %d, towel white %d), z %.1f..%.1f, x %.1f..%.1f'
       % (n_cloth, int((cloth & green).sum()), int((cloth & white & ~green).sum()),
