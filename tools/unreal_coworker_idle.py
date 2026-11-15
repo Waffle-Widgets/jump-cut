@@ -67,6 +67,12 @@ def main():
     d.set_editor_property('saved_playing', True)
     d.set_editor_property('saved_play_rate', 1.0)
     c.set_editor_property('animation_data', d)
+    # The level's look gives pixels that write custom depth their own lighting (the Char* numbers on
+    # MI_AnimeLook_JumpCut). Until Sun Nov 15 only the player wrote it, so her pale face went through the
+    # background's posterising and came out flat and sketchy. `depth` / `nodepth` as a second argument switch it.
+    if len(sys.argv) > 2 and sys.argv[2] in ('depth', 'nodepth'):
+        c.set_editor_property('render_custom_depth', sys.argv[2] == 'depth')
+    say('render_custom_depth now %s' % c.get_editor_property('render_custom_depth'))
     a.set_actor_transform(a.get_actor_transform(), False, False)          # dirties the actor's own package
     a.modify()
     state(c, 'AFTER ')

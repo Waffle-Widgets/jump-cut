@@ -28,7 +28,7 @@ BREATH, SWAY = E('BREATH', 1.1), E('SWAY', 0.35)
 FRAMES, FPS = 120, 30
 REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
 DIR = os.path.join(REPO, 'Art', 'Blender', 'export', 'Characters', 'CafeCoworkerV2')
-SRC = os.path.join(DIR, os.environ.get('BODY', 'SK_CafeCoworkerV2_oldrig_handfix.fbx'))
+SRC = os.path.join(DIR, os.environ.get('BODY', 'SK_CafeCoworkerV2_oldrig_handsmooth.fbx'))
 OUT = os.path.join(DIR, 'SK_CafeCoworkerV2_Idle.fbx')
 CACHE = os.path.join(REPO, 'Art', 'Blender', 'cache'); os.makedirs(CACHE, exist_ok=True)
 
@@ -138,6 +138,51 @@ def pose(f):
         rot(wr, ax, thumb_roll(fo, wr) * ROLL)
         if f == 0: LEFT.append(round(thumb_roll(fo, wr), 1))
 
+
+# THE GAP. The owner: "make sure the hands aren't clipping into her body." So it is measured, not eyeballed: with the
+# pose applied, the nearest distance from any hand vertex to any vertex that no arm bone moves (hip, trousers, apron).
+# The arms open a little at a time until that is at least GAP centimetres.
+from mathutils import kdtree
+GAP = E('GAP', 2.5)
+arm_names = set()
+for cb in CLAV:
+    arm_names |= {cb} | {b.name for b in PB[cb].children_recursive}
+gname = {g.index: g.name for g in mesh.vertex_groups}
+palm_names = set()
+for up in UP:
+    pb = PB[kid(kid(up))]
+    while len(pb.children) < 3 and pb.children:
+        pb = pb.children[0]
+    palm_names.add(pb.name)
+HANDV, BODYV = [], []
+for v in mesh.data.vertices:
+    ws = {gname[g.group]: g.weight for g in v.groups if g.weight > 1e-4}
+    if any(n in palm_names and w >= 0.99 for n, w in ws.items()):
+        HANDV.append(v.index)
+    elif not any(n in arm_names for n in ws):
+        BODYV.append(v.index)
+
+
+def clearance():
+    dg = bpy.context.evaluated_depsgraph_get(); dg.update()
+    ev = mesh.evaluated_get(dg); em = ev.to_mesh()
+    MWm = mesh.matrix_world
+    kd = kdtree.KDTree(len(BODYV))
+    for i, vi in enumerate(BODYV):
+        kd.insert(MWm @ em.vertices[vi].co, i)
+    kd.balance()
+    d = min(kd.find(MWm @ em.vertices[vi].co)[2] for vi in HANDV)
+    ev.to_mesh_clear()
+    return d
+
+
+for out_deg in (9, 11, 13, 15, 17, 19, 21, 23, 25):
+    ARM_OUT = float(out_deg)
+    worst = min(clearance() for _f in (0, FRAMES // 2) if pose(_f) is None)
+    print('CWIDLE arms %d deg out: nearest hand-to-body distance %.1f cm' % (out_deg, worst))
+    if worst >= GAP:
+        break
+print('CWIDLE using ARM_OUT %.0f (gap %.1f cm, wanted %.1f)' % (ARM_OUT, worst, GAP))
 
 rig.animation_data_create()
 act = bpy.data.actions.new('Idle'); rig.animation_data.action = act
