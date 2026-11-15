@@ -178,6 +178,21 @@ anyone picks up a task:
 
 ## Open
 
+### Sakura trees, a van, a car, a bike and a scooter are made; none of it is in the game (Sun Nov 15, 1:50 PM Pacific, M Station)
+
+Asked for by the Team Owner at 12:41 PM on deadline day, after the agent said it was past the "submission work
+only" line; he chose the full set. Five Gemini pictures -> Meshy Image to 3D -> `meshy_prop_bake.py`:
+`Art/Meshy/{SakuraTree,KeiVanM,Hatchback,BicycleM,ScooterM}/` (FBX + one 2048 texture each, 9,000-22,000
+triangles). See [the devlog entry](devlog/2026-11-15-sakura-trees-a-van-a-car-a-bike-and-a-scooter.md).
+
+- **Needs the builder (GameStation):** `py <repo>/tools/unreal_street_models.py import`, then `plan`, lock the
+  26 actor files it lists, then `swap`. **The script has never been run** - M Station could not open Unreal
+  to test it. `revert` puts the kit models back.
+- **Needs a person:** how a textured prop reads under the cel look (every other street prop is flat colour),
+  and whether the sakura canopy (2.4 m deep, planted at y = +/-395) clips the shopfronts.
+- **Cut line:** if the import is not clean by the time the final build has to start, skip it. The kit models
+  are still in the level and nothing depends on these.
+
 ### The game stops being silent: 17 sounds wired (#52, wiring half) (Sun Nov 15, 18:10 UTC, Justin's Mac mini)
 
 Asked for and approved by Justin (*"Complete the work fully then merge to main"*). **Checked by a script in PIE,

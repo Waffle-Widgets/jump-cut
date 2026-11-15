@@ -553,6 +553,17 @@ WT = 0.15          # wall thickness
 DOOR_HW, DOOR_H = 1.50, 2.40
 
 
+IMPACT_RUBBLE = []        # filled by build_cafe_shell, drawn by build_cafe_impact_rubble (which must run after it)
+
+
+def build_cafe_impact_rubble(name='SM_CafeImpactRubble'):
+    """The bricks the car knocks into the cafe, in the room's own coordinates: place it at City_CafeShell's transform."""
+    b = B(seed=12)
+    for lo, hi, shade in IMPACT_RUBBLE:
+        b.box(lo, hi, 'MS_CityBrick', shade)
+    return b.finish(name)
+
+
 def build_cafe_shell(name='SM_CafeShell'):
     """The whole cafe room as one mesh: floor, four walls, the door, the shopfront, the hole the car made,
     and a ceiling. Replaces five grey boxes (WallN, WallS, WallW, WallE_South, WallE_North)."""
@@ -602,11 +613,16 @@ def build_cafe_shell(name='SM_CafeShell'):
         b.box((-X, ty - 0.14, hole_z - th), (-X + WT, ty + 0.14, hole_z), 'MS_CityBrick', 0.85)
         tb = rng.uniform(0.08, 0.34)
         b.box((-X + 0.01, ty - 0.12, 0), (-X + WT - 0.01, ty + 0.12, tb), 'MS_CityBrick', 0.8)
-    for i in range(14):                                  # rubble spilling inward from the impact
+    # The rubble spilling inward from the impact is NOT part of the room any more (Sun Nov 15): the room is on
+    # screen for minutes before the car arrives now, and a floor of bricks under an unbroken wall gave the crash
+    # away. The same fourteen bricks, from the same random draws, are SM_CafeImpactRubble, which the game shows
+    # once the wall has been hit. The draws still happen here so nothing after them in this mesh moves.
+    del IMPACT_RUBBLE[:]
+    for i in range(14):
         rx = rng.uniform(-X + 0.2, -X + 2.6)
         ry = rng.uniform(hole_y0 - 0.4, hole_y1 + 0.4)
         s = rng.uniform(0.07, 0.26)
-        b.box((rx, ry, 0.02), (rx + s, ry + s * 0.8, 0.02 + s * 0.6), 'MS_CityBrick', rng.uniform(0.7, 1.0))
+        IMPACT_RUBBLE.append(((rx, ry, 0.02), (rx + s, ry + s * 0.8, 0.02 + s * 0.6), rng.uniform(0.7, 1.0)))
     # ---- ceiling, with exposed beams so the room has a top edge for the outline pass.
     # Wound to face DOWN, into the room: the player is underneath it, and a ceiling whose normal points at the
     # sky is invisible from the only side anybody ever sees it from.
@@ -2648,7 +2664,7 @@ def build_fire_stair(name='SM_FireStair'):
 
 GROUPS = {
     'cafe': [
-        ('SM_CafeShell', build_cafe_shell), ('SM_CafeCounter', build_cafe_counter),
+        ('SM_CafeShell', build_cafe_shell), ('SM_CafeImpactRubble', build_cafe_impact_rubble), ('SM_CafeCounter', build_cafe_counter),
         ('SM_CafeEspresso', build_cafe_espresso), ('SM_CafePastryCase', build_cafe_pastry_case),
         ('SM_CafeRegister', build_cafe_register),
         ('SM_CafeShelf', build_cafe_shelf), ('SM_CafeTable', build_cafe_table),

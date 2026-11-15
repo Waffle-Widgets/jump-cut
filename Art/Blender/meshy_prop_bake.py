@@ -21,7 +21,10 @@ TEXEL = 0.03          # metres per texel: a sprite pixel is 1.5 game units = 3 c
 # (about 4 mm per texel, at most 2048) instead of the 3 cm pixel one, and a wider bake margin
 SMOOTH = os.environ.get('PROP_PIXEL') != '1'   # practice repo: fine texture by default
 if SMOOTH:
-    TEXEL = 0.004
+    TEXEL = float(os.environ.get('PROP_TEXEL', '0.004'))
+# PROP_CAGE: how far the bake looks outward from the low mesh, as a fraction of the prop's size. 0.05 suits a
+# smooth prop; on a lumpy one (blossom clumps) a ray that long starts inside the next lump and bakes black
+CAGE = float(os.environ.get('PROP_CAGE', '0.05'))
 # optional 6th argument: voxel size in metres. Wraps the low copy in one closed skin before decimating, for models
 # made of many thin overlapping shells (the berry bush's leaves), which otherwise decimate into spikes and bake black
 VOXEL = float(argv[5]) if len(argv) > 5 else 0.0
@@ -50,6 +53,16 @@ for o in list(bpy.context.scene.objects):
 
 # size and place: base on the ground, centred
 V = np.empty(len(src.data.vertices) * 3); src.data.vertices.foreach_get('co', V); V = V.reshape(-1, 3)
+# PROP_YAW=<degrees>: turn the model about the up axis first, so its long side lies where the kit expects it
+# (the city kit builds every vehicle with its length along X and its nose at +X)
+YAW = math.radians(float(os.environ.get('PROP_YAW', '0')))
+if YAW:
+    c, sn = math.cos(YAW), math.sin(YAW)
+    V[:, 0], V[:, 1] = V[:, 0] * c - V[:, 1] * sn, V[:, 0] * sn + V[:, 1] * c
+# PROP_PRESCALE=sx,sy,sz: stretch the model before it is sized. Image to 3D sees one side of a thing, so a
+# tree comes back as a fan: the sakura was 6.2 m wide and 1.9 m deep (Nov 15).
+PRE = [float(x) for x in os.environ.get('PROP_PRESCALE', '1,1,1').split(',')]
+V *= PRE
 lo, hi = V.min(0), V.max(0); dims = hi - lo
 s = SIZE / (dims[2] if MODE == 'height' else max(dims[0], dims[1]))
 V = (V - [(lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, lo[2]]) * s
@@ -96,6 +109,11 @@ report['low_tris'] = sum(len(p.vertices) - 2 for p in low.data.polygons)
 low.data.uv_layers.new(name='UV')
 bpy.ops.object.mode_set(mode='EDIT'); bpy.ops.mesh.select_all(action='SELECT')
 bpy.ops.uv.smart_project(angle_limit=math.radians(66), island_margin=0.03, scale_to_bounds=False)
+# A decimated Meshy vehicle comes out as several hundred islands, and a 3% margin round each one left the
+# hatchback's body on about a tenth of the atlas (Nov 15). Re-pack tight: same islands, about 3x the texels.
+bpy.ops.uv.select_all(action='SELECT')
+bpy.ops.uv.average_islands_scale()
+bpy.ops.uv.pack_islands(rotate=True, margin=0.005)
 bpy.ops.object.mode_set(mode='OBJECT')
 
 # texture size from the surface area at 3 cm per texel (smart_project fills roughly half the square)
@@ -135,7 +153,7 @@ try:
 except Exception:
     pass
 bk = sc.render.bake
-bk.use_selected_to_active = True; bk.cage_extrusion = 0.05 * SIZE; bk.max_ray_distance = 0.0; bk.margin = 8 if SMOOTH else 2   # 0 = no limit
+bk.use_selected_to_active = True; bk.cage_extrusion = CAGE * SIZE; bk.max_ray_distance = 0.0; bk.margin = 8 if SMOOTH else 2   # 0 = no limit
 for o in sc.objects:
     o.select_set(False)
 src.select_set(True); low.select_set(True); bpy.context.view_layer.objects.active = low

@@ -7,6 +7,7 @@ Every asset we did not create ourselves goes here, added the moment it enters th
 | Third Person template content (mannequin, level prototyping meshes, input actions) | Starting point of the project | Unreal Engine 5.8 Third Person Blueprint template | Epic Games | Unreal Engine EULA | bootstrap script, 2026-11-12 |
 | Mannequin animations copied onto our hero (`Content/Game/Imported/CafeWalker/Anims/*_CW`: idle, walk, jog, jump) | The hero's movement | Unreal Engine 5.8 Third Person template, retargeted with `tools/unreal_retarget_mannequin.py` | Epic Games | Unreal Engine EULA (sourced, not scored) | Claude on GameStation, 2026-11-12 |
 | Hero character drawing (`Art/Refs/cafe_walker_ref.jpg`) | Reference for the hero model | AI-generated with Gemini from our own prompt; redrawn in an A-pose with Tripo's image tool | Team (AI-generated) | Ours | Claude on GameStation, 2026-11-12 |
+| Street models: sakura tree, kei van, hatchback, city bicycle, delivery scooter (`Art/Refs/Street/*_ref.jpg`, `Art/Meshy/{SakuraTree,KeiVanM,Hatchback,BicycleM,ScooterM}/`) | Replace the block-model tree, van, bicycle and scooter on the street | Reference pictures AI-generated with Gemini from our own prompts (kept in `Art/Refs/Street/PROMPTS.md`), models AI-generated with Meshy Image to 3D on its website (175 credits), resized, reduced and re-baked with `Art/Blender/meshy_prop_bake.py`. Invented designs: no real make, model, badge or plate | Team (AI-generated) | Ours | Claude on M Station, 2026-11-15 |
 | Hero character model (`Art/Refs/CafeWalker_tripo_apose.glb`, `SK_CafeWalker_Walk`, `T_CafeWalker_BaseColor`) | The playable character in `Lvl_Cafe` | AI-generated with Tripo (tripo3d.ai, jam partner) from our drawing, slimmed with its Retopology, rigged with `Art/Blender/trellis_character.py` | Team (AI-generated) | Ours | Claude on GameStation, 2026-11-12 |
 | Music: "song21 0" (Mysterious Ambience), as `MUS_TitleMystery` | Title screen music | OpenGameArt: https://opengameart.org/content/mysterious-ambience-song21 (taken from Justin's Cerberus app) | cynicmusic | CC0 1.0 (sourced, not scored) | Claude on Justin's Mac mini, 2026-11-15 |
 | Music: "jrpg battle full 0" (JRPG Epic Rock Battle Theme 1), as `MUS_Gameplay_Sourced` | Gameplay music | OpenGameArt: https://opengameart.org/content/jrpg-epic-rock-battle-theme-1 (taken from Justin's Cerberus app) | HydroGene | CC0 1.0 (sourced, not scored) | Claude on Justin's Mac mini, 2026-11-15 |
@@ -35,7 +36,8 @@ go in the table above instead. This list is also what goes in the itch.io form's
   two draw in the same hand) — the character reference sheets in
   `Art/Refs/` (prompts kept in `docs/prompts.md`, so every picture can be traced to the words that made it).
   Nothing is sent to a service: it runs on our own hardware.
-- Meshy (paid, cloud) — image-to-3D and rigging for the characters. Used from the website, not the API.
+- Meshy (paid, cloud) — image-to-3D and rigging for the characters, and image-to-3D for the five street models
+  (Nov 15). Used from the website, not the API.
 - Tripo (tripo3d.ai, a jam partner) — image-to-3D for the `CafeWalker` hero made on the jam's first night, its
   A-pose redraw and retopology (the model is in the table above).
 - TRELLIS.2 (Microsoft, MIT) — image-to-3D models, run locally
