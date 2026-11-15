@@ -148,6 +148,12 @@ nonempty=sum(1 for g in new_mesh.vertex_groups
 print(f"VERIFY groups={len(new_mesh.vertex_groups)} unweighted_verts={unw}")
 
 bpy.data.objects.remove(old_mesh, do_unlink=True)
+# Unreal makes the armature OBJECT's name the root bone, so an armature still carrying this script's 'OLD_'
+# import tag makes Interchange log "cannot merge bone tree with the existing skeleton" - and it does so
+# NON-FATALLY: the SkeletalMesh is still created and still reports the skeleton you asked for, so every
+# scripted check passes over a broken import. Cost a whole pass to find once already (PR #112). Name it here.
+old_arm.name = old_arm.data.name = 'Armature'
+new_mesh.name = 'Mesh0'
 bpy.ops.object.select_all(action='DESELECT')
 old_arm.select_set(True); new_mesh.select_set(True)
 bpy.context.view_layer.objects.active=old_arm

@@ -181,6 +181,10 @@ object identity and refuses rather than quietly building a second one.
 Known caveats on the reskin, from #96: 18 of 21 finger bones carry weight (the shipped mesh weights
 all 21), and max deformation error is 14.1 cm against the shipped mesh's 15.5 cm.
 
+*(Superseded Sat Nov 15, 00:55 UTC. "18 of 21 finger bones carry weight" was true and useless —
+most of those carried one to six vertices. Measured by DISPLACEMENT instead, 17 of 40 finger bones
+moved nothing at all. The cause was not the weights. See "The hands were a pose problem" below.)*
+
 ### Sat Nov 14, 22:33 UTC — `BP_Player` now wears it (M Station)
 
 On the Team Owner's say-so, `BP_Player.CharacterMesh0.skeletal_mesh_asset` is
@@ -1362,3 +1366,94 @@ only allowance for legitimate skin below the head is a small disc at each hand.
 It is still worth running — it is what found the player's shirt. But **a flag is a reason to open the leak map,
 not a verdict**, and nobody should spend credits on one without looking first.
 
+
+### Sun Nov 15, 00:55 UTC — the hands were a pose problem, not a weight problem (M Station)
+
+`SK_CafeWalkerV2` is rebuilt and re-imported. **17 of its 40 finger bones used to move nothing at
+all**; now 32 of 40 drive real geometry, which is exactly what the old V1 body manages (32 of 40).
+Nothing about the skeleton changed, so every clip, montage, blend space and `ABP_Unarmed_CWM` still
+applies. `BP_Player` is untouched and still wears `SK_CafeWalkerV2`.
+
+**What was actually wrong.** A skinned mesh has to be modelled in its skeleton's rest pose. V2 was
+not. `reskin_to_existing_rig.py` checks that the two bodies agree on height, feet-at-zero and arm
+span — and all three matched while the limbs did not. Measured against the 69-bone rig's rest pose,
+Meshy's own rig for the same body puts the **elbow 8.3 cm out, the wrist 12.7 cm and the knee
+8.2 cm**. V1's A-pose splays the legs and hangs the forearms down and back; Meshy stood him up
+straight. Per-bone, the weighted centroid of V2's geometry sat **9.4 cm** from the forearm bone and
+**12.7 cm** from the hand bone, where V1's sit 1.5 cm and 0.4 cm.
+
+So the rig's twenty finger bones were in **empty space** — 11 to 17 cm from the nearest vertex of
+the hand they drive. A proximity weight transfer had nothing sensible to find, dumped the fingers
+into the palm, and the result passed every check anyone had: right vertex count, right skeleton,
+right material, zero unweighted vertices.
+
+**Re-weighting cannot fix this and that is worth knowing.** A bone 15 cm from the finger it drives
+does not curl the finger, it swings it. A geometric re-weight was written, measured, and **made the
+model worse** (29 finger bones articulating against 33), because it concentrates weight on bones
+that are in the wrong place to begin with. It is not in the repo; this paragraph is the record.
+
+**The fix, three scripts, in this order.**
+
+1. `Art/Blender/conform_rest_pose.py` — poses Meshy's OWN rig to match the 69-bone rig's rest pose
+   joint by joint, then bakes. Three details were each needed: the root is seated by the **leg
+   roots and the soles**, not by the hip bone (Meshy's `Hips` sits 9.7 cm above its own leg roots
+   where `Bone_001` sits 2.1 cm above its, and matching them put the body **11.9 cm through the
+   floor**); the hand's axis is wrist → **the middle of the fingertips**, not `Bone_020 → Bone_019`,
+   which is a 5 cm wrist stub pointing elsewhere and cost the arm 9 cm of reach; and each hand gets
+   a slide and a **roll search against the finger bones themselves**, because joint-direction
+   matching cannot determine roll and Meshy's rig has no fingers to align against.
+2. `Art/Blender/reskin_to_existing_rig.py` — unchanged in method. Now also renames the armature
+   object to `Armature` itself, so the PR #112 trap cannot recur.
+3. `Art/Blender/smooth_hand_weights.py` — blurs weights over the hands only, factor **0.25**,
+   2 passes. Curling every finger threw a shard off the palm; that is an isolated vertex bound hard
+   to a bone none of its neighbours touch. Smoothing costs one finger bone (33 → 32 articulating),
+   which is why the factor is 0.25 and not the 0.5 that cost five.
+
+`Art/Blender/reweight_verify.py` is the check: it poses each of the 40 finger bones on its own and
+measures how far the mesh moves. Use it instead of counting weights.
+
+| | finger bones that move | weak | dead | whole-hand swing |
+|---|---|---|---|---|
+| V2 as shipped Nov 14 | 18 | 5 | **17** | 14.1 / 14.9 cm |
+| V2 now | **32** | 6 | 2 | 13.3 / 13.6 cm |
+| V1 (the best we had) | 32 | 7 | 1 | 15.5 / 14.3 cm |
+
+![hands, shipped vs rebuilt](media/2026-11-14-cafewalker-v2-hands-rest-pose.png)
+
+**What is still wrong, and it is Meshy's, not ours.** The 365k high-poly Meshy generated already has
+the fingers **fused** — shallow grooves, no gaps, a stub thumb. Adjacent fingers share vertices and
+will always drag on each other. A full fist still folds into a wedge rather than closing. The two
+dead bones are `Bone_037` and `Bone_061`, the outermost segment of one finger on each hand, whose
+bones extend past the end of the mitten.
+
+**Re-importing needs `tools/unreal_reimport_char_v2.py`, not the import script.**
+`unreal_import_char_v2.py` imports the FBX and renames whatever came out to `SK_<Name>` — right the
+first time, silently wrong every time after. Interchange names the new asset after the FBX file
+(`SK_CafeWalkerV2_oldrig`), the rename is skipped because `SK_CafeWalkerV2` already exists, and the
+script then validates — and reports a clean bill of health on — the **old** asset while the new
+geometry sits in a duplicate nobody references. Re-posing a mesh changes neither its vertex count,
+its skeleton, its bone count nor its material slot, so every check in that script passes either way.
+The only property that moves is the **bounds**, which is what the re-import tool checks, against
+numbers measured in Blender. It also takes `only=<Name>` so the coworker is not rewritten for free.
+
+### Sun Nov 15, 00:55 UTC — the animation editor was previewing the wrong body (M Station)
+
+`SK_CafeWalker_Skeleton`'s preview mesh was `SK_CafeWalker` — **V1**. That is the body Unreal shows
+you whenever you open a clip, a montage, a blend space or `ABP_Unarmed_CWM`, and V1 is the one with
+the skirt apron and forty working finger bones. Anyone authoring a hand pose would have watched it
+read perfectly and shipped a clip that looks nothing like that in play. Now
+`/Game/Game/Imported/CafeWalkerV2/SK_CafeWalkerV2`. Fix: `tools/unreal_fix_preview_meshes.py`.
+
+**One asset, not forty-one, and the difference is worth recording.** 40 of the 72 animation assets
+under `CafeWalker` do hold a soft reference to the V1 body, and reading the `.uasset` name tables is
+how that was first — wrongly — called a per-clip preview override. Asked directly, every one reports
+`preview_pose_asset = None` and exposes no preview-mesh property at all: the reference is
+**`RetargetSourceAsset`**, the mesh whose proportions the clip was authored against. That is correct
+and was left alone; repointing it would change how all 38 of those clips are interpreted.
+
+Python's spelling for this is `USkeleton.get_skeleton_preview_mesh` / `set_skeleton_preview_mesh`.
+There is no `preview_mesh` editor property — `get_editor_property('preview_mesh')` raises, which
+reads exactly like "the preview is unset" and is not.
+
+**Nobody has played any of this.** Every figure above is Blender measuring the committed FBX, or
+Unreal reporting on the saved asset. No in-engine picture was taken this pass.
