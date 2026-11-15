@@ -1002,7 +1002,14 @@ referenced by any Blueprint or widget, and three sounds. Everything with a model
 | #45 poses | driver slumped, coworker down, coworker flinch | `Art/Blender/export/Characters/`, `Art/Blender/pose_clip.py` |
 
 **Untested, all of it:** nobody has heard a sound or seen an effect at the game camera, and nothing has been
-imported. The builder's side is #52. Not started: the boss lot's dressing (#50) and music.
+imported. The builder's side is #52. Not started: the boss lot's dressing (#50) and ~~music~~.
+
+**Sun Nov 15, 11:10-11:37 AM Pacific, on main from Justin's Mac (nobody has played or heard these yet):** music (a
+title theme and a gameplay loop, from code, `1742648`), the #64 title animation (`1011dff`, on the still title
+`7b08001`), a power-grant fanfare (`6a0f3f7`), and two bug fixes: Freeze Frame outliving the boss (`08c47d5`) and the
+crash sound landing 1.5 s late (`623b030`). Each has its devlog entry. The Windows build has to be repackaged on a
+Windows PC to include them. Still open from #64: moving `SFX_TitleSting` to the reveal needs `BP_JumpCutGameMode`
+(LFS-locked by another machine at the time).
 
 ## Stretch (only if the critical path is finished)
 
