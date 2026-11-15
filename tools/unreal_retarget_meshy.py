@@ -19,7 +19,7 @@ It then names the chains exactly what Unreal's auto definition names the mannequ
 `auto_map_chains(FUZZY)` pairs them up.
 
 Run it in the Unreal editor's console box (Cmd), with Play mode stopped:
-    py <repo>/tools/unreal_retarget_meshy.py <target skeletal mesh> <output folder> <suffix> [arms|all|none] [clips|abp|both] [all|fight|loco]
+    py <repo>/tools/unreal_retarget_meshy.py <target skeletal mesh> <output folder> <suffix> [arms|limbs|all|none] [clips|abp|both] [all|fight|loco|Clip,Clip]
     py .../unreal_retarget_meshy.py /Game/Game/Imported/CafeWalker/Meshy/SK_CafeWalker \
        /Game/Game/Imported/CafeWalker/MeshyAnims _CWM
 
@@ -67,6 +67,14 @@ if WHICH == 'fight':
     LIST = [n for n in LIST if '/Attack/' in n or 'HitReact' in n or 'Death/' in n]
 elif WHICH == 'loco':
     LIST = [n for n in LIST if not ('/Attack/' in n or 'HitReact' in n or 'Death/' in n)]
+elif WHICH != 'all':
+    # a comma-separated list of clip base names, so an alignment change can be proved on ONE clip
+    # in a scratch folder before 48 real assets are rewritten
+    want = set(WHICH.split(','))
+    LIST = [n for n in LIST if n.split('/')[-1] in want]
+    missing = want - set(n.split('/')[-1] for n in LIST)
+    if missing:
+        raise RuntimeError('no such clip in LIST: %s' % ', '.join(sorted(missing)))
 
 ABP_SRC = '/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed'
 
@@ -305,9 +313,12 @@ def work_out_chains(names, par, pos):
         else:
             log('WARN hand', ch[-1], 'is not a five-branch hand - no finger chains, hands will'
                 ' hold the reference pose in every clip')
+    leg_bones, leg_chains = [], []
     for b in legs:
         ch = straight(b)
         chains.append((side(ch) + 'Leg', ch[0], ch[-1]))
+        leg_bones += ch
+        leg_chains.append(ch)
     names_used = [c[0] for c in chains]
     dupes = sorted({n for n in names_used if names_used.count(n) > 1})
     if dupes:
@@ -316,7 +327,8 @@ def work_out_chains(names, par, pos):
     return {'root': root, 'hip': hip, 'height': round(height, 2), 'faces_plus_y': faces_plus_y,
             'axis_up': [round(c, 3) for c in up], 'axis_fwd': [round(c, 3) for c in fwd],
             'axis_right': [round(c, 3) for c in right],
-            'chains': chains, 'arm_bones': arm_bones}
+            'chains': chains, 'arm_bones': arm_bones, 'leg_bones': leg_bones,
+            'leg_chains': leg_chains}
 
 
 def make_src_rig(folder, mesh):
@@ -378,9 +390,53 @@ def run():
     c.reset_retarget_pose(c.get_current_retarget_pose_name(T), [], T)
     if ALIGN == 'all':
         c.auto_align_all_bones(T)
-    elif ALIGN == 'arms':
+    elif ALIGN == 'arms' or ALIGN.startswith('limbs') or ALIGN == 'hybrid':
+        # `arms` aligns the arm and finger bones only, so the LEGS keep the target rig's raw
+        # reference pose - and a retarget adds that pose to every frame of every clip. Measured on
+        # the player (issue #73, tools/stance_check.py): the Meshy rest pose stands 0.880
+        # leg-lengths wide against the mannequin's 0.330, and the retargeted walk came out 0.751
+        # wide against the mannequin walk's 0.195 - the +0.550 reference-pose offset passing
+        # through as +0.556. The arms, which this call DID align, matched the mannequin to within
+        # 0.9 degrees in the same clip. That difference is the whole of the "waddle".
+        #
+        # `limbs[:method[:drop]]` adds the leg bones. `drop` leaves that many bones off the END of
+        # each leg chain, because aligning the FOOT is actively wrong: chain-to-chain aligns a
+        # bone to its chain's overall direction, and a leg chain points down the leg, so the foot
+        # gets yawed outward. Aligning whole legs measured 40.9 degrees of toe-out against the
+        # mannequin walk's 5.1 - worse than the 21.3 it started at - while fixing stance width.
+        meth = {'chain': unreal.RetargetAutoAlignMethod.CHAIN_TO_CHAIN,
+                'mesh': unreal.RetargetAutoAlignMethod.MESH_TO_MESH,
+                'global': unreal.RetargetAutoAlignMethod.GLOBAL_ROTATION_AXES,
+                'local': unreal.RetargetAutoAlignMethod.LOCAL_ROTATION_AXES}
+        parts = ALIGN.split(':')
+        legs_sel, mids = [], []
+        if parts[0] == 'limbs':
+            drop = int(parts[2]) if len(parts) > 2 else 0
+            for ch in plan['leg_chains']:
+                legs_sel += ch[:len(ch) - drop] if drop else ch
+        elif parts[0] == 'hybrid':
+            # MESH_TO_MESH on the whole leg gives the best stance width and does NOT yaw the foot,
+            # but leaves the knees as straight as they were; CHAIN_TO_CHAIN recovers the knee and
+            # doubles toe-out. This takes the first for the leg and then re-aligns only the middle
+            # (knee/shin) bones with the second, to see whether the knee comes back without the yaw.
+            legs_sel = [b for ch in plan['leg_chains'] for b in ch]
+            mids = [b for ch in plan['leg_chains'] for b in ch[1:3]]
+        m = (unreal.RetargetAutoAlignMethod.MESH_TO_MESH if parts[0] == 'hybrid'
+             else meth[parts[1]] if len(parts) > 1
+             else unreal.RetargetAutoAlignMethod.CHAIN_TO_CHAIN)
+        # Two calls on disjoint bone sets, NOT one: the arms are already correct under
+        # CHAIN_TO_CHAIN (0.9 degrees off the mannequin, measured), so varying the leg method must
+        # not also change theirs, or the comparison says nothing about the legs.
         c.auto_align_bones([unreal.Name(b) for b in plan['arm_bones']],
                            unreal.RetargetAutoAlignMethod.CHAIN_TO_CHAIN, T)
+        log('align arms CHAIN_TO_CHAIN', len(plan['arm_bones']), 'bones')
+        if legs_sel:
+            c.auto_align_bones([unreal.Name(b) for b in legs_sel], m, T)
+            log('align legs', str(m), len(legs_sel), 'bones', legs_sel)
+        if mids:
+            c.auto_align_bones([unreal.Name(b) for b in mids],
+                               unreal.RetargetAutoAlignMethod.CHAIN_TO_CHAIN, T)
+            log('align leg mids CHAIN_TO_CHAIN', len(mids), 'bones', mids)
     # joint rotations only: the IK pass drags hands and feet onto the mannequin's and bows the knees
     for i in range(c.get_num_retarget_ops()):
         if 'IK' in str(c.get_op_name(i)):
