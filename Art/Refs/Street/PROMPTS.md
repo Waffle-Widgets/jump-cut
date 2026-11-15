@@ -63,3 +63,26 @@ Every prompt is its own description followed by the same style block.
 
 The raw downloads (20-46 MB each, 450k-1.3M triangles) are gitignored (`Art/Meshy/_raw/`); Meshy keeps them
 three days.
+
+## Second batch (2:00 PM the same day): 13 street and cafe props
+
+Prompts: `prompts_batch2.json` in this folder (`_style` is appended to each). The style block gained "no writing
+in any language, no numbers". Same Meshy settings. Three pictures here are Gemini's full-size files
+(VendingMachine, StreetLamp, Planter); the other ten are the 1024-pixel copy shown on the page, because the
+download button stopped working - see the devlog entry. `GasBottles` was generated and dropped.
+
+| Name | size, mode | tris | env |
+|---|---|---|---|
+| VendingMachineM | 1.90 height | 8000 | `PROP_TEXEL=0.003 PROP_BACK=0.43` |
+| StreetLampM | 5.96 height | 6000 | `PROP_TEXEL=0.003 PROP_ORIGIN=base PROP_ARM=180` |
+| PlanterM | 1.20 width | 8000 | `PROP_TEXEL=0.003 PROP_BACK=0.25` |
+| PotRowM | 1.99 width | 10000 | `PROP_TEXEL=0.002 PROP_BACK=0.262 PROP_SHIFT_X=-0.239` |
+| DumpsterM | 1.62 width | 6000 | `PROP_TEXEL=0.003 PROP_BACK=0.495` |
+| AFrameSignM | 0.98 height | 3000 | `PROP_TEXEL=0.001 PROP_YAW=90` |
+| BenchM | 1.80 width | 8000 | `PROP_TEXEL=0.002 PROP_BACK=0.25` |
+| CafeEspressoM | 0.80 width | 8000 | `PROP_TEXEL=0.001` |
+| CafeRegisterM | 0.37 height | 5000 | `PROP_TEXEL=0.001` |
+| CafePastryCaseM | 1.20 width | 8000 | `PROP_TEXEL=0.001` |
+| CafePlantTallM | 1.31 height | 8000 | `PROP_TEXEL=0.002` |
+| CafePlantSmallM | 0.22 height | 3000 | `PROP_TEXEL=0.001` |
+| CafeStoolM | 0.75 height | 4000 | `PROP_TEXEL=0.001` |

@@ -65,7 +65,28 @@ PRE = [float(x) for x in os.environ.get('PROP_PRESCALE', '1,1,1').split(',')]
 V *= PRE
 lo, hi = V.min(0), V.max(0); dims = hi - lo
 s = SIZE / (dims[2] if MODE == 'height' else max(dims[0], dims[1]))
-V = (V - [(lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, lo[2]]) * s
+cx, cy = (lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2
+# PROP_ORIGIN=base: put the origin under the FOOT of the model (the middle of its lowest 2%) instead of the
+# middle of its bounding box. A street lamp's box is mostly arm; the kit's lamp has its origin at the column.
+# With it, PROP_ARM=<degrees> turns the model so the overhang points that way (180 = toward -X, like the kit).
+if os.environ.get('PROP_ORIGIN') == 'base':
+    foot = V[V[:, 2] < lo[2] + 0.02 * dims[2]]
+    fx, fy = float(foot[:, 0].mean()), float(foot[:, 1].mean())
+    if 'PROP_ARM' in os.environ:
+        a = math.radians(float(os.environ['PROP_ARM'])) - math.atan2(cy - fy, cx - fx)
+        c, sn = math.cos(a), math.sin(a)
+        X, Y = V[:, 0] - fx, V[:, 1] - fy
+        V[:, 0], V[:, 1] = X * c - Y * sn, X * sn + Y * c
+        fx = fy = 0.0
+    cx, cy = fx, fy
+V = (V - [cx, cy, lo[2]]) * s
+# PROP_BACK=<metres>: slide the model so its BACK (+Y, the side that stands against a wall) is at this Y, which is
+# the kit model's own. A Meshy bench is 78 cm deep where the kit's is 50; centred, its back would be 14 cm inside
+# the shopfront. PROP_SHIFT_X=<metres>: the same for a kit model whose origin is not at its middle (SM_PotRow).
+if 'PROP_BACK' in os.environ:
+    V[:, 1] += float(os.environ['PROP_BACK']) - V[:, 1].max()
+if 'PROP_SHIFT_X' in os.environ:
+    V[:, 0] += float(os.environ['PROP_SHIFT_X'])
 if POLE > 0:
     # the wide top starts at the lowest height where the model is at least half as wide as its widest part
     z, r = V[:, 2], np.abs(V[:, :2]).max(1)
