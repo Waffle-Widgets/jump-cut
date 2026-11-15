@@ -381,6 +381,55 @@ reviewable, not so she can be swapped in.
 front-only reference. ![coworker](media/2026-11-14-cafecoworker-v2-texture-bake.jpg) The fix in #101
 is Meshy's Multi-view input plus a matched A-pose; nothing here changes that.
 
+### Sun Nov 15, 04:05 UTC — she is in the game, on HER OWN rig, and #101 is closed (M Station)
+
+`BP_Coworker.CoworkerBody` is now `/Game/Game/Imported/CafeCoworkerV2/SK_CafeCoworkerV2`, and that asset
+binds to **`SK_CafeCoworker_Skeleton`** — the 68-bone rig `SK_CafeCoworkerArmature_Idle` and `_Walk` are
+keyed to. `Art/Blender/rest_delta.py` reads **0.0°** against it, so both clips still play with nothing
+retargeted. `tools/unreal_coworker_body_v2.py` (`measure` | `import` | `swap`) is the thing that does it.
+
+**[#101](https://github.com/Waffle-Widgets/jump-cut/issues/101) said this was impossible, and it was —
+until the cause was understood.** Her reskin failed at 13.5 cm per hand, and posing the hand bone moved
+1,384 vertices on the shipped body against 30 on the reskinned one. That is **the same fault the player
+had**, and `conform_rest_pose.py` is the same fix: pose Meshy's own 28-bone rig onto the target rig's rest
+FIRST, bake, and transfer weights afterwards. Her V1 rig uses the identical `Bone_NNN` naming, so the
+script's bone map applied unchanged. After it every mapped bone sits **0.08–1.5 cm** inside her mesh.
+
+**Her texture was the same bake damage the player had, and it is gone the same way.**
+`Art/Blender/rebuild_coworker_v2.py` decimates Meshy's 383,852-triangle high-poly to 56,493 instead of
+baking: torn fringe over her right eye, a shredded collar, ragged sleeve hems, skin-coloured streaks down
+the trouser sides and navy bleeding onto the arms and thumbs — all gone, because all of them were bake
+artefacts rather than anything in the art.
+![coworker rebuilt](media/2026-11-15-cafecoworker-v2-rebuilt-no-bake.jpg)
+
+**Two post-passes were each separately necessary**, both in `Art/Blender/collapse_hand_weights.py`:
+
+* **Her hands are a fused mitten**, so the rig's **41 finger bones are folded into the two palm bones**.
+  Keying five finger chains on one lump of geometry fans it into white shards from the first frame of
+  `Idle`. She cannot articulate fingers she was not given; a hand that moves rigidly at the wrist reads
+  correctly at the distance she is ever seen from, and it is strictly better than one that shatters.
+  **This is the wrong move for the player** — his fingers separate and 32 of his 40 bones work.
+* **Weights further than 12 cm from their bone are dropped.** `reskin_to_existing_rig.py` prunes at 25 cm,
+  which still lets a hip bone drive a hand vertex — and that vertex comes out as a **needle spike several
+  centimetres long** off the heel of the hand. One or two vertices, invisible in any weight count, plainly
+  visible in a side view, and gone after the prune.
+
+![old vs new](media/2026-11-15-cafecoworker-v1-vs-v2-on-her-rig.jpg)
+*Left: the V1 body that was in the game until now — tan skin, a toothy western-cartoon face, a full wrap
+skirt apron. Right: the rebuilt V2 on the same rig, driven by the same `Idle` clip.*
+
+**Still wrong, and it is Meshy's, not the pipeline's.** The apron straps still **cross in an X with a
+diamond keeper** on her back, which the character lock forbids — and it is **raised geometry as well as
+texture**: the straps stand 3–6 mm proud of the shirt and the keeper 12–14 mm, over about 141 cm² and
+16,700 high-poly triangles. No bake or decimate change removes it. Removing it means selecting by the teal
+texel mask and shrinkwrapping those vertices onto the shirt, then repainting in **3D** — the X's texels are
+scattered over 97 of the atlas's 4,096 cells, so a 2D fill cannot do it — and then re-running the rebuild.
+Her hands also have no fingers at all in the source sculpt, which is why they are folded above.
+
+**Seen in the engine, after a restart.** The placed actor rendered as a crumpled teal lump immediately
+after the import — the same stale-skinning artefact as [#109](https://github.com/Waffle-Widgets/jump-cut/issues/109),
+and it cleared on the next editor launch. **Nobody has played it.**
+
 ## The first boss — `CrashDriver`
 
 The man who drives a car through the cafe wall in the opening and dies giving you Freeze Frame. **He does not

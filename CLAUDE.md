@@ -887,6 +887,23 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   without a `view_layer.update()` **between bones** compounds the error down each chain: the arms and hair tear
   into long streaks that look exactly like a broken bind and are nothing of the kind. Bit a clip-playback check
   on both the old and the new body at once, which is the only reason it was caught.
+- **A blueprint that is not a Character keeps its mesh in an SCS component, and `get_components_by_class`
+  on the CDO returns an EMPTY list for those.** `BP_Coworker`'s body is `CoworkerBody`, an SCS
+  `SkeletalMeshComponent`; the CDO reports zero components, which reads as "this blueprint has no mesh".
+  Reach the templates through `unreal.get_engine_subsystem(unreal.SubobjectDataSubsystem)` →
+  `k2_gather_subobject_data_for_blueprint`, write to EVERY handle it returns for that name (it lists each
+  node twice), then `BlueprintEditorLibrary.compile_blueprint` before saving. `BP_Player` is a Character,
+  so `CharacterMesh0` IS on its CDO - the two are not interchangeable.
+- **A just-deleted asset keeps answering `load_asset()` with the trashed object.** Deleting
+  `SK_CafeCoworkerV2` and importing a replacement, then reading it back, returned the CORPSE: old bounds,
+  `skeleton None`, and a perfectly good import reported as a failure. Call
+  `unreal.SystemLibrary.collect_garbage()` after the delete and re-scan the registry before verifying.
+  Same cause: gating a rename on `not does_asset_exist(TARGET)` skips it silently, because the deleted
+  name still answers true until the registry catches up.
+- **A placed actor can render as a crumpled lump straight after its mesh is re-imported, and be fine on
+  the next launch.** The coworker went from a correct asset thumbnail to a teal blob in the level viewport
+  the moment the import landed, and came back upright after a restart - stale skinning on the editor-world
+  actor, the same thing #109 chased. Restart before filing it as a defect.
 - **Look at the colours before calling a character done: `python tools/color_audit.py`.** Image to 3D bakes one
   texture for the whole body and nothing in the pipeline knows a pixel is "hair" or "sleeve", so a model can come
   back with skin-coloured hair, or a shirt the same colour as the arm inside it, and every number still reads
