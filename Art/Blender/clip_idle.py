@@ -20,7 +20,7 @@ FOOT_FWD = T('FOOT_FWD', 0.0)      # the feet stay where every other clip plants
 STAGGER = T('STAGGER', 2.5)        # cm: left foot ahead, right foot behind
 TOE_OUT = T('TOE_OUT', 3.0)
 PEL_DX = T('PEL_DX', -1.6)         # weight a little onto his right leg
-PEL_DZ = T('PEL_DZ', 1.4)          # straight legs: the knees measured 29 degrees bent at -0.8, 19 here (the bones' own kink)
+PEL_DZ = T('PEL_DZ', 1.6)          # straight legs: the knees measured 29 degrees bent at -0.8, 19 here (the bones' own kink)
 PEL_FWD = T('PEL_FWD', -6.5)       # cm: the PELVIS moves back over the ankles instead. The model rests with its ankles
                                    # 6 cm behind its hip joints; standing like that, his legs slant and bow from the side.
 PEL_PITCH = T('PEL_PITCH', 5.0)    # brings the shoulders forward over the hips: they sat 5-8 cm BEHIND them
@@ -61,8 +61,9 @@ CHEST = T('CHEST', -5.0)           # chest up
 SH_EVEN = T('SH_EVEN', 0.0)        # degrees: + lifts his LEFT collarbone. LEFT AT 0: tried 2.5-13, it tilts the joints (4 cm at 9) and the cloth barely moves
 WRIST_IN = T('WRIST_IN', 0.0)      # degrees the hand tips toward the thumb
 WRIST_BEND = T('WRIST_BEND', 0.0)
-HIP_ROLL = T('HIP_ROLL', -2.5)      # degrees the pelvis rolls: his right leg is the longer one, this lifts that hip so both knees straighten
-CHEST_ROLL = T('CHEST_ROLL', 2.5)  # and this rolls the chest back so the shoulders stay level
+CENTER = T('CENTER', -1.0)         # cm: the skeleton's hips rest 1 cm to his left of the point between his ankles
+HIP_ROLL = T('HIP_ROLL', 0.0)      # degrees the pelvis rolls. OFF: at -2.5 (to even the knees) his chest sat 2 cm to his left of his feet and the owner saw him lean
+CHEST_ROLL = T('CHEST_ROLL', 0.0)  # and this rolls the chest back so the shoulders stay level
 HEAD_LEVEL = T('HEAD_LEVEL', 0.0)  # degrees of neck tilt that stand the head upright (measured with posture_check.py)
 HEAD_TURN = T('HEAD_TURN', 0.0)
 
@@ -80,7 +81,7 @@ def pose(u, foot_fwd=FOOT_FWD, dz=PEL_DZ, reach=ARM_REACH, pfwd=PEL_FWD, pitch=P
     br = math.sin(two * u) * life                  # breath, once per loop
     sw = math.sin(two * (u + 0.18)) * life         # the weight drifting, a little behind it
     lk = math.sin(two * (u + 0.55)) * life         # the head, on its own clock
-    C.body(dx=DRIFT * sw, fwd=pfwd, dz=dz, pitch=pitch + 0.5 * br, lean=-0.3 * sw + HIP_ROLL)
+    C.body(dx=CENTER + DRIFT * sw, fwd=pfwd, dz=dz, pitch=pitch + 0.5 * br, lean=-0.3 * sw + HIP_ROLL)
     C.spine(x=(CHEST if life else SPINE) - BREATH * br, y=0.3 * sw + CHEST_ROLL, z=0.0)
     C.neck(x=HEAD + 0.6 * BREATH * br, y=HEAD_LEVEL, z=HEAD_TURN + LOOK * lk)
     C.foot('L', x=FEET_X, fwd=foot_fwd, yaw=TOE_OUT + 4.0 * life)

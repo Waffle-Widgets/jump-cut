@@ -113,6 +113,22 @@ print('HUMAN  shoulder-to-wrist       %5.1f       %5.1f   (arm bones: %.1f + %.1
 print('HUMAN  ankles apart            %5.1f       %5.1f' % (abs(anL.x - anR.x), 17.0))
 print('HUMAN  knee bend L/R           %2.0f/%2.0f       0-5' % (bend(P(B['L']['hip']), P(B['L']['kn']), anL), bend(P(B['R']['hip']), P(B['R']['kn']), anR)))
 print('HUMAN  hand to thigh, sideways: innermost hand point L %.1f R %.1f cm from centre; outside of thigh L %.1f R %.1f' % (tips['L'][1], tips['R'][1], thigh_out['L'], thigh_out['R']))
+# LEAN, seen from the front: where each level of him sits sideways (cm toward his left of the point between the ankles)
+mid = lambda a, b: (P(a).x + P(b).x) / 2
+ax0 = mid(B['L']['an'], B['R']['an'])
+hd = Vc[Vc[:, 2] > Vc[:, 2].max() - 20]
+wst = Vc[(Vc[:, 2] - fl > 100) & (Vc[:, 2] - fl < 106)]; cst = Vc[(Vc[:, 2] - fl > 120) & (Vc[:, 2] - fl < 126) & (np.abs(Vc[:, 0] - cx) < 16)]
+print('LEAN   sideways, cm toward his left of the ankles\' midpoint: hip joints %+.1f  waist surface %+.1f  chest surface %+.1f  shoulder joints %+.1f  head %+.1f'
+      % (mid(B['L']['hip'], B['R']['hip']) - ax0, (wst[:, 0].min() + wst[:, 0].max()) / 2 - ax0, (cst[:, 0].min() + cst[:, 0].max()) / 2 - ax0,
+         mid(B['L']['sh'], B['R']['sh']) - ax0, (hd[:, 0].min() + hd[:, 0].max()) / 2 - ax0))
+for sd in 'LR':
+    b = B[sd]
+    fo = Vc[[v.index for v in mesh.data.vertices if any(gn[g.group] == b['el'] and g.weight > 0.6 for g in v.groups)]]
+    a_, c_ = P(b['el']), P(b['wr']); ax_ = (c_ - a_).normalized()
+    t_ = np.array([(Vector(p) - a_).dot(ax_) for p in fo]); r_ = np.array([((Vector(p) - a_) - ax_ * (Vector(p) - a_).dot(ax_)).length for p in fo])
+    L_ = (c_ - a_).length
+    print('ARM    %s forearm thickness (radius, cm) near the elbow %.1f, middle %.1f, near the wrist %.1f' % (sd,
+          np.percentile(r_[(t_ > 0.1 * L_) & (t_ < 0.3 * L_)], 80), np.percentile(r_[(t_ > 0.4 * L_) & (t_ < 0.6 * L_)], 80), np.percentile(r_[(t_ > 0.7 * L_) & (t_ < 0.9 * L_)], 80)))
 world = bpy.data.worlds.new('W'); sc.world = world; world.use_nodes = True
 world.node_tree.nodes['Background'].inputs[0].default_value = (0.9, 0.9, 0.9, 1); world.node_tree.nodes['Background'].inputs[1].default_value = 1.2
 sun = bpy.data.objects.new('Sun', bpy.data.lights.new('Sun', 'SUN')); sun.data.energy = 3; sun.rotation_euler = (0.7, 0.2, -0.5); sc.collection.objects.link(sun)
