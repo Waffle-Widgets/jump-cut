@@ -578,6 +578,16 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   objective jumped straight to 3 with the player still standing at `(0, 0, 94)`. Nothing errors
   and the capture looks fine. After moving any actor a beat triggers off, read the objective
   state back with the player where he really starts.
+- **A destroyed actor's package stays DIRTY IN MEMORY after you `git rm` the file, and saving it
+  later writes the orphan back (Nov 15).** `b1_opening_wire.py` destroys and re-places the
+  director and the beacon every run, so the old packages become orphans on disk AND dirty
+  packages in memory. Removing the files is only half of it: `tools/b1v_orphanflush.py` saves
+  those two packages, which for a one-file-per-actor package whose actor is gone DELETES the file
+  and clears the dirty flag - verified, nothing came back in `git status`. Only do this for a
+  package that (a) has no live actor and (b) HAS a file on disk. A dirty package with **no** file
+  is a throwaway from this session (every `add_spawnable_from_instance` temp leaves one); saving
+  THAT would create a brand new orphan, so leave those alone and let the next editor restart drop
+  them with Don't Save.
 - **A Sequencer SPAWNABLE WITH NO SPAWN KEYS IS SPAWNED FOR THE WHOLE SEQUENCE (Nov 15).**
   `add_spawnable_from_instance` creates a `MovieSceneSpawnTrack` whose section has **zero keys**,
   and that means on from the first frame to the last. Beat 1's flying car therefore sat inside
