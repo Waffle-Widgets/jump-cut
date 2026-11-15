@@ -51,6 +51,16 @@ for o in list(bpy.context.scene.objects):
     if o is not src:
         bpy.data.objects.remove(o)
 
+# PROP_CUT_BELOW=<fraction of the height>: throw away everything below that level before anything else. The
+# awning was drawn standing on posts; the kit's hangs off the wall, and posts either side of the cafe door
+# would be two new things to walk into.
+CUT = float(os.environ.get('PROP_CUT_BELOW', '0'))
+if CUT > 0:
+    bm = bmesh.new(); bm.from_mesh(src.data)
+    zs = [v.co.z for v in bm.verts]
+    lim = min(zs) + CUT * (max(zs) - min(zs))
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.co.z < lim], context='VERTS')
+    bm.to_mesh(src.data); bm.free(); src.data.update()
 # size and place: base on the ground, centred
 V = np.empty(len(src.data.vertices) * 3); src.data.vertices.foreach_get('co', V); V = V.reshape(-1, 3)
 # PROP_YAW=<degrees>: turn the model about the up axis first, so its long side lies where the kit expects it

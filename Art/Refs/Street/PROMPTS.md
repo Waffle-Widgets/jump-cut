@@ -103,3 +103,18 @@ Prompts: `prompts_batch3_cafe.json`. All nine reference pictures are the 1024-pi
 | CafeBanquetteM | 2.26 width | 8000 | `PROP_TEXEL=0.002 PROP_KITBOX=-1.13,1.13,-0.36,0.36,0,1.08` |
 | CafeBarCounterM | 2.40 width | 4000 | `PROP_TEXEL=0.002 PROP_KITBOX=-1.2,1.2,-0.16,0.16,0,1.05` |
 | CafeChalkboardM | 2.40 width | 3000 | `PROP_TEXEL=0.001 PROP_KITBOX=-1.2,1.2,0,0.17,-0.85,0.85` |
+
+## Fourth batch (3:40 PM): six small cafe pieces, drawn locally
+
+Prompts: `prompts_batch4_cafe_small.json`. Drawn with `tools/gen_images.py --text ... --size 1024x1024 --steps 20`
+(Qwen-Image through ComfyUI on the 3090), because Gemini put a robot check in front of this browser.
+`PROP_KITBOX` here is the kit box from `city_models.json` **with Y negated** - that file is in Unreal's axes.
+
+| Name | tris | env |
+|---|---|---|
+| CafeTableTopM | 5000 | `PROP_TEXEL=0.001 PROP_KITBOX=-0.22,0.202,-0.172,0.207,0,0.25` |
+| CafeWallArtM | 3000 | `PROP_TEXEL=0.001 PROP_KITBOX=-0.85,0.82,-0.062,0,0.10,0.74` |
+| CafeClockM | 2500 | `PROP_TEXEL=0.001 PROP_KITBOX=-0.17,0.17,-0.07,0,-0.17,0.17` |
+| CafeRugM | 2000 | `PROP_TEXEL=0.002 PROP_KITBOX=-1.3,1.3,-0.9,0.9,0,0.015` |
+| CafeAwningM | 5000 | `PROP_TEXEL=0.003 PROP_YAW=180 PROP_CUT_BELOW=0.5 PROP_KITBOX=-2,2,0,1.30,2.18,3.10` |
+| NorenM | 3000 | `PROP_TEXEL=0.001 PROP_KITBOX=-0.75,0.75,-0.025,0.025,0,1.002` |
