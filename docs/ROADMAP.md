@@ -180,8 +180,8 @@ anyone picks up a task:
 
 ### The rescue is a run, the boss uses Splice, the clapperboard clacks (Sun Nov 15, 16:45 UTC, Justin's Mac mini)
 
-Asked for by Justin on Sunday morning. **Built, played by a script in PIE, not played by a person, not in a
-Windows build.** On branch `claude/project-thread-1f2owz`. See
+Asked for by Justin on Sunday morning. **Played by Justin in the editor on his Mac and merged to `main` on his
+word (Sun Nov 15, 17:36 UTC). Not yet in a Windows build.** See
 [the devlog entry](devlog/2026-11-15-they-run-the-boss-blinks-the-clapper-clacks.md).
 
 - **Rescue:** the player runs at 520 cm/s facing the way he goes and the coworker runs at his shoulder
