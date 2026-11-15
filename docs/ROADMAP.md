@@ -178,6 +178,20 @@ anyone picks up a task:
 
 ## Open
 
+### The game stops being silent: 17 sounds wired (#52, wiring half) (Sun Nov 15, 18:10 UTC, Justin's Mac mini)
+
+Asked for and approved by Justin (*"Complete the work fully then merge to main"*). **Checked by a script in PIE,
+merged to `main`. Nobody has heard it yet, and it is not in a Windows build.** Every `SFX_*` in `/Game/Game/Audio`
+now has a caller (24 of 24). See [the devlog entry](devlog/2026-11-15-seventeen-sounds-get-wired.md) for where
+each one plays and what keeps it to once.
+
+- Changed: `BP_Player`, `BP_EnemyBase`, `BP_BossFreeze`, `BP_OpeningDirector`, `BP_Checkpoint`, `BP_PlazaGate`,
+  `BP_JumpCutGameMode`. No new assets, components or systems; three new default-false bools (`PunchLanded`,
+  `BossWasWindingUp`, `CineCrashSounded`) and eight tiny helper functions.
+- **Needs a person:** the mix (all at volume 1.0, 2D), and the crash sound against the car on screen.
+- **For Justin to decide:** the opening cinematic already runs behind the title screen, so a player who waits on
+  the title hears the crash behind it. That was true before this change.
+
 ### The rescue is a run, the boss uses Splice, the clapperboard clacks (Sun Nov 15, 16:45 UTC, Justin's Mac mini)
 
 Asked for by Justin on Sunday morning. **Played by Justin in the editor on his Mac and merged to `main` on his

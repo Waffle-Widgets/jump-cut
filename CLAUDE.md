@@ -192,6 +192,20 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
 - **The console box ref changes per session** (`tb1` one launch, `tb2` the next). Find the textbox on the
   line after `text "Cmd"` in a `Snapshot` rather than trusting either number.
 
+### Adding one node to a big graph: splice it, do not rewrite (learned 2026-11-15, wiring 17 sounds)
+- **To add a call to an existing function, splice ONE node into the exec wire instead of `write_graph_dsl`.**
+  `find_nodes` + `get_node_infos` -> pick the node by its ref (`K2Node_CallFunction_117`), `create_node`
+  (`Audio|PlaySound2D`, or `CallFunction|<OurHelper>`), `break_pins` its `then` -> old target, `connect_pins`
+  old -> new -> old target, `set_pin_value` on the `Sound` pin. Nothing else in the graph changes, so none of
+  the round-trip traps below can bite. Put any new logic in a brand-new helper function (DSL on an empty graph
+  is safe) and splice only the call. Prove it by counting: total nodes before + added = after.
+- **Many of our functions are mostly dead nodes.** `PlayerPunch` had 79 nodes and 21 reachable from its entry;
+  `CineDirectorStep` 355 and 40. Walk the exec pins from `K2Node_FunctionEntry` to find the live ones before
+  picking a node to splice after - a dead twin has the same title.
+- **Testing in PIE without a person:** `py <script>` in the console box with `unreal.UnrealEditorSubsystem().
+  get_game_world()` and `actor.call_method(...)` runs the real functions; one script call is one frame, so
+  "the next tick" (lose screen, win screen) needs a second call.
+
 ### Blueprint graphs through `write_graph_dsl` (learned 2026-11-15, beat 1's explosion)
 - **A variable's CATEGORY is part of its DSL type id.** Move a variable out of `Default` and
   `Variables|Default|GetFoo` stops existing - `write_graph_dsl` fails with
