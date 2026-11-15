@@ -108,6 +108,40 @@ def tick(dt):
             if now > 5.0:
                 finish('PIE not running')
             return
+        if MODE == 'music':
+            # title (2 s) -> R -> opening (music silent) -> play (music up) -> whole-level restart
+            gms, dirs = actors(gw, 'BP_JumpCutGameMode'), actors(gw, 'BP_OpeningDirector')
+            if not gms or not dirs:
+                return
+            gm, d = gms[0], dirs[0]
+            comp = gp(d, 'MusicComp', None)
+            mus = 0
+            for a in unreal.GameplayStatics.get_all_actors_of_class(gw, unreal.Actor):
+                for c in a.get_components_by_class(unreal.AudioComponent):
+                    s = c.get_editor_property('sound')
+                    if s is not None and s.get_name().startswith('MUS_') and c.is_playing():
+                        mus += 1
+            st = {'t': round(now, 3), 'ph': S['phase'], 'flow': gp(gm, 'FlowState', -1),
+                  'have': gp(d, 'MusicHave', None), 'level': gp(d, 'MusicLevel', None),
+                  'sound': comp.get_editor_property('sound').get_name() if comp and comp.get_editor_property('sound') else None,
+                  'playing': comp.is_playing() if comp else None, 'mus_playing': mus,
+                  'opening': bool(gp(d, 'CineRunning', False)), 'world': gw.get_name()}
+            S['frames'].append(st)
+            key = (st['flow'], st['have'], st['level'], st['sound'], st['playing'], st['mus_playing'], st['opening'])
+            if key != S.get('lastkey'):
+                ev('state %s' % st); S['lastkey'] = key
+            ph = S['phase']
+            if ph == 0 and st['flow'] == 0 and now > 2.5:
+                gm.call_method('JumpCutStartPlay'); S['phase'] = 1; S['mark'] = now; ev('called JumpCutStartPlay')
+            elif ph == 1 and S['mark'] and not st['opening'] and now - S['mark'] > 3.0 and st['level'] == 1.0:
+                S['phase'] = 2; S['mark'] = now; ev('opening over, music up')
+            elif ph == 2 and now - S['mark'] > 2.0:
+                gm.call_method('JumpCutRestartWholeLevel'); S['phase'] = 3; S['mark'] = now; ev('called JumpCutRestartWholeLevel')
+            elif ph == 3 and now - S['mark'] > 4.0:
+                finish('music checked through a restart')
+            if now > 60.0:
+                finish('timeout in phase %d' % ph)
+            return
         if MODE == 'titleskip':
             # start play 1 s into the animation (what R does), then restart the whole level (what R
             # does on the win screen) and check the new title widget starts its animation from 0
@@ -159,7 +193,8 @@ def tick(dt):
              'boss': bool(gp(d, 'BossCine', False)),
              'ff': bool(gp(pawn, 'FreezeFrameActive', False)),
              'ffLeft': round(gp(pawn, 'FreezeFrameTimeLeft', -1.0), 3),
-             'won': bool(gp(pawn, 'HasWon', False)), 'splice': bool(gp(pawn, 'HasSplice', False))}
+             'won': bool(gp(pawn, 'HasWon', False)), 'splice': bool(gp(pawn, 'HasSplice', False)),
+             'mlevel': gp(d, 'MusicLevel', None)}
         bs = actors(gw, 'BP_BossFreeze')
         if bs:
             b = bs[0]
@@ -213,7 +248,7 @@ def tick(dt):
             b.call_method('EnemyTakeHit', (9999.0, pawn.get_actor_location(), 300.0, 100.0, 0.5))
             S['phase'] = 4; S['mark'] = now; ev('boss killed inside Freeze Frame')
         elif ph == 4:
-            for key in ('power', 'outro', 'won', 'ff', 'bstop'):
+            for key in ('power', 'outro', 'won', 'ff', 'bstop', 'mlevel'):
                 prev = S.get('prev_' + key)
                 if prev is not None and prev != f.get(key):
                     ev('%s -> %s (powerT %s outroT %s dil %s bctd %s)' % (key, f.get(key), f['powerT'], f['outroT'], f['dil'], f.get('bctd')))

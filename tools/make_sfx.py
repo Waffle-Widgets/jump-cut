@@ -395,11 +395,160 @@ def make_clapper(folder):
           mix(seq(click, silence(0.2)), seq(silence(0.012), mix(click, ring)), knock))
 
 
+def _loop_buf(seconds):
+    return [0.0] * int(round(seconds * RATE))
+
+
+def _put(buf, t, samples):
+    """Add samples at time t, WRAPPING past the end - so a note that rings over the loop point
+    comes back in at the start and the loop has no seam at all."""
+    n = len(buf)
+    i0 = int(round(t * RATE))
+    for k, s in enumerate(samples):
+        buf[(i0 + k) % n] += s
+
+
+def _write_level(path, samples, peak):
+    """Like write(), but normalised to a fixed peak so music sits a known distance under the SFX
+    (write() only limits; the SFX peak at 0.85, so peak 0.22 is about 12 dB under them)."""
+    p = max(1e-9, max(abs(s) for s in samples))
+    write(path, [s * peak / p for s in samples])
+
+
+def _kick(vol=0.9):
+    n = int(0.22 * RATE)
+    out, ph = [], 0.0
+    for i in range(n):
+        x = i / n
+        ph += 2 * math.pi * (45.0 + 110.0 * (1.0 - x) ** 3) / RATE
+        out.append(math.sin(ph) * vol * (1.0 - x) ** 2.2)
+    return out
+
+
+def _pluck(midi, dur, vol, wave_fn=math.sin, decay=2.5):
+    f = note(midi)
+    return tone(lambda x: f, dur, wave_fn, vol, attack=0.004, decay_pow=decay)
+
+
+def _pad(midi, dur, vol):
+    f = note(midi)
+    n = int(dur * RATE)
+    out, p1, p2 = [], 0.0, 0.0
+    for i in range(n):
+        p1 += 2 * math.pi * f * 1.003 / RATE
+        p2 += 2 * math.pi * f * 0.997 / RATE
+        a = min(1.0, i / (0.6 * RATE)) * min(1.0, (n - i) / (0.8 * RATE))
+        out.append((0.6 * tri(p1) + 0.4 * math.sin(p2)) * vol * a)
+    return out
+
+
+def make_music(folder):
+    """Two music loops for Jump Cut (Sun Nov 15). Ours, from code: no CREDITS.md entry.
+
+    MUS_Title    - 72 BPM, 8 bars (26.7 s), A minor: Am - F - Dm - E. Slow pads, a soft plucked
+                   figure and a distant low pulse. Moody, leaves room for the clapper snap.
+    MUS_Gameplay - 144 BPM, 40 bars (66.7 s), A minor: Am - F - C - G. Kick, snare, hats, an eighth-
+                   note bass, a sixteenth arpeggio and a lead line, built up in five 8-bar sections
+                   (drums+bass, +arp, +lead, breakdown, everything) so a 3-5 minute run does not
+                   hear the same 8 bars over and over.
+    Both are rendered into a ring buffer (_put wraps), so they loop with no seam, and both are
+    normalised to peak 0.22 - about 12 dB under the sound effects, which peak at 0.85.
+
+        python tools/make_sfx.py <folder> music
+    """
+    random.seed(1115)
+
+    # ---- title ---------------------------------------------------------------------------
+    bpm, bars = 72.0, 8
+    beat = 60.0 / bpm
+    buf = _loop_buf(bars * 4 * beat)
+    prog = [(57, 60, 64), (53, 57, 60), (50, 53, 57), (52, 56, 59)]   # Am F Dm E
+    figure = [0, 2, 1, 2, 0, 2, 1, 2]                                  # chord-tone index per eighth
+    for b in range(bars):
+        ch = prog[b % 4]
+        t0 = b * 4 * beat
+        for m in ch:
+            _put(buf, t0, _pad(m, 4 * beat + 0.6, 0.10))
+        _put(buf, t0, _pad(ch[0] - 24, 4 * beat + 0.6, 0.12))
+        for k, idx in enumerate(figure):
+            _put(buf, t0 + k * beat / 2, _pluck(ch[idx] + 12, 0.9, 0.16 if k % 4 == 0 else 0.10))
+        for k in range(4):
+            _put(buf, t0 + k * beat, _pluck(ch[0] - 24, 0.35, 0.22, tri, 3.0))
+    _write_level(os.path.join(folder, "MUS_Title.wav"), buf, 0.22)
+
+    # ---- gameplay -------------------------------------------------------------------------
+    bpm, bars = 144.0, 40
+    beat = 60.0 / bpm
+    buf = _loop_buf(bars * 4 * beat)
+    prog = [(57, 60, 64), (53, 57, 60), (48, 52, 55), (55, 59, 62)]   # Am F C G
+    lead = [76, None, 74, 76, 79, None, 76, 74,  72, None, 72, 74, 76, None, 72, None,
+            72, None, 71, 72, 76, None, 72, 71,  74, None, 74, 76, 79, None, 74, None]
+    kick, hat = _kick(0.85), noise(0.035, 0.22, lowpass=0.95, decay_pow=4.0)
+    snare = mix(noise(0.16, 0.45, lowpass=0.75, decay_pow=2.5),
+                tone(lambda x: 200.0 - 40.0 * x, 0.08, math.sin, 0.30, attack=0.001, decay_pow=2.0))
+    for b in range(bars):
+        sec = b // 8                       # 0 drums+bass, 1 +arp, 2 +lead, 3 breakdown, 4 all
+        ch = prog[b % 4]
+        t0 = b * 4 * beat
+        if sec != 3:
+            for k in range(4):
+                if k in (0, 2) or (k == 3 and b % 2 == 1):
+                    _put(buf, t0 + k * beat + (beat / 2 if k == 3 else 0.0), kick)
+                if k in (1, 3):
+                    _put(buf, t0 + k * beat, snare)
+            for k in range(8):
+                _put(buf, t0 + k * beat / 2, [s * (1.0 if k % 2 else 0.6) for s in hat])
+            for k in range(8):                              # driving eighth-note bass
+                _put(buf, t0 + k * beat / 2,
+                     _pluck(ch[0] - 24 + (12 if k in (3, 7) else 0), beat / 2 * 0.95, 0.30,
+                            lambda p: 0.6 * square(p) + 0.4 * tri(p), 1.6))
+        else:
+            for m in ch:
+                _put(buf, t0, _pad(m, 4 * beat + 0.4, 0.09))
+            _put(buf, t0, _pad(ch[0] - 24, 4 * beat + 0.4, 0.14))
+            if b % 2 == 1:
+                _put(buf, t0 + 3 * beat, [s * 0.5 for s in kick])
+        if sec >= 1:                                        # sixteenth arpeggio
+            arp = [ch[0], ch[1], ch[2], ch[0] + 12]
+            for k in range(16):
+                _put(buf, t0 + k * beat / 4,
+                     _pluck(arp[k % 4] + 12, beat / 4 * 1.6, 0.07 if sec == 3 else 0.09, tri, 2.2))
+        if sec in (2, 4):                                   # lead line, two bars per phrase
+            for k in range(8):
+                m = lead[(b % 4) * 8 + k]
+                if m is not None:
+                    _put(buf, t0 + k * beat / 2,
+                         _pluck(m, beat * 0.9, 0.13, lambda p: 0.7 * math.sin(p) + 0.3 * tri(p), 1.2))
+    _write_level(os.path.join(folder, "MUS_Gameplay.wav"), buf, 0.22)
+
+
+def make_fanfare(folder):
+    """SFX_PowerFanfare - the moment a power is granted (Sun Nov 15). About one second: a bright
+    rising arpeggio C5 E5 G5 C6 (55 ms apart) that lands on a held C major chord with a high
+    shimmer. Brighter and faster than SFX_PowerFreezeFrame / SFX_PowerSplice, which carry the
+    power's own colour and play with it.
+
+        python tools/make_sfx.py <folder> fanfare
+    """
+    run = seq(*[tone(lambda x, f=note(m): f, 0.055, lambda p: 0.6 * math.sin(p) + 0.4 * tri(p), 0.30,
+                     attack=0.002, decay_pow=0.6) for m in (72, 76, 79)])
+    hit = mix(*[tone(lambda x, f=note(m): f, 0.85, lambda p: 0.7 * math.sin(p) + 0.3 * tri(p), v,
+                     attack=0.004, decay_pow=1.8) for m, v in ((60, 0.22), (72, 0.26), (76, 0.20),
+                                                              (79, 0.20), (84, 0.24))],
+              tone(lambda x: note(96) * (1.0 + 0.004 * math.sin(40.0 * x)), 0.85, math.sin, 0.08,
+                   attack=0.01, decay_pow=2.5))
+    write(os.path.join(folder, "SFX_PowerFanfare.wav"), seq(run, hit))
+
+
 if __name__ == "__main__":
     folder = sys.argv[1] if len(sys.argv) > 1 else "sfx"
     which = sys.argv[2] if len(sys.argv) > 2 else "all"
     os.makedirs(folder, exist_ok=True)
-    if which == "clapper":
+    if which == "music":
+        make_music(folder)
+    elif which == "fanfare":
+        make_fanfare(folder)
+    elif which == "clapper":
         make_clapper(folder)
     elif which == "jumpcut":
         make_jumpcut(folder)
