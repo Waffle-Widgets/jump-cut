@@ -57,3 +57,6 @@ __pycache__/
 
 # FBX embedded-texture extraction folders, written beside an .fbx by the Unreal importer
 *.fbm/
+
+# Meshy's full-detail downloads (20-45 MB each): the baked FBX + PNG beside them are what we commit
+Art/Meshy/_raw/
