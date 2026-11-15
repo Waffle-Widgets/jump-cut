@@ -18,7 +18,7 @@ def T(name, default):
 
 FOOT_FWD = T('FOOT_FWD', 0.0)      # the feet stay where every other clip plants them, so nothing slides on a blend
 STAGGER = T('STAGGER', 2.5)        # cm: left foot ahead, right foot behind
-TOE_OUT = T('TOE_OUT', 8.0)
+TOE_OUT = T('TOE_OUT', 10.0)
 PEL_DX = T('PEL_DX', -1.6)         # weight a little onto his right leg
 PEL_DZ = T('PEL_DZ', 0.6)          # straight legs: the knees measured 29 degrees bent at -0.8, 19 here (the bones' own kink)
 PEL_FWD = T('PEL_FWD', -6.5)       # cm: the PELVIS moves back over the ankles instead. The model rests with its ankles
@@ -36,17 +36,25 @@ PRON = T('PRON', 55.0)
 CURL = T('CURL', 0.34)
 
 
-# A SIMPLE, CASUAL STAND. The owner's reference (Nov 15, an anime character sheet: front, side, back) is plain: feet
-# under the shoulders, legs straight, arms hanging straight down close to the body with the palms toward the thighs,
-# shoulders level, head level. The version before this one answered "too stiff" with a contrapposto - weight on one
-# leg, a dropped hip, tipped shoulders - which was more pose than was asked for. This keeps the stand symmetric and
-# puts the life in small movement instead: the breath, a slow drift of the weight, the head.
-BREATH = T('BREATH', 1.6)          # degrees of chest on a breath
-DRIFT = T('DRIFT', 0.8)            # cm the weight wanders side to side
-LOOK = T('LOOK', 3.0)              # degrees the head turns, slowly
-FEET_X = T('FEET_X', 11.0)         # cm either side of the centre line: under the shoulders
-PALM = T('PALM', 86.0)             # forearm roll: 90 faces the palm at the thigh. At 55 the palms faced half forward
-                                   # and the whole arm read as twisted ("make sure his arms don't look twisted up").
+# THE STAND, third reference (owner, Nov 15, a line drawing of an anime hero standing): "His shoulders should be
+# straight while his arms hang down not touching his torso." Read off the drawing: the shoulder line is level and
+# square; the arms hang CLEAR of the body with daylight between arm and ribs, elbows a little out and softly bent,
+# hands as loose fists at the top of the thigh; the feet are wider than the shoulders with one turned out; the chest
+# is up. The stand before this one hung the arms straight down against the body, and brought down from the A-pose
+# like that the shoulders slope ("drooping") and the arms press into the torso.
+BREATH = T('BREATH', 2.2)          # degrees of chest on a breath
+DRIFT = T('DRIFT', 1.2)            # cm the weight wanders side to side
+LOOK = T('LOOK', 4.0)              # degrees the head turns, slowly
+FEET_X = T('FEET_X', 14.0)         # cm either side of the centre line: wider than the shoulders
+ARM_OUT = T('ARM_OUT', 9.5)        # cm the wrist hangs outside the shoulder joint: daylight between arm and ribs
+ARM_FWD = T('ARM_FWD', 1.0)
+ARM_BEND = T('ARM_BEND', 0.972)    # of the arm's length: a soft elbow, about 27 degrees
+ELBOW_OUT = T('ELBOW_OUT', 0.6)    # how far outward the elbow points (0 is straight back)
+PALM = T('PALM', 96.0)             # forearm roll: the back of the fist faces out and a little forward
+FIST = T('FIST', 0.85)             # loose fists
+SH_UP = T('SH_UP', 36.0)           # collarbone lift: 24 drooped; with the arms held out, 36 is level, not a shrug
+SH_BACK = T('SH_BACK', 2.0)        # shoulders wide rather than pulled back
+CHEST = T('CHEST', -5.0)           # chest up
 
 
 def pose(u, foot_fwd=FOOT_FWD, dz=PEL_DZ, reach=ARM_REACH, pfwd=PEL_FWD, pitch=PEL_PITCH, life=1.0):
@@ -54,15 +62,18 @@ def pose(u, foot_fwd=FOOT_FWD, dz=PEL_DZ, reach=ARM_REACH, pfwd=PEL_FWD, pitch=P
     br = math.sin(two * u) * life                  # breath, once per loop
     sw = math.sin(two * (u + 0.18)) * life         # the weight drifting, a little behind it
     lk = math.sin(two * (u + 0.55)) * life         # the head, on its own clock
-    C.body(dx=DRIFT * sw, fwd=pfwd, dz=dz + 0.35 * br, pitch=pitch + 0.4 * br, lean=-0.5 * sw)
-    C.spine(x=SPINE - BREATH * br, y=0.5 * sw, z=-0.6 * sw)
-    C.neck(x=HEAD + 0.6 * BREATH * br, y=-0.3 * sw, z=LOOK * lk)
-    C.foot('L', x=FEET_X, fwd=foot_fwd, yaw=TOE_OUT)
-    C.foot('R', x=-FEET_X, fwd=foot_fwd, yaw=TOE_OUT)
+    fid = math.sin(two * 2 * (u + 0.3)) * life     # a smaller, faster settle, twice per loop
+    C.body(dx=-1.0 * life + DRIFT * sw, fwd=pfwd, dz=dz + 0.4 * br, pitch=pitch + 0.5 * br, lean=-(0.8 * life + 0.7 * sw), twist=0.6 * sw)
+    C.spine(x=(CHEST if life else SPINE) - BREATH * br, y=0.8 * life + 0.6 * sw, z=-0.9 * sw)
+    C.neck(x=HEAD + 0.6 * BREATH * br + 0.6 * fid, y=-0.4 * sw, z=LOOK * lk)
+    C.foot('L', x=FEET_X, fwd=foot_fwd + 1.5 * life, yaw=TOE_OUT + 4.0 * life)
+    C.foot('R', x=-FEET_X, fwd=foot_fwd - 0.5 * life, yaw=TOE_OUT + 16.0 * life)     # one foot turned out, as drawn
     for s in 'LR':
-        C.clav(s, up=CLAV_UP + 1.0 * br, back=CLAV_BACK)
-        C.hand(s, out=HAND_OUT, fwd=HAND_FWD + 0.6 * sw * C.SGN[s], up=-C.ARMLEN[s] * reach + 0.45 * br,
-               pron=PALM, curl=CURL, elbow=(0.15, -1.0, 0.0))
+        C.clav(s, up=SH_UP + 1.2 * br, back=SH_BACK)
+        o_ = ARM_OUT + 0.5 * br + 0.5 * sw * C.SGN[s]; f_ = ARM_FWD + 0.8 * sw * C.SGN[s] + 0.4 * fid
+        r_ = C.ARMLEN[s] * ARM_BEND                 # the wrist sits this far from the shoulder, whichever way it hangs:
+        C.hand(s, out=o_, fwd=f_, up=-math.sqrt(max(1.0, r_ * r_ - o_ * o_ - f_ * f_)) + 0.6 * br,   # out AND down would lock the elbow
+               pron=PALM, curl=FIST + 0.03 * fid, elbow=(ELBOW_OUT, -1.0, 0.0))
 
 
 if os.environ.get('STUDY'):

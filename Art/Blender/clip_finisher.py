@@ -147,6 +147,7 @@ def pose_at(f):
 def foot(s, x, fwd, up, pitch, yaw, roll, pole):
     """cw_clip.foot() with the knee's direction given outright, as (toward his left, forward, up), and a roll.
     A foot pitched onto its toes is lifted by at least what the roll onto the ball of the foot needs."""
+    x += C.SGN[s] * C.STANCE['foot_x'] * C._stance[0]      # the idle's wider feet at the ends of the clip (cw_clip.STANCE)
     th, sh, ft = C.LEG[s]
     if pitch > 0:                                          # heel up: the toes stay ON the floor, not in it
         p = math.radians(min(pitch, 60.0)); up = max(up, TOE * math.sin(p) + ANKLE_H * (math.cos(p) - 1.0))

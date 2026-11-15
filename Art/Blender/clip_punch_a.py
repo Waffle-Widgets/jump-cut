@@ -134,6 +134,7 @@ def pose_at(f):
 
 def foot(s, x, fwd, up, pitch, yaw, pole):
     """cw_clip.foot() with the knee's direction given outright, as (toward his left, forward, up)."""
+    x += C.SGN[s] * C.STANCE['foot_x'] * C._stance[0]      # the idle's wider feet at the ends of the clip (cw_clip.STANCE)
     th, sh, ft = C.LEG[s]
     t = Vector((x, C.ANK_Y - fwd, C.ANK[s].z - C.DROP[s] + max(up, 0.0)))
     C.ik2('leg' + s, th, sh, ft, t, Vector((pole[0], -pole[1], pole[2])), -C.Y)

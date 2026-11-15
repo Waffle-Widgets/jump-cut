@@ -273,8 +273,10 @@ _state = {}
 # takes `stance=(a, b)`: the difference between the old stand and the measured one is ADDED to whatever the script
 # poses, in full on the first frame, fading out by u = a (the action takes over), and fading back in from u = b to
 # the last frame. The feet are not touched: both stands plant them in the same place.
-STANCE = dict(fwd=-6.5, dz=1.8, pitch=5.0, spine=-3.0, neck=-12.0, hand_out=-5.0, hand_fwd=0.0, hand_up=-0.02, pron=24.0,   # palms to the thighs, as the idle
-              clav_up=24.0, clav_back=6.0)
+STANCE = dict(fwd=-6.5, dz=1.8, pitch=5.0, spine=-5.0, neck=-12.0,
+              hand_out=2.5, hand_fwd=-2.0, hand_up=0.014, pron=34.0, curl=0.5,      # arms clear of the torso, loose fists
+              clav_up=36.0, clav_back=2.0,                                          # the idle's square shoulders
+              foot_x=3.5)                                                           # and its wider feet (14 cm, the clips plant at 10.5)
 _stance = [0.0]                                             # this frame's weight, set by author()
 
 
@@ -320,6 +322,7 @@ def foot(s, x=None, fwd=0.0, up=0.0, pitch=0.0, yaw=8.0, knee_out=0.22):
     up), negative lifts the toes. yaw: toe-out. A foot flat on the floor is up=0, pitch=0."""
     th, sh, ft = LEG[s]
     if x is None: x = SGN[s] * 10.5
+    x += SGN[s] * STANCE['foot_x'] * _stance[0]
     t = Vector((x, ANK_Y - fwd, ANK[s].z - DROP[s] + up))
     ik2('leg' + s, th, sh, ft, t, Vector((SGN[s] * knee_out, -1.0, 0.0)), -Y)
     yw = math.radians(yaw) * SGN[s]; p = math.radians(pitch)
@@ -338,6 +341,7 @@ def hand(s, out=9.0, fwd=3.0, up=None, pron=62.0, curl=0.34, elbow=(0.35, -1.0, 
     if up is None: up = -ARMLEN[s] * 0.965
     w_ = _stance[0]
     out += STANCE['hand_out'] * w_; fwd += STANCE['hand_fwd'] * w_; up += STANCE['hand_up'] * ARMLEN[s] * w_; pron += STANCE['pron'] * w_
+    curl = min(1.0, curl + STANCE['curl'] * w_)
     if not _state.get('clav' + s):
         # Hold the shoulder where the idle holds it, in every pose. A hanging arm needs 28 degrees of collarbone lift
         # or the shoulder slopes (owner, Nov 15, twice). Round two then dropped the lift to nothing for a level or
