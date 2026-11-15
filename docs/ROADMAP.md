@@ -189,8 +189,10 @@ each one plays and what keeps it to once.
   `BP_JumpCutGameMode`. No new assets, components or systems; three new default-false bools (`PunchLanded`,
   `BossWasWindingUp`, `CineCrashSounded`) and eight tiny helper functions.
 - **Needs a person:** the mix (all at volume 1.0, 2D), and the crash sound against the car on screen.
-- **For Justin to decide:** the opening cinematic already runs behind the title screen, so a player who waits on
-  the title hears the crash behind it. That was true before this change.
+- **Fixed the same day (Justin: "Fix item 1 and merge"):** the opening used to start behind the title screen. It
+  now waits until the title is dismissed (`BP_OpeningDirector.CineBeginWhenPlaying` checks the game mode's
+  `FlowState`). Checked by script; not yet checked with a real R press. See
+  [the devlog entry](devlog/2026-11-15-the-opening-waits-for-the-title.md).
 
 ### The rescue is a run, the boss uses Splice, the clapperboard clacks (Sun Nov 15, 16:45 UTC, Justin's Mac mini)
 
