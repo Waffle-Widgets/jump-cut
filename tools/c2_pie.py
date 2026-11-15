@@ -62,6 +62,44 @@ def tp(pawn, pc, x, y, yaw, pitch=-10.0):
     pc.set_control_rotation(unreal.Rotator(roll=0.0, pitch=pitch, yaw=yaw))
 
 
+SHOTS = [float(x) for x in sys.argv[2].split(',')] if len(sys.argv) > 2 else [0.5, 1.2, 2.0, 2.45, 3.0, 4.5]
+W_KEYS = ['TitleBarista', 'TitleDirector', 'TitleClapOpen', 'TitleClapShut', 'TitleArt', 'ScreenTitle', 'ScreenKey', 'KeyBox']
+
+
+def title_tick(now, gw):
+    """`title`: the title screen as the player sees it. Needs ShowTitleOnStart TRUE (b1u_pie.py flags off)."""
+    gms = actors(gw, 'BP_JumpCutGameMode')
+    if not gms:
+        return
+    gm = gms[0]
+    w = gp(gm, 'TitleWidget', None)
+    if w is None:
+        return
+    vis = str(w.get_visibility()).split('.')[-1]
+    if 'tw0' not in S and 'COLLAPSED' not in vis.upper():
+        S['tw0'] = now; ev('title widget visible (%s)' % vis)
+    if 'tw0' not in S:
+        return
+    t = now - S['tw0']
+    f = {'t': round(t, 3), 'vis': vis, 'flow': gp(gm, 'FlowState', -1),
+         'dil': round(unreal.GameplayStatics.get_global_time_dilation(gw), 3),
+         'animT': round(gp(w, 'TitleT', -1.0), 3), 'snapped': gp(w, 'TitleSnapped', None)}
+    for k in W_KEYS:
+        c = gp(w, k, None)
+        if c is not None:
+            f[k] = [round(c.get_render_opacity(), 3), str(c.get_visibility()).split('.')[-1]]
+    S['frames'].append(f)
+    for s in SHOTS:
+        tag = 'title_%.2f' % s
+        if t >= s and tag not in S.get('shot', set()):
+            S.setdefault('shot', set()).add(tag)
+            unreal.SystemLibrary.execute_console_command(gw, 'Screenshot showui')
+            ev('screenshot %s at t=%.3f' % (tag, t))
+            break
+    if t > max(SHOTS) + 1.0:
+        finish('title sampled')
+
+
 def tick(dt):
     try:
         now = time.time() - S['t0']
@@ -69,6 +107,11 @@ def tick(dt):
         if gw is None:
             if now > 5.0:
                 finish('PIE not running')
+            return
+        if MODE == 'title':
+            title_tick(now, gw)
+            if now > 40.0:
+                finish('timeout')
             return
         pc = unreal.GameplayStatics.get_player_controller(gw, 0)
         pawns, dirs = actors(gw, 'BP_Player'), actors(gw, 'BP_OpeningDirector')
