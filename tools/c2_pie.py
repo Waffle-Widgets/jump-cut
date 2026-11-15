@@ -108,6 +108,39 @@ def tick(dt):
             if now > 5.0:
                 finish('PIE not running')
             return
+        if MODE == 'titleskip':
+            # start play 1 s into the animation (what R does), then restart the whole level (what R
+            # does on the win screen) and check the new title widget starts its animation from 0
+            gms = actors(gw, 'BP_JumpCutGameMode')
+            if not gms:
+                return
+            gm = gms[0]
+            w = gp(gm, 'TitleWidget', None)
+            ph = S['phase']
+            st = {'flow': gp(gm, 'FlowState', -1), 'vis': str(w.get_visibility()).split('.')[-1] if w else None,
+                  'animT': round(gp(w, 'TitleT', -1.0), 3) if w else None,
+                  'dil': round(unreal.GameplayStatics.get_global_time_dilation(gw), 3),
+                  'world': gw.get_name(), 'wid': w.get_name() if w else None}
+            S['frames'].append(dict(st, t=round(now, 3), ph=ph))
+            if ph == 0 and st['animT'] is not None and st['animT'] > 1.0:
+                ev('before start: %s' % st)
+                gm.call_method('JumpCutStartPlay')
+                S['phase'] = 1; S['mark'] = now
+            elif ph == 1 and now - S['mark'] > 0.5:
+                pawn = actors(gw, 'BP_Player')[0]
+                ev('0.5 s after start: %s inputLocked=%s' % (st, gp(pawn, 'InputLocked', None)))
+                S['wid0'] = st['wid']
+                gm.call_method('JumpCutRestartWholeLevel')
+                S['phase'] = 2; S['mark'] = now
+            elif ph == 2 and st['wid'] != S.get('wid0') and st['animT'] is not None and st['animT'] > 0.0:
+                ev('after restart, first frame of new title: %s' % st)
+                S['phase'] = 3; S['mark'] = now
+            elif ph == 3 and now - S['mark'] > 3.0:
+                ev('3 s into the replayed title: %s' % st)
+                finish('skip and replay checked')
+            if now > 60.0:
+                finish('timeout in phase %d' % ph)
+            return
         if MODE == 'title':
             title_tick(now, gw)
             if now > 40.0:
