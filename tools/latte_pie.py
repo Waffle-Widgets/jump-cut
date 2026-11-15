@@ -253,6 +253,9 @@ try:
                     say('FX-NAME %-28s %-22s at (%.0f %.0f %.0f) hidden %s comps %s' % (lab[:28], o.get_class().get_name()[:22], l.x, l.y, l.z, o.get_editor_property('hidden'),
                         [c.get_class().get_name() for c in o.get_components_by_class(unreal.PrimitiveComponent)][:4]))
             say('FX end')
+        elif mode == 'shotui':                    # the game view WITH its on-screen text (HighResShot leaves UMG out)
+            unreal.SystemLibrary.execute_console_command(W, 'Screenshot showui')
+            say('SHOTUI')
         elif mode == 'pour':
             say('POUR %s start: %s' % (sys.argv[2], state(a)))
             pour(a, sys.argv[2])

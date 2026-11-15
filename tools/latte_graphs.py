@@ -44,8 +44,8 @@ G['EventGraph'] = f'''
 G['LatteShow'] = f'''
 (fn LatteShow (Show)
   (Rendering|SetVisibility :self ({V}GetPitcher) :bNewVisibility Show)
-  (Rendering|SetVisibility :self ({V}GetPrompt) :bNewVisibility Show)
-  (Rendering|SetVisibility :self ({V}GetStatus) :bNewVisibility Show)
+  (Rendering|SetVisibility :self ({V}GetPrompt) :bNewVisibility false)
+  (Rendering|SetVisibility :self ({V}GetStatus) :bNewVisibility false)
   (Rendering|SetVisibility :self ({V}GetFillBar) :bNewVisibility Show)
   (Rendering|SetVisibility :self ({V}GetFillMark) :bNewVisibility Show)
   (Rendering|SetVisibility :self ({V}GetGuide) :bNewVisibility Show)
@@ -61,7 +61,9 @@ WALK = f'(Pawn|Components|CharacterMovement|SetMovementMode :self (Class|Charact
 
 
 def say(text):
-    return f'(Rendering|Components|TextRender|SetText :self ({V}GetWorldText) :Value (Utilities|Text|MakeLiteralText :Value "{text}"))'
+    """One line in the game's caption box. The code only has to differ between messages."""
+    line = text.replace('!<br>', '!   ').replace('<br>', '.   ')
+    return '(CallFunction|LatteSay :Code %d :Msg "%s" :Secs 900.0)' % (100 + sum(ord(ch) for ch in line) % 97, line)
 
 
 # THE SHIFT.  Shift: 0 title, 1 an order is in (walk to the cup), 2 pouring, 3 served (the customer takes it),
@@ -77,8 +79,7 @@ G['LatteTryBegin'] = f'''
       (Class|BPPlayer|PlayerSetInputLocked :self Player :Locked true)
       ({V}SetShift 1)
       ({V}SetTextLoc (+ (Transformation|GetActorLocation :self self) (Math|Vector|MakeVector :X 0.0 :Y 0.0 :Z 48.0)))
-      (Rendering|SetVisibility :self ({V}GetWorldText) :bNewVisibility true)
-      {say("ORDER IN: ONE LATTE<br>Go behind the counter<br>Press E at the cup")}
+          {say("ORDER IN: ONE LATTE<br>Go behind the counter<br>Press E at the cup")}
       {WALK})))
 '''
 
@@ -98,6 +99,7 @@ G['LatteClockOut'] = f'''
 (fn LatteClockOut ()
   ({V}SetShift 5)
   ({V}SetLatteDone true)
+  (CallFunction|LatteSay :Code 1 :Msg " " :Secs 0.05)
   (Rendering|SetVisibility :self ({V}GetWorldText) :bNewVisibility false)
   (Class|BPPlayer|PlayerSetInputLocked :self ({V}GetLattePlayer) :Locked false))
 '''
@@ -233,6 +235,7 @@ G['LatteStep'] = f'''
       (Transformation|SetRelativeLocation :self ({V}GetFillBar) :NewLocation (Math|Vector|MakeVector :X (+ -6.0 (* ({V}GetFill) 6.0)) :Y -10.0 :Z 0.0))
       (Transformation|SetRelativeScale3D :self ({V}GetFillBar) :NewScale3D (Math|Vector|MakeVector :X (* ({V}GetFill) 0.12) :Y 0.008 :Z 0.004))
       (CallFunction|LatteGuideStep)
+      (CallFunction|LatteCaptionStep)
       ({V}SetMatchT (+ ({V}GetMatchT) Dt))
       (if (> ({V}GetMatchT) 0.2)
         ({V}SetMatchT 0.0)
@@ -366,6 +369,45 @@ G['LatteRubbleStep'] = f'''
     (:CastFailed)))
 '''
 
+
+# THE WORDS ON SCREEN.  LatteSay only speaks when the message changes (Code), so the caption box is not re-set
+# every frame.  LatteCaptionStep picks the ONE step the player is on, from the same counters as the guide.
+G['LatteSay'] = '''
+(fn LatteSay (Code Msg Secs)
+  (if (!= Code (Variables|Default|GetCapCode))
+    (Variables|Default|SetCapCode Code)
+    (bind d (Utilities|Casting|CastToBP_OpeningDirector :Object (Actor|GetActorOfClass :ActorClass "/Game/Game/Blueprints/BP_OpeningDirector.BP_OpeningDirector_C"))
+      (:then
+        (Class|BPOpeningDirector|CineSay :self d :Msg Msg :Secs Secs))
+      (:CastFailed))))
+'''
+
+G['LatteCaptionStep'] = '''
+(fn LatteCaptionStep ()
+  (bind done (select (== (Variables|Default|GetPattern) 0) (>= (Variables|Default|GetLowTime) 2.8) (select (== (Variables|Default|GetPattern) 1) (>= (Variables|Default|GetWiggles) 8) (and (>= (Variables|Default|GetBlobs) 3) (> (Variables|Default|GetLowGap) 0.15)))))
+  (bind pat (Variables|Default|GetPattern))
+  (if (Variables|Default|GetEnding)
+    (CallFunction|LatteSay :Code 290 :Msg "The cup is full.          E: done     R: start over     1 2 3: another pattern" :Secs 900.0)
+    (elif (and done (>= (Variables|Default|GetCutDist) 0.4))
+      (CallFunction|LatteSay :Code 240 :Msg "Add more if you like.          E: done     R: start over     1 2 3: another pattern" :Secs 900.0)
+      (elif done
+        (CallFunction|LatteSay :Code 230 :Msg "Step 3 of 3:  let go, then hold LEFT mouse and follow the straight line down.          R: start over" :Secs 900.0)
+        (elif (or (>= (Variables|Default|GetFill) 0.5) (> (Variables|Default|GetBlobs) 0))
+          (if (== pat 0)
+            (CallFunction|LatteSay :Code 220 :Msg "HEART  step 2 of 3:  hold RIGHT mouse inside the ring until the ring goes.          R: start over" :Secs 900.0)
+            (elif (== pat 1)
+              (CallFunction|LatteSay :Code 221 :Msg "ROSETTA  step 2 of 3:  hold RIGHT mouse and follow the wavy line up, then rest in the small ring.          R: start over" :Secs 900.0)
+              (else
+                (CallFunction|LatteSay :Code 222 :Msg "TULIP  step 2 of 3:  hold RIGHT mouse in each ring, bottom to top. Let go between rings.          R: start over" :Secs 900.0))))
+          (else
+            (if (== pat 0)
+              (CallFunction|LatteSay :Code 210 :Msg "HEART  step 1 of 3:  hold LEFT mouse and pour from high until the bar reaches the mark.          1 2 3: another pattern" :Secs 900.0)
+              (elif (== pat 1)
+                (CallFunction|LatteSay :Code 211 :Msg "ROSETTA  step 1 of 3:  hold LEFT mouse and pour from high until the bar reaches the mark.          1 2 3: another pattern" :Secs 900.0)
+                (else
+                  (CallFunction|LatteSay :Code 212 :Msg "TULIP  step 1 of 3:  hold LEFT mouse and pour from high until the bar reaches the mark.          1 2 3: another pattern" :Secs 900.0))))))))))
+'''
+
 G['LatteJudge'] = f'''
 (fn LatteJudge ()
   (bind made (select (== ({V}GetPattern) 0) (>= ({V}GetLowTime) 2.8) (select (== ({V}GetPattern) 1) (>= ({V}GetWiggles) 8) (>= ({V}GetBlobs) 3))))
@@ -388,7 +430,6 @@ G['LatteFinish'] = f'''
   (Game|Player|SetViewTargetwithBlend :self (Game|GetPlayerController 0) :NewViewTarget ({V}GetLattePlayer) :BlendTime 0.5)
   ({V}SetShift 3)
   ({V}SetShiftT 0.0)
-  (Rendering|SetVisibility :self ({V}GetWorldText) :bNewVisibility true)
   {say("The latte is ready<br>Press E at the cup when you want to serve it")}
   (Class|PlayerController|SetShowMouseCursor :self (Game|GetPlayerController 0) :bShowMouseCursor false)
   (Input|SetInputModeGameOnly :PlayerController (Game|GetPlayerController 0) :bFlushInput false)
