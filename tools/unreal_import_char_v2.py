@@ -158,12 +158,18 @@ def make_mi(name, tex_path):
 
 
 def main():
-    do_save = 'save' in [a.lower() for a in sys.argv[1:]]
-    say('repo=%s  save=%s' % (REPO, do_save))
+    args = [a for a in sys.argv[1:]]
+    do_save = 'save' in [a.lower() for a in args]
+    # only=<Name> re-imports one character. Without it both are re-imported, which rewrites the
+    # coworker's .uasset for no reason and puts a binary nobody asked for into the diff.
+    only = next((a.split('=', 1)[1] for a in args if a.lower().startswith('only=')), None)
+    say('repo=%s  save=%s  only=%s' % (REPO, do_save, only or '(all)'))
     ensure_registry()
     results = []
 
     for name, fbx, png, dest, skel_path, want_verts in PLAN:
+        if only and name.lower() != only.lower():
+            continue
         say('')
         say('=== %s ===' % name)
         if not os.path.isfile(fbx):
