@@ -58,8 +58,8 @@ Every prompt is its own description followed by the same style block.
 | SakuraTree | SakuraTree.glb | 4.2 height | 22000 | `PROP_PRESCALE=0.764,1.36,1 PROP_CAGE=0.012` |
 | KeiVanM | KeiVan.glb | 3.3 width | 10000 | `PROP_YAW=180` |
 | Hatchback | Hatchback.glb | 3.1 width | 10000 | `PROP_YAW=180` |
-| Bicycle | Bicycle.glb | 1.75 width | 12000 | `PROP_YAW=180 PROP_CAGE=0.03 PROP_TEXEL=0.002` |
-| Scooter | Scooter.glb | 1.75 width | 9000 | `PROP_YAW=180 PROP_TEXEL=0.003` |
+| BicycleM | Bicycle.glb | 1.75 width | 12000 | `PROP_YAW=180 PROP_CAGE=0.03 PROP_TEXEL=0.002` |
+| ScooterM | Scooter.glb | 1.75 width | 9000 | `PROP_YAW=180 PROP_TEXEL=0.003` |
 
 The raw downloads (20-46 MB each, 450k-1.3M triangles) are gitignored (`Art/Meshy/_raw/`); Meshy keeps them
 three days.

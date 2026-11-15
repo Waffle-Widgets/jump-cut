@@ -8,8 +8,12 @@ to 3D -> Art/Blender/meshy_prop_bake.py, each ONE material with ONE baked colour
     Art/Meshy/SakuraTree/   SM_SakuraTree.fbx  T_SakuraTree.png     replaces SM_StreetTree  (10 placed)
     Art/Meshy/KeiVanM/      SM_KeiVanM.fbx     T_KeiVanM.png        replaces SM_KeiVan      (3 of the 5)
     Art/Meshy/Hatchback/    SM_Hatchback.fbx   T_Hatchback.png      takes 2 of the 5 van spots
-    Art/Meshy/Bicycle/      SM_BicycleM.fbx    T_BicycleM.png       replaces SM_Bicycle     (5 placed)
-    Art/Meshy/Scooter/      SM_ScooterM.fbx    T_ScooterM.png       replaces SM_Scooter     (6 placed)
+    Art/Meshy/BicycleM/     SM_BicycleM.fbx    T_BicycleM.png       replaces SM_Bicycle     (5 placed)
+    Art/Meshy/ScooterM/     SM_ScooterM.fbx    T_ScooterM.png       replaces SM_Scooter     (6 placed)
+
+The "M" on three of them is only there because the kit already owns SM_KeiVan, SM_Bicycle and SM_Scooter,
+and Interchange names a one-mesh FBX after its FILE: a second SM_Bicycle in another folder would work and
+would be mistaken for the kit's in every log line.
 
 WHY NEW NAMES AND NOT A RE-IMPORT OVER THE KIT MESH. Every placed City_* actor carries per-component
 material overrides indexed by slot INDEX (see unreal_city_reimport_by_name.py). The kit tree has three
@@ -50,9 +54,13 @@ MODELS = {
     'SakuraTree': ('SakuraTree', 'SM_StreetTree'),
     'KeiVanM': ('KeiVanM', 'SM_KeiVan'),
     'Hatchback': ('Hatchback', None),
-    'BicycleM': ('Bicycle', 'SM_Bicycle'),
-    'ScooterM': ('Scooter', 'SM_Scooter'),
+    'BicycleM': ('BicycleM', 'SM_Bicycle'),
+    'ScooterM': ('ScooterM', 'SM_Scooter'),
 }
+# The kit tree is near enough round, so two street trees were placed at yaw 270. The sakura is 4.4 m one way
+# and 2.4 m the other; at yaw 270 its long side would run 1 m into the shopfronts. These two get turned so
+# the long side follows the pavement. `revert` does not turn them back (the kit tree does not care).
+YAW = {'City_Tree_01': 180.0, 'City_Tree_02': 180.0}
 # These labels get a model other than the one their kit mesh maps to: two of the five vans become cars,
 # so the street is not five copies of one vehicle.
 BY_LABEL = {'City_Van_1': 'Hatchback', 'City_AvenueVan1': 'Hatchback'}
@@ -127,6 +135,16 @@ def do_import():
         if unreal.load_asset(mesh_path) is None:
             import_one(fbx, dest, 'SM_' + name)
         mesh = unreal.load_asset(mesh_path)
+        if mesh is None:
+            # Interchange names the asset itself and does not have to honour destination_name: take
+            # whatever StaticMesh landed in this model's own folder rather than report a false failure.
+            reg.scan_paths_synchronous([dest], True)
+            for p in eal.list_assets(dest, recursive=False):
+                cand = unreal.load_asset(p.split('.')[0])
+                if isinstance(cand, unreal.StaticMesh):
+                    mesh, mesh_path = cand, p.split('.')[0]
+                    info['mesh_named_by_importer'] = cand.get_name()
+                    break
         if tex is None or mesh is None or not isinstance(mesh, unreal.StaticMesh):
             info['error'] = 'import produced tex=%s mesh=%s' % (tex, mesh)
             say('%s: %s' % (name, info['error']))
@@ -158,7 +176,7 @@ def do_import():
             'slots': slots,
             'material': [mesh.get_material(i).get_path_name() if mesh.get_material(i) else None
                          for i in range(len(slots))],
-            'tris': smes.get_number_triangles(mesh, 0) if hasattr(smes, 'get_number_triangles') else None,
+            'tris': mesh.get_num_triangles(0) if hasattr(mesh, 'get_num_triangles') else None,
             'nanite': smes.get_nanite_settings(mesh).enabled,
             'size_cm': [round(b.box_extent.x * 2, 1), round(b.box_extent.y * 2, 1), round(b.box_extent.z * 2, 1)],
             'floor_z_cm': round(b.origin.z - b.box_extent.z, 2),
@@ -246,7 +264,11 @@ def do_swap(plan_only, revert=False):
                 m = kit_mats.get(str(sm.get_editor_property('material_slot_name')))
                 if m is not None:
                     comp.set_material(i, m)
-        a.set_actor_transform(a.get_actor_transform(), False, False)      # dirties the actor's own package
+        xf = a.get_actor_transform()
+        if not revert and a.get_actor_label() in YAW:
+            xf = unreal.Transform(xf.translation, unreal.Rotator(roll=0.0, pitch=0.0, yaw=YAW[a.get_actor_label()]),
+                                  xf.scale3d)
+        a.set_actor_transform(xf, False, False)                           # also dirties the actor's own package
         got = comp.get_editor_property('static_mesh')
         rows.append({'label': a.get_actor_label(), 'mesh': got.get_name() if got else None,
                      'overrides': len(comp.get_editor_property('override_materials')),
