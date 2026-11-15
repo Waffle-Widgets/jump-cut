@@ -92,10 +92,21 @@ def save_folder(folder):
     another lane's four read-only Blueprints: the save fails, leaves .tmp files behind, and the
     editor stops answering for ten minutes."""
     pkgs = []
+    locked = 0
     for p in eal.list_assets(folder, True, False):
         a = unreal.load_asset(p)
         if a is not None:
+            # A freshly retargeted clip comes back with Root Motion Root Lock = RefPose. On a Meshy rig the
+            # reference-pose root is at PELVIS height, so every root-motion clip then lifts the whole body about
+            # 90 cm: the float bug. It was fixed by hand on Nov 13 and Nov 14 and came straight back on Nov 15 when
+            # the player's clips were re-retargeted, because nothing here set it. Set it on the way out, every time.
+            if isinstance(a, unreal.AnimSequence) and a.get_editor_property('enable_root_motion') \
+                    and a.get_editor_property('root_motion_root_lock') != unreal.RootMotionRootLock.ANIM_FIRST_FRAME:
+                a.modify()
+                a.set_editor_property('root_motion_root_lock', unreal.RootMotionRootLock.ANIM_FIRST_FRAME)
+                locked += 1
             pkgs.append(a.get_outermost())
+    log('root lock set to AnimFirstFrame on', locked, 'root-motion clips in', folder)
     pkgs = list({p.get_name(): p for p in pkgs}.values())
     ok = unreal.EditorLoadingAndSavingUtils.save_packages(pkgs, False)
     log('saved', len(pkgs), 'packages in', folder, 'ok', ok)
