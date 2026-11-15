@@ -9,7 +9,7 @@
 - **What happened:** changed `WBP_Title` only (`Content/Game/UI/`).
   - One new `TextBlock`, `TitleSynopsis`, on the existing canvas, centered at 55.6% of screen height: between the
     "JUMP CUT" title (42%) and the R / (A) prompt (66%). Roboto Regular 22, dark warm grey on the cream, so it
-    reads as quieter than both. The two lines are an explicit line breaks, auto-wrap off (the `AutoWrapText` trap
+    reads as quieter than both. The two lines are split by an explicit line break, auto-wrap off (the `AutoWrapText` trap
     in CLAUDE.md). It starts at opacity 0.
 
         A sorcerer's power was cut apart and sealed.
