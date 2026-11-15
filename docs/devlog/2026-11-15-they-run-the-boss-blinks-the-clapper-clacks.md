@@ -47,6 +47,12 @@
     stale-instance trap as last night. It is now written so that every new variable is correct at false and
     zero: the switch is `BossSpliceOff`, and the timings are literals.
 
+  - **Then it was made bigger**, because the first answer back was "Don't make splice too small. It should
+    be visually impressive, it is the boss fight after all." He now stretches to nearly twice his height
+    as he pinches, the bursts at both ends are doubled and two and a half times the size, four more mark
+    the line he travelled, the sound is louder and drops in pitch on arrival, and the screen flashes cyan
+    with a short lens kick when he lands. Still no new art: it is the same star burst, used eleven times.
+
   **3. The clapperboard.** Our own drawing, imported for the first time, with a new `SFX_Clapper` made in
   code. It appears open and tilted, snaps shut at 0.16 s with the clack and a 28% pop, holds, and is gone by
   one second. It fires when a power is granted *and* every time the player triggers Freeze Frame himself,
@@ -72,6 +78,7 @@
 - **Media:**
   ![Both of them running out of the cafe](../media/2026-11-15-rescue-both-run.jpg)
   ![The boss pinched to a sliver as he cuts out of his close-up](../media/2026-11-15-boss-cuts-out-of-his-shot.jpg)
+  ![The boss stretched to a spike as he leaves](../media/2026-11-15-boss-splice-windup.jpg)
   ![The boss arriving at the player's side in the fight](../media/2026-11-15-boss-splice-flank.jpg)
   ![The clapperboard open on the Freeze Frame moment](../media/2026-11-15-clapperboard-on-freeze-frame.jpg)
   ![The clapperboard snapped shut](../media/2026-11-15-clapperboard-shut.jpg)
