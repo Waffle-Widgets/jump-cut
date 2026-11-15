@@ -20,6 +20,30 @@ Just ask Claude on your computer: **"Get me the latest build."**
   to `main` and pulls. Open the project and press **Play**. **Never save** on a tester computer; if
   Unreal asks when you close it, choose **Don't Save**.
 
+## The game now opens on an 11-second cinematic (Sat Nov 14)
+
+After you press **R**, beat 1 plays an opening: the quiet cafe, the car through the west wall, the driver
+thrown out of it, then control. **Your input is locked for those 11 seconds on purpose** - that is not a
+freeze. When it ends you are facing the wreck and a blue sphere is bobbing over the driver's body: that is
+the objective marker telling you where to go. Press **F** on him for Freeze Frame as before.
+
+Nobody has played this yet. The things to judge: does the crash read, does the body landing read, does the
+hand-over to control feel abrupt, and is 11 seconds too long before a judge can touch anything.
+
+## Beat 1's hazard changed: the car catches fire (Sat Nov 14)
+
+It is no longer a piece of shrapnel flying at the coworker. Press **F** on the driver, and two seconds
+later the car catches fire, a red warning ring appears on the floor and a **9-second fuse** starts.
+
+1. **Press E.** The fuse only burns while time is running, so freezing stops it. This is the lesson.
+2. **Press F on the coworker.** She takes your hand and walks after you from then on.
+3. **Walk east, past the ring**, dragging her out. The safe side starts about level with the counter.
+4. The car explodes. Anyone still inside the ring is caught: she dies, you lose 30 health.
+
+Things to judge: is 9 seconds fair, is the ring obvious enough, does her following read as being led or
+as a bug, and is losing her a fair punishment for being slow. If the whole thing is worse than the old
+shrapnel version, say so - `UseFireHazard` on `Coworker_Cafe` switches it straight back.
+
 ## Starting the game: press R first, or it looks broken
 
 **The game opens on a title screen that switches every control off.** Until you press **R** (or gamepad

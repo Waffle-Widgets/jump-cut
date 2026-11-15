@@ -178,6 +178,50 @@ anyone picks up a task:
 
 ## Open
 
+### Beat 1 opens on a cinematic (Sat Nov 14, 4:00 PM Pacific, Justin's Mac mini)
+
+The Team Owner asked for a beginning cinematic: a peaceful coffee shop, interrupted by the car coming
+through the wall and the driver thrown from it, with control handed to the player at that moment and a
+marker telling him to go and check on the driver. **Built and on a branch, not played by anybody.**
+See [the devlog entry](devlog/2026-11-14-the-game-opens-on-a-crash.md).
+
+- `/Game/Game/Cinematics/LS_Beat1_Opening` — 11 s, 30 fps, four shots (quiet cafe / the crash / the body
+  thrown / settle behind the player). Four cine cameras, the flying car and the flying body are all
+  **spawnables**, so the sequence owns no level actor.
+- `BP_OpeningDirector` (`B1_Cine_Director`) plays it, holds input and movement locked while it runs,
+  un-hides the real wreck at 4.70 s and the real body at 6.45 s, and at 11.0 s unlocks input facing 172°.
+- `B1_Cine_WallPatch` puts the wall back for the peaceful shot and goes on the frame the car arrives.
+  4 cm proud of the shell, never flush — a flush different-material face is #67's depth tie.
+- `B1_Objective_Beacon` is one bobbing blue sphere the director moves between objectives. Objective 1
+  ("check on the driver") is live and verified; **2 and 3 are plumbed but nothing advances past 1 yet.**
+
+### Beat 1's hazard is a fire and a blast radius (Sat Nov 14, 5:20 PM Pacific, Justin's Mac mini)
+
+The second half of the same request, and **the answer to issue #18** ("what sets off the explosion in
+beat 1?"): the car catches. **Built, on the same branch, not played by anybody.**
+See [the devlog entry](devlog/2026-11-14-the-car-catches-fire-instead.md).
+
+Touch the driver -> Freeze Frame -> 2 s later the car catches fire, a warning ring the size of the blast
+appears on the floor and a **9 s fuse** starts -> the fuse only burns while time is running, so **E**
+stops it -> **F** on the coworker while time is stopped takes her hand and she walks after you -> get
+**both** of you outside the ring before the fuse ends. Anyone still inside when it blows is caught: she
+dies, the player loses 30 health.
+
+- `BP_Coworker` gained `UseFireHazard` (instance-editable, default true). Switch it off and the old
+  shrapnel-and-teleport path runs exactly as before - a playtest that hates this costs a checkbox.
+- `M_FireHot` and `M_BlastRing` are ours (`M_BlastRing` uses our own `T_FX_WarnRing` sheet as a mask).
+  `B1_Cafe_Fire`, `B1_Cafe_FireLight` and `B1_Cafe_BlastRing` are hidden until the car catches.
+- The objective beacon now walks the whole beat: driver -> safe spot -> the street -> off.
+- Measured both endings in Play mode by calling the real Blueprint functions: caught = she dies and the
+  player goes 100 -> 70; dragged clear = she follows to 837 cm against a 700 cm radius, survives, player
+  untouched. **The F and E keys themselves are still unpressed by a person.**
+- **The flame is a stylised cone, not real fire.** A Niagara or flipbook fire is the upgrade and is not
+  built.
+
+**Known blemish:** the crash rubble is modelled into `SM_CafeShell`, so broken blocks are on the floor
+during the peaceful shot, before anything has broken. Fixing it is a city-kit change (rubble as its own
+mesh), not a level edit.
+
 ### The cafe stops being a box, and the street grows a tree (Fri Nov 13, late Pacific, M Station)
 
 On the Team Owner's note that the assets were lacking, that the cafe should look like an anime cafe, and
