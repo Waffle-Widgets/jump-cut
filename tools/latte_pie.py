@@ -47,14 +47,20 @@ PLANS = {
     'blob': [(3.0, True, line(0, 0, 0, 0))],
     'right': [(2.0, True, line(2.5, 3.0, 2.5, 3.0))],          # up and to the right on screen: checks the picture is not mirrored
     'heart': [(4.5, True, line(0.5, 0, 0.5, 0)), (0.9, False, line(4.5, 0, -4.5, 0))],
-    'rosetta': [(1.2, True, line(2.5, 0, 2.5, 0)),
-                (5.0, True, lambda u: (2.5 - 5.5 * u, 1.6 * math.sin(u * 2 * math.pi * 7))),
-                (0.9, False, line(-4.5, 0, 4.5, 0))],
+    # rosetta: a wide base at the far side, leaves that narrow as you pull back, a small heart at the near end,
+    # then the cut back up through all of it (the stem)
+    'rosetta': [(1.0, True, line(2.6, 0, 2.6, 0)),
+                (5.2, True, lambda u: (2.6 - 5.6 * u, (2.0 - 1.3 * u) * math.sin(u * 2 * math.pi * 9))),
+                (0.7, True, line(-3.3, 0, -3.3, 0)),
+                (0.25, None, line(0, 0, 0, 0)),
+                (0.8, False, line(-4.6, 0, 3.4, 0))],
     'topup': [(14.0, False, lambda u: (3.5 * math.cos(u * 40), 3.5 * math.sin(u * 40)))],       # high pour round the edge until the cup is full
-    'tulip': [(2.0, True, line(1.0, 0, 1.0, 0)), (0.5, None, line(0, 0, 0, 0)),
-              (1.6, True, line(-0.8, 0, 0.6, 0)), (0.5, None, line(0, 0, 0, 0)),
-              (1.3, True, line(-2.4, 0, -1.2, 0)), (0.4, None, line(0, 0, 0, 0)),
-              (0.9, False, line(-4.5, 0, 4.5, 0))],
+    # tulip: each layer is poured BEHIND the last and pushed up into it, and each is smaller, so a layer dents the
+    # one before it instead of swallowing it
+    'tulip': [(2.3, True, line(1.2, 0, 1.8, 0)), (0.45, None, line(0, 0, 0, 0)),
+              (1.3, True, line(-1.0, 0, 0.1, 0)), (0.45, None, line(0, 0, 0, 0)),
+              (0.8, True, line(-2.7, 0, -1.9, 0)), (0.35, None, line(0, 0, 0, 0)),
+              (0.8, False, line(-4.6, 0, 3.6, 0))],
 }
 
 

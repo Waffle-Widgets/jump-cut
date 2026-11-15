@@ -40,7 +40,7 @@ PARTS = [
     ('Guide', unreal.StaticMeshComponent, 'Plane', '/Game/Game/Materials/Latte/MI_LatteSurface_A', V(1.5, -17.5, 0.2), R(roll=0, pitch=0, yaw=0), V(0.075, 0.075, 1)),
     ('GuideLabel', unreal.TextRenderComponent, None, None, V(-4.2, -17.5, 0.4), R(roll=0, pitch=68, yaw=180), V(1, 1, 1)),
     ('FillBar', unreal.StaticMeshComponent, 'Cube', '/Game/Game/Materials/Latte/M_LatteBar', V(-4.2, -10, 0), R(roll=0, pitch=0, yaw=0), V(0.036, 0.008, 0.004)),
-    ('FillMark', unreal.StaticMeshComponent, 'Cube', '/Game/Game/Materials/Latte/M_LatteMilk', V(2.0, -10.9, 0), R(roll=0, pitch=0, yaw=0), V(0.004, 0.03, 0.004)),
+    ('FillMark', unreal.StaticMeshComponent, 'Cube', '/Game/Game/Materials/Latte/M_LatteMilk', V(0.0, -10.9, 0), R(roll=0, pitch=0, yaw=0), V(0.004, 0.03, 0.004)),
     ('Prompt', unreal.TextRenderComponent, None, None, V(-15.0, 0, 2), R(roll=0, pitch=68, yaw=180), V(1, 1, 1)),
     ('WorldText', unreal.TextRenderComponent, None, None, V(0, 0, 48), R(roll=0, pitch=0, yaw=0), V(1, 1, 1)),
     ('Status', unreal.TextRenderComponent, None, None, V(10.5, 0, 2), R(roll=0, pitch=68, yaw=180), V(1, 1, 1)),
