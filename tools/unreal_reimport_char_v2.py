@@ -34,8 +34,14 @@ STRAY = [
     '/Game/Game/Imported/CafeWalkerV2/SK_CafeWalkerV2_oldrig',
     '/Game/Game/Imported/CafeWalkerV2/SK_CafeWalkerV2_oldrig_PhysicsAsset',
 ]
-# Blender, world cm, from conform_rest_pose.py. Our FBX settings send Blender +Y to Unreal -Y.
-WANT = {'x': (-55.4, 56.4), 'y': (-18.0, 22.3), 'z': (0.0, 174.45)}
+MAT = '/Game/Game/Materials/MI_CafeWalkerV2'
+TEX = '/Game/Game/Imported/CafeWalkerV2/T_CafeWalkerV2_BaseColor'
+TEX_SRC = os.path.join(ART, 'CafeWalkerV2', 'T_CafeWalkerV2_BaseColor.png')
+# UNREAL world cm. Art/Blender/rebuild_walker_v2.py prints these in BLENDER axes; our FBX settings send
+# Blender +Y to Unreal -Y, so the y pair is negated AND swapped here: Blender y[-22.31 17.88] is Unreal
+# y[-17.88 22.31]. x and z carry straight across. Getting that backwards makes a good import read as a
+# failure, which is how the table stays honest.
+WANT = {'x': (-55.58, 56.46), 'y': (-17.88, 22.31), 'z': (0.0, 174.39)}
 TOL = 2.0
 
 eal = unreal.EditorAssetLibrary
@@ -132,29 +138,85 @@ def main():
         for i in (0, 1):
             if abs(after[ax][i] - WANT[ax][i]) > TOL:
                 bad.append('%s[%d] %.2f vs %.2f' % (ax, i, after[ax][i], WANT[ax][i]))
-    if after == before:
-        say('FAILED: bounds did not move at all - the re-import was a no-op')
-        return
     if bad:
-        say('FAILED: bounds do not match the FBX Blender measured: %s' % '; '.join(bad))
+        if after == before:
+            say('FAILED: bounds did not move at all - the re-import was a no-op')
+        else:
+            say('FAILED: bounds do not match the FBX Blender measured: %s' % '; '.join(bad))
         return
-    say('bounds match the conformed FBX - the new geometry is in the asset the game uses')
+    if after == before:
+        say('note: bounds already matched WANT before this run - this is a re-run, geometry unchanged')
+    say('bounds match the FBX Blender measured - the new geometry is in the asset the game uses')
 
     skel = mesh.get_editor_property('skeleton')
     say('skeleton: %s' % (skel.get_path_name() if skel else '(none)'))
     if skel is None or skel.get_path_name().split('.')[0] != SKEL:
         say('FAILED: skeleton is not %s' % SKEL)
         return
-    slots = [str(s.material_interface.get_path_name()) if s.material_interface else None
-             for s in mesh.get_editor_property('materials')]
-    say('material slots: %s' % slots)
+    # A re-import can hand the slot back as WorldGridMaterial - Interchange matches slots by the FBX's own
+    # material name, and a rebuilt FBX need not use the same one. It does not error. The character simply
+    # renders as grey checkerboard. So put MI_CafeWalkerV2 back, and say so.
+    # get_editor_property('materials') returns COPIES of the slot structs: mutating them in place is
+    # silently discarded. The whole array has to be set back.
+    mi = eal.load_asset(MAT)
+    slots = mesh.get_editor_property('materials')
+    names = [str(s.material_interface.get_path_name()) if s.material_interface else None for s in slots]
+    say('material slots after import: %s' % names)
+    if mi is None:
+        say('WARNING: %s missing - cannot restore the material slot' % MAT)
+    elif any(n is None or n.split('.')[0] != MAT for n in names):
+        # Fresh structs, not the copies get_editor_property handed back - mutating those is discarded
+        # silently (the lesson from unreal_import_char_v2.py, and it caught this script out once).
+        fresh = []
+        for s in slots:
+            sm = unreal.SkeletalMaterial()
+            sm.set_editor_property('material_interface', mi)
+            sm.set_editor_property('material_slot_name', s.get_editor_property('material_slot_name'))
+            fresh.append(sm)
+        mesh.set_editor_property('materials', fresh)
+        names = [str(s.material_interface.get_path_name()) if s.material_interface else None
+                 for s in mesh.get_editor_property('materials')]
+        say('material slots restored: %s' % names)
+        if any(n is None or n.split('.')[0] != MAT for n in names):
+            say('FAILED: could not restore the material slot')
+            return
+
+    # The base colour and the mesh share ONE UV space. Replacing the mesh without replacing the texture
+    # (or the reverse) does not error - it renders as camouflage noise. So they go together, in one run.
+    tex_ok = reimport_texture()
 
     if do_save:
-        for path in [TARGET, TARGET + '_PhysicsAsset']:
+        for path in [TARGET, TARGET + '_PhysicsAsset'] + ([TEX] if tex_ok else []):
             if eal.does_asset_exist(path):
                 say('saved %s -> %s' % (path, eal.save_asset(path, False)))
+        if not tex_ok:
+            say('WARNING: texture NOT saved - mesh and base colour are now out of step')
     else:
         say('not saved (pass `save`)')
+
+
+def reimport_texture():
+    if not os.path.isfile(TEX_SRC):
+        say('REFUSING texture: no such file %s' % TEX_SRC)
+        return False
+    if not eal.does_asset_exist(TEX):
+        say('REFUSING texture: %s does not exist' % TEX)
+        return False
+    tex = eal.load_asset(TEX)
+    try:
+        params = unreal.ImportAssetParameters()
+        params.set_editor_property('is_automated', True)
+        params.set_editor_property('replace_existing', True)
+        params.set_editor_property('reimport_asset', tex)
+        src = unreal.InterchangeManager.create_source_data(TEX_SRC)
+        mgr = unreal.InterchangeManager.get_interchange_manager_scripted()
+        mgr.import_asset('/Game/Game/Imported/CafeWalkerV2', src, params)
+    except Exception as e:
+        say('texture re-import raised: %s' % e)
+        return False
+    tex = eal.load_asset(TEX)
+    say('texture %s imported_size=%sx%s' % (TEX, tex.blueprint_get_size_x(), tex.blueprint_get_size_y()))
+    return True
 
 
 try:
