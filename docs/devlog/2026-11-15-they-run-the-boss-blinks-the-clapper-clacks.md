@@ -53,6 +53,11 @@
     the line he travelled, the sound is louder and drops in pitch on arrival, and the screen flashes cyan
     with a short lens kick when he lands. Still no new art: it is the same star burst, used eleven times.
 
+  - **And the intro blink came out again.** Justin played it: "I saw it use it once before the cutscene
+    was over, which was jarring." The blink on the boss's last line is gone; his first one now comes half
+    a second after control returns, crossing the whole plaza to the player's side, so the fight opens with
+    it. Measured: no blink during the cutscene, first one 0.9 s after it, then every 6 s.
+
   **3. The clapperboard.** Our own drawing, imported for the first time, with a new `SFX_Clapper` made in
   code. It appears open and tilted, snaps shut at 0.16 s with the clack and a 28% pop, holds, and is gone by
   one second. It fires when a power is granted *and* every time the player triggers Freeze Frame himself,

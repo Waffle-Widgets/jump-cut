@@ -186,8 +186,8 @@ Windows build.** On branch `claude/project-thread-1f2owz`. See
 
 - **Rescue:** the player runs at 520 cm/s facing the way he goes and the coworker runs at his shoulder
   (her `Walk` at 1.9x; she has no run clip). **No hand-hold:** no clip exists and her hands are fused mittens.
-- **Boss Splice:** a 0.4 s blink (pinch, move, open, cyan burst, `SFX_SpliceBlink`). Once in his intro, out of
-  his own close-up and 350 cm nearer; then every 6 s in the fight to the player's side. `BossSpliceOff` on
+- **Boss Splice:** a 0.4 s blink (pinch, move, open, cyan burst, `SFX_SpliceBlink`). Not in his intro any more (Justin, after playing it: jarring);
+  it opens the fight half a second after control returns, then every 6 s, to the player's side. `BossSpliceOff` on
   `BP_BossFreeze` turns the fight blink off if a playtest says it is unfair.
 - **Clapperboard:** our own drawing, open then snapped shut with a new `SFX_Clapper`, on a power being
   granted and on every Freeze Frame the player triggers.
