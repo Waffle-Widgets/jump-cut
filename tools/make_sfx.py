@@ -378,11 +378,30 @@ def make_jumpcut_fight(folder):
                                tone(lambda x: note(48) * (1.0 - 0.06 * x), 1.5, square, 0.05, decay_pow=1.5))))
 
 
+def make_clapper(folder):
+    """SFX_Clapper - the clapperboard that snaps shut when Freeze Frame goes off (Sun Nov 15).
+    Two hard wooden clicks 12 ms apart (the bar hitting the slate, then the slate ringing) over a
+    short low knock, so it reads as wood on wood and cuts through the power sting that plays
+    under it. Written on its own so making it does not touch the other .wav files' timestamps:
+    Unreal re-imports every .wav whose file changes.
+
+        python tools/make_sfx.py <folder> clapper
+    """
+    click = noise(0.035, 0.95, lowpass=0.95, decay_pow=5.0)
+    ring = mix(tone(lambda x: 1900.0, 0.06, tri, 0.35, attack=0.0005, decay_pow=3.0),
+               tone(lambda x: 820.0, 0.09, math.sin, 0.30, attack=0.0005, decay_pow=2.5))
+    knock = tone(lambda x: 170.0 * (1.0 - 0.3 * x), 0.12, math.sin, 0.55, attack=0.001, decay_pow=2.0)
+    write(os.path.join(folder, "SFX_Clapper.wav"),
+          mix(seq(click, silence(0.2)), seq(silence(0.012), mix(click, ring)), knock))
+
+
 if __name__ == "__main__":
     folder = sys.argv[1] if len(sys.argv) > 1 else "sfx"
     which = sys.argv[2] if len(sys.argv) > 2 else "all"
     os.makedirs(folder, exist_ok=True)
-    if which == "jumpcut":
+    if which == "clapper":
+        make_clapper(folder)
+    elif which == "jumpcut":
         make_jumpcut(folder)
         make_jumpcut_fight(folder)
     else:

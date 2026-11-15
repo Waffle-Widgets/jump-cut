@@ -178,6 +178,36 @@ anyone picks up a task:
 
 ## Open
 
+### The game stops being silent: 17 sounds wired (#52, wiring half) (Sun Nov 15, 18:10 UTC, Justin's Mac mini)
+
+Asked for and approved by Justin (*"Complete the work fully then merge to main"*). **Checked by a script in PIE,
+merged to `main`. Nobody has heard it yet, and it is not in a Windows build.** Every `SFX_*` in `/Game/Game/Audio`
+now has a caller (24 of 24). See [the devlog entry](devlog/2026-11-15-seventeen-sounds-get-wired.md) for where
+each one plays and what keeps it to once.
+
+- Changed: `BP_Player`, `BP_EnemyBase`, `BP_BossFreeze`, `BP_OpeningDirector`, `BP_Checkpoint`, `BP_PlazaGate`,
+  `BP_JumpCutGameMode`. No new assets, components or systems; three new default-false bools (`PunchLanded`,
+  `BossWasWindingUp`, `CineCrashSounded`) and eight tiny helper functions.
+- **Needs a person:** the mix (all at volume 1.0, 2D), and the crash sound against the car on screen.
+- **For Justin to decide:** the opening cinematic already runs behind the title screen, so a player who waits on
+  the title hears the crash behind it. That was true before this change.
+
+### The rescue is a run, the boss uses Splice, the clapperboard clacks (Sun Nov 15, 16:45 UTC, Justin's Mac mini)
+
+Asked for by Justin on Sunday morning. **Played by Justin in the editor on his Mac and merged to `main` on his
+word (Sun Nov 15, 17:36 UTC). Not yet in a Windows build.** See
+[the devlog entry](devlog/2026-11-15-they-run-the-boss-blinks-the-clapper-clacks.md).
+
+- **Rescue:** the player runs at 520 cm/s facing the way he goes and the coworker runs at his shoulder
+  (her `Walk` at 1.9x; she has no run clip). **No hand-hold:** no clip exists and her hands are fused mittens.
+- **Boss Splice:** a 0.4 s blink (pinch, move, open, cyan burst, `SFX_SpliceBlink`). Not in his intro any more (Justin, after playing it: jarring);
+  it opens the fight half a second after control returns, then every 6 s, to the player's side. `BossSpliceOff` on
+  `BP_BossFreeze` turns the fight blink off if a playtest says it is unfair.
+- **Clapperboard:** our own drawing, open then snapped shut with a new `SFX_Clapper`, on a power being
+  granted and on every Freeze Frame the player triggers.
+- Changed: `BP_OpeningDirector`, `BP_Coworker`, `BP_BossFreeze`, `WBP_CineOverlay`. New: `SFX_Clapper`,
+  `T_UI_Clapper_Open`, `T_UI_Clapper_Shut`. `BP_Player` untouched.
+
 ### The boss speaks, the demo ends at the boss, the cafe wall falls every time (Sun Nov 15, 15:50 UTC, Justin's Mac mini)
 
 Asked for by the Team Owner on Sunday morning. **Built, played by a script in PIE, not played by a person.**

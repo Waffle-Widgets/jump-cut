@@ -136,6 +136,30 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   keyed the arc to the old left-hand spot - a mid-air tumble to y -118 and then a snap to y +220 -
   and nothing errored. Order: `b1z_wallpanel.py place` -> `b1_opening_wire.py` -> `b1_opening_cine.py`.
 
+### Scripted moves, new variables and filming short effects (learned 2026-11-15, the rescue run and the boss's Splice)
+- **`BP_Player.MoveLocked = true` does NOT mean the movement component is off.** `PlayerRefreshMoveLock`
+  only calls `DisableMovement` on the transition, and `BP_OpeningDirector` sets the flag directly, so
+  during the director's cinematics he is still in `MOVE_Walking`. Adding a velocity or `AddMovementInput`
+  on top of a per-tick `SetActorLocation` ran him at 900 cm/s instead of 520. To make a scripted move
+  ANIMATE, drop the teleport and drive the movement component: `Class|MovementComponent|SetVelocity` plus
+  `Pawn|Input|AddMovementInput` each tick (`CineRescueAnim`). `read_graph_dsl` prints that setter as
+  `Class|ABPUnarmed|SetVelocity`; it is the movement component's, measured by the speed it produced.
+- **Make every new Blueprint variable correct at false and zero.** A new bool defaulting to true and a
+  float defaulting to 6.0 both read as false and 0 on the boss ALREADY PLACED in the level, with the CDO
+  reading back right. Name the switch for the off state (`BossSpliceOff`) and write timings as literals.
+- **A getter is re-read at every use, so "previous value" logic must write LAST.** `(bind was (GetPrev))`
+  then `(SetPrev now)` then `(if (and now (not was)))` never fires: `was` is read after the set.
+- **`Screenshot showui` hitches the game about 0.3 s** - longer than a 0.4 s effect, which then plays out
+  inside one frame. Slow the world while the effect runs (`tools/b2_pie.py` sets global dilation 0.12
+  during the boss's blink) and never ask for two screenshots in one frame: only one file is written and
+  every later name is off by one.
+- **Two widgets named for one action beat one widget with a swapped brush.** `Appearance|SetBrushfromTexture`
+  exists on Border and Image and the DSL picks Border's; two stacked Images with their opacity switched
+  needed no retarget.
+- **An enemy teleported "behind the player" lands in the third-person camera.** Flank to the side.
+- **`execute_tool_script` cannot catch a tool error**: `try/except` does not stop it aborting the script.
+- **BlueprintTools arguments are `{"refPath": ...}` objects, and `container_type` must be OMITTED**, not "".
+
 ### This Mac's editor hangs, and handing a camera back (learned 2026-11-15, beat 1 round 7)
 - **On Justin's Mac mini, launch the editor with `-noraytracing`.** `r.RayTracing=True` makes every PIE
   start compile ray tracing PSOs, and Apple's `MTLCompilerService` dies on them
@@ -167,6 +191,20 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   `git symbolic-ref HEAD refs/heads/<the packed spelling>`.
 - **The console box ref changes per session** (`tb1` one launch, `tb2` the next). Find the textbox on the
   line after `text "Cmd"` in a `Snapshot` rather than trusting either number.
+
+### Adding one node to a big graph: splice it, do not rewrite (learned 2026-11-15, wiring 17 sounds)
+- **To add a call to an existing function, splice ONE node into the exec wire instead of `write_graph_dsl`.**
+  `find_nodes` + `get_node_infos` -> pick the node by its ref (`K2Node_CallFunction_117`), `create_node`
+  (`Audio|PlaySound2D`, or `CallFunction|<OurHelper>`), `break_pins` its `then` -> old target, `connect_pins`
+  old -> new -> old target, `set_pin_value` on the `Sound` pin. Nothing else in the graph changes, so none of
+  the round-trip traps below can bite. Put any new logic in a brand-new helper function (DSL on an empty graph
+  is safe) and splice only the call. Prove it by counting: total nodes before + added = after.
+- **Many of our functions are mostly dead nodes.** `PlayerPunch` had 79 nodes and 21 reachable from its entry;
+  `CineDirectorStep` 355 and 40. Walk the exec pins from `K2Node_FunctionEntry` to find the live ones before
+  picking a node to splice after - a dead twin has the same title.
+- **Testing in PIE without a person:** `py <script>` in the console box with `unreal.UnrealEditorSubsystem().
+  get_game_world()` and `actor.call_method(...)` runs the real functions; one script call is one frame, so
+  "the next tick" (lose screen, win screen) needs a second call.
 
 ### Blueprint graphs through `write_graph_dsl` (learned 2026-11-15, beat 1's explosion)
 - **A variable's CATEGORY is part of its DSL type id.** Move a variable out of `Default` and
