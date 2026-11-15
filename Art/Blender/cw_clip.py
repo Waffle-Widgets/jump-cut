@@ -158,6 +158,7 @@ def orient(bone, f, u, f0, u0):
 
 
 REACH = {}                                                 # how far past full stretch an IK target was, per limb
+TWIST = {}                                                 # the most an upper arm was spun about its own length, per arm
 
 def ik2(tag, up, lo, end, target, pole, rest_pole):
     """Two-bone IK. up/lo/end: thigh, shin, foot (or upper arm, forearm, wrist). The knee / elbow goes toward pole,
@@ -314,7 +315,27 @@ def hand(s, out=9.0, fwd=3.0, up=None, pron=62.0, curl=0.34, elbow=(0.35, -1.0, 
     t = Vector((sh0.x + SGN[s] * out, sh0.y - fwd, sh0.z + up))
     pole = Vector((SGN[s] * elbow[0], -elbow[1], elbow[2]))
     ik2('arm' + s, up_, fo, wr, t, pole, Y)
-    rot(fo, (head(wr) - head(fo)).normalized(), SGN[s] * pron)
+    # SHARE EVERY TWIST BETWEEN TWO JOINTS. This rig has no twist bones, so skin wrung through one joint by an angle
+    # a keeps only cos(a/2) of its thickness there: 95 degrees of forearm roll at the elbow alone leaves 68 % ("the
+    # arms look really thin when he starts running", owner, Nov 15); the same roll as 47 + 48 leaves 91 %.
+    #  1. The upper arm. ik2 spins it until the elbow's hinge faces the pole, all of it at the shoulder. Measure that
+    #     spin against the plain swing from the bind pose, hand half of it to the elbow, and turn the forearm back
+    #     so nothing below the elbow moves.
+    cur = (head(fo) - head(up_)).normalized()
+    M0 = (W[PARENT[up_]] @ REL[up_]).to_3x3()                       # the upper arm as the collarbone carries it, unposed
+    d0 = (M0 @ REL[up_].to_3x3().inverted() @ (REST[PARENT[up_]].to_3x3().inverted() @ (RH[fo] - RH[up_]))).normalized()
+    q = d0.rotation_difference(cur).to_matrix()
+    nat = q @ M0 @ Vector((1, 0, 0)); now = W[up_].to_3x3() @ Vector((1, 0, 0))
+    nat = nat - cur * nat.dot(cur); now = now - cur * now.dot(cur)
+    tw = math.degrees(math.atan2(cur.dot(nat.cross(now)), nat.dot(now))) if nat.length > 1e-6 and now.length > 1e-6 else 0.0
+    TWIST['arm' + s] = max(TWIST.get('arm' + s, 0.0), abs(tw))
+    if abs(tw) > 1e-3:
+        rot(up_, cur, -0.5 * tw)
+        rot(fo, cur, 0.5 * tw)
+    #  2. The forearm roll (pron): half at the elbow, half at the wrist.
+    fax = (head(wr) - head(fo)).normalized()
+    rot(fo, fax, SGN[s] * pron * 0.5)
+    rot(wr, fax, SGN[s] * pron * 0.5)
     fingers(s, curl)
 
 
@@ -330,7 +351,40 @@ def wrist(s, bend=0.0, side=0.0):
         rot(wr, palm.normalized(), SGN[s] * side)
 
 
+APRON = {s: 'Apron_' + s for s in 'LR'} if 'Apron_L' in BONES else {}      # a body from apron_bones.py has these
+_apron = {}                                                 # this frame's swing per side, degrees
+
+
+def _apron_need(s):
+    """How far forward (degrees) the skirt half on side s has to swing, as a flap hinged at the waist, for that leg
+    to pass behind it. Measured in the pelvis's own frame: the knee and the middle of the thigh, pushed out by the
+    thickness of the leg, seen from the hinge."""
+    carry = W['Bone_001'].to_3x3() @ REST['Bone_001'].to_3x3().inverted()
+    pf, pu = carry @ (-Y), carry @ Z
+    h = W['Bone_001'] @ (REST['Bone_001'].inverted() @ RH[APRON[s]])
+    th, sh, _ = LEG[s]
+    worst = -90.0
+    for p, r in ((head(sh), 4.5), ((head(th) + head(sh)) * 0.5, 6.0)):
+        v = (p + pf * r) - h
+        down = -v.dot(pu)
+        worst = max(worst, math.degrees(math.atan2(v.dot(pf), down)) if down > 1.0 else 90.0)
+    return worst
+
+
+def _apron_set(s, deg):
+    carry = W['Bone_001'].to_3x3() @ REST['Bone_001'].to_3x3().inverted()
+    b = APRON[s]
+    set_world(b, W['Bone_001'] @ REL[b])                    # back to hanging, then swing
+    rot(b, (carry @ X).normalized(), -deg)
+    _apron[s] = deg
+
+
 def _finish():
+    if APRON:                                               # cloth is pushed out by a leg in front, never pulled back
+        need = {s: min(70.0, max(0.0, _apron_need(s) - APRON_REST[s])) for s in APRON}
+        for s in APRON:                                     # it is ONE sheet: a knee on one side drags the other side
+            o = 'R' if s == 'L' else 'L'                    # part of the way with it
+            _apron_set(s, max(need[s], 0.45 * need[o]))
     hip = W['Bone_001'].copy()
     set_world('Bone_000', ROOT_FLOOR)
     set_world('Bone_001', hip)
@@ -359,6 +413,9 @@ def keys(u, pts):
             return v0 + (v1 - v0) * t
 
 
+APRON_REST = {}
+reset()
+for _s in APRON: APRON_REST[_s] = _apron_need(_s) - 2.0     # the clearance it hangs with at rest, less a little
 # soles: the two shoes do not rest at the same height in the model, so stand him once and measure
 _vgn = {g.index: g.name for g in mesh.vertex_groups}
 _domb = [_vgn[max(v.groups, key=lambda g: g.weight).group] if v.groups else '' for v in mesh.data.vertices]
@@ -376,6 +433,9 @@ def _torn(V):
     pairs = {}
     for e in bad:
         k = tuple(sorted((_domb[_E[e, 0]], _domb[_E[e, 1]]))); pairs[k] = pairs.get(k, 0) + 1
+    if len(bad):                                             # where on the body, in the rest pose: height, side, depth
+        mid = (V0[_E[bad, 0]] + V0[_E[bad, 1]]) / 2
+        _torn.where = {ax: [round(float(np.percentile(mid[:, i], q))) for q in (5, 50, 95)] for i, ax in enumerate('xyz')}
     return int(len(bad)), (float(r1[bad].max()) if len(bad) else 0.0), sorted(((n, list(k)) for k, n in pairs.items()), reverse=True)[:5]
 
 
@@ -387,17 +447,40 @@ def author(clip, frames, build, loop=True, sheet_frames=8):
     OUT = os.path.join(DIR, 'SK_%s_%s.fbx' % (NAME, clip))
     log.update({'clip': clip, 'frames': [F0, F1], 'loop': loop, 'seconds': round(N / FPS, 3)})
     VERTS, POSES, TRACK, reach, fk_err = {}, {}, {}, {}, 0.0
+    NEED = {}
     for f in range(F0, F1 + 1):
         g = F0 if (loop and f == F1) else f
         REACH.clear()
         build(g, (g - F0) / N); _finish(); apply_pose(); VERTS[f] = world_verts()
         POSES[f] = {n: BASIS[n].copy() for n in BONES}
+        NEED[f] = dict(_apron)
         TRACK[f] = {'L': head(LEG['L'][2]).copy(), 'R': head(LEG['R'][2]).copy(), 'hip': head('Bone_001').copy(),
                     'wL': head(ARM['L'][2]).copy(), 'wR': head(ARM['R'][2]).copy()}
         for k, v in REACH.items():
             if v > 0.05: reach[k] = max(reach.get(k, 0.0), round(v, 1))
         fk_err = max(fk_err, max((RW @ pb.matrix - W[pb.name]).to_translation().length for pb in rig.pose.bones))
     log['fk_check_cm'] = round(fk_err, 5); assert fk_err < 1e-2, fk_err
+    if APRON:
+        # THE SKIRT HAS WEIGHT. A leg throws it forward at once; it does not come back at once. Each half falls
+        # toward where the leg lets it hang, about half of the way per frame, and never through the leg. Run twice
+        # round a loop so the last frame hands over to the first.
+        fr = list(range(F0, F1 + 1)); final = {}
+        for s in APRON:
+            cur = NEED[fr[0]][s]
+            for _ in range(2 if loop else 1):
+                for f in fr:
+                    cur = max(NEED[f][s], cur + (NEED[f][s] - cur) * 0.55)
+                    final[(f, s)] = cur
+            if loop: final[(F1, s)] = final[(F0, s)]
+        log['apron_swing_deg'] = {s: [round(min(final[(f, s)] for f in fr)), round(max(final[(f, s)] for f in fr))] for s in APRON}
+        for f in fr:
+            if all(abs(final[(f, s)] - NEED[f][s]) < 0.05 for s in APRON): continue
+            for n in BONES:
+                BASIS[n] = POSES[f][n]; p = PARENT[n]
+                W[n] = ((W[p] @ REL[n]) if p else REST[n]) @ BASIS[n]
+            for s in APRON: _apron_set(s, final[(f, s)])
+            POSES[f] = {n: BASIS[n].copy() for n in BONES}
+            apply_pose(); VERTS[f] = world_verts()
     act = bpy.data.actions.new(clip)
     rig.animation_data_create(); rig.animation_data.action = act
     prev = {}
@@ -415,6 +498,7 @@ def author(clip, frames, build, loop=True, sheet_frames=8):
     log['lowest_by_frame'] = lows
     log['loop_seam_cm'] = round(float(np.abs(VERTS[F1] - VERTS[F0]).max()), 5) if loop else None
     log['over_reach_cm'] = reach                              # a limb asked to reach further than it is long
+    log['upper_arm_twist_deg'] = {k: round(v) for k, v in TWIST.items()}   # before sharing; half of it stays at the shoulder
     log['fastest_vertex_cm_per_frame'] = round(max(float(np.linalg.norm(VERTS[f + 1] - VERTS[f], axis=1).max()) for f in range(F0, F1)), 1)
     # ankles as (toward his left, forward, up) per frame: a planted foot holds x and up and moves back at one speed
     log['ankles'] = {f: {s: [round(TRACK[f][s].x, 1), round(ANK_Y - TRACK[f][s].y, 1), round(TRACK[f][s].z - (ANK[s].z - DROP[s]), 1)] for s in 'LR'} for f in range(F0, F1 + 1)}
@@ -427,6 +511,7 @@ def author(clip, frames, build, loop=True, sheet_frames=8):
         n, lg, pr = _torn(VERTS[f]); log['torn'][f] = [n, round(lg, 1)]
         if n > worst[0]: worst = (n, lg, pr)
     log['torn_worst'] = {'edges': worst[0], 'longest_cm': round(worst[1], 1), 'between': worst[2]}
+    log['torn_where_last_frame_cm'] = getattr(_torn, 'where', None)
 
     log['sheets'] = []
     if 'norender' not in a:
