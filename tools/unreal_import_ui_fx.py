@@ -50,6 +50,11 @@ SETS = [
 # T_UI_Cover / T_UI_Cover_630x500 are deliberately NOT imported: they are the itch.io page (#26),
 # not the game, and an unused 1328x1056 asset in Content is just weight in the package.
 
+# `title`: only the three title-animation layers (#64), stacked full-canvas at 0,0 in WBP_Title.
+if 'title' in sys.argv[1:]:
+    SETS = [('Art/UI', '/Game/Game/UI/Textures', True,
+             ['T_UI_TitlePair', 'T_UI_TitleBarista', 'T_UI_TitleDirector'])]
+
 REPORT_ONLY = 'report' in sys.argv[1:]
 OUT = os.path.join(unreal.Paths.project_saved_dir(), 'jcpy', 'import_ui_fx.json')
 R = {'report_only': REPORT_ONLY, 'imported': [], 'skipped': [], 'failed': [], 'textures': {}}

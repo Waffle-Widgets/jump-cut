@@ -8,6 +8,14 @@ Every asset we did not create ourselves goes here, added the moment it enters th
 | Mannequin animations copied onto our hero (`Content/Game/Imported/CafeWalker/Anims/*_CW`: idle, walk, jog, jump) | The hero's movement | Unreal Engine 5.8 Third Person template, retargeted with `tools/unreal_retarget_mannequin.py` | Epic Games | Unreal Engine EULA (sourced, not scored) | Claude on GameStation, 2026-11-12 |
 | Hero character drawing (`Art/Refs/cafe_walker_ref.jpg`) | Reference for the hero model | AI-generated with Gemini from our own prompt; redrawn in an A-pose with Tripo's image tool | Team (AI-generated) | Ours | Claude on GameStation, 2026-11-12 |
 | Hero character model (`Art/Refs/CafeWalker_tripo_apose.glb`, `SK_CafeWalker_Walk`, `T_CafeWalker_BaseColor`) | The playable character in `Lvl_Cafe` | AI-generated with Tripo (tripo3d.ai, jam partner) from our drawing, slimmed with its Retopology, rigged with `Art/Blender/trellis_character.py` | Team (AI-generated) | Ours | Claude on GameStation, 2026-11-12 |
+| Music: "song21 0" (Mysterious Ambience), as `MUS_TitleMystery` | Title screen music | OpenGameArt: https://opengameart.org/content/mysterious-ambience-song21 (taken from Justin's Cerberus app) | cynicmusic | CC0 1.0 (sourced, not scored) | Claude on Justin's Mac mini, 2026-11-15 |
+| Music: "jrpg battle full 0" (JRPG Epic Rock Battle Theme 1), as `MUS_Gameplay_Sourced` | Gameplay music | OpenGameArt: https://opengameart.org/content/jrpg-epic-rock-battle-theme-1 (taken from Justin's Cerberus app) | HydroGene | CC0 1.0 (sourced, not scored) | Claude on Justin's Mac mini, 2026-11-15 |
+| Music: "Epic Boss Battle [Seamlessly Looping]", as `MUS_GameplayBossBattle` | Boss fight music, from the boss intro on | OpenGameArt: https://opengameart.org/content/boss-battle-music (taken from Justin's Cerberus app) | Juhani Junkala (posted by SubspaceAudio) | CC0 1.0 (sourced, not scored) | Claude on Justin's Mac mini, 2026-11-15 |
+
+The three music licences are as recorded in the Cerberus app's `apps/app/static/sounds/SOURCES.md`; they were not
+re-checked on the OpenGameArt pages. Each track was converted to WAV, trimmed to a clean loop and re-levelled
+(`tools/mus_loopfix.py`). Our own generated loops (`MUS_Title`, `MUS_Gameplay`) stay in the project; the
+`UseGeneratedMusic` switch on `BP_OpeningDirector` plays them instead.
 
 ## Team
 - **Manuel Mendez** — Team Owner (submits the entry). Driver: Unreal implementation on GameStation, art pipeline on M Station, devlog and video.

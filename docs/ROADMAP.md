@@ -189,8 +189,10 @@ each one plays and what keeps it to once.
   `BP_JumpCutGameMode`. No new assets, components or systems; three new default-false bools (`PunchLanded`,
   `BossWasWindingUp`, `CineCrashSounded`) and eight tiny helper functions.
 - **Needs a person:** the mix (all at volume 1.0, 2D), and the crash sound against the car on screen.
-- **For Justin to decide:** the opening cinematic already runs behind the title screen, so a player who waits on
-  the title hears the crash behind it. That was true before this change.
+- **Fixed the same day (Justin: "Fix item 1 and merge"):** the opening used to start behind the title screen. It
+  now waits until the title is dismissed (`BP_OpeningDirector.CineBeginWhenPlaying` checks the game mode's
+  `FlowState`). Checked by script; not yet checked with a real R press. See
+  [the devlog entry](devlog/2026-11-15-the-opening-waits-for-the-title.md).
 
 ### The rescue is a run, the boss uses Splice, the clapperboard clacks (Sun Nov 15, 16:45 UTC, Justin's Mac mini)
 
@@ -1000,7 +1002,14 @@ referenced by any Blueprint or widget, and three sounds. Everything with a model
 | #45 poses | driver slumped, coworker down, coworker flinch | `Art/Blender/export/Characters/`, `Art/Blender/pose_clip.py` |
 
 **Untested, all of it:** nobody has heard a sound or seen an effect at the game camera, and nothing has been
-imported. The builder's side is #52. Not started: the boss lot's dressing (#50) and music.
+imported. The builder's side is #52. Not started: the boss lot's dressing (#50) and ~~music~~.
+
+**Sun Nov 15, 11:10-11:37 AM Pacific, on main from Justin's Mac (nobody has played or heard these yet):** music (a
+title theme and a gameplay loop, from code, `1742648`), the #64 title animation (`1011dff`, on the still title
+`7b08001`), a power-grant fanfare (`6a0f3f7`), and two bug fixes: Freeze Frame outliving the boss (`08c47d5`) and the
+crash sound landing 1.5 s late (`623b030`). Each has its devlog entry. The Windows build has to be repackaged on a
+Windows PC to include them. Still open from #64: moving `SFX_TitleSting` to the reveal needs `BP_JumpCutGameMode`
+(LFS-locked by another machine at the time).
 
 ## Stretch (only if the critical path is finished)
 
