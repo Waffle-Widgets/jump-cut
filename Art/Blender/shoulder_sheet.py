@@ -12,7 +12,9 @@ import numpy as np
 from mathutils import Vector
 
 argv = sys.argv[sys.argv.index('--') + 1:]
-OUT, items = argv[0], [a.split(':') for a in argv[1:]]
+SCALE = float(next((a[6:] for a in argv[1:] if a.startswith('scale=')), 75))   # cm across the picture
+AIM = next((a[4:] for a in argv[1:] if a.startswith('aim=')), 'chest')              # chest | hips
+OUT, items = argv[0], [a.split(':') for a in argv[1:] if '=' not in a]
 DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'export', 'Characters', 'CafeWalkerV2')
 W, H = 300, 300
 rows = []
@@ -26,6 +28,7 @@ for clip, frame in items:
     sL, sR, neck, hip = P('Bone_022'), P('Bone_027'), P('Bone_018'), P('Bone_001')
     s = (sL - sR).length / 38.0                                  # scene units per cm, near enough
     ctr = (sL + sR) / 2
+    if AIM == 'hips': ctr = hip - Vector((0, 0, 25 * s))
     left = (sL - sR).normalized()
     up = (neck - hip).normalized()
     fwd = up.cross(left).normalized()                            # out of his chest
@@ -34,7 +37,7 @@ for clip, frame in items:
     world.node_tree.nodes['Background'].inputs[0].default_value = (0.5, 0.5, 0.52, 1); world.node_tree.nodes['Background'].inputs[1].default_value = 1.3
     sun = bpy.data.objects.new('Sun', bpy.data.lights.new('Sun', 'SUN')); sun.data.energy = 3; sun.rotation_euler = (0.7, 0.2, -0.5); sc.collection.objects.link(sun)
     cam = bpy.data.objects.new('Cam', bpy.data.cameras.new('Cam')); sc.collection.objects.link(cam); sc.camera = cam
-    cam.data.type = 'ORTHO'; cam.data.clip_end = 100000 * s; cam.data.ortho_scale = 75 * s
+    cam.data.type = 'ORTHO'; cam.data.clip_end = 100000 * s; cam.data.ortho_scale = SCALE * s
     sc.render.engine = 'BLENDER_EEVEE'; sc.render.resolution_x, sc.render.resolution_y = W, H
     tiles = []
     for tag, v in (('front', fwd), ('back', -fwd), ('left', left), ('right', -left), ('top', up * 0.8 + fwd * 0.6)):
