@@ -276,7 +276,7 @@ _state = {}
 STANCE = dict(fwd=-6.5, dz=1.6, pitch=5.0, spine=-5.0, neck=-12.0,
               # Nov 15, later: the idle became the model's own A-pose lowered (clip_idle.py), so the stand every clip
               # starts and ends in follows it: arms 10 cm out and open-handed, collarbones as sculpted, feet 20 cm apart.
-              hand_out=1.0, hand_fwd=-1.0, hand_up=-0.009, pron=-17.0, curl=-0.14,
+              hand_out=1.0, hand_fwd=-1.0, hand_up=-0.002, pron=-17.0, curl=-0.14,
               clav_up=14.0, clav_back=0.0,
               foot_x=-0.5)
 HEAD_FIX = (-4.0, 2.0)                                      # neck (tilt, turn) that stands the model's head upright

@@ -23,7 +23,9 @@ from mathutils import Matrix, Vector
 argv = sys.argv[sys.argv.index('--') + 1:]
 IN, OUT = argv[0], argv[1]
 RENDER = argv[2] if len(argv) > 2 else None
-K_ARM = float(os.environ.get('ARM', 1.15)); K_HAND = float(os.environ.get('HAND', 1.06)); HEAD_MAX = float(os.environ.get('HEAD_MAX', 4.0))
+# Nov 15, one round later (owner: "The length of his arms were fine they were just too skinny"): the arms are no longer
+# LENGTHENED (ARM 1.0). They are THICKENED: every vertex moves straight out from its bone's own line by THICK.
+K_ARM = float(os.environ.get('ARM', 1.0)); K_THICK = float(os.environ.get('THICK', 1.25)); K_HAND = float(os.environ.get('HAND', 1.06)); HEAD_MAX = float(os.environ.get('HEAD_MAX', 4.0))
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.fbx(filepath=IN)
@@ -64,10 +66,17 @@ for u in UP:
         wa = w.get(u, 0.0) + w.get(fo, 0.0); wd = sum(x for n, x in w.items() if n in hand)
         if wa + wd < 1e-4: continue
         p = Vector(V[i])
-        Vn[i] = np.array(p * (1 - wa - wd) + S_arm(p) * wa + S_hand(p) * wd)
+        q = p * (1 - wa - wd) + S_arm(p) * wa + S_hand(p) * wd
+        for b_, e_ in ((u, fo), (fo, wr)):                 # thicker: out from each arm bone's line, by that bone's weight
+            wb = w.get(b_, 0.0)
+            if wb <= 0: continue
+            a_ = S_arm(wh(b_)); ax_ = (S_arm(wh(e_)) - a_).normalized()
+            r_ = (S_arm(p) - a_) - ax_ * (S_arm(p) - a_).dot(ax_)
+            q = q + r_ * (K_THICK - 1.0) * wb
+        Vn[i] = np.array(q)
     bone_xf[u] = (None, S_arm); bone_xf[fo] = (S_arm, S_arm)
     for n in hand: bone_xf[n] = (S_hand, S_hand)
-    print('TUNE %s: shoulder to wrist %.1f -> %.1f cm' % (u, (wrist0 - piv).length / s, (wrist1 - piv).length / s))
+    print('TUNE %s: shoulder to wrist %.1f -> %.1f cm, thickness x%.2f' % (u, (wrist0 - piv).length / s, (wrist1 - piv).length / s, K_THICK))
 
 # the head, sideways
 cx = (wh(UP[0]).x + wh(UP[1]).x) / 2
