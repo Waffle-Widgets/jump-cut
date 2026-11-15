@@ -883,12 +883,24 @@ def build_fire_escape(name='SM_FireEscape'):
     for fl in range(3):
         z = 3.2 + fl * 3.4
         b.box((-w / 2, -1.5, z), (w / 2, 0.0, z + 0.06), 'MS_CityMetal', 0.8)        # landing
-        for i in range(int(w / 0.3)):
-            rx = -w / 2 + i * 0.3
-            b.box((rx, -1.48, z + 0.06), (rx + 0.03, -1.45, z + 1.0), 'MS_CityTrim', 0.55)
-        b.box((-w / 2, -1.5, z + 1.0), (w / 2, -1.44, z + 1.06), 'MS_CityTrim', 0.55)
-        for sx in (-w / 2, w / 2 - 0.06):                                            # stringers
-            b.box((sx, -1.5, z), (sx + 0.06, -1.44, z + 1.06), 'MS_CityTrim', 0.5)
+        # SUB-PIXEL PASS, issue #67. Eight 3 cm balusters at a 30 cm pitch is 0.6 px of baluster on a 6.0 px
+        # pitch at the 43 m these are seen from across the street: a sub-pixel picket fence, which is the
+        # textbook recipe for a crawling moire and was the "railings at a distance" on the playtest list.
+        # NOTHING 3 cm WIDE CAN BE FIXED BY WIDENING ALONE at that range - 2 px would need a 10 cm baluster
+        # - so the guard becomes mostly SOLID: a 42 cm kick panel (8.4 px, resolves outright) with four
+        # 10 cm uprights above it (2.0 px on a 13 px pitch, clear of the sampling limit, so there is no
+        # pattern left to beat). A solid lower panel with bars above it is what a real steel fire escape
+        # has, it still reads as a railing from the alley floor, and it is fewer triangles than before.
+        b.box((-w / 2, -1.48, z + 0.06), (w / 2, -1.45, z + 0.48), 'MS_CityTrim', 0.52)
+        for i in range(4):
+            rx = -w / 2 + 0.14 + i * (w - 0.38) / 3.0
+            b.box((rx, -1.48, z + 0.48), (rx + 0.10, -1.45, z + 0.96), 'MS_CityTrim', 0.55)
+        # The rail and the end stringers were the last two 6 cm members here, both 1.2 px at 43 m. They go
+        # to 10 cm (2.0 px). The rail grows DOWNWARDS - its top edge is what sets this model's z-max, and
+        # moving that would move city_models.json and every fire escape computed off it.
+        b.box((-w / 2, -1.5, z + 0.96), (w / 2, -1.44, z + 1.06), 'MS_CityTrim', 0.55)
+        for sx in (-w / 2, w / 2 - 0.10):                                            # stringers
+            b.box((sx, -1.5, z), (sx + 0.10, -1.44, z + 1.06), 'MS_CityTrim', 0.5)
         if fl < 2:                                                                   # the flight going up
             for s in range(10):
                 t = s / 10.0
@@ -1461,9 +1473,26 @@ def build_roof_tank(name='SM_RoofTank'):
 
 
 def build_manhole(name='SM_Manhole'):
+    """A cast cover, 72 cm across.
+
+    SUB-PIXEL PASS, issue #67: "the rims of the circles in the street". The rim was the 6 cm annulus between
+    a r=0.36 body and a r=0.30 centre plate, which is 1.6 screen pixels at the 7.2 m the player sees it from
+    once the ground's foreshortening is taken off - under a pixel and a half of high-contrast ring, so it
+    crawled. The centre plate drops to r=0.24, making the rim 12 cm (3.2 px). n goes 16 -> 24 because a
+    16-gon's 14 cm chords are themselves visible angle breaks on a circle this size, and the silhouette of
+    the cover against a pale road is the highest-contrast edge it has.
+    BOTH HEIGHTS ARE DELIBERATELY UNCHANGED. A capture of City_Manhole_S0 in Lvl_JumpCut says the bright
+    thin feature here is the 2.5 cm OUTER SIDE WALL - sunlit metal against both the dark cover and the pale
+    road - while the rim and the centre plate are the same dark material as each other and differ only by
+    shading. Thinning that wall to buy height for the centre riser would have traded the one feature that
+    carries real contrast (2.7 px, already resolving) for one that carries almost none. The 1.2 cm riser
+    stays at 1.3 px and is the residual on this model; it is dark-on-dark, which is why it is tolerable.
+    The 0.72 x 0.72 x 0.037 m bounding box is unchanged to the millimetre (a 24-gon still has vertices on
+    both axes), so city_models.json and every placement computed off it stay exactly where they are.
+    """
     b = B(seed=68)
-    b.tube((0, 0, 0.0), 0.025, 0.36, 'MS_CityMetal', n=16, c=0.7)
-    b.tube((0, 0, 0.025), 0.012, 0.3, 'MS_CityMetal', n=16, c=0.6)
+    b.tube((0, 0, 0.0), 0.025, 0.36, 'MS_CityMetal', n=24, c=0.7)
+    b.tube((0, 0, 0.025), 0.012, 0.24, 'MS_CityMetal', n=24, c=0.6)
     return b.finish(name)
 
 
@@ -1487,15 +1516,30 @@ def build_bench(name='SM_Bench'):
 
 
 def build_kerb(name='SM_Kerb'):
-    """An 8 m kerb and pavement strip. The one piece that actually makes a flat floor read as a road."""
+    """An 8 m kerb and pavement strip. The one piece that actually makes a flat floor read as a road.
+
+    SUB-PIXEL PASS, issue #67, Sat 14 Nov. The flag joints used to be 2 cm ribs standing 1 cm PROUD of the
+    pavement, and both halves of that were wrong. A 2 cm feature on the ground is 1.1 screen pixels at the
+    4.9 m the player walks past it (ground detail is foreshortened to about a third of its true width), so
+    the joint never covered a whole pixel: its coverage changed every frame the camera moved and it boiled.
+    And a joint in a pavement is a RECESS, not a rib. They are now 6 cm grooves cut 1.5 cm INTO the slab,
+    which is 3.2 px across with a 2.4 px riser, so every part of the feature resolves and holds still.
+    Every joint is INTERIOR - the two ends stay flush, so kerbs still tile seamlessly end to end.
+    One material throughout, as before. That part matters: the level's M_City* materials are flat colours
+    and ignore the kit's vertex colours, so a joint here is only ever expressed as geometry - which is
+    exactly why a sub-pixel one was pure cost. It contributed no colour at all, only shimmer.
+    """
     b = B(seed=70)
-    L = 8.0
-    b.box((-L / 2, 0.0, 0), (L / 2, 2.4, 0.14), 'MS_CityConcrete', 0.95)        # pavement
-    b.box((-L / 2, -0.16, 0), (L / 2, 0.0, 0.16), 'MS_CityConcrete', 1.0)       # kerb stone
-    for i in range(int(L / 0.9)):                                               # flag joints
-        jx = -L / 2 + i * 0.9
-        b.box((jx, 0.02, 0.14), (jx + 0.02, 2.38, 0.15), 'MS_CityConcrete', 0.8)
-    b.box((-L / 2, 1.2, 0.14), (L / 2, 1.22, 0.15), 'MS_CityConcrete', 0.8)
+    L, W, TOP, JW, JD = 8.0, 2.4, 0.14, 0.06, 0.015
+    C = 'MS_CityConcrete'
+    b.box((-L / 2, 0.0, 0), (L / 2, W, TOP - JD), C, 0.95)                      # slab; its top is the groove floor
+    b.box((-L / 2, -0.16, 0), (L / 2, 0.0, 0.16), C, 1.0)                       # kerb stone
+    xs = ([-L / 2] + [v for k in range(1, 8)
+                      for v in (-L / 2 + k - JW / 2, -L / 2 + k + JW / 2)] + [L / 2])
+    ys = [0.0, 1.2 - JW / 2, 1.2 + JW / 2, W]
+    for i in range(0, len(xs), 2):                                              # the flags themselves
+        for j in range(0, len(ys), 2):
+            b.box((xs[i], ys[j], TOP - JD), (xs[i + 1], ys[j + 1], TOP), C, 0.95, skip=('zlo',))
     return b.finish(name)
 
 
@@ -1999,16 +2043,46 @@ def build_cafe_chalkboard(name='SM_CafeChalkboard'):
     bars of varying length, which is what handwriting reads as at three metres and which nobody can read,
     translate or claim. Faces -Y. Its origin is the CENTRE of the board, so it hangs from a mounting height.
     """
+    # SUB-PIXEL PASS, issue #67. This is the "ladder-like thing behind the register" from the playtest:
+    # seven horizontal strokes at a 21 cm pitch read as rungs on a dark frame. The strokes used to be 6 mm
+    # slabs floating 2 mm off the board, and that 6 mm of side wall is 0.74 px at the 6.9 m the menu is read
+    # from - a sub-pixel geometric step carrying the sharpest contrast in the room (MS_CafeWall 0.93,0.85,
+    # 0.72 chalk against MS_CityTrim 0.11,0.12,0.14 board, about 7.6:1 in luma), plus a contact shadow and
+    # an outline-pass ink line, every one of them thinner than a pixel.
+    # They are now INLAID: chalk and board share one plane, and the board's front face is TILED AROUND the
+    # strokes instead of continuing behind them. So there is no relief to alias, no overlap to z-fight
+    # (which is the tie the 4 mm stand_proud pass above would otherwise have to break), and no depth or
+    # normal discontinuity for the ink pass to find. What is left is a flat colour inlay 3 cm tall - 3.7 px
+    # - which is what chalk on a board actually is. The rng call order is deliberately unchanged, so the
+    # stroke lengths are the same ones that have always been on this board.
     b = B(seed=124)
     w, h = 1.15, 0.80
+    FY = -0.07                                                     # the board's front plane
     b.box((-w - 0.05, -0.06, -h - 0.05), (w + 0.05, 0.0, h + 0.05), 'MS_CityWood', 0.7)
-    b.box((-w, -0.07, -h), (w, -0.055, h), 'MS_CityTrim', 0.18)
+    b.box((-w, FY, -h), (w, -0.055, h), 'MS_CityTrim', 0.18, skip=('ylo',))   # front face is tiled below
+    rows = []
     for row in range(7):
         z = h - 0.14 - row * 0.21
-        b.box((-w + 0.12, -0.078, z - 0.015), (-w + 0.12 + b.rng.uniform(0.3, 0.9), -0.072, z + 0.015),
-              'MS_CafeWall', 0.98)
-        if b.rng.random() < 0.6:                                   # the price, right-aligned
-            b.box((w - 0.34, -0.078, z - 0.015), (w - 0.34 + 0.18, -0.072, z + 0.015), 'MS_CafeWall', 0.9)
+        ln = b.rng.uniform(0.3, 0.9)                               # same two calls in the same order
+        rows.append((z, ln, b.rng.random() < 0.6))
+
+    def face(x0, z0, x1, z1, slot, c):
+        if x1 - x0 > 1e-6 and z1 - z0 > 1e-6:
+            b.quad([(x0, FY, z0), (x1, FY, z0), (x1, FY, z1), (x0, FY, z1)], slot, c)
+
+    zc = -h
+    for z, ln, price in sorted(rows):                              # bottom of the board upwards
+        z0, z1 = z - 0.015, z + 0.015
+        face(-w, zc, w, z0, 'MS_CityTrim', 0.18)                   # bare board between two lines of chalk
+        x = -w
+        for sx0, sx1, c in ([(-w + 0.12, -w + 0.12 + ln, 0.98)] +
+                            ([(w - 0.34, w - 0.16, 0.9)] if price else [])):
+            face(x, z0, sx0, z1, 'MS_CityTrim', 0.18)
+            face(sx0, z0, sx1, z1, 'MS_CafeWall', c)
+            x = sx1
+        face(x, z0, w, z1, 'MS_CityTrim', 0.18)
+        zc = z1
+    face(-w, zc, w, h, 'MS_CityTrim', 0.18)
     b.box((-w, -0.17, -h - 0.05), (w, -0.055, -h), 'MS_CityWood', 0.62)          # chalk ledge
     return b.finish(name)
 
@@ -2527,12 +2601,17 @@ def build_shop_display(name='SM_ShopDisplay'):
 def build_drain_grate(name='SM_DrainGrate'):
     """A road gully at the kerb line. Flat, 2 cm proud, no collision needed - but it is one more edge for
     the outline pass to find in 5 m of empty grey road."""
+    # SUB-PIXEL PASS, issue #67: seven 4.2 cm bars at a 7 cm pitch is 1.2 px of bar on a 2.0 px pitch at
+    # the 7 m this is read from - BELOW the sampling limit, so it did not merely shimmer, it beat against
+    # the pixel grid and crawled as a pattern, which is the worst-looking failure of the four. Three 10 cm
+    # bars at a 17 cm pitch (2.8 px on 4.8 px) is the same read of a road gully and resolves. Bounds and
+    # material slot order unchanged, and it is 4 triangles cheaper.
     b = B(seed=158)
     b.cbox((-0.33, -0.21, 0.0), (0.33, 0.21, 0.025), 'MS_CityConcrete', 0.85, ch=0.035)
     b.cbox((-0.27, -0.16, 0.025), (0.27, 0.16, 0.04), 'MS_CityTrim', 0.32, ch=0.02)
-    for i in range(7):
-        bx = -0.24 + i * 0.07
-        b.cbox((bx, -0.13, 0.04), (bx + 0.042, 0.13, 0.052), 'MS_CityMetal', 0.55, ch=0.006)
+    for i in range(3):
+        bx = -0.225 + i * 0.17
+        b.cbox((bx, -0.13, 0.04), (bx + 0.10, 0.13, 0.052), 'MS_CityMetal', 0.55, ch=0.012)
     return b.finish(name)
 
 

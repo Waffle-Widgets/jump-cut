@@ -350,6 +350,78 @@ the kit — procedural, **0 credits, nothing uploaded**.
   actor-by-actor against the committed one before running `add`** — that diff (0 removed, 71 added, 1 moved)
   is what proved `add` was safe here.
 
+## The sub-pixel pass, and why #111 and #114 were only half the story (Sat 14 Nov, evening)
+
+The playtest after #114 named four things still flickering: *the cracks in the sidewalk, the rims of the
+circles in the street, the thing that looks like a ladder in the coffee shop behind the register, and
+railings on buildings at a distance.* **None of them was z-fighting.** Three separate scans came back
+clean: no different-material coplanar tie inside any of the six candidate models, the between-actor
+vertical class was cleared by #114, and the horizontal between-actor class — which #114's scan **skipped**,
+because `final.py` filtered to `abs(n[2]) < 0.1` — has 19.60 m² of tie but only 7.70 m² that a ray cast
+straight up can reach, all of it one skyline pair 110 m away. The 53 kerb pairs sit under a 14 cm pavement
+slab; the counter pairs under 6 cm of counter.
+
+What they have in common instead is that **every one of them is thinner than one screen pixel** at the
+distance it is seen from. PIE renders 1709 px wide at 90°, and a feature needs about 2 px of coverage to
+hold still from frame to frame; below that its coverage changes with sub-pixel camera jitter and it boils.
+Ground detail is worse than it looks, because foreshortening costs it roughly another factor of three.
+
+| what the playtest called it | the geometry | was | now |
+|---|---|---|---|
+| cracks in the sidewalk | `build_kerb` flag joints, 4.9 m | 2 cm rib **proud**, 1.08 px | 6 cm groove **recessed**, 3.24 px |
+| rims of the circles in the street | `build_manhole` annulus, 7.2 m | 6 cm, 1.59 px | 12 cm, 3.19 px |
+| the ladder behind the register | `build_cafe_chalkboard` strokes, 6.9 m | 6 mm relief, 0.74 px | **inlaid, 0.00 px** |
+| railings at a distance | `build_fire_escape` balusters, 43 m | 3 cm on a 30 cm pitch, 0.60 px | 42 cm kick panel + 10 cm uprights |
+| (found here) road gully bars | `build_drain_grate`, 7.0 m | 4.2 cm on a 7 cm pitch, **1.18 px on 1.96** | 10 cm on a 17 cm pitch, 2.80 on 4.76 |
+
+The drain grate was the worst of the set and nobody had named it: a 1.96 px pitch is **below the sampling
+limit**, so it did not merely shimmer, it beat against the pixel grid and crawled as a moire pattern.
+
+### The uncomfortable part: #111 caused some of this
+
+`stand_proud()` cured a depth tie by lifting flat detail **0.4 cm along its normal**. That worked, and the
+z-fight numbers prove it. But a 0.4–0.8 cm proud face is itself sub-pixel at these distances, so the pass
+**traded a z-fight for a shimmer**. The chalkboard is the clean illustration and the template for the real
+answer: instead of standing the chalk proud of the board, punch the board's front face out and **tile it
+around the strokes**, so chalk and board share one plane. No relief to alias, no overlap to z-fight, and
+nothing for the outline pass to find. Verified by rasterising the front plane at 2 mm: 3.680000 m² of face
+on a 3.680000 m² board, **0 gap cells and 0 overlap cells across 920,000 samples**.
+
+### Three things that could not have fixed it, with the reason
+
+- **Not resolution.** `r.ScreenPercentage 100` was tested in PIE and changed nothing. A manual value does
+  short-circuit the editor override (`LegacyScreenPercentageDriver.cpp:216`), so the test was valid.
+- **Not a console variable.** The project already runs TSR at its documented maximum anti-flicker setting:
+  `AntiAliasingQuality@3` applies `r.TSR.History.ScreenPercentage:200`, which
+  `TemporalSuperResolution.cpp:53-61` names as the Nyquist-sufficient rate and the highest supported value,
+  plus `ShadingRejection.Flickering:1` and `Resurrection:1`. There is no dial left.
+- **Not LOD popping.** Every city mesh is **LOD count 1 with Nanite off** — verified live on ten models.
+  There are no LODs to pop. And neither Nanite nor auto-LOD is the medicine: both work by deleting thin
+  parts, which is exactly the detail that is aliasing. `jumpcut_city_place.py:309-316` disables Nanite
+  deliberately for that reason, and RT shadows read the fallback mesh.
+
+### Traps this pass added to the list
+
+- **A fix that changes triangle counts inverts both halves of `unreal_city_reimport_by_name.py`.** It was
+  written for `stand_proud`, where tris must NOT move and bounds growth proves the import took. Here tris
+  MUST move and bounds are unchanged by design, so bounds prove nothing. The tool now reads an
+  **expected-tris table** (`/tmp/jc67_tris.json`, or `$JC67_TRIS`) which does both jobs more strictly: the
+  count must equal what Blender built *and* differ from what was in the level. A model with no entry keeps
+  the old strict behaviour.
+- **Widening is not always available.** Nothing 3 cm wide can be made to resolve at 43 m — 2 px there needs
+  10 cm. The fire escape's eight balusters became a **solid 42 cm kick panel with four 10 cm uprights**:
+  fewer triangles, still reads as a railing, and no sub-pixel pattern left to beat.
+- **Check which feature actually carries the contrast before thinning anything.** The manhole's bright thin
+  feature is its 2.5 cm **outer side wall** (sunlit metal against both the dark cover and the pale road),
+  not the rim — the rim and the centre plate are the same material and differ only by shading. An earlier
+  draft of this fix thinned that wall to buy height for the centre riser, which would have traded the one
+  feature that resolves for one that carries almost no contrast. Both heights were left alone.
+- **Grow a rail downwards.** The fire escape's top rail sets the model's z-max; widening it upwards would
+  have moved `city_models.json` and every placement computed off it.
+- **Keep the RNG call order when reshaping a builder.** `build_cafe_chalkboard` still makes the same two
+  `rng` calls per row in the same order, so the stroke lengths are the ones that have always been there.
+  (Same trap as the bin bags in the previous pass, from the other direction.)
+
 ## Known gaps
 
 - **No people.** The city has no pedestrians. See `docs/CHARACTERS.md` → *Crowds* for the cheap route
