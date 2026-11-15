@@ -214,11 +214,14 @@ P0 = RH['Bone_000'].copy()                                  # the pelvis, at res
 ANK = {s: RH[LEG[s][2]].copy() for s in 'LR'}               # the ankles, at rest: that height keeps the soles on the floor
 ARMLEN = {s: (RH[ARM[s][1]] - RH[ARM[s][0]]).length + (RH[ARM[s][2]] - RH[ARM[s][1]]).length for s in 'LR'}
 ROOT_FLOOR = Matrix.Translation(-P0) @ REST['Bone_000']     # the root where the retargeted clips keep it
+DROP = {'L': 0.0, 'R': 0.0}                                 # how far each ankle comes down so the sole touches the floor
 T = {                                                       # every number a person might want to change
     'foot_x': 10.5, 'foot_yL': -2.5, 'foot_yR': 2.5, 'toe_out': 11.0,     # cm from the centre line; cm fore/aft; degrees
     'pel_shift': -1.6, 'pel_drop': 1.2, 'hip_tilt': 1.6,                  # weight onto his right leg (his right is -X)
     'spine_back': -1.5, 'head_up': -2.0,                                  # degrees about +X (positive bends him forward)
-    'hand_out': 3.5, 'hand_fwd': -3.0, 'arm_bend': 0.965,                 # wrist beside the thigh; 1.0 = dead straight
+    'hand_out': 7.0, 'hand_fwd': -3.0, 'arm_bend': 0.965,                 # wrist beside the thigh; 1.0 = dead straight
+    'clav_up': 14.0, 'clav_back': 3.0,                                    # degrees: collarbones lifted / drawn back.
+    # Without them the arms coming down from the A-pose drag the shoulders into a slope ("droopy", the Team Owner).
     'pron': 62.0, 'curl': 0.34,                                           # palms toward the thighs; relaxed fingers
     'breath_deg': 0.9, 'breath_cm': 0.35, 'sway_cm': 0.7, 'sway_deg': 0.5,
 }
@@ -245,13 +248,15 @@ def build(f):
     set_world('Bone_000', Matrix.Translation(pos) @ R @ Matrix.Translation(-P0) @ REST['Bone_000'])
     for s in 'LR':
         th, sh, ft = LEG[s]
-        t = Vector((SGN[s] * T['foot_x'], ANK[s].y + T['foot_y' + s], ANK[s].z))     # fore/aft from where the ankle rests
+        t = Vector((SGN[s] * T['foot_x'], ANK[s].y + T['foot_y' + s], ANK[s].z - DROP[s]))   # fore/aft from where the ankle rests
         out = math.radians(T['toe_out']) * SGN[s]
         toe = Vector((math.sin(out), -math.cos(out), 0.0))
         ik2('leg' + s, th, sh, ft, t, Vector((SGN[s] * 0.22, -1.0, 0.0)), -Y)
         orient(ft, toe, Z, FOOT_F0[s], Z)
     for s in 'LR':
         up, fo, wr = ARM[s]
+        # Bringing the arms down from the A-pose drags the shoulder down with them unless the collarbone answers.
+        rot(PARENT[up], Y, -SGN[s] * T['clav_up']); rot(PARENT[up], Z, -SGN[s] * T['clav_back'])
         sh0 = head(up)
         t = Vector((sh0.x + SGN[s] * T['hand_out'], sh0.y + T['hand_fwd'], sh0.z - ARMLEN[s] * T['arm_bend'] + 0.25 * br))
         ik2('arm' + s, up, fo, wr, t, Vector((SGN[s] * 0.35, 1.0, 0.1)), Y)
@@ -265,6 +270,16 @@ def build(f):
 
 def apply_pose():
     for pb in rig.pose.bones: pb.matrix_basis = BASIS[pb.name]
+
+
+# Put each sole ON the floor. The two shoes do not rest at the same height in the model (one is a centimetre up),
+# so pose once, measure the lowest point of each shoe, and lower that ankle by exactly that much.
+_vgn = {g.index: g.name for g in mesh.vertex_groups}
+_domb = [_vgn[max(v.groups, key=lambda g: g.weight).group] if v.groups else '' for v in mesh.data.vertices]
+SHOE = {s: np.array([i for i, d in enumerate(_domb) if d == LEG[s][2] or d in SUB[LEG[s][2]]]) for s in 'LR'}
+build(F0); apply_pose(); _V = world_verts()
+for s in 'LR': DROP[s] = float(_V[SHOE[s], 2].min()) - 0.05
+log['sole_drop_cm'] = {s: round(DROP[s], 2) for s in 'LR'}
 
 
 VERTS = {}; POSES = {}; TRACK = {}; fk_err = 0.0
@@ -389,6 +404,21 @@ if 'norender' not in a:
                              ('feet_front', (0.001, -1, 0.25), (0, 0, 14), 70), ('feet_top', (0.001, -0.02, 1), (0, -4, 0), 70)):
         fp = os.path.join(CACHE, '_idle_%s.png' % tag); shot(fp, Vector(ctr), v, sp_, (400, 400)); tiles.append(fp)
     log['sheets'].append(sheet('detail', tiles, 4, (400, 400)))
+    # shoulders and feet, close, in the idle pose AND in the rest pose the body was modelled in: a part that looks
+    # wrong in both is the model, a part that only looks wrong in the idle is this clip (or the weights)
+    tiles = []
+    for which in ('idle', 'rest'):
+        if which == 'rest':
+            rig.animation_data.action = None
+            for pb in rig.pose.bones: pb.matrix_basis = Matrix.Identity(4)
+        else:
+            sc.frame_set(F0)
+        bpy.context.view_layer.update()
+        for tag, v, ctr, sp_ in (('sh_front', (0.001, -1, 0.0), (0, 0, 140), 80), ('sh_back', (0.001, 1, 0.0), (0, 0, 140), 80),
+                                 ('feet_side', (1, 0.001, 0.0), (0, 0, 14), 60), ('feet_three', (0.7, -1, 0.35), (0, 0, 12), 60)):
+            fp = os.path.join(CACHE, '_idle_%s_%s.png' % (which, tag)); shot(fp, Vector(ctr), v, sp_, (400, 400)); tiles.append(fp)
+    rig.animation_data.action = act
+    log['sheets'].append(sheet('shoulders_feet', tiles, 4, (400, 400)))
 for o in [ground] + strips: bpy.data.objects.remove(o)
 
 # ---------- export: mesh + rig + this one action, the same call as death_clip.py ----------
