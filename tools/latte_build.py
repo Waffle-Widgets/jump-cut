@@ -42,7 +42,7 @@ float2 di = p - si;
 float2 vel = d / max(r2, 0.0009) + di / max(dot(di, di), 0.0009);
 float2 src = p - Pour.w * vel;
 src += (Pour.w * 0.45 + Vel.z * 0.00003) * float2(sin(p.y * 46.0 + Fx.w * 3.1), cos(p.x * 41.0 - Fx.w * 2.7));
-src -= Vel.xy * Vel.z * exp(-r2 / 0.004);
+src -= Vel.xy * Vel.z * exp(-r2 / 0.0065);
 float2 pv = Texture2DSample(Prev, PrevSampler, src + 0.5).rg;
 float prev = pv.x;
 float r = sqrt(r2);
@@ -50,7 +50,7 @@ float inj = Pour.z * (1.0 - smoothstep(Misc.x * 0.6, Misc.x, r));
 float v = max(prev, inj);
 float rim = Misc.y * smoothstep(Misc.x * 0.9, Misc.x * 1.1, r) * (1.0 - smoothstep(Misc.x * 1.3, Misc.x * 1.7, r));
 v = lerp(v, 0.0, saturate(rim));
-v = lerp(v, 0.16, saturate(Vel.w * exp(-r2 / 0.00022)));
+v = lerp(v, 0.16, saturate(Vel.w * exp(-r2 / 0.00007)));
 v = lerp(v, smoothstep(0.0, 1.0, v), Misc.z);
 v *= (dot(p, p) < 0.2304) ? 1.0 : 0.0;
 float g = lerp(pv.y, 0.5 + 0.5 * sin(Fx.w * 11.0), saturate(inj));
@@ -67,14 +67,24 @@ float2 sm = Texture2DSample(Sim, SimSampler, uv2).rg;
 float v = sm.x;
 float em = Texture2DSample(Sim, SimSampler, uv2 + float2(0.006, 0.006)).r - Texture2DSample(Sim, SimSampler, uv2 - float2(0.006, 0.006)).r;
 float n = sin(p.x * 37.0 + sin(p.y * 23.0) * 2.0) * sin(p.y * 31.0 + sin(p.x * 19.0) * 2.0);
-float3 crema = lerp(float3(0.105, 0.040, 0.012), float3(0.165, 0.068, 0.022), 0.5 + 0.5 * n);
-float3 halo = float3(0.36, 0.20, 0.09);
+float3 crema = lerp(float3(0.17, 0.070, 0.022), float3(0.25, 0.110, 0.038), 0.5 + 0.5 * n);
+float3 halo = float3(0.42, 0.25, 0.12);
 float3 milk = float3(0.66, 0.61, 0.50);
 float3 c = lerp(crema, halo, smoothstep(0.04, 0.30, v));
 c = lerp(c, milk * (0.76 + 0.24 * sm.y), smoothstep(0.24, 0.62, v));
 c += em * 0.20;
 c *= 1.0 + rip * 0.35;
 c += 0.05 * smoothstep(0.25, 0.0, length(p - float2(0.18, -0.16)));
+float ga = length(p - GuideA.xy);
+float ring = (1.0 - smoothstep(0.005, 0.009, abs(ga - GuideA.z))) * step(0.5, frac(atan2(p.y - GuideA.y, p.x - GuideA.x) * 1.9099 + Fx.w * 0.6));
+float gx0 = min(GuideB.x, GuideB.y);
+float gx1 = max(GuideB.x, GuideB.y);
+float gdir = sign(GuideB.y - GuideB.x);
+float wave = GuideB.z * sin((p.x - GuideB.x) * 95.0);
+float slope = GuideB.z * 95.0 * cos((p.x - GuideB.x) * 95.0);
+float path = (1.0 - smoothstep(0.005, 0.009, abs(p.y - wave) / sqrt(1.0 + slope * slope))) * step(gx0, p.x) * step(p.x, gx1) * step(0.5, frac(p.x * gdir * 14.0 - Fx.w * 1.6));
+float gl = saturate(ring * GuideA.w + path * GuideB.w) * ShowGuide;
+c = lerp(c, float3(0.05, 0.50, 0.62), gl);
 float rr = length(p);
 c *= lerp(1.0, 0.55, smoothstep(0.40, 0.48, rr));
 return c * Bright;
@@ -158,9 +168,9 @@ def collection():
     c = eal.load_asset(path)
     if c is None:
         c = at.create_asset('MPC_Latte', DIR, unreal.MaterialParameterCollection, unreal.MaterialParameterCollectionFactoryNew())
-    if len(c.get_editor_property('vector_parameters')) != 4:
+    if len(c.get_editor_property('vector_parameters')) != 6:
         ps = []
-        for n, dv in (('Pour', (0, 0, 0, 0)), ('Vel', (0, 0, 0, 0)), ('Misc', (0.035, 0, 0.25, 0)), ('Fx', (0, 0, 0, 0))):
+        for n, dv in (('Pour', (0, 0, 0, 0)), ('Vel', (0, 0, 0, 0)), ('Misc', (0.035, 0, 0.25, 0)), ('Fx', (0, 0, 0, 0)), ('GuideA', (0, 0, 0.06, 0)), ('GuideB', (0, 0, 0, 0))):
             v = unreal.CollectionVectorParameter()
             v.set_editor_property('parameter_name', n)
             v.set_editor_property('default_value', unreal.LinearColor(*dv))
@@ -186,6 +196,8 @@ def instance(name, parent, tex_name, tex):
         tv.set_editor_property('parameter_info', info)
         tv.set_editor_property('parameter_value', tex)
         mi.set_editor_property('texture_parameter_values', [tv])
+    if name.startswith('MI_LatteSurface'):
+        mel.set_material_instance_scalar_parameter_value(mi, 'ShowGuide', 1.0)      # the cup shows the guide; the GOAL picture does not
     mel.update_material_instance(mi)
     got = mel.get_material_instance_texture_parameter_value(mi, tex_name)
     say('   reads back %s' % (got.get_name() if got else None))
@@ -245,7 +257,7 @@ def assets():
     b = rt('RT_LatteB')
     c = collection()
     sim = material('M_LatteSim', SIM, 'Prev', {'Pour': 0, 'Vel': 0, 'Misc': 0, 'Fx': 0}, {}, a)
-    surf = material('M_LatteSurface', SURF, 'Sim', {'Fx': 0}, {'Bright': 0.42}, a)
+    surf = material('M_LatteSurface', SURF, 'Sim', {'Fx': 0, 'GuideA': 0, 'GuideB': 0}, {'Bright': 0.42, 'ShowGuide': 0.0}, a)
     made = [a, b, c, sim, surf, flat('M_LatteCup', (0.17, 0.16, 0.14), shaded=True), flat('M_LatteSteel', (0.10, 0.11, 0.13), shaded=True),
             flat('M_LatteMilk', (0.30, 0.285, 0.25), shaded=True, wobble=True), flat('M_LatteBar', (0.40, 0.26, 0.10), True),
             instance('MI_LatteSim_FromA', sim, 'Prev', a), instance('MI_LatteSim_FromB', sim, 'Prev', b),
