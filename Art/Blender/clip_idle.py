@@ -45,21 +45,21 @@ CURL = T('CURL', 0.34)
 BREATH = T('BREATH', 2.2)          # degrees of chest on a breath
 DRIFT = T('DRIFT', 0.8)            # cm the weight wanders side to side
 LOOK = T('LOOK', 2.0)              # degrees the head turns, slowly
-FEET_X = T('FEET_X', 8.5)         # cm either side of the centre line: 17 cm between the ankles, the measured average for people (McIlroy & Maki 1996). It was 28
-ARM_OUT = T('ARM_OUT', 1.0)        # cm the wrist hangs outside the shoulder joint: the arm hangs straight DOWN and the hand rests by the thigh. At 4.5+ the hands hovered away from the legs
-ARM_FWD = T('ARM_FWD', 3.5)
-ARM_BEND = T('ARM_BEND', 0.995)     # of the arm's length: 9 degrees at the elbow. 16 still read as bent from the front (owner, Nov 15)
-ELBOW_OUT = T('ELBOW_OUT', 0.0)    # the elbow points STRAIGHT back, so its bend is fore-and-aft. Pointed outward at all, the
+FEET_X = T('FEET_X', 10.0)         # cm either side of the centre line: 17 cm between the ankles, the measured average for people (McIlroy & Maki 1996). It was 28
+ARM_OUT = T('ARM_OUT', 10.0)        # cm the wrist hangs outside the shoulder joint: the arm hangs straight DOWN and the hand rests by the thigh. At 4.5+ the hands hovered away from the legs
+ARM_FWD = T('ARM_FWD', 2.0)
+ARM_BEND = T('ARM_BEND', 0.99)     # of the arm's length: 9 degrees at the elbow. 16 still read as bent from the front (owner, Nov 15)
+ELBOW_OUT = T('ELBOW_OUT', 0.2)    # the elbow points STRAIGHT back, so its bend is fore-and-aft. Pointed outward at all, the
                                    # arm bows in the front view: out to the elbow, back in to the wrist ("oddly bent", owner)
-PALM = T('PALM', 82.0)             # forearm roll: the back of the fist faces out and a little forward
-FIST = T('FIST', 0.25)             # loose fists
-SH_UP = T('SH_UP', 36.0)           # collarbone lift: 24 drooped; with the arms held out, 36 is level, not a shrug
-SH_BACK = T('SH_BACK', 2.0)        # shoulders wide rather than pulled back
+PALM = T('PALM', 45.0)             # forearm roll: the back of the fist faces out and a little forward
+FIST = T('FIST', 0.2)             # loose fists
+SH_UP = T('SH_UP', 14.0)           # collarbone lift: 24 drooped; with the arms held out, 36 is level, not a shrug
+SH_BACK = T('SH_BACK', 0.0)        # shoulders wide rather than pulled back
 CHEST = T('CHEST', -5.0)           # chest up
 
 
 SH_EVEN = T('SH_EVEN', 0.0)        # degrees: + lifts his LEFT collarbone. LEFT AT 0: tried 2.5-13, it tilts the joints (4 cm at 9) and the cloth barely moves
-WRIST_IN = T('WRIST_IN', -15.0)      # degrees the hand tips toward the thumb
+WRIST_IN = T('WRIST_IN', 0.0)      # degrees the hand tips toward the thumb
 WRIST_BEND = T('WRIST_BEND', 0.0)
 HIP_ROLL = T('HIP_ROLL', -2.5)      # degrees the pelvis rolls: his right leg is the longer one, this lifts that hip so both knees straighten
 CHEST_ROLL = T('CHEST_ROLL', 2.5)  # and this rolls the chest back so the shoulders stay level
@@ -67,6 +67,11 @@ HEAD_LEVEL = T('HEAD_LEVEL', 0.0)  # degrees of neck tilt that stand the head up
 HEAD_TURN = T('HEAD_TURN', 0.0)
 
 
+# THE A-POSE, LOWERED (owner, Nov 15: "We could just straighten out the legs a bit and bring the arms down a bit from
+# that pose"). The upper body is now the modeller's own: collarbones near where they were sculpted (SH_UP 14, not a
+# squared 36), arms 12 degrees out from straight down instead of 30, palms part-way in, hands open. What is NOT the
+# A-pose is what was wrong with it from the side: its hips sit ahead of its ankles and its head hangs 12 degrees down,
+# and its feet are 60 cm apart. Those three corrections stay (PEL_FWD, HEAD, FEET_X).
 def pose(u, foot_fwd=FOOT_FWD, dz=PEL_DZ, reach=ARM_REACH, pfwd=PEL_FWD, pitch=PEL_PITCH, life=1.0):
     """LEVEL. "The shoulders need to be straight not higher on one side than the other. The head needs to be
     straight not slanted" (owner, Nov 15). Nothing in the resting pose is one-sided any more: no weight shift, no
