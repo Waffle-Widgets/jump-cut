@@ -94,14 +94,24 @@ def do_montages(save):
         if a is None:
             say('montages: %s not imported yet, skipped' % name)
             continue
-        mname = 'AM_CafeWalker_%s_Authored' % name
-        mpath = '%s/%s' % (AUTH, mname)
-        mont = eal.load_asset(mpath)
-        if mont is None:
-            f = unreal.AnimMontageFactory()
-            f.set_editor_property('source_animation', a)
-            f.set_editor_property('target_skeleton', a.get_editor_property('skeleton'))
-            mont = tools.create_asset(mname, AUTH, unreal.AnimMontage, f)
+        # A montage keeps the length its clip had when it was made. Re-importing a longer clip over the same asset
+        # leaves the montage cutting it short, and a montage's segment cannot be edited from Python. So when the
+        # lengths disagree a new montage is made beside the old one (_B, _C ...) and BP_Player is pointed at it;
+        # the old one is left alone, because deleting an asset a loaded Blueprint points at nulls the pointer.
+        mont = None
+        for suffix in ('', '_B', '_C', '_D', '_E'):
+            mname = 'AM_CafeWalker_%s_Authored%s' % (name, suffix)
+            mont = eal.load_asset('%s/%s' % (AUTH, mname))
+            if mont is None:
+                f = unreal.AnimMontageFactory()
+                f.set_editor_property('source_animation', a)
+                f.set_editor_property('target_skeleton', a.get_editor_property('skeleton'))
+                mont = tools.create_asset(mname, AUTH, unreal.AnimMontage, f)
+                break
+            if abs(mont.get_play_length() - a.get_play_length()) <= 0.01:
+                break
+            say('%s is %.3f s but its clip is now %.3f s: superseded' % (mname, mont.get_play_length(), a.get_play_length()))
+            mont = None
         if mont is None:
             say('FAILED: could not make %s' % mname)
             continue
