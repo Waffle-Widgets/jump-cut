@@ -43,37 +43,43 @@ CURL = T('CURL', 0.34)
 # is up. The stand before this one hung the arms straight down against the body, and brought down from the A-pose
 # like that the shoulders slope ("drooping") and the arms press into the torso.
 BREATH = T('BREATH', 2.2)          # degrees of chest on a breath
-DRIFT = T('DRIFT', 1.2)            # cm the weight wanders side to side
-LOOK = T('LOOK', 4.0)              # degrees the head turns, slowly
+DRIFT = T('DRIFT', 0.8)            # cm the weight wanders side to side
+LOOK = T('LOOK', 2.0)              # degrees the head turns, slowly
 FEET_X = T('FEET_X', 14.0)         # cm either side of the centre line: wider than the shoulders
-ARM_OUT = T('ARM_OUT', 9.5)        # cm the wrist hangs outside the shoulder joint: daylight between arm and ribs
+ARM_OUT = T('ARM_OUT', 8.5)        # cm the wrist hangs outside the shoulder joint: daylight between arm and ribs
 ARM_FWD = T('ARM_FWD', 1.0)
-ARM_BEND = T('ARM_BEND', 0.972)    # of the arm's length: a soft elbow, about 27 degrees
-ELBOW_OUT = T('ELBOW_OUT', 0.6)    # how far outward the elbow points (0 is straight back)
-PALM = T('PALM', 96.0)             # forearm roll: the back of the fist faces out and a little forward
-FIST = T('FIST', 0.85)             # loose fists
+ARM_BEND = T('ARM_BEND', 0.99)     # of the arm's length: 16 degrees at the elbow. 27 with a fist looked held, not hanging
+ELBOW_OUT = T('ELBOW_OUT', 0.3)    # how far outward the elbow points (0 is straight back)
+PALM = T('PALM', 82.0)             # forearm roll: the back of the fist faces out and a little forward
+FIST = T('FIST', 0.36)             # loose fists
 SH_UP = T('SH_UP', 36.0)           # collarbone lift: 24 drooped; with the arms held out, 36 is level, not a shrug
 SH_BACK = T('SH_BACK', 2.0)        # shoulders wide rather than pulled back
 CHEST = T('CHEST', -5.0)           # chest up
 
 
+HEAD_LEVEL = T('HEAD_LEVEL', 0.0)  # degrees of neck tilt that stand the head upright (measured with posture_check.py)
+HEAD_TURN = T('HEAD_TURN', 0.0)
+
+
 def pose(u, foot_fwd=FOOT_FWD, dz=PEL_DZ, reach=ARM_REACH, pfwd=PEL_FWD, pitch=PEL_PITCH, life=1.0):
+    """LEVEL. "The shoulders need to be straight not higher on one side than the other. The head needs to be
+    straight not slanted" (owner, Nov 15). Nothing in the resting pose is one-sided any more: no weight shift, no
+    hip or shoulder tilt, both feet the same, both hands the same. What moves is small and passes through level."""
     two = 2 * math.pi
     br = math.sin(two * u) * life                  # breath, once per loop
     sw = math.sin(two * (u + 0.18)) * life         # the weight drifting, a little behind it
     lk = math.sin(two * (u + 0.55)) * life         # the head, on its own clock
-    fid = math.sin(two * 2 * (u + 0.3)) * life     # a smaller, faster settle, twice per loop
-    C.body(dx=-1.0 * life + DRIFT * sw, fwd=pfwd, dz=dz + 0.4 * br, pitch=pitch + 0.5 * br, lean=-(0.8 * life + 0.7 * sw), twist=0.6 * sw)
-    C.spine(x=(CHEST if life else SPINE) - BREATH * br, y=0.8 * life + 0.6 * sw, z=-0.9 * sw)
-    C.neck(x=HEAD + 0.6 * BREATH * br + 0.6 * fid, y=-0.4 * sw, z=LOOK * lk)
-    C.foot('L', x=FEET_X, fwd=foot_fwd + 1.5 * life, yaw=TOE_OUT + 4.0 * life)
-    C.foot('R', x=-FEET_X, fwd=foot_fwd - 0.5 * life, yaw=TOE_OUT + 16.0 * life)     # one foot turned out, as drawn
+    C.body(dx=DRIFT * sw, fwd=pfwd, dz=dz + 0.4 * br, pitch=pitch + 0.5 * br, lean=-0.3 * sw)
+    C.spine(x=(CHEST if life else SPINE) - BREATH * br, y=0.3 * sw, z=0.0)
+    C.neck(x=HEAD + 0.6 * BREATH * br, y=HEAD_LEVEL, z=HEAD_TURN + LOOK * lk)
+    C.foot('L', x=FEET_X, fwd=foot_fwd, yaw=TOE_OUT + 4.0 * life)
+    C.foot('R', x=-FEET_X, fwd=foot_fwd, yaw=TOE_OUT + 4.0 * life)
     for s in 'LR':
         C.clav(s, up=SH_UP + 1.2 * br, back=SH_BACK)
-        o_ = ARM_OUT + 0.5 * br + 0.5 * sw * C.SGN[s]; f_ = ARM_FWD + 0.8 * sw * C.SGN[s] + 0.4 * fid
+        o_ = ARM_OUT + 0.4 * br; f_ = ARM_FWD + 0.5 * sw * C.SGN[s]
         r_ = C.ARMLEN[s] * ARM_BEND                 # the wrist sits this far from the shoulder, whichever way it hangs:
         C.hand(s, out=o_, fwd=f_, up=-math.sqrt(max(1.0, r_ * r_ - o_ * o_ - f_ * f_)) + 0.6 * br,   # out AND down would lock the elbow
-               pron=PALM, curl=FIST + 0.03 * fid, elbow=(ELBOW_OUT, -1.0, 0.0))
+               pron=PALM, curl=FIST, elbow=(ELBOW_OUT, -1.0, 0.0))
 
 
 if os.environ.get('STUDY'):

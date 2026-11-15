@@ -60,6 +60,13 @@ ht = T('Bone_016')
 print('POSTURE  head tilt (forward of vertical, deg): %.0f   spine hip-to-neck lean: %.0f'
       % (math.degrees(math.atan2(headb.y - ht.y, ht.z - headb.z)), math.degrees(math.atan2(P('Bone_001').y - neck.y, neck.z - P('Bone_001').z))))
 
+# level? Seen from the front: how much higher his LEFT shoulder joint is than his right, and how far the head leans.
+shL, shR = P(B['L']['sh']), P(B['R']['sh'])
+print('POSTURE  shoulders: left is %+.1f cm higher than right (%.1f deg)   head: leans %+.1f deg toward his left, turned %+.1f deg to his left'
+      % (shL.z - shR.z, math.degrees(math.atan2(shL.z - shR.z, abs(shL.x - shR.x))),
+         math.degrees(math.atan2(ht.x - headb.x, ht.z - headb.z)),
+         math.degrees(math.atan2(-((rig.matrix_world @ rig.pose.bones['Bone_016'].matrix).to_3x3() @ Vector((1, 0, 0))).y,
+                                 ((rig.matrix_world @ rig.pose.bones['Bone_016'].matrix).to_3x3() @ Vector((1, 0, 0))).x))))
 world = bpy.data.worlds.new('W'); sc.world = world; world.use_nodes = True
 world.node_tree.nodes['Background'].inputs[0].default_value = (0.9, 0.9, 0.9, 1); world.node_tree.nodes['Background'].inputs[1].default_value = 1.2
 sun = bpy.data.objects.new('Sun', bpy.data.lights.new('Sun', 'SUN')); sun.data.energy = 3; sun.rotation_euler = (0.7, 0.2, -0.5); sc.collection.objects.link(sun)

@@ -32,6 +32,7 @@ RENDER = argv[3] if len(argv) > 3 else None
 TIE_HI, TIE_LO = 100.0, 98.0       # cm above the floor: the body's own weights above, all apron below. The skirt is cut
                                    # free below TIE_LO; a 9 cm ramp left 500 stretched edges at the waist in a plain walk
 FOLD = 22.0                        # cm below the hinge where the skirt can fold: Apron_L2 / Apron_R2 start here
+BACKING = 18.0                     # cm below the tie that get a backing layer (see "THE HOLE" below)
 BLEND_X = 15.0                     # cm either side of the centre line over which the two bones share the skirt:
                                    # nearly its whole width, so one raised knee TWISTS the sheet instead of tearing it in two
 
@@ -141,12 +142,34 @@ n0 = len(bm.verts)
 bmesh.ops.split(bm, geom=free)
 bm.verts.ensure_lookup_table()
 bm.faces.ensure_lookup_table()
+# THE HOLE. The model is one skin: where the apron covers his waist there are no trousers underneath, the apron IS
+# the surface. Cut the skirt free and swing it even 12 degrees and a slit opens right under the tie with nothing
+# behind it - "there is a gap in his waist ... you can see right through him" (owner, Nov 15). Two other cures were
+# tried first: leaving the top of the skirt joined as a hinge (21 cm webs of stretched cloth at the waist in a run)
+# and keeping the skirt's sides on his hips (it shredded the skirt). So the hole is FILLED instead: the top of the
+# skirt is duplicated, pushed a little toward the body, and left with the weights the surface always had. It stays
+# on his hips when the skirt swings, and what shows in the gap is cloth.
+fb = bm.verts.layers.int.new('backing')
+zs = (1.0 if abs(MW.to_scale().z - 1) < 1e-6 else MW.to_scale().z) / s
+top = [f for f in bm.faces if f[ft] and f.calc_center_median().z * zs > TIE_LO - BACKING]
+dup = bmesh.ops.duplicate(bm, geom=top)
+push = MW.inverted().to_3x3() @ Vector((0.0, 0.8 * s, 0.0))      # he faces -Y: toward the body is +Y
+n_back = 0
+for g in dup['geom']:
+    if isinstance(g, bmesh.types.BMVert):
+        g[fb] = 1; g[fl] = 0; g.co += push; n_back += 1
+    elif isinstance(g, bmesh.types.BMFace):
+        g[ft] = 0
+bm.verts.ensure_lookup_table()
+bm.faces.ensure_lookup_table()
+print('APRON backing layer: %d faces, %d vertices, under the top %.0f cm of the skirt' % (len(top), n_back, BACKING))
 in_skirt = np.zeros(len(bm.verts), bool)
 for f in bm.faces:
     if f[ft]:
         for v in f.verts:
             in_skirt[v.index] = True
 flag = np.array([v[fl] for v in bm.verts], bool)
+bm.verts.layers.int.remove(fb)
 bm.verts.layers.int.remove(fl)
 bm.faces.layers.int.remove(ft)
 bm.to_mesh(me)

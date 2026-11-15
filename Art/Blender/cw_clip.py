@@ -277,6 +277,7 @@ STANCE = dict(fwd=-6.5, dz=1.8, pitch=5.0, spine=-5.0, neck=-12.0,
               hand_out=2.5, hand_fwd=-2.0, hand_up=0.014, pron=34.0, curl=0.5,      # arms clear of the torso, loose fists
               clav_up=36.0, clav_back=2.0,                                          # the idle's square shoulders
               foot_x=3.5)                                                           # and its wider feet (14 cm, the clips plant at 10.5)
+HEAD_FIX = (-4.0, 2.0)                                      # neck (tilt, turn) that stands the model's head upright
 _stance = [0.0]                                             # this frame's weight, set by author()
 
 
@@ -304,6 +305,10 @@ def spine(x=0.0, y=0.0, z=0.0):
 def neck(x=0.0, y=0.0, z=0.0):
     """Head and neck. x: positive nods DOWN. y: positive tilts toward his LEFT. z: positive looks to his LEFT."""
     x += STANCE['neck'] * _stance[0]
+    # THE MODEL'S HEAD IS NOT UPRIGHT. Seen close from the front in any level pose it leans about 4 degrees toward
+    # his right shoulder and is turned a little that way too ("the head needs to be straight not slanted", owner,
+    # Nov 15; rendered at 0, -4 and -7: -4 is upright, -7 leans the other way). Corrected here so every clip has it.
+    y += HEAD_FIX[0]; z += HEAD_FIX[1]
     for b, k in NECK:
         rot(b, X, x * k); rot(b, Y, -y * k); rot(b, Z, z * k)
 
@@ -519,6 +524,15 @@ if APRON:                                                   # the front surface 
             # Only the leg itself. The waistband above the hip joint is weighted to the thigh too, and it swings
             # BACK when the knee comes up: sampling it made a raised knee read as needing no room at all.
             _idx = np.array([i for i, d in enumerate(_domb) if d == _b and V0[i, 2] < RH[LEG[_s][0]].z - 4.0])
+            # ...and not the apron's own backing layer (apron_bones.py: a copy of the top of the skirt left on the body
+            # to fill the hole behind it). It sits 0.8 cm behind the skirt and would count as a leg pushing it out.
+            if len(_idx) and len(_sk):
+                from mathutils.kdtree import KDTree as _KD
+                if '_apron_kd' not in globals():
+                    _apron_kd = _KD(len(_sk))
+                    for _n, _i in enumerate(_sk): _apron_kd.insert(Vector(V0[_i]), _n)
+                    _apron_kd.balance()
+                _idx = np.array([i for i in _idx if _apron_kd.find(Vector(V0[i]))[2] > 1.5])
             if not len(_idx): continue
             # The front HALF. The front third missed the outer front of the thigh, and the skirt's side edge wraps
             # round exactly there: a strip of trouser showed in front of the apron's edge while he stood.

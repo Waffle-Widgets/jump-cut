@@ -13,7 +13,7 @@ from mathutils import Vector
 
 argv = sys.argv[sys.argv.index('--') + 1:]
 SCALE = float(next((a[6:] for a in argv[1:] if a.startswith('scale=')), 75))   # cm across the picture
-AIM = next((a[4:] for a in argv[1:] if a.startswith('aim=')), 'chest')              # chest | hips
+AIM = next((a[4:] for a in argv[1:] if a.startswith('aim=')), 'chest')              # chest | hips | waist
 OUT, items = argv[0], [a.split(':') for a in argv[1:] if '=' not in a]
 DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'export', 'Characters', 'CafeWalkerV2')
 W, H = 300, 300
@@ -29,6 +29,8 @@ for clip, frame in items:
     s = (sL - sR).length / 38.0                                  # scene units per cm, near enough
     ctr = (sL + sR) / 2
     if AIM == 'hips': ctr = hip - Vector((0, 0, 25 * s))
+    if AIM == 'waist': ctr = hip + Vector((0, 0, 6 * s))
+    if AIM == 'head': ctr = neck + Vector((0, 0, 13 * s)); left = Vector((1, 0, 0)); up = Vector((0, 0, 1)); fwd = Vector((0, -1, 0))   # world axes: is the head upright?
     left = (sL - sR).normalized()
     up = (neck - hip).normalized()
     fwd = up.cross(left).normalized()                            # out of his chest
