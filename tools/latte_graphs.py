@@ -169,7 +169,7 @@ G['LatteReset'] = f'''
   ({V}SetLowGap 9.0)
   ({V}SetEnding false)
   ({V}SetEndTimer 0.0)
-  (Rendering|Components|TextRender|SetText :self ({V}GetStatus) :Value (Utilities|Text|MakeLiteralText :Value " "))
+  (Rendering|Components|TextRender|SetText :self ({V}GetStatus) :Value (Utilities|Text|MakeLiteralText :Value "E: done     R: start over<br>1 Heart     2 Rosetta     3 Tulip"))
   (if (not ({V}GetKeepPattern))
     ({V}SetPattern (Math|Random|RandomIntegerinRange 0 2)))
   ({V}SetKeepPattern false)
@@ -180,11 +180,11 @@ G['LatteReset'] = f'''
       (else
         (Rendering|Material|SetMaterial :self ({V}GetGuide) :ElementIndex 0 :Material "/Game/Game/Materials/Latte/MI_LatteGuide_2.MI_LatteGuide_2"))))
   (if (== ({V}GetPattern) 0)
-    (Rendering|Components|TextRender|SetText :self ({V}GetPrompt) :Value (Utilities|Text|MakeLiteralText :Value "LATTE ART: HEART<br>{P1}<br>2. Hold RIGHT mouse inside the ring until the ring goes<br>3. Let go. Hold LEFT and follow the line down through the circle. Let go<br>R: start over"))
+    (Rendering|Components|TextRender|SetText :self ({V}GetPrompt) :Value (Utilities|Text|MakeLiteralText :Value "LATTE ART: HEART<br>{P1}<br>2. Hold RIGHT mouse inside the ring until the ring goes<br>3. Let go. Hold LEFT and follow the line down through the circle<br>Add more if you like. Press E when you are happy with it"))
     (elif (== ({V}GetPattern) 1)
-      (Rendering|Components|TextRender|SetText :self ({V}GetPrompt) :Value (Utilities|Text|MakeLiteralText :Value "LATTE ART: ROSETTA<br>{P1}<br>2. Hold RIGHT mouse: follow the wavy line up, then rest in the small ring<br>3. Let go. Hold LEFT and follow the straight line back down. Let go<br>R: start over"))
+      (Rendering|Components|TextRender|SetText :self ({V}GetPrompt) :Value (Utilities|Text|MakeLiteralText :Value "LATTE ART: ROSETTA<br>{P1}<br>2. Hold RIGHT mouse: follow the wavy line up, then rest in the small ring<br>3. Let go. Hold LEFT and follow the straight line back down<br>Add more if you like. Press E when you are happy with it"))
       (else
-        (Rendering|Components|TextRender|SetText :self ({V}GetPrompt) :Value (Utilities|Text|MakeLiteralText :Value "LATTE ART: TULIP<br>{P1}<br>2. Hold RIGHT mouse in each ring, bottom to top. Let go between rings<br>3. Hold LEFT and follow the line down through the stack. Let go<br>R: start over"))))))
+        (Rendering|Components|TextRender|SetText :self ({V}GetPrompt) :Value (Utilities|Text|MakeLiteralText :Value "LATTE ART: TULIP<br>{P1}<br>2. Hold RIGHT mouse in each ring, bottom to top. Let go between rings<br>3. Hold LEFT and follow the line down through the stack<br>Add more if you like. Press E when you are happy with it"))))))
 '''
 
 G['LatteStep'] = f'''
@@ -193,13 +193,13 @@ G['LatteStep'] = f'''
   (if (and (Game|Player|IsInputKeyDown :self pc :Key "R") (not ({V}GetRWas)))
     ({V}SetKeepPattern true)
     (CallFunction|LatteReset))
-  (if ({V}GetEnding)
-    ({V}SetEndTimer (- ({V}GetEndTimer) Dt))
-    (if ({V}GetEndWin)
-      (if (and (Game|Player|IsInputKeyDown :self pc :Key "E") (not ({V}GetEWas)))
-        (CallFunction|LatteFinish))
-      (elif (<= ({V}GetEndTimer) 0.0)
-        (CallFunction|LatteReset)))
+  (bind pick (or (Game|Player|IsInputKeyDown :self pc :Key "One") (or (Game|Player|IsInputKeyDown :self pc :Key "Two") (Game|Player|IsInputKeyDown :self pc :Key "Three"))))
+  (if (and pick (not ({V}GetPickWas)))
+    ({V}SetPattern (select (Game|Player|IsInputKeyDown :self pc :Key "One") 0 (select (Game|Player|IsInputKeyDown :self pc :Key "Two") 1 2)))
+    ({V}SetKeepPattern true)
+    (CallFunction|LatteReset))
+  (if (and (Game|Player|IsInputKeyDown :self pc :Key "E") (not ({V}GetEWas)))
+    (CallFunction|LatteFinish)
     (else
       ({V}SetLowGap (+ ({V}GetLowGap) Dt))
       ({V}SetSimT (+ ({V}GetSimT) Dt))
@@ -218,7 +218,7 @@ G['LatteStep'] = f'''
       (bind low (Game|Player|IsInputKeyDown :self pc :Key "RightMouseButton"))
       (bind high (and (Game|Player|IsInputKeyDown :self pc :Key "LeftMouseButton") (not low)))
       ({V}SetPitH (Math|Interpolation|FInterpTo :Current ({V}GetPitH) :Target (select low 2.6 8.0) :DeltaTime Dt :InterpSpeed 10.0))
-      (if (or low high)
+      (if (and (or low high) (< ({V}GetFill) 1.0))
         (CallFunction|LattePour :Dt Dt :Low low :Dx (* (- ({V}GetPitY) ({V}GetPrevY)) 12.0)))
       (Transformation|SetRelativeLocation :self ({V}GetPitcher) :NewLocation (Math|Vector|MakeVector :X ({V}GetPitX) :Y ({V}GetPitY) :Z (+ ({V}GetPitH) 0.2)))
       (Transformation|SetRelativeLocation :self ({V}GetStream) :NewLocation (Math|Vector|MakeVector :X ({V}GetPitX) :Y ({V}GetPitY) :Z 0.0))
@@ -227,8 +227,10 @@ G['LatteStep'] = f'''
       (Transformation|SetRelativeLocation :self ({V}GetFillBar) :NewLocation (Math|Vector|MakeVector :X (+ -6.0 (* ({V}GetFill) 6.0)) :Y -10.0 :Z 0.0))
       (Transformation|SetRelativeScale3D :self ({V}GetFillBar) :NewScale3D (Math|Vector|MakeVector :X (* ({V}GetFill) 0.12) :Y 0.008 :Z 0.004))
       (CallFunction|LatteGuideStep)
-      (if (or (>= ({V}GetFill) 1.0) (and (not (or low high)) (and (>= ({V}GetCutDist) 0.4) (select (== ({V}GetPattern) 0) (>= ({V}GetLowTime) 2.8) (select (== ({V}GetPattern) 1) (>= ({V}GetWiggles) 8) (and (>= ({V}GetBlobs) 3) (> ({V}GetLowGap) 0.15)))))))
-        (CallFunction|LatteJudge))))
+      (if (and (>= ({V}GetFill) 1.0) (not ({V}GetEnding)))
+        ({V}SetEnding true)
+        (Rendering|Components|TextRender|SetText :self ({V}GetStatus) :Value (Utilities|Text|MakeLiteralText :Value "The cup is full<br>E: done     R: start over     1 Heart   2 Rosetta   3 Tulip")))))
+  ({V}SetPickWas pick)
   ({V}SetRWas (Game|Player|IsInputKeyDown :self pc :Key "R"))
   ({V}SetEWas (Game|Player|IsInputKeyDown :self pc :Key "E")))
 '''
@@ -285,16 +287,16 @@ G['LatteGuideStep'] = '''
   (bind idx (select (> (Variables|Default|GetLowGap) 0.15) (Variables|Default|GetBlobs) (- (Variables|Default|GetBlobs) 1)))
   (if (== (Variables|Default|GetPattern) 0)
     (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideA" :ParameterValue (Utilities|Struct|MakeLinearColor :R 0.083 :G 0.0 :B 0.21 :A (select done 0.0 m)))
-    (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideB" :ParameterValue (Utilities|Struct|MakeLinearColor :R 0.375 :G -0.29 :B 0.0 :A (select done 1.0 0.0)))
+    (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideB" :ParameterValue (Utilities|Struct|MakeLinearColor :R 0.375 :G -0.29 :B 0.0 :A (select (and done (< (Variables|Default|GetCutDist) 0.4)) 1.0 0.0)))
     (elif (== (Variables|Default|GetPattern) 1)
       (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideA" :ParameterValue (Utilities|Struct|MakeLinearColor :R 0.25 :G 0.0 :B 0.05 :A (select done 0.0 m)))
       (if done
-        (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideB" :ParameterValue (Utilities|Struct|MakeLinearColor :R 0.38 :G -0.28 :B 0.0 :A 1.0))
+        (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideB" :ParameterValue (Utilities|Struct|MakeLinearColor :R 0.38 :G -0.28 :B 0.0 :A (select (< (Variables|Default|GetCutDist) 0.4) 1.0 0.0)))
         (else
           (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideB" :ParameterValue (Utilities|Struct|MakeLinearColor :R -0.217 :G 0.233 :B 0.1 :A m))))
       (else
         (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideA" :ParameterValue (Utilities|Struct|MakeLinearColor :R (select (<= idx 0) -0.125 (select (== idx 1) 0.04 0.23)) :G 0.0 :B (select (<= idx 0) 0.15 (select (== idx 1) 0.1 0.065)) :A (select done 0.0 m)))
-        (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideB" :ParameterValue (Utilities|Struct|MakeLinearColor :R 0.38 :G -0.3 :B 0.0 :A (select done 1.0 0.0)))))))
+        (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideB" :ParameterValue (Utilities|Struct|MakeLinearColor :R 0.38 :G -0.3 :B 0.0 :A (select (and done (< (Variables|Default|GetCutDist) 0.4)) 1.0 0.0)))))))
 '''
 
 G['LatteJudge'] = f'''

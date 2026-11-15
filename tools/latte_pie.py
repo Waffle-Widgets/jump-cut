@@ -98,8 +98,6 @@ def pour(a, name, queue=None):
         b = latte(w)
         dt = min(dt, 0.05)
         if st['i'] >= len(plan):
-            if st['after'] == 0.0:
-                b.call_method('LatteJudge')        # ends the pour, which also takes the guide off the cup for the picture
             st['after'] += dt
             if st['shots'] == 0 and st['after'] > 0.3:
                 st['shots'] = 1
