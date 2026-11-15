@@ -31,8 +31,29 @@ DEFAULTS = {
     'ObjectiveHeight': 230.0,
     'ObjectiveState': 0,
     'ObjDriverLoc': unreal.Vector(-380.0, 220.0, 0.0),   # the crash driver
-    'ObjSafeLoc': unreal.Vector(300.0, -60.0, 0.0),      # clear of the car, east end of the room
-    'ObjStreetLoc': unreal.Vector(640.0, 0.0, 0.0),      # the cafe door, out to the street
+    # 430 is 950 cm from the car against a 700 cm blast - clear, with margin, and still inside
+    # the room so the player is never told to walk through a wall.
+    'ObjSafeLoc': unreal.Vector(430.0, -40.0, 0.0),
+    'ObjStreetLoc': unreal.Vector(820.0, 0.0, 0.0),      # out of the door, onto the street
+    'ObjStreetDoneX': 1200.0,                            # past this the beacon switches off
+}
+
+# BP_Coworker's fire hazard. Set on the CDO *and* on the placed actor: a placed actor keeps its
+# own serialized value, and Coworker_Cafe has already been bitten by exactly that once
+# (AutoFreezeOnExplosion/ExplosionDelay came back zero-initialised after a variable was added).
+COWORKER_DEFAULTS = {
+    'UseFireHazard': True,
+    'BlastRadius': 700.0,
+    'FuseSeconds': 9.0,
+    'HoldSpeed': 560.0,
+    'HoldStopDist': 120.0,
+    'BlastPlayerDamage': 30.0,
+    'FireLit': False,
+    'Blown': False,
+    'Holding': False,
+    'FuseLeft': 0.0,
+    'FireFlicker': 0.0,
+    'BlastOrigin': unreal.Vector(-520.0, 0.0, 0.0),
 }
 
 MODE = 'wire'
@@ -117,6 +138,8 @@ try:
         'CineRealDriver': by_label.get('C1_Cafe_CrashDriver'),
         'CineWallPatch': by_label.get('B1_Cine_WallPatch'),
         'ObjectiveBeacon': b,
+        'DriverRef': by_label.get('C1_Cafe_CrashDriver'),
+        'CoworkerRef': by_label.get('Coworker_Cafe'),
     }
     for k, v in wiring.items():
         if v is None:
@@ -128,6 +151,47 @@ try:
             k, v.get_actor_label(), (back.get_actor_label() if back else 'NONE')))
     # a set_editor_property on a placed actor does not dirty its package: re-set the transform
     d.set_actor_location_and_rotation(unreal.Vector(0.0, 0.0, 300.0), unreal.Rotator(), False, True)
+
+    # ---------------- BP_Coworker's fire hazard
+    say('')
+    cw_cls = unreal.load_class(None, '/Game/Game/Blueprints/BP_Coworker.BP_Coworker_C')
+    cw_cdo = unreal.get_default_object(cw_cls)
+    for k, v in COWORKER_DEFAULTS.items():
+        cw_cdo.set_editor_property(k, v)
+    say('BP_Coworker class defaults set')
+    cw = by_label.get('Coworker_Cafe')
+    if cw is None:
+        say('   !! Coworker_Cafe is not in the level')
+    else:
+        # Only the instance-editable dials can be written on a placed actor; FireLit/Blown/
+        # Holding/FuseLeft/FireFlicker are runtime state and deliberately are not exposed.
+        for k, v in COWORKER_DEFAULTS.items():
+            if k in ('FireLit', 'Blown', 'Holding', 'FuseLeft', 'FireFlicker'):
+                continue
+            cw.set_editor_property(k, v)
+        cw_wiring = {
+            'FireActor': by_label.get('B1_Cafe_Fire'),
+            'FireLight': by_label.get('B1_Cafe_FireLight'),
+            'BlastRing': by_label.get('B1_Cafe_BlastRing'),
+        }
+        for k, v in cw_wiring.items():
+            if v is None:
+                say('   !! %s has nothing to point at (run b1_fire_actors.py first)' % k)
+                continue
+            cw.set_editor_property(k, v)
+            back = cw.get_editor_property(k)
+            say('   %-14s -> %-22s read back: %s' % (
+                k, v.get_actor_label(), (back.get_actor_label() if back else 'NONE')))
+        for k in COWORKER_DEFAULTS:
+            say('   %-18s %s' % (k, cw.get_editor_property(k)))
+        for k in ('ExplosionDelay', 'RescueRequiresFreeze', 'BulletTimeOnExplosion',
+                  'CoworkerSafeOffset'):
+            try:
+                say('   (existing) %-18s %s' % (k, cw.get_editor_property(k)))
+            except Exception as e:
+                say('   (existing) %-18s <%s>' % (k, type(e).__name__))
+        xf = cw.get_actor_transform()
+        cw.set_actor_location_and_rotation(xf.translation, xf.rotation.rotator(), False, True)
 
     say('')
     say('NOT SAVED. Save with jc_save_actors.py and AssetTools.save_assets.')

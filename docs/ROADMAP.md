@@ -195,10 +195,28 @@ See [the devlog entry](devlog/2026-11-14-the-game-opens-on-a-crash.md).
 - `B1_Objective_Beacon` is one bobbing blue sphere the director moves between objectives. Objective 1
   ("check on the driver") is live and verified; **2 and 3 are plumbed but nothing advances past 1 yet.**
 
-**Still open from the same request, and NOT built:** the car catching fire after the power is taken, the
-explosion replacing the shrapnel as the hazard, Freeze Frame being for getting both the player and the
-coworker out of the blast radius, and the final indicator pointing out to the street. This is also the
-answer to issue #18 ("what sets off the explosion in beat 1?") once it is built.
+### Beat 1's hazard is a fire and a blast radius (Sat Nov 14, 5:20 PM Pacific, Justin's Mac mini)
+
+The second half of the same request, and **the answer to issue #18** ("what sets off the explosion in
+beat 1?"): the car catches. **Built, on the same branch, not played by anybody.**
+See [the devlog entry](devlog/2026-11-14-the-car-catches-fire-instead.md).
+
+Touch the driver -> Freeze Frame -> 2 s later the car catches fire, a warning ring the size of the blast
+appears on the floor and a **9 s fuse** starts -> the fuse only burns while time is running, so **E**
+stops it -> **F** on the coworker while time is stopped takes her hand and she walks after you -> get
+**both** of you outside the ring before the fuse ends. Anyone still inside when it blows is caught: she
+dies, the player loses 30 health.
+
+- `BP_Coworker` gained `UseFireHazard` (instance-editable, default true). Switch it off and the old
+  shrapnel-and-teleport path runs exactly as before - a playtest that hates this costs a checkbox.
+- `M_FireHot` and `M_BlastRing` are ours (`M_BlastRing` uses our own `T_FX_WarnRing` sheet as a mask).
+  `B1_Cafe_Fire`, `B1_Cafe_FireLight` and `B1_Cafe_BlastRing` are hidden until the car catches.
+- The objective beacon now walks the whole beat: driver -> safe spot -> the street -> off.
+- Measured both endings in Play mode by calling the real Blueprint functions: caught = she dies and the
+  player goes 100 -> 70; dragged clear = she follows to 837 cm against a 700 cm radius, survives, player
+  untouched. **The F and E keys themselves are still unpressed by a person.**
+- **The flame is a stylised cone, not real fire.** A Niagara or flipbook fire is the upgrade and is not
+  built.
 
 **Known blemish:** the crash rubble is modelled into `SM_CafeShell`, so broken blocks are on the floor
 during the peaceful shot, before anything has broken. Fixing it is a city-kit change (rubble as its own

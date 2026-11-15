@@ -6,7 +6,10 @@ in memory: it is never written to disk and vanishes when the editor closes.
 import unreal, os
 OUT = os.path.join(unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_saved_dir()), 'jcpy')
 PATHS = ['/Game/Game/Blueprints/BP_OpeningDirector',
-         '/Game/Game/Cinematics/LS_Beat1_Opening']
+         '/Game/Game/Blueprints/BP_Coworker',
+         '/Game/Game/Cinematics/LS_Beat1_Opening',
+         '/Game/Game/Materials/M_FireHot',
+         '/Game/Game/Materials/M_BlastRing']
 log=[]
 def say(s): log.append(str(s)); print(str(s))
 try:

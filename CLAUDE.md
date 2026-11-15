@@ -695,6 +695,27 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   was made instance-editable refuses the write with *"cannot be edited on instances"*. That is a stale
   instance, not a wrong property name: recompile, then destroy and re-place the actor.
 
+- **`Object.call_method` reaches our own Blueprint functions on a live PIE actor** - this is the
+  way to drive a mechanic a script cannot press a key for, and it beats writing state. Most
+  Blueprint variables are NOT instance-editable, and `set_editor_property` on one is refused
+  outright (*"cannot be edited on instances"*): `HasFreezeFrame`, `ExplosionTimeLeft` and
+  `FuseLeft` all do it. `actor.call_method('DriverTryTouch')` / `('FreezeFrameStart')` /
+  `('CoworkerTryRescue')` run the real gated functions instead (`tools/b1_fire_test.py`).
+- **Check whether the TEST is slower than the thing it tests.** An MCP round trip to this editor is
+  5-8 s. Beat 1's fuse is 9 s, so running the steps as separate calls burnt the fuse before the
+  rescue every time, three runs running, and it read as "the beat is unwinnable". Doing the whole
+  run-up inside ONE script call - one frame - showed it wins cleanly. Same family as the 11 s
+  cinematic that is over before the second sample.
+- **An emissive value that looks right in the material editor can clip to WHITE through this
+  project's posterising look.** `M_FireHot` at emissive 3.0 came out of the tonemapper white; 1.7
+  reads orange. `MI_AnimeLook_JumpCut` quantises, so judge any emissive from a captured frame, not
+  from the number.
+- **Re-placing an actor makes a NEW `__ExternalActors__` package and orphans the committed one.**
+  Re-placing is the cure for a stale instance, but World Partition loads every package in that
+  folder, so the old one must be `git rm`-ed in the same commit or the next load has two. After any
+  re-place, run `py <repo>/tools/b1_beat1_audit.py`: it counts the actors that must be unique and
+  prints each one's package, so a duplicate is visible before it ships.
+
 ## AI-generated 3D models (Hunyuan3D 2.1 and TRELLIS.2, both local)
 - **TRELLIS.2** (Microsoft, MIT licence, `D:\AI\TRELLIS2` on the main PC, `C:\AI\TRELLIS2` on GameStation) is the one to use: one photo with the background cut out ->
   `venv\Scripts\python.exe run_image_to_3d.py <cutout.png> out\<name> 1024_cascade` (about 5 minutes on the 3090) -> a GLB
