@@ -498,6 +498,35 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   goon's 16 locomotion clips. It now scans `/Game/Game/Imported` recursively - **never hand-list folders in a
   sweep tool**, because it reports complete success over whatever subset it was handed. And a bold note in a doc
   saying "the goon needs this too" is not a fix: do it in the same pass or file a ticket.
+- **`force_root_lock` + `root_motion_root_lock = REF_POSE` is the whole bug, and FOUR separate
+  checks say the clip is fine (Nov 15).** A clip with that pair has its root pinned to the
+  SKELETON'S reference pose, which on every Meshy Smart Rig here is pelvis height - so the mesh is
+  drawn ~90 cm up for as long as it plays. `7ef73e1` moved the locomotion clips to
+  `ANIM_FIRST_FRAME` and missed `MM_Jump/Fall_Loop/Land` for the player (`_CWM`) and the goons
+  (`_SGN`), which is why the float only showed while airborne. What makes it hide: the clips' own
+  root tracks read **0.0** at every sample; they all DO carry a `bone_000` track (so it is not a
+  missing-track fallback); none is marked additive; and the Jump state really is wired to
+  `MM_Jump_CWM`. All four are true and all four are irrelevant - the lock is applied after the clip
+  is sampled. Read the two properties, not the clip. `tools/b1y_rootlock.py` reports and fixes.
+  **Do not sweep this across the project**: 85 clips match the pattern and 60 are Epic's own
+  mannequin clips, where REF_POSE is CORRECT because the mannequin's reference pose has its root on
+  the floor. Only Meshy rigs are affected; confirm which clips are live by reading each anim
+  blueprint's asset references.
+- **This project's own unlock path puts the player into MOVE_Falling, so the bug above fires at the
+  start of every game.** `PlayerRefreshMoveLock` releases a lock with
+  `SetMovementMode(MOVE_Falling)`, and the title screen's lock is released on the first tick - so
+  beat 1 opened with the character 90 cm in the air for 0.9 s. If you are hunting something that
+  only happens "at the start", check what the first tick's state transition does before looking at
+  the cinematic.
+- **A Geometry Collection draws the materials its SOURCE FBX came in with, and nobody tells it
+  otherwise (Nov 15).** Every `GC_*` in `/Game/Game/Destruction` was drawing `MS_City*` from
+  `Imported/City/` - `MaterialInstanceConstant`s of `FBXLegacyPhongSurfaceMaterial` with
+  DiffuseColor 0.8, i.e. Unreal's flat grey import placeholder. The real look materials are
+  `M_City*` under `Materials/City/`, and every placed `City_*` STATIC actor overrides to them per
+  slot (measured: **0** static actors draw an `MS_` directly), so only the things that shatter were
+  grey. Fix it on the collection ASSET's `materials` array, slot for slot, which fixes every actor
+  using it at once - 13 actors here. `tools/b1y_fix3.py`.
+
 - **"The capsule lifts" and "the mesh lifts" look identical in a screenshot and need opposite fixes.** Log
   `pawn.get_actor_location().z` beside the bone world heights. On the float bug `actor_z` never moved (94.15 for
   four seconds) while every bone rose 90.58 cm, which ruled out root-motion translation in one reading and sent

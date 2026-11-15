@@ -31,7 +31,11 @@ BEACON_MAT = '/Game/Game/Materials/M_PropBlue'
 DEFAULTS = {
     'CinePlayOpening': True,
     'CineLength': 11.0,
-    'CineImpactTime': 4.70,
+    # 6.20 s = frame 186, where the cinematic car's transform keys STOP and the spawnable is
+    # despawned. Do not lower it: at 4.70 the real wreck is revealed while the spawnable is
+    # still in the air at x=-900, which is the 'two cars' defect. It was set to 6.20 live on
+    # Nov 14 and this default put 4.70 straight back on the next run (reported again Nov 15).
+    'CineImpactTime': 6.20,
     'CineBodyTime': 6.45,
     'CineEndYaw': 172.0,
     'ObjectiveHeight': 230.0,
