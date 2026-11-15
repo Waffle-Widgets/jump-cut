@@ -255,6 +255,23 @@ R['vgroups_with_weight'] = sum(1 for g in groups
 print('WEIGHTS %d groups, %d carry weight, source distance mean %.2f cm'
       % (R['vgroups'], R['vgroups_with_weight'], R['weight_src_dist_mean_cm']))
 
+# ------------------------------------------------------------------ 4b. nothing may ride the ROOT bone
+# Bone_000 sits at pelvis height in the rest pose and on the FLOOR in every retargeted clip, so a vertex weighted
+# to it is dragged toward the floor by (weight x 90 cm): the apron's waist tie streaked down to the ground between
+# his feet. Bone_001 is its only child, starts in the same place and stays at the pelvis, so it takes the weight.
+# (root_weight_to_hip.py is the same step for an FBX that is already built; it also verifies nothing else moved.)
+_root, _hip = hi.vertex_groups.get('Bone_000'), hi.vertex_groups.get('Bone_001')
+if _root is not None and _hip is not None:
+    _moved = 0
+    for v in hi.data.vertices:
+        w0 = next((g.weight for g in v.groups if g.group == _root.index), 0.0)
+        if w0 > 0.0:
+            _hip.add([v.index], w0, 'ADD')
+            _root.remove([v.index])
+            _moved += 1
+    R['root_weight_moved_to_hip_verts'] = _moved
+    print('ROOT->HIP moved root weight on %d vertices' % _moved)
+
 # ------------------------------------------------------------------ 5. bind to the UNTOUCHED rig
 for o in (low, conf):
     bpy.data.objects.remove(o, do_unlink=True)
