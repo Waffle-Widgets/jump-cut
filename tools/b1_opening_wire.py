@@ -6,9 +6,13 @@ the placed director to the actors it drives.
 
 Run AFTER b1_opening_cine.py and b1_opening_actors.py. Never saves.
 
-The beacon is a plain unlit sphere the director teleports to whatever the current objective is -
-one actor for all three objectives, rather than three markers to keep in step. 230 cm up so it
-clears the driver's body and the counter and is visible from the far end of the room.
+The beacon is a single unlit CONE, point down, that the director teleports to whatever the current
+objective is - one actor for all five objectives, rather than five markers to keep in step. 230 cm
+up so it clears the driver's body and the counter and is visible from the far end of the room.
+
+It was a sphere until the owner asked for a downward cone on 2026-11-15. That change was made on the
+placed actor in a live session and NOT in this script, so the next run of this script put the sphere
+straight back - confirmed from a PIE capture. The shape lives here now.
 """
 import unreal, os, sys
 
@@ -19,7 +23,9 @@ def say(s):
 
 TAG = 'B1_Cine'
 BP_PATH = '/Game/Game/Blueprints/BP_OpeningDirector'
-SPHERE = '/Engine/BasicShapes/Sphere.Sphere'
+CONE = '/Engine/BasicShapes/Cone.Cone'      # +Z is the apex, so roll 180 points it down
+BEACON_ROT = (180.0, 0.0, 0.0)              # (roll, pitch, yaw)
+BEACON_SCALE = (0.45, 0.45, 0.75)
 BEACON_MAT = '/Game/Game/Materials/M_PropBlue'
 
 DEFAULTS = {
@@ -36,6 +42,32 @@ DEFAULTS = {
     'ObjSafeLoc': unreal.Vector(430.0, -40.0, 0.0),
     'ObjStreetLoc': unreal.Vector(820.0, 0.0, 0.0),      # out of the door, onto the street
     'ObjStreetDoneX': 1200.0,                            # past this the beacon switches off
+    # --- the explosion-and-pan cinematic (b1x_graphs.py). Four poses, three lerps: A holds on the
+    # wreck as it comes apart, B->C swings off it, C->D settles looking out of the cafe door.
+    'ExplTB': 1.8, 'ExplTC': 3.6, 'ExplTD': 5.2,
+    'ExplSayAt': 2.6,                                    # the voice speaks as the camera reaches the door
+    'ExplFlashSecs': 1.6,                                # 36 frames of T_FX_Explosion_6x6 at 22.5 fps
+    'ExplCardMin': 6.0, 'ExplCardMax': 11.0,             # the fireball card grows 600 -> 1100 cm
+    'ExplBlastStrain': 5000000.0,                        # same strain a punch uses on a crate stack
+    # 900 threw the debris 30 m across the room and out through the walls; 350 keeps it in the cafe
+    'ExplBlastImpulse': 350.0,                           # cm/s outward, bVelChange
+    'ExplCamALoc': unreal.Vector(120.0, 330.0, 240.0),
+    'ExplCamARot': unreal.Rotator(0.0, -11.8, -152.7),
+    'ExplCamBLoc': unreal.Vector(110.0, 300.0, 232.0),
+    'ExplCamBRot': unreal.Rotator(0.0, -11.5, -154.5),
+    'ExplCamCLoc': unreal.Vector(150.0, 190.0, 222.0),
+    'ExplCamCRot': unreal.Rotator(0.0, -9.0, -80.0),
+    'ExplCamDLoc': unreal.Vector(180.0, 60.0, 210.0),
+    'ExplCamDRot': unreal.Rotator(0.0, -8.8, -5.4),
+    'ExplCine': False, 'ExplDone': False, 'ExplSaid': False, 'ExplT': 0.0,
+    # --- beats 2 and 3: the goons on the street, then the boss
+    'ObjGoonLoc': unreal.Vector(4600.0, 0.0, 0.0),       # Spawner_Street
+    'ObjBossLoc': unreal.Vector(8120.0, 0.0, 0.0),       # Boss_Freeze / Marker_BossSpot
+    'ObjBossDoneX': 7600.0,
+    # Spawner_Beat4 stands at x = 12900 and fills its group at BeginPlay, so the goon count has to
+    # be fenced to the beat-2 stretch or it never reaches zero.
+    'GoonZoneMaxX': 6500.0,
+    'GoonsSeen': False, 'GoonsLeftNow': 0,
 }
 
 # BP_Coworker's fire hazard. Set on the CDO *and* on the placed actor: a placed actor keeps its
@@ -86,9 +118,11 @@ try:
         if d:
             say('--- placed B1_Cine_Director')
             for k in list(DEFAULTS) + ['CineSeqActor', 'CineRealCar', 'CineRealDriver',
-                                       'CineWallPatch', 'ObjectiveBeacon']:
+                                       'CineWallPatch', 'ObjectiveBeacon',
+                                       'ExplCam', 'ExplCard', 'ExplCarGC']:
                 say('   %-18s %s' % (k, d.get_editor_property(k)))
-        for lab in ('B1_Cine_WallPatch', 'B1_Cine_Seq', 'B1_Objective_Beacon'):
+        for lab in ('B1_Cine_WallPatch', 'B1_Cine_Seq', 'B1_Objective_Beacon',
+                    'B1_Cine_ExplCam', 'B1_Cafe_Explosion', 'B1_Cafe_CrashCar_GC'):
             a = by_label.get(lab)
             say('%-22s %s' % (lab, (a.get_actor_location() if a else 'MISSING')))
         raise SystemExit
@@ -107,18 +141,20 @@ try:
         eas.destroy_actor(b)
         say('removed old beacon')
     b = eas.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(-380.0, 220.0, 230.0),
-                                   unreal.Rotator())
+                                   unreal.Rotator(*BEACON_ROT))
     smc = b.static_mesh_component
     smc.set_mobility(unreal.ComponentMobility.MOVABLE)
-    smc.set_static_mesh(unreal.load_asset(SPHERE))
+    smc.set_static_mesh(unreal.load_asset(CONE))
     smc.set_material(0, unreal.load_asset(BEACON_MAT))
     smc.set_editor_property('cast_shadow', False)
-    b.set_actor_scale3d(unreal.Vector(0.5, 0.5, 0.5))
+    b.set_actor_scale3d(unreal.Vector(*BEACON_SCALE))
     b.set_actor_enable_collision(False)
     b.set_actor_label('B1_Objective_Beacon')
     b.set_editor_property('tags', [unreal.Name(TAG)])
-    b.set_actor_location_and_rotation(unreal.Vector(-380.0, 220.0, 230.0), unreal.Rotator(), False, True)
-    say('B1_Objective_Beacon placed at %s scale %s' % (b.get_actor_location(), b.get_actor_scale3d()))
+    b.set_actor_location_and_rotation(unreal.Vector(-380.0, 220.0, 230.0),
+                                      unreal.Rotator(*BEACON_ROT), False, True)
+    say('B1_Objective_Beacon placed at %s rot %s scale %s' % (
+        b.get_actor_location(), b.get_actor_rotation(), b.get_actor_scale3d()))
 
     # ---------------- wire the placed director
     # Always re-place it. A placed actor keeps the class layout it was spawned with, so one
@@ -134,7 +170,12 @@ try:
     say('placed a fresh B1_Cine_Director')
     wiring = {
         'CineSeqActor': by_label.get('B1_Cine_Seq'),
-        'CineRealCar': by_label.get('City_CafeCrashCar'),
+        # the static City_CafeCrashCar is hidden for good by b1x_actors.py; the thing the
+        # opening reveals, and the thing the blast breaks, is the geometry collection
+        'CineRealCar': by_label.get('B1_Cafe_CrashCar_GC'),
+        'ExplCarGC': by_label.get('B1_Cafe_CrashCar_GC'),
+        'ExplCam': by_label.get('B1_Cine_ExplCam'),
+        'ExplCard': by_label.get('B1_Cafe_Explosion'),
         'CineRealDriver': by_label.get('C1_Cafe_CrashDriver'),
         'CineWallPatch': by_label.get('B1_Cine_WallPatch'),
         'ObjectiveBeacon': b,

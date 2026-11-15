@@ -107,6 +107,68 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
 `playtest-issues`, `devlog-entry`, `pc-handoff`, `jam-rules-check`, `niagara-fx`, `niagara-fluids` (realistic fire: Niagara Fluids, tuning through Slate, baking a sim into a flipbook), `chaos-physics` (things that break: Geometry Collections cut by a Dataflow graph, broken from code).
 
 ## Lessons from practice (Unreal + MCP)
+
+### Blueprint graphs through `write_graph_dsl` (learned 2026-11-15, beat 1's explosion)
+- **A variable's CATEGORY is part of its DSL type id.** Move a variable out of `Default` and
+  `Variables|Default|GetFoo` stops existing - `write_graph_dsl` fails with
+  *"Variables|Default|GetExplCarGC does not exist"* for a variable `list_variables` plainly
+  returns. Thirty variables were written fine, then `set_variable_category` to "Beat1 Explosion"
+  broke every later write to the same graphs. Keep new variables in `Default`, or write
+  `Variables|<Category>|Get<Name>` in the DSL.
+- **A multi-exec node terminates the exec flow it sits in, so it must be the LAST statement in
+  its scope.** `Utilities|IsValid`, any `CastTo*`, any latent node. Two guards in one function
+  are refused with *"Unreachable code after branch/return"*; split the function or nest the
+  second guard inside the first's continuation. Plain `if`/`elif` do NOT terminate - a chain of
+  them followed by more statements is fine, which is what makes the rule easy to misread.
+- **`write_graph_dsl` leaves the OLD graph behind as orphaned nodes.** Confirmed by dumping
+  `find_nodes` + `get_node_infos` on `CineDirectorStep`: the function entry is repointed at the
+  new chain and the previous chain survives, fully wired, with nothing pointing into it. It is
+  dead code in a *function*; in an EVENT graph a second copy of an event would run. Count nodes
+  after any rewrite you care about.
+- **The read-back form is not the write form.** `read_graph_dsl` prints
+  `Math|Vector|vector-vector`, which `get_node_type_pins` refuses to create. Write `(- a b)` and
+  let the DSL pick the node.
+
+### Chaos geometry collections (learned 2026-11-15, the exploding car)
+- **A GeometryCollectionActor spawns `Chaos_Object_Dynamic`, and anything car-sized falls out of
+  the world.** The cafe-table GCs use Dynamic and are fine, which makes the setting look safe.
+  Measured: `B1_Cafe_CrashCar_GC`'s bounds reached **z -19405 within four seconds of BeginPlay**.
+  Use **Kinematic** for something that must stand still until it is hit.
+- **A kinematic collection CANNOT be broken, and fails silently.** `ApplyExternalStrain` plus
+  `AddRadialImpulse` ran with no error and the bounds came back identical to the intact mesh.
+  Switch it first: `Class|GeometryCollectionComponent|SetObjectType` to `Chaos_Object_Dynamic`,
+  then `ChaosPhysics|RemoveAllAnchors`, then `ChaosPhysics|CrumbleActiveClusters`, then the
+  strain and the impulse.
+- **Chaos debris does not collide with this city kit's floors.** The kit is collision-trace
+  *complex-as-simple* and GC particles only collide with simple/convex collision, so broken
+  pieces fall straight through to **z -44289**. Put a hidden box collider under anything that
+  breaks (`B1_Cafe_DebrisFloor`).
+- Run **`py <repo>/tools/b1x_orphans.py`** after any script that destroys and re-spawns a placed
+  actor. A re-spawned actor gets a NEW package hash, the old `__ExternalActors__` file stays on
+  disk, and World Partition loads everything in that folder - which would have put a **second
+  BP_OpeningDirector** in the level and run beat 1 twice. It found exactly two.
+
+### Other traps from the same session
+- **The editor console box is `tb1`. `tb2` is the Outliner search.** Refs are assigned per
+  session and the old note naming `tb2` is stale. A `py <path>` typed into `tb2` silently becomes
+  an Outliner filter - the Outliner then reads *"No matching actors (473 total)"* and no `Cmd:`
+  line appears in the log. Confirm by the `Cmd:` line, never by the return value.
+- **`SlateInspector.Type` with `submit: true` works where `FillForm` + `PressKey("Enter")` does
+  not.** `PressKey` goes to the *focused* widget, and `FillForm` does not focus. `Type` focuses
+  first.
+- **`MakeRotFromZ` leaves the roll about the view axis free.** A billboard card built with it
+  came out at **roll -83 degrees** - the sprite drawn on its side. For a `/Engine/BasicShapes/Plane`
+  facing a camera, use `MakeRotator(roll 0, pitch = camPitch + 90, yaw = camYaw)`.
+- **A flipbook frame index must be floored inside the MATERIAL.** A fractional `Frame` lands
+  between two cells of the sheet and draws half of each.
+- **A change made only on a placed actor is reverted by the next run of the script that places
+  it.** The objective beacon was changed from a sphere to a cone in a live session on Nov 14 and
+  never written into `tools/b1_opening_wire.py`; running that script on Nov 15 put the sphere
+  straight back, and it took a PIE capture to notice.
+- **`EditorActorSubsystem` cannot spawn into the PIE world.** `spawn_actor_from_class` returns
+  `None` there, so a SceneCapture2D is not an option for photographing a running game. Point the
+  real player camera (`tools/b1x_pie.py look`) and use `CaptureEditorImage`, which DOES composite
+  UMG during PIE - the letterbox bars and the caption box photograph fine.
 - **Lock before you edit.** Git LFS marks committed `.uasset`/`.umap` files read-only. Run `git lfs lock <file>` before changing
   an asset that's already committed, or the editor's save silently does nothing. After pushing, `git lfs unlock <file>`.
   Check `git status` after saving to confirm the file really changed.
