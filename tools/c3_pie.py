@@ -176,8 +176,12 @@ def tick(dt):
                       'shift': gp(lat[0], 'Shift', None) if lat else None,
                       'cine': bool(gp(d, 'CineRunning', False)), 'cineT': round(gp(d, 'CineTime', 0.0), 3),
                       'wall': bool(gp(d, 'CineWallDone', False)), 'obj': gp(d, 'ObjectiveState', -1)})
-            # every AudioComponent in the world that is playing something long (music, not one-shots)
             S['frames'].append(f)
+            key = (snd, playing, f['mlevel'])
+            if key != S.get('lastkey'):
+                S['lastkey'] = key
+                ev('MUSIC -> %s playing=%s level=%s | shift=%s cine=%s cineT=%s wall=%s obj=%s flow=%s' % (
+                    snd, playing, f['mlevel'], f['shift'], f['cine'], f['cineT'], f['wall'], f['obj'], f['flow']))
             ph = S['phase']
             if ph == 0 and now > 2.0:
                 ev('title: %s vol %s playing %s flow %s' % (snd, vol, playing, f['flow']))
@@ -198,6 +202,20 @@ def tick(dt):
                     S['phase'] = 3; S['mark'] = now; ev('opening over: %s vol %s playing %s' % (snd, vol, playing))
             elif ph == 3 and now - S['mark'] > 1.5:
                 ev('in play: %s vol %s playing %s' % (snd, vol, playing))
+                # UseGeneratedMusic: flip it on the live director and replay the gameplay track
+                try:
+                    d.set_editor_property('UseGeneratedMusic', True)
+                    d.call_method('CineMusicPlay', (2,))
+                    ev('UseGeneratedMusic on, track 2 -> %s' % comp.get_editor_property('sound').get_name())
+                    d.call_method('CineMusicPlay', (4,))
+                    ev('UseGeneratedMusic on, track 4 -> %s' % comp.get_editor_property('sound').get_name())
+                    d.set_editor_property('UseGeneratedMusic', False)
+                    d.call_method('CineMusicPlay', (2,))
+                    ev('UseGeneratedMusic off, track 2 -> %s' % comp.get_editor_property('sound').get_name())
+                except Exception as e:
+                    ev('UseGeneratedMusic check failed: %s' % e)
+                S['phase'] = 35; S['mark'] = now
+            elif ph == 35 and now - S['mark'] > 0.5:
                 unreal.SystemLibrary.execute_console_command(gw, 'RestartLevel')
                 S['phase'] = 4; S['mark'] = now
             elif ph == 4 and now - S['mark'] > 3.0:

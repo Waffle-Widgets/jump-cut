@@ -522,6 +522,59 @@ def make_music(folder):
     _write_level(os.path.join(folder, "MUS_Gameplay.wav"), buf, 0.22)
 
 
+def _epiano(midi, dur, vol):
+    """A soft electric-piano note: sine plus a quiet bell partial that dies first, slow decay."""
+    f = note(midi)
+    n = int(dur * RATE)
+    out, p1, p2 = [], 0.0, 0.0
+    for i in range(n):
+        p1 += 2 * math.pi * f / RATE
+        p2 += 2 * math.pi * f * 3.0 / RATE
+        t = i / RATE
+        a = min(1.0, t / 0.008) * math.exp(-t * 1.6) * min(1.0, (n - i) / (0.05 * RATE))
+        out.append((math.sin(p1) + 0.18 * math.sin(p2) * math.exp(-t * 6.0)) * vol * a)
+    return out
+
+
+def make_latte_cafe(folder):
+    """MUS_LatteCafe - the latte shift's own music (Sun Nov 15). Ours, from code: no CREDITS.md entry.
+
+    84 BPM, 16 bars (45.7 s), D major, slow cafe jazz: Dmaj7 - Bm7 - Em7 - A7 voiced on a soft
+    electric piano, a walking upright-ish bass on the beats, brushed-noise hats on a lazy swing,
+    and a sparse vibraphone-like melody in the second half. Rendered into the ring buffer (_put
+    wraps), so it loops with no seam, and levelled to peak 0.22 like MUS_Title / MUS_Gameplay.
+
+        python tools/make_sfx.py <folder> latte
+    """
+    random.seed(1501)
+    bpm, bars = 84.0, 16
+    beat = 60.0 / bpm
+    swing = beat * 0.62                                     # the off-beat eighth lands late
+    buf = _loop_buf(bars * 4 * beat)
+    prog = [(62, 66, 69, 73), (59, 62, 66, 69), (64, 67, 71, 74), (57, 61, 64, 67)]  # Dmaj7 Bm7 Em7 A7
+    walks = [[38, 42, 45, 47], [35, 38, 42, 44], [40, 43, 47, 45], [33, 37, 40, 37]]
+    mel = [[78, None, 76, None], [74, None, None, 73], [71, 74, None, 76], [73, None, None, None],
+           [81, None, 78, None], [76, 74, None, None], [74, None, 71, None], [73, None, 69, None]]
+    brush = noise(0.09, 0.10, lowpass=0.55, decay_pow=3.0)
+    for b in range(bars):
+        ch = prog[b % 4]
+        t0 = b * 4 * beat
+        # comping: chord on 1, a softer re-strike on the swung "and" of 2
+        for m in ch:
+            _put(buf, t0, _epiano(m, 3.0 * beat, 0.055))
+            _put(buf, t0 + beat + swing, _epiano(m, 1.6 * beat, 0.03))
+        for k, m in enumerate(walks[b % 4]):              # walking bass
+            _put(buf, t0 + k * beat, _pluck(m, beat * 0.95, 0.20, lambda p: 0.8 * math.sin(p) + 0.2 * tri(p), 1.4))
+        for k in range(4):                                  # brushes: swish on the beat, tap on the late "and"
+            _put(buf, t0 + k * beat, [s * (1.0 if k % 2 else 0.7) for s in brush])
+            _put(buf, t0 + k * beat + swing, [s * 0.45 for s in brush])
+        if b >= 8:                                          # melody in the second half only
+            for k, m in enumerate(mel[b - 8]):
+                if m is not None:
+                    _put(buf, t0 + k * beat, _pluck(m, beat * 1.8, 0.07, lambda p: 0.85 * math.sin(p) + 0.15 * math.sin(4 * p), 1.1))
+    _write_level(os.path.join(folder, "MUS_LatteCafe.wav"), buf, 0.22)
+
+
 def make_fanfare(folder):
     """SFX_PowerFanfare - the moment a power is granted (Sun Nov 15). About one second: a bright
     rising arpeggio C5 E5 G5 C6 (55 ms apart) that lands on a held C major chord with a high
@@ -546,6 +599,8 @@ if __name__ == "__main__":
     os.makedirs(folder, exist_ok=True)
     if which == "music":
         make_music(folder)
+    elif which == "latte":
+        make_latte_cafe(folder)
     elif which == "fanfare":
         make_fanfare(folder)
     elif which == "clapper":

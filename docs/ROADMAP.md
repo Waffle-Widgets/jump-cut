@@ -192,6 +192,9 @@ street models and the packaged build have not been played by a person.
   `tools/unreal_street_models.py`. [Entry](devlog/2026-11-15-street-models-go-into-the-level.md).
 - **Still missing:** a customer character (the cup disappears when served); anything that reacts to how good the pour
   was; gamepad during the shift; a person walking the street to look at the new models.
+- **Sun 2:15 PM Pacific:** the shift has its own music, `MUS_LatteCafe` (ours, from code), which plays on into the
+  opening and is cut by the car hitting the wall, where the gameplay track starts (Justin's ask). Scripted check
+  only, nobody has heard it; [entry](devlog/2026-11-15-the-latte-shift-gets-cafe-music.md).
 
 
 ### Sakura trees, a van, a car, a bike and a scooter are made (IN THE GAME since 1:15 PM Pacific, see the entry above) (Sun Nov 15, 1:50 PM Pacific, M Station)
