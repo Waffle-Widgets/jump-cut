@@ -880,7 +880,7 @@ E1 also fills `PlayerRespawnAtCheckpoint` on `BP_Player` (section 6, step 1) and
 | `TriggerSphere` radius | 300 / 250 / 250 cm | BP_PlazaGate / BP_Checkpoint / BP_SceneMarker (class defaults) |
 | `TriggerSphere` radius, placed copies | `Checkpoint_StreetEnd` 550 cm; `Marker_FreezeFrameDoor` 200 cm; `Marker_FreezeFrameGiven` 250 cm | instances in `Lvl_JumpCut` (set by `tools/d1_editor.py`, `tools/e1_editor.py`) |
 | `ShowTitleOnStart` | true | BP_JumpCutGameMode |
-| `CharLevel` | 0.95 (the cafe script sets 0.55) | `MI_AnimeLook_JumpCut` (post-process on `PP_AnimeLook`) |
+| `CharLevel` | 0.6 since Nov 15 (was 0.95; the cafe script sets 0.55) | `MI_AnimeLook_JumpCut` (post-process on `PP_AnimeLook`) |
 | `LineWidth` | 2.0 (the cafe script sets 1.5) | `MI_AnimeLook_JumpCut` |
 | `KeyDir` | (-0.579, 0.406, 0.957), towards this level's sun (`Sun_Main`, pitch -45, yaw -35) | `MI_AnimeLook_JumpCut` |
 

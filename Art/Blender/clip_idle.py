@@ -46,10 +46,11 @@ BREATH = T('BREATH', 2.2)          # degrees of chest on a breath
 DRIFT = T('DRIFT', 0.8)            # cm the weight wanders side to side
 LOOK = T('LOOK', 2.0)              # degrees the head turns, slowly
 FEET_X = T('FEET_X', 14.0)         # cm either side of the centre line: wider than the shoulders
-ARM_OUT = T('ARM_OUT', 8.5)        # cm the wrist hangs outside the shoulder joint: daylight between arm and ribs
-ARM_FWD = T('ARM_FWD', 1.0)
+ARM_OUT = T('ARM_OUT', 4.5)        # cm the wrist hangs outside the shoulder joint: daylight between arm and ribs
+ARM_FWD = T('ARM_FWD', 3.5)
 ARM_BEND = T('ARM_BEND', 0.99)     # of the arm's length: 16 degrees at the elbow. 27 with a fist looked held, not hanging
-ELBOW_OUT = T('ELBOW_OUT', 0.3)    # how far outward the elbow points (0 is straight back)
+ELBOW_OUT = T('ELBOW_OUT', 0.0)    # the elbow points STRAIGHT back, so its bend is fore-and-aft. Pointed outward at all, the
+                                   # arm bows in the front view: out to the elbow, back in to the wrist ("oddly bent", owner)
 PALM = T('PALM', 82.0)             # forearm roll: the back of the fist faces out and a little forward
 FIST = T('FIST', 0.36)             # loose fists
 SH_UP = T('SH_UP', 36.0)           # collarbone lift: 24 drooped; with the arms held out, 36 is level, not a shrug

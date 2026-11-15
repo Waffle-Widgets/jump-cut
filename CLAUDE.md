@@ -394,7 +394,7 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   `weightedBlendables` for the real one before touching a parameter.
 - **The cel look's `Char*` parameters only touch pixels that write custom depth, and the player is the only
   thing that does.** `BP_Player.CharacterMesh0` has `render_custom_depth = True`; a fresh `SkeletalMeshComponent`
-  defaults to `False`. With `MI_AnimeLook_JumpCut`'s `CharLevel` at **0.95**, his light skin and khaki shirt clip
+  defaults to `False`. (Nov 15: `CharLevel` is now **0.6** - `tools/unreal_look_char.py` reads and sets it.) With `MI_AnimeLook_JumpCut`'s `CharLevel` at **0.95**, his light skin and khaki shirt clip
   to near-white, while the **identical mesh spawned as a plain `SkeletalMeshActor` one metre away, in the same
   frame and the same light, keeps its eyes and its khaki shirt** (`docs/media/2026-11-14-player-wears-cafewalker-v2.jpg`).
   So: before blaming a character's art or its texture for washing out, **spawn the same mesh as a control**. That
