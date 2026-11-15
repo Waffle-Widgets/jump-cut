@@ -107,6 +107,68 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
 `playtest-issues`, `devlog-entry`, `pc-handoff`, `jam-rules-check`, `niagara-fx`, `niagara-fluids` (realistic fire: Niagara Fluids, tuning through Slate, baking a sim into a flipbook), `chaos-physics` (things that break: Geometry Collections cut by a Dataflow graph, broken from code).
 
 ## Lessons from practice (Unreal + MCP)
+
+### Blueprint graphs through `write_graph_dsl` (learned 2026-11-15, beat 1's explosion)
+- **A variable's CATEGORY is part of its DSL type id.** Move a variable out of `Default` and
+  `Variables|Default|GetFoo` stops existing - `write_graph_dsl` fails with
+  *"Variables|Default|GetExplCarGC does not exist"* for a variable `list_variables` plainly
+  returns. Thirty variables were written fine, then `set_variable_category` to "Beat1 Explosion"
+  broke every later write to the same graphs. Keep new variables in `Default`, or write
+  `Variables|<Category>|Get<Name>` in the DSL.
+- **A multi-exec node terminates the exec flow it sits in, so it must be the LAST statement in
+  its scope.** `Utilities|IsValid`, any `CastTo*`, any latent node. Two guards in one function
+  are refused with *"Unreachable code after branch/return"*; split the function or nest the
+  second guard inside the first's continuation. Plain `if`/`elif` do NOT terminate - a chain of
+  them followed by more statements is fine, which is what makes the rule easy to misread.
+- **`write_graph_dsl` leaves the OLD graph behind as orphaned nodes.** Confirmed by dumping
+  `find_nodes` + `get_node_infos` on `CineDirectorStep`: the function entry is repointed at the
+  new chain and the previous chain survives, fully wired, with nothing pointing into it. It is
+  dead code in a *function*; in an EVENT graph a second copy of an event would run. Count nodes
+  after any rewrite you care about.
+- **The read-back form is not the write form.** `read_graph_dsl` prints
+  `Math|Vector|vector-vector`, which `get_node_type_pins` refuses to create. Write `(- a b)` and
+  let the DSL pick the node.
+
+### Chaos geometry collections (learned 2026-11-15, the exploding car)
+- **A GeometryCollectionActor spawns `Chaos_Object_Dynamic`, and anything car-sized falls out of
+  the world.** The cafe-table GCs use Dynamic and are fine, which makes the setting look safe.
+  Measured: `B1_Cafe_CrashCar_GC`'s bounds reached **z -19405 within four seconds of BeginPlay**.
+  Use **Kinematic** for something that must stand still until it is hit.
+- **A kinematic collection CANNOT be broken, and fails silently.** `ApplyExternalStrain` plus
+  `AddRadialImpulse` ran with no error and the bounds came back identical to the intact mesh.
+  Switch it first: `Class|GeometryCollectionComponent|SetObjectType` to `Chaos_Object_Dynamic`,
+  then `ChaosPhysics|RemoveAllAnchors`, then `ChaosPhysics|CrumbleActiveClusters`, then the
+  strain and the impulse.
+- **Chaos debris does not collide with this city kit's floors.** The kit is collision-trace
+  *complex-as-simple* and GC particles only collide with simple/convex collision, so broken
+  pieces fall straight through to **z -44289**. Put a hidden box collider under anything that
+  breaks (`B1_Cafe_DebrisFloor`).
+- Run **`py <repo>/tools/b1x_orphans.py`** after any script that destroys and re-spawns a placed
+  actor. A re-spawned actor gets a NEW package hash, the old `__ExternalActors__` file stays on
+  disk, and World Partition loads everything in that folder - which would have put a **second
+  BP_OpeningDirector** in the level and run beat 1 twice. It found exactly two.
+
+### Other traps from the same session
+- **The editor console box is `tb1`. `tb2` is the Outliner search.** Refs are assigned per
+  session and the old note naming `tb2` is stale. A `py <path>` typed into `tb2` silently becomes
+  an Outliner filter - the Outliner then reads *"No matching actors (473 total)"* and no `Cmd:`
+  line appears in the log. Confirm by the `Cmd:` line, never by the return value.
+- **`SlateInspector.Type` with `submit: true` works where `FillForm` + `PressKey("Enter")` does
+  not.** `PressKey` goes to the *focused* widget, and `FillForm` does not focus. `Type` focuses
+  first.
+- **`MakeRotFromZ` leaves the roll about the view axis free.** A billboard card built with it
+  came out at **roll -83 degrees** - the sprite drawn on its side. For a `/Engine/BasicShapes/Plane`
+  facing a camera, use `MakeRotator(roll 0, pitch = camPitch + 90, yaw = camYaw)`.
+- **A flipbook frame index must be floored inside the MATERIAL.** A fractional `Frame` lands
+  between two cells of the sheet and draws half of each.
+- **A change made only on a placed actor is reverted by the next run of the script that places
+  it.** The objective beacon was changed from a sphere to a cone in a live session on Nov 14 and
+  never written into `tools/b1_opening_wire.py`; running that script on Nov 15 put the sphere
+  straight back, and it took a PIE capture to notice.
+- **`EditorActorSubsystem` cannot spawn into the PIE world.** `spawn_actor_from_class` returns
+  `None` there, so a SceneCapture2D is not an option for photographing a running game. Point the
+  real player camera (`tools/b1x_pie.py look`) and use `CaptureEditorImage`, which DOES composite
+  UMG during PIE - the letterbox bars and the caption box photograph fine.
 - **Lock before you edit.** Git LFS marks committed `.uasset`/`.umap` files read-only. Run `git lfs lock <file>` before changing
   an asset that's already committed, or the editor's save silently does nothing. After pushing, `git lfs unlock <file>`.
   Check `git status` after saving to confirm the file really changed.
@@ -436,6 +498,35 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   goon's 16 locomotion clips. It now scans `/Game/Game/Imported` recursively - **never hand-list folders in a
   sweep tool**, because it reports complete success over whatever subset it was handed. And a bold note in a doc
   saying "the goon needs this too" is not a fix: do it in the same pass or file a ticket.
+- **`force_root_lock` + `root_motion_root_lock = REF_POSE` is the whole bug, and FOUR separate
+  checks say the clip is fine (Nov 15).** A clip with that pair has its root pinned to the
+  SKELETON'S reference pose, which on every Meshy Smart Rig here is pelvis height - so the mesh is
+  drawn ~90 cm up for as long as it plays. `7ef73e1` moved the locomotion clips to
+  `ANIM_FIRST_FRAME` and missed `MM_Jump/Fall_Loop/Land` for the player (`_CWM`) and the goons
+  (`_SGN`), which is why the float only showed while airborne. What makes it hide: the clips' own
+  root tracks read **0.0** at every sample; they all DO carry a `bone_000` track (so it is not a
+  missing-track fallback); none is marked additive; and the Jump state really is wired to
+  `MM_Jump_CWM`. All four are true and all four are irrelevant - the lock is applied after the clip
+  is sampled. Read the two properties, not the clip. `tools/b1y_rootlock.py` reports and fixes.
+  **Do not sweep this across the project**: 85 clips match the pattern and 60 are Epic's own
+  mannequin clips, where REF_POSE is CORRECT because the mannequin's reference pose has its root on
+  the floor. Only Meshy rigs are affected; confirm which clips are live by reading each anim
+  blueprint's asset references.
+- **This project's own unlock path puts the player into MOVE_Falling, so the bug above fires at the
+  start of every game.** `PlayerRefreshMoveLock` releases a lock with
+  `SetMovementMode(MOVE_Falling)`, and the title screen's lock is released on the first tick - so
+  beat 1 opened with the character 90 cm in the air for 0.9 s. If you are hunting something that
+  only happens "at the start", check what the first tick's state transition does before looking at
+  the cinematic.
+- **A Geometry Collection draws the materials its SOURCE FBX came in with, and nobody tells it
+  otherwise (Nov 15).** Every `GC_*` in `/Game/Game/Destruction` was drawing `MS_City*` from
+  `Imported/City/` - `MaterialInstanceConstant`s of `FBXLegacyPhongSurfaceMaterial` with
+  DiffuseColor 0.8, i.e. Unreal's flat grey import placeholder. The real look materials are
+  `M_City*` under `Materials/City/`, and every placed `City_*` STATIC actor overrides to them per
+  slot (measured: **0** static actors draw an `MS_` directly), so only the things that shatter were
+  grey. Fix it on the collection ASSET's `materials` array, slot for slot, which fixes every actor
+  using it at once - 13 actors here. `tools/b1y_fix3.py`.
+
 - **"The capsule lifts" and "the mesh lifts" look identical in a screenshot and need opposite fixes.** Log
   `pawn.get_actor_location().z` beside the bone world heights. On the float bug `actor_z` never moved (94.15 for
   four seconds) while every bone rose 90.58 cm, which ruled out root-motion translation in one reading and sent
@@ -685,6 +776,102 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
 - **`CaptureViewport` during PIE renders the level viewport, editor sprites and all** - it is not a player's-eye view,
   and `CaptureAssetImage` on a clip (the asset's own preview, real mesh + real clip) is the cheaper and more honest
   way to LOOK at an animation. See the Nov 14 devlog for a render that could not be explained from either.
+
+- **Sequencer, learned building beat 1's opening (Sat Nov 14, `tools/b1_opening_cine.py`).** The whole
+  Python API is present in 5.8 and works: `add_spawnable_from_instance`, `MovieScene3DTransformTrack`
+  (9 channels, `Location.X/Y/Z`, `Rotation.X/Y/Z` = roll/pitch/yaw, then Scale),
+  `MovieSceneCameraCutTrack` with `set_camera_binding_id(seq.get_binding_id(binding))`. Four traps:
+  - **A throwaway actor that outlives a failed script is a REAL actor in the level.** The spawnable
+    recipe is spawn a temp -> `add_spawnable_from_instance` -> destroy the temp. A raise in between
+    leaves the temp standing in the map, untagged, and nothing else removes it: one run left a
+    `CineDriver` upright in mid-air through the whole peaceful shot, and a `LevelSequenceActor` with no
+    tag. Destroy throwaways in a `finally`, and keep a finder (`tools/b1_cine_strays.py`).
+  - **`ASkeletalMeshActor`'s SkeletalMeshComponent IS its root component**, so `set_relative_transform`
+    on it is the actor transform and a transform track overwrites it every frame. Bake any pose offset
+    into the keys. A rotator is applied Yaw*Pitch*Roll, so actor rot (roll 0, pitch -78, yaw 140) equals
+    actor yaw 140 plus a mesh relative pitch -78 - which is how a thrown body hands over to a placed one
+    with no jump.
+  - **You cannot measure a short cinematic from PIE.** An MCP round trip to this editor is ~5 s, so an
+    11 s sequence is over before the second sample (measured: t=14.09, 19.07, 39.69, all finished).
+    Open the asset and scrub it instead - `LevelSequenceEditorBlueprintLibrary.open_level_sequence` +
+    `set_current_time(frame)`, then read each binding back (`tools/b1_cine_scrub.py`). `GetBoundObjects`
+    wants `seq.get_binding_id(binding)`, not the binding proxy.
+  - **`ALevelSequenceActor` has no `auto_play` property of its own** - it is
+    `playback_settings.auto_play`, and that struct has no `restore_state`. Prefer the director Blueprint
+    hiding and showing real actors on its own clock over a Sequencer visibility track: the track keys
+    `bHidden` behind a label that reads "Visible", and backwards is invisible until you look at a frame.
+- **The city kit's materials are under `/Game/Game/Materials/City/`, not `/Game/Game/Materials/`.**
+  `M_CafeWall`, `M_CityBrick`, `M_CityTrim` and the rest live there. `load_asset` on the wrong path
+  returns `None`, `set_material(0, None)` does not complain, and the mesh renders as the grey checker
+  default. Read a neighbouring actor's slot list rather than guessing a path.
+- **The graph DSL treats a multi-exec-output node as TERMINAL.** `(Utilities|IsValid x (:"Is Valid" ...)
+  (:"Is Not Valid"))` cannot be followed by another statement - the writer refuses with
+  "Unreachable code after branch/return". Plain `(if ...)` is fine to sequence. Wrap the guarded work in
+  a tiny own function (`CineHideActor(Target, Hide)`) and call that instead of repeating the IsValid.
+  Setting a variable on ANOTHER actor needs the value named after the variable:
+  `(Class|BPPlayer|SetInputLocked :self ref :InputLocked true)` - positional is refused.
+- **A placed actor keeps the class layout it was spawned with.** An instance spawned before a variable
+  was made instance-editable refuses the write with *"cannot be edited on instances"*. That is a stale
+  instance, not a wrong property name: recompile, then destroy and re-place the actor.
+
+- **A positional argument to `CallFunction|<OurFunction>` lands in the SELF pin, not in the
+  parameter (Nov 14).** `(CallFunction|CineRescueStep DeltaSeconds)` fails outright with
+  *"Could not connect pin DeltaSeconds to self"*, and `write_graph_dsl` **rolls the whole graph
+  back** when it does - so a half-written function is not the failure mode, a silently unchanged
+  one is. The trap is that `read_graph_dsl` PRINTS every call in exactly that positional form
+  (`(CallFunction|CoworkerExplosionStep DeltaSeconds)`), so reading a graph and writing it back
+  is not safe. Name every pin: `(CallFunction|CineRescueStep :DeltaSeconds DeltaSeconds)`.
+  Same family as the bool-parameter trap below.
+- **A swept `SetActorLocation` that begins already TOUCHING something returns to the START
+  point - it does not slide (Nov 14).** Beat 1's rescue moved the player **zero centimetres in
+  4.4 seconds** while the fuse burnt down and the blast killed the coworker, because he was
+  standing against a cafe table and every frame's sweep was refused. Nothing logs it and the
+  function returns normally. For a scripted camera-held move down a path the player has already
+  walked, pass `bSweep false`.
+- **`CaptureEditorImage` does NOT composite UMG - it cannot photograph a widget (Nov 14).**
+  Three captures of a running PIE session came back with no letterbox bars and no caption box
+  while the live widget reported `renderScale = (1,1)`, `visibility = HitTestInvisible` and
+  `IsInViewport = True`. Same family as the `stat unit` overlay note below. To prove a widget is
+  really on screen use the Slate side instead: `SlateInspector.WaitFor` on a string the widget
+  displays returns true only if that text is in the live Slate tree, and
+  `widget.get_desired_size()` is non-zero only once it has laid out and measured its content.
+- **A UMG `Border`'s default brush DRAWS NOTHING, and `BrushColor` tints the nothing (Nov 14).**
+  A fresh `UBorder` has `Background.DrawAs = Image`, `ImageType = NoImage`,
+  `ResourceObject = None`. Setting `brushColor` to opaque black gives an invisible panel that
+  reads as perfectly healthy in every property dump. Set
+  `background.resourceObject = /Engine/EngineResources/WhiteSquareTexture.WhiteSquareTexture`
+  and tint that. `ObjectTools.set_properties` takes its payload in a **`values`** parameter as a
+  JSON **string**, not a `properties` object.
+- **Beat 1's cinematic car settles at frame 186 (6.20 s) at `(-520, 0, 0)` rot 0, which is the
+  real wreck's placed transform (Nov 14).** Reveal the real wreck anywhere earlier and both are
+  on screen at once - `CineImpactTime` was 4.70 s, so they overlapped for 1.5 s ("I can see two
+  cars"). The `CineCar` spawn track now keys `False` at 186 so the two never coexist; the thrown
+  body does the same at 194. Two identical coincident meshes would also be a perfect depth tie
+  (#67).
+- **`DriverTryTouch` and `CoworkerCanRescueNow` were ALWAYS range-gated** - the F key only chose
+  *when* to ask. So "walk up to it and the story moves on" is the director calling them every
+  tick while the objective is live, not new interaction code. `BP_OpeningDirector.AutoBeats`
+  (instance-editable) puts the key presses back.
+- **`Object.call_method` reaches our own Blueprint functions on a live PIE actor** - this is the
+  way to drive a mechanic a script cannot press a key for, and it beats writing state. Most
+  Blueprint variables are NOT instance-editable, and `set_editor_property` on one is refused
+  outright (*"cannot be edited on instances"*): `HasFreezeFrame`, `ExplosionTimeLeft` and
+  `FuseLeft` all do it. `actor.call_method('DriverTryTouch')` / `('FreezeFrameStart')` /
+  `('CoworkerTryRescue')` run the real gated functions instead (`tools/b1_fire_test.py`).
+- **Check whether the TEST is slower than the thing it tests.** An MCP round trip to this editor is
+  5-8 s. Beat 1's fuse is 9 s, so running the steps as separate calls burnt the fuse before the
+  rescue every time, three runs running, and it read as "the beat is unwinnable". Doing the whole
+  run-up inside ONE script call - one frame - showed it wins cleanly. Same family as the 11 s
+  cinematic that is over before the second sample.
+- **An emissive value that looks right in the material editor can clip to WHITE through this
+  project's posterising look.** `M_FireHot` at emissive 3.0 came out of the tonemapper white; 1.7
+  reads orange. `MI_AnimeLook_JumpCut` quantises, so judge any emissive from a captured frame, not
+  from the number.
+- **Re-placing an actor makes a NEW `__ExternalActors__` package and orphans the committed one.**
+  Re-placing is the cure for a stale instance, but World Partition loads every package in that
+  folder, so the old one must be `git rm`-ed in the same commit or the next load has two. After any
+  re-place, run `py <repo>/tools/b1_beat1_audit.py`: it counts the actors that must be unique and
+  prints each one's package, so a duplicate is visible before it ships.
 
 ## AI-generated 3D models (Hunyuan3D 2.1 and TRELLIS.2, both local)
 - **TRELLIS.2** (Microsoft, MIT licence, `D:\AI\TRELLIS2` on the main PC, `C:\AI\TRELLIS2` on GameStation) is the one to use: one photo with the background cut out ->
