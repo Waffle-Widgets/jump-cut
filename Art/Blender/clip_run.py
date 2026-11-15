@@ -19,11 +19,12 @@ N = 18
 SPEED = 20.0          # cm per frame while planted
 TRACK = 9.0           # each foot this far from the centre line
 
-PELVIS_PITCH = T('PELVIS_PITCH', 9.0)    # forward lean of the pelvis
-SPINE_PITCH = T('SPINE_PITCH', 11.0)     # more lean through the back (20 in all)
-NECK_UP = T('NECK_UP', 26.0)             # head lifted back level: eyes forward
-DZ_LOW = T('DZ_LOW', -8.0)               # pelvis height at mid-stance
-DZ_AMP = T('DZ_AMP', 5.0)                # how far he rises into the flight
+PELVIS_PITCH = T('PELVIS_PITCH', 13.0)   # forward lean of the pelvis
+SPINE_PITCH = T('SPINE_PITCH', 15.0)     # more lean through the back (28 in all). At 20 he measured only 11 degrees
+                                         # hip to head in the game and read as bounding upright (dumped frames, Nov 15).
+NECK_UP = T('NECK_UP', 31.0)             # head lifted back level: eyes forward
+DZ_LOW = T('DZ_LOW', -10.0)               # pelvis height at mid-stance
+DZ_AMP = T('DZ_AMP', 4.0)                # how far he rises into the flight
 PELVIS_FWD = T('PELVIS_FWD', 3.0)
 HIP_TWIST = T('HIP_TWIST', 7.0)          # pelvis turns toward the leg that swings forward
 CHEST_TWIST = T('CHEST_TWIST', 20.0)     # spine twist the other way (net shoulders = CHEST_TWIST - HIP_TWIST)
@@ -33,7 +34,7 @@ HEEL_UP = T('HEEL_UP', 56.0)             # ankle height when the heel tucks unde
 
 ARM_PH = T('ARM_PH', 4.0)                # frame (after the left foot lands) at which the LEFT hand is highest in front
 A_FRONT = T('A_FRONT', 90.0)             # wrist direction from the shoulder, degrees forward of straight down
-A_BACK = T('A_BACK', -36.0)
+A_BACK = T('A_BACK', -46.0)
 R_FRONT = T('R_FRONT', 0.66)             # shoulder-to-wrist distance, of the arm length: 0.68 is an 85 degree elbow
 R_BACK = T('R_BACK', 0.85)               # 0.84 is 115 degrees
 OUT_FRONT = T('OUT_FRONT', 1.5)         # cm outside the shoulder: straight forward-back, never across the body
@@ -43,20 +44,22 @@ CURL = T('CURL', 0.24)
 
 # One leg through the cycle. t = frames since that foot touched down. (t, fwd, up, pitch); pitch + = toes down.
 LEG = [                             # note: fwd = 0 is where the ankle rests, 6 cm BEHIND the hip joint
-    (0.0,  34.0,  0.0,   0.0),      # contact just ahead of the hips
-    (1.0,  14.0,  0.0,   0.0),
-    (2.0,  -6.0,  0.0,   0.0),
-    (3.0, -26.0,  0.0,   0.0),      # last planted frame
-    (4.0, -39.0, 10.0,  30.0),      # toe-off: leg long behind him
-    (5.2, -48.0, 25.0,  70.0),      # follow-through
+    # The stance sits 9 cm further BACK than it first did. Landing at +34 put the foot 28 cm ahead of the hip joint
+    # on a straight leg: a braking, bounding stride ("something still looks off about the run", owner, Nov 15).
+    (0.0,  25.0,  0.0,   0.0),      # contact close under the hips
+    (1.0,   5.0,  0.0,   0.0),
+    (2.0, -15.0,  0.0,   0.0),
+    (3.0, -35.0,  0.0,   0.0),      # last planted frame
+    (4.0, -45.0, 12.0,  34.0),      # toe-off: leg long behind him
+    (5.2, -51.0, 27.0,  70.0),      # follow-through
     (6.8, -40.0, HEEL_UP - 10.0, 100.0),   # heel whips up
     (8.4, -18.0, HEEL_UP,  92.0),   # tucked tight under the hip
     (10.0, 10.0, HEEL_UP - 8.0,  62.0),    # knee leading through
     (11.6, KNEE_FWD - 6.0, KNEE_UP + 2.0,  30.0),   # knee drive, thigh close to level
     (13.2, KNEE_FWD + 4.0, KNEE_UP - 6.0,  12.0),   # top: shin hanging
-    (15.0, 48.0, 14.0,  -6.0),      # shin reaches out
-    (16.4, 45.0,  5.0,  -6.0),      # pawing back down
-    (17.4, 39.5,  1.0,  -3.0),
+    (15.0, 40.0, 14.0,  -4.0),      # shin reaches out, not far
+    (16.4, 36.0,  5.0,  -4.0),      # pawing back down
+    (17.4, 30.5,  1.0,  -2.0),
 ]
 
 

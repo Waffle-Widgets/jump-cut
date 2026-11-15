@@ -391,6 +391,7 @@ _apron = {}                                                 # this frame's swing
 LEGPTS = []                                                 # (bone, point in its own frame, rest angle from the top hinge, from the fold)
 APRON_LEN = 44.0                                            # hinge to hem
 APRON_L1 = 22.0                                             # hinge to fold (the upper panel); the rest is the lower panel
+COUPLE = 0.45                                               # how far one half of the skirt follows the other
 APRON2 = {s: 'Apron_' + s + '2' for s in 'LR'} if 'Apron_L2' in BONES else {}
 _apron = {}                                                 # this frame: 'L','R' upper swing; 'L2','R2' lower panel's own angle
 
@@ -414,12 +415,18 @@ def _clear(hinge, radius, which):
             lat = (p - mid).dot(px)
             # Each bone owns its side AND the 15 cm either side of the centre line that the two share: watching only
             # its own side let the far leg through the middle of the skirt ("clips ... during some attacks").
-            if not (-15.0 <= lat * SGN[s] <= 20.0): continue
+            # How much of the sheet at this point belongs to this bone: the two share the middle 30 cm (apron_bones.py
+            # BLEND_X). A bone answers for the points that are mostly its own, and swings far enough that the sheet
+            # THERE clears them even though the other bone only follows COUPLE of the way. Making both bones answer
+            # for the whole shared strip swung them together and the skirt moved as one board.
+            t_ = min(1.0, max(0.0, (lat * SGN[s] + 15.0) / 30.0)); w_ = t_ * t_ * (3 - 2 * t_)
+            if w_ < 0.5 or lat * SGN[s] > 20.0: continue
             v = p - hinge[s]
             down, fw = -v.dot(pu), v.dot(pf)
             # a thigh raised to level has its front surface ABOVE the hinge: that is the case that matters most
             if not (down > 2.0 or fw > 0.0) or math.hypot(down, fw) > radius + 2.0: continue
-            worst = max(worst, math.degrees(math.atan2(fw + 1.5, down)) - e[which][s])
+            need = math.degrees(math.atan2(fw + 1.5, down)) - e[which][s]
+            if need > 0.0: worst = max(worst, need / (w_ + (1.0 - w_) * COUPLE))
         out[s] = worst
     return out
 
@@ -439,12 +446,12 @@ def _apron_solve():
     top = {s: mid + px * (SGN[s] * 8.0) for s in APRON}
     c1 = _clear(top, APRON_L1 if APRON2 else APRON_LEN, 2)
     a1 = {s: min(105.0, max(c1[s], 0.6 * grav)) for s in APRON}
-    a1 = {s: max(a1[s], 0.45 * a1['R' if s == 'L' else 'L']) for s in APRON}
+    a1 = {s: max(a1[s], COUPLE * a1['R' if s == 'L' else 'L']) for s in APRON}
     out = dict(a1)
     if APRON2:
         c2 = _clear({s: _fold_point(s, a1[s]) for s in APRON}, APRON_LEN - APRON_L1, 3)
         a2 = {s: min(a1[s] + 5.0, max(c2[s], 0.9 * grav)) for s in APRON}
-        a2 = {s: max(a2[s], 0.45 * a2['R' if s == 'L' else 'L']) for s in APRON}
+        a2 = {s: max(a2[s], COUPLE * a2['R' if s == 'L' else 'L']) for s in APRON}
         for s in APRON: out[s + '2'] = a2[s]
     return out
 
@@ -498,7 +505,9 @@ _domb = [_vgn[max(v.groups, key=lambda g: g.weight).group] if v.groups else '' f
 SHOE = {s: np.array([i for i, d in enumerate(_domb) if d == LEG[s][2] or d in SUB[LEG[s][2]]]) for s in 'LR'}
 if APRON:                                                   # the front surface of both legs, as points the skirt must clear
     reset()
-    _sk = np.array([i for i, d in enumerate(_domb) if d in APRON.values()])
+    # BOTH panels. Counting only the upper bones' vertices made the skirt's length equal the upper panel's, so the
+    # lower panel's reach was zero: it never looked for a leg and hung straight down through the thigh under it.
+    _sk = np.array([i for i, d in enumerate(_domb) if d in APRON.values() or d in APRON2.values()])
     APRON_LEN = float(RH[APRON['L']].z - V0[_sk, 2].min())  # hinge to hem, from the skirt itself (the bone is shorter)
     _pts = []
     for _s in 'LR':
