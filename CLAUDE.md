@@ -667,9 +667,22 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   The `_CWM1` names are the engine's intermediate step, not corruption - what makes them dangerous is a
   run interrupted half way, which is exactly what a read-only file causes. While the dialog is up the
   answer is **No**: Yes deletes the original and leaves only the `_CWM1` copy.
-  **Overwriting in place is otherwise the right move** - the asset paths survive, so the anim blueprint,
-  the blend space, `BP_Player` and the hand-authored `AM_*` montages all keep resolving untouched. Do
+  **Overwriting in place is otherwise the right move** - *on disk* the asset paths survive, so the anim
+  blueprint, the blend space, `BP_Player` and the hand-authored `AM_*` montages all keep resolving. Do
   not retarget into a new folder and repoint them.
+- **But the RUNNING editor session is left broken by that same overwrite, and only a restart fixes it.**
+  The force-delete step NULLS the pointer held by every ALREADY-LOADED asset that referenced the clip,
+  and renaming the replacement back into the path does not restore it. `ABP_Unarmed_CWM` then fails to
+  compile on Play with *"Sequence Player references an unknown Anim Sequence Base"* and *"Blendspace
+  Player references an unknown Blend Space"*, behind a **Blueprint Asset Compilation Error** dialog
+  (buttons *Play in Editor* / *Cancel*) which - like the read-only modal above - blocks the game thread,
+  so every MCP call times out and the editor looks hung from the tool side. The `.uasset` files on disk
+  are FINE: check them without the GUI with
+  `UnrealEditor-Cmd <uproject> -run=pythonscript -script=<check.py>` (forward slashes - see the
+  `-script=` trap below), which loads and compiles the anim blueprint in a clean process. Then just
+  restart the editor. **Do not re-save the anim blueprint or the blend space from the stale session** -
+  that writes the nulled references to disk. For the same reason, do not let the folder-wide save that
+  follows a retarget run commit the anim blueprint; revert it and keep the clip changes only.
 - **`get_all_socket_names()` returns SOCKETS as well as bones, and it will wreck a topology walk.** A
   socket is always a leaf, so one attached to a hand makes it a six-branch node and the five-finger test
   stops finding the hand; and a socket whose parent lookup comes back empty looks like a second skeleton
