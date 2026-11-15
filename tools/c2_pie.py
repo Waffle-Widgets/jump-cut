@@ -63,7 +63,7 @@ def tp(pawn, pc, x, y, yaw, pitch=-10.0):
 
 
 SHOTS = [float(x) for x in sys.argv[2].split(',')] if len(sys.argv) > 2 else [0.5, 1.2, 2.0, 2.45, 3.0, 4.5]
-W_KEYS = ['TitleBarista', 'TitleDirector', 'TitleClapOpen', 'TitleClapShut', 'TitleArt', 'ScreenTitle', 'ScreenKey', 'KeyBox']
+W_KEYS = ['TitleBarista', 'TitleDirector', 'TitleClapOpen', 'TitleClapShut', 'TitleArt', 'ScreenTitle', 'ScreenKey', 'KeyBox', 'TitleSynopsis']
 
 
 def title_tick(now, gw):
@@ -105,7 +105,7 @@ def tick(dt):
         now = time.time() - S['t0']
         gw = ues.get_game_world()
         if gw is None:
-            if now > 5.0:
+            if now > (45.0 if MODE == 'title' else 5.0):  # title: armed before StartPIE
                 finish('PIE not running')
             return
         if MODE == 'music':
