@@ -218,6 +218,58 @@ Team Owner's call because it restyles the character.
 
 **Nobody has played it.** The pictures are the editor rendering its own level from a scripted camera.
 
+### Sun Nov 15, 03:10 UTC — the body is rebuilt from the high-poly, and NOTHING is baked (M Station)
+
+`Art/Blender/rebuild_walker_v2.py`. The Team Owner uploaded Meshy's own render and said, in as many
+words, that *that* is what the game should look like. Two faults stood between the two pictures and
+only one of them was ever the rig's.
+
+**1. The texture was damage we inflicted ourselves, and it was never necessary.** The colour map in
+the game was BAKED from the 365k high-poly onto the remeshed body's regenerated UVs (#112). The bake
+is lossy: a dark blotch smeared across the apron, a sawtooth hem, a mottled white-and-grey collar,
+speckled waist ties. But Meshy's high-poly carries its **own** clean UVs and its **own** clean
+texture, and a Blender DECIMATE keeps both. So decimate instead of baking — 365,038 → 55,679
+triangles, exactly the shipped count, 0 credits — and the damage simply never happens.
+`T_CafeWalkerV2_BaseColor.png` drops from **3.3 MB to 494 KB**, which is what clean art looks like
+next to baked noise.
+
+![rebuilt](media/2026-11-15-cafewalker-v2-rebuilt-no-bake.jpg)
+
+**2. The silhouette is unchanged, deliberately, and that is the interesting half.** The obvious fix
+for #117's distortion was to stop deforming the mesh and move the BONES into it instead. That was
+written, it measured beautifully — bone-to-mesh fit 1.71 cm against the conform's 2.39 — and it is
+**wrong**. Unreal's `UAnimSequence` tracks are ABSOLUTE LOCAL transforms: playback puts each bone
+where the clip says regardless of what the mesh was bound in, and the mesh is skinned
+`(clip pose) * (bind)^-1`. A bind pose that is not the rest pose the 48 clips were keyed against
+therefore shows up as extra twist on **every frame**. Measured with `Art/Blender/rest_delta.py`, the
+rig-fitted body's rest was **75.7° from the clip rig's on average, 171° at worst, 47 of 69 bones past
+20°** — and it renders beautifully standing still and shreds the head and one arm the moment `Idle`
+plays. **`rest_delta.py` must read 0.0° or the body is broken in motion.** It reads 0.0° now.
+
+**So the clean geometry is carried into the pose the rig needs, using the displacement #117 already
+measured.** The conformed body and Meshy's low-poly are the **same 27,976 vertices in the same
+order**, so `conformed[i] - natural[i]` is an exact per-vertex field; sampled at the nearest point on
+the low-poly surface it lands the decimated high-poly in the rig's rest pose with no *new* distortion.
+Applied field mean **7.34 cm**, max **23.83 cm** — the same 7.15 / 23.84 the conform itself produced.
+Weights come from the conformed body by nearest surface, mean source distance **0.25 cm**, all 68
+groups carrying weight.
+
+**What this does and does not fix.** Gone: the apron blotch, the sawtooth hem, the mottled collar, the
+fused paddle hand (the high-poly's fingers separate). Unchanged on purpose: the wide stance and the
+apron's front-to-back depth, because both come from the rig's own splayed rest pose — that is
+[#73](https://github.com/Waffle-Widgets/jump-cut/issues/73), and any mesh that skins correctly on this
+rig has to stand that way. Unchanged and still open: the blown-white face, which is
+[#72](https://github.com/Waffle-Widgets/jump-cut/issues/72).
+
+**Verified by rendering, not by counting.** `Idle` and `Walk` were taken off the committed
+`SK_CafeWalker.fbx` and played on both bodies with the pose copied bone-for-bone the way Unreal does
+it, old body beside new in the same frame. One trap worth keeping: `pose_bone.matrix` resolves against
+the parent's *current* evaluated matrix, so the depsgraph has to be refreshed **between bones** — leave
+it to the end of the loop and the arms and hair tear into streaks that look exactly like a broken bind
+and are nothing of the kind.
+
+**Nobody has played it.** Every picture above is Blender rendering the committed files.
+
 ## The coworker — `CafeCoworker` (beat 1; modelled and rigged Nov 13, **in Unreal since Sat Nov 14, 02:25 UTC**)
 
 The person the player saves in the demo's first beat. She exists because the beat's *lesson* needs a subject:
@@ -328,6 +380,55 @@ reviewable, not so she can be swapped in.
 **crossing in an X**, which the character lock explicitly rules out — Meshy invented it from a
 front-only reference. ![coworker](media/2026-11-14-cafecoworker-v2-texture-bake.jpg) The fix in #101
 is Meshy's Multi-view input plus a matched A-pose; nothing here changes that.
+
+### Sun Nov 15, 04:05 UTC — she is in the game, on HER OWN rig, and #101 is closed (M Station)
+
+`BP_Coworker.CoworkerBody` is now `/Game/Game/Imported/CafeCoworkerV2/SK_CafeCoworkerV2`, and that asset
+binds to **`SK_CafeCoworker_Skeleton`** — the 68-bone rig `SK_CafeCoworkerArmature_Idle` and `_Walk` are
+keyed to. `Art/Blender/rest_delta.py` reads **0.0°** against it, so both clips still play with nothing
+retargeted. `tools/unreal_coworker_body_v2.py` (`measure` | `import` | `swap`) is the thing that does it.
+
+**[#101](https://github.com/Waffle-Widgets/jump-cut/issues/101) said this was impossible, and it was —
+until the cause was understood.** Her reskin failed at 13.5 cm per hand, and posing the hand bone moved
+1,384 vertices on the shipped body against 30 on the reskinned one. That is **the same fault the player
+had**, and `conform_rest_pose.py` is the same fix: pose Meshy's own 28-bone rig onto the target rig's rest
+FIRST, bake, and transfer weights afterwards. Her V1 rig uses the identical `Bone_NNN` naming, so the
+script's bone map applied unchanged. After it every mapped bone sits **0.08–1.5 cm** inside her mesh.
+
+**Her texture was the same bake damage the player had, and it is gone the same way.**
+`Art/Blender/rebuild_coworker_v2.py` decimates Meshy's 383,852-triangle high-poly to 56,493 instead of
+baking: torn fringe over her right eye, a shredded collar, ragged sleeve hems, skin-coloured streaks down
+the trouser sides and navy bleeding onto the arms and thumbs — all gone, because all of them were bake
+artefacts rather than anything in the art.
+![coworker rebuilt](media/2026-11-15-cafecoworker-v2-rebuilt-no-bake.jpg)
+
+**Two post-passes were each separately necessary**, both in `Art/Blender/collapse_hand_weights.py`:
+
+* **Her hands are a fused mitten**, so the rig's **41 finger bones are folded into the two palm bones**.
+  Keying five finger chains on one lump of geometry fans it into white shards from the first frame of
+  `Idle`. She cannot articulate fingers she was not given; a hand that moves rigidly at the wrist reads
+  correctly at the distance she is ever seen from, and it is strictly better than one that shatters.
+  **This is the wrong move for the player** — his fingers separate and 32 of his 40 bones work.
+* **Weights further than 12 cm from their bone are dropped.** `reskin_to_existing_rig.py` prunes at 25 cm,
+  which still lets a hip bone drive a hand vertex — and that vertex comes out as a **needle spike several
+  centimetres long** off the heel of the hand. One or two vertices, invisible in any weight count, plainly
+  visible in a side view, and gone after the prune.
+
+![old vs new](media/2026-11-15-cafecoworker-v1-vs-v2-on-her-rig.jpg)
+*Left: the V1 body that was in the game until now — tan skin, a toothy western-cartoon face, a full wrap
+skirt apron. Right: the rebuilt V2 on the same rig, driven by the same `Idle` clip.*
+
+**Still wrong, and it is Meshy's, not the pipeline's.** The apron straps still **cross in an X with a
+diamond keeper** on her back, which the character lock forbids — and it is **raised geometry as well as
+texture**: the straps stand 3–6 mm proud of the shirt and the keeper 12–14 mm, over about 141 cm² and
+16,700 high-poly triangles. No bake or decimate change removes it. Removing it means selecting by the teal
+texel mask and shrinkwrapping those vertices onto the shirt, then repainting in **3D** — the X's texels are
+scattered over 97 of the atlas's 4,096 cells, so a 2D fill cannot do it — and then re-running the rebuild.
+Her hands also have no fingers at all in the source sculpt, which is why they are folded above.
+
+**Seen in the engine, after a restart.** The placed actor rendered as a crumpled teal lump immediately
+after the import — the same stale-skinning artefact as [#109](https://github.com/Waffle-Widgets/jump-cut/issues/109),
+and it cleared on the next editor launch. **Nobody has played it.**
 
 ## The first boss — `CrashDriver`
 
