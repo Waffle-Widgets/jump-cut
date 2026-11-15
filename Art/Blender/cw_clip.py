@@ -273,7 +273,7 @@ _state = {}
 # takes `stance=(a, b)`: the difference between the old stand and the measured one is ADDED to whatever the script
 # poses, in full on the first frame, fading out by u = a (the action takes over), and fading back in from u = b to
 # the last frame. The feet are not touched: both stands plant them in the same place.
-STANCE = dict(fwd=-6.5, dz=1.8, pitch=5.0, spine=-3.0, neck=-12.0, hand_out=-5.0, hand_fwd=2.0, hand_up=-0.02, pron=-7.0,
+STANCE = dict(fwd=-6.5, dz=1.8, pitch=5.0, spine=-3.0, neck=-12.0, hand_out=-5.0, hand_fwd=0.0, hand_up=-0.02, pron=24.0,   # palms to the thighs, as the idle
               clav_up=24.0, clav_back=6.0)
 _stance = [0.0]                                             # this frame's weight, set by author()
 
@@ -516,8 +516,10 @@ if APRON:                                                   # the front surface 
             # BACK when the knee comes up: sampling it made a raised knee read as needing no room at all.
             _idx = np.array([i for i, d in enumerate(_domb) if d == _b and V0[i, 2] < RH[LEG[_s][0]].z - 4.0])
             if not len(_idx): continue
-            _idx = _idx[np.argsort(V0[_idx, 1])][:max(40, len(_idx) // 3)]        # he faces -Y: the most forward third
-            for i in _idx[::max(1, len(_idx) // 160)]:
+            # The front HALF. The front third missed the outer front of the thigh, and the skirt's side edge wraps
+            # round exactly there: a strip of trouser showed in front of the apron's edge while he stood.
+            _idx = _idx[np.argsort(V0[_idx, 1])][:max(40, len(_idx) // 2)]        # he faces -Y
+            for i in _idx[::max(1, len(_idx) // 260)]:
                 _pts.append((_b, REST[_b].inverted() @ Vector(V0[i])))
     APRON_L1 = float(RH[APRON['L']].z - RH[APRON2['L']].z) if APRON2 else APRON_LEN
     _px, _pf, _pu, _mid = _pelvis()

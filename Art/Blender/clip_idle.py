@@ -18,7 +18,7 @@ def T(name, default):
 
 FOOT_FWD = T('FOOT_FWD', 0.0)      # the feet stay where every other clip plants them, so nothing slides on a blend
 STAGGER = T('STAGGER', 2.5)        # cm: left foot ahead, right foot behind
-TOE_OUT = T('TOE_OUT', 11.0)
+TOE_OUT = T('TOE_OUT', 8.0)
 PEL_DX = T('PEL_DX', -1.6)         # weight a little onto his right leg
 PEL_DZ = T('PEL_DZ', 0.6)          # straight legs: the knees measured 29 degrees bent at -0.8, 19 here (the bones' own kink)
 PEL_FWD = T('PEL_FWD', -6.5)       # cm: the PELVIS moves back over the ankles instead. The model rests with its ankles
@@ -29,24 +29,24 @@ SPINE = T('SPINE', -3.0)
 HEAD = T('HEAD', -14.0)           # head LEVEL: at -2 it tipped 12 degrees down and he stared at the floor
 ARM_REACH = T('ARM_REACH', 0.985)  # of the arm's length: 0.965 bent the elbow 30 degrees; this is a relaxed 15
 HAND_OUT = T('HAND_OUT', 2.0)      # arms hang beside the body, not out in an A (they were 13-17 cm outside the hips)
-HAND_FWD = T('HAND_FWD', 5.0)      # the hand rests a little in front of the hip, as in every reference photo
+HAND_FWD = T('HAND_FWD', 3.0)      # the hand rests a little in front of the hip, as in every reference photo
 CLAV_UP = T('CLAV_UP', 24.0)       # 28 squares the shoulders but reads as a shrug when he is doing nothing
 CLAV_BACK = T('CLAV_BACK', 6.0)    # shoulders back, chest open
 PRON = T('PRON', 55.0)
 CURL = T('CURL', 0.34)
 
 
-# LIFE. The first version of this stand was measured into place and then barely moved: the same pose on both sides,
-# a breath of 0.9 degrees and a sway of 0.7 cm. "He looks way too stiff in his idle stance" (owner, Nov 15). A person
-# standing still is never symmetric and never still: the weight sits on one leg with that hip up and the other knee
-# soft, the shoulders tilt the other way to balance, the chest and shoulders rise on the breath, the weight drifts,
-# the head wanders. All of it loops in the 4 seconds.
-WEIGHT_DX = T('WEIGHT_DX', -3.2)   # cm: weight onto his RIGHT leg
-HIP_TILT = T('HIP_TILT', 3.2)      # the free (left) hip drops
-SH_TILT = T('SH_TILT', 2.6)        # shoulders tip back the other way
-BREATH = T('BREATH', 2.0)          # degrees of chest on a breath
-DRIFT = T('DRIFT', 1.3)            # cm the weight wanders
-LOOK = T('LOOK', 5.0)              # degrees the head turns, slowly
+# A SIMPLE, CASUAL STAND. The owner's reference (Nov 15, an anime character sheet: front, side, back) is plain: feet
+# under the shoulders, legs straight, arms hanging straight down close to the body with the palms toward the thighs,
+# shoulders level, head level. The version before this one answered "too stiff" with a contrapposto - weight on one
+# leg, a dropped hip, tipped shoulders - which was more pose than was asked for. This keeps the stand symmetric and
+# puts the life in small movement instead: the breath, a slow drift of the weight, the head.
+BREATH = T('BREATH', 1.6)          # degrees of chest on a breath
+DRIFT = T('DRIFT', 0.8)            # cm the weight wanders side to side
+LOOK = T('LOOK', 3.0)              # degrees the head turns, slowly
+FEET_X = T('FEET_X', 11.0)         # cm either side of the centre line: under the shoulders
+PALM = T('PALM', 86.0)             # forearm roll: 90 faces the palm at the thigh. At 55 the palms faced half forward
+                                   # and the whole arm read as twisted ("make sure his arms don't look twisted up").
 
 
 def pose(u, foot_fwd=FOOT_FWD, dz=PEL_DZ, reach=ARM_REACH, pfwd=PEL_FWD, pitch=PEL_PITCH, life=1.0):
@@ -54,19 +54,15 @@ def pose(u, foot_fwd=FOOT_FWD, dz=PEL_DZ, reach=ARM_REACH, pfwd=PEL_FWD, pitch=P
     br = math.sin(two * u) * life                  # breath, once per loop
     sw = math.sin(two * (u + 0.18)) * life         # the weight drifting, a little behind it
     lk = math.sin(two * (u + 0.55)) * life         # the head, on its own clock
-    fid = math.sin(two * 2 * (u + 0.3)) * life     # a faster, smaller settle, twice per loop
-    C.body(dx=(WEIGHT_DX if life else PEL_DX) + DRIFT * sw, fwd=pfwd + 0.5 * fid, dz=dz + 0.4 * br,
-           pitch=pitch + 0.5 * br, lean=-((HIP_TILT if life else TILT) + 0.8 * sw), twist=-2.0 * life + 0.8 * sw)
-    C.spine(x=SPINE - BREATH * br, y=(SH_TILT + 1.0 * sw) * (1 if life else 0) + 0.5 * sw * (0 if life else 1), z=2.0 * life - 1.2 * sw)
-    C.neck(x=HEAD + 0.6 * BREATH * br + 1.0 * fid, y=-1.2 * life - 0.4 * sw, z=LOOK * lk)
-    # the standing (right) leg is straight under him; the free (left) foot sits a little forward and turned out
-    C.foot('L', x=11.5 if life else 10.5, fwd=foot_fwd + (5.5 if life else STAGGER), yaw=TOE_OUT + (7.0 if life else 0.0))
-    C.foot('R', x=-10.0 if life else -10.5, fwd=foot_fwd - (1.5 if life else STAGGER), yaw=TOE_OUT - 2.0 * (1 if life else 0))
-    for s, fw_, out_, curl_ in (('L', HAND_FWD + 2.0 * life, HAND_OUT + 1.0 * life, CURL - 0.05 * life),
-                                ('R', HAND_FWD - 1.5 * life, HAND_OUT, CURL + 0.05 * life)):
-        C.clav(s, up=CLAV_UP + 1.3 * br, back=CLAV_BACK)
-        C.hand(s, out=out_ + 0.5 * sw * C.SGN[s], fwd=fw_ + 1.2 * sw * C.SGN[s] + 0.6 * fid, up=-C.ARMLEN[s] * (reach - (0.02 if s == 'L' else 0.0) * (1 if life else 0)) + 0.6 * br,   # his left shoulder sits higher
-               pron=PRON, curl=curl_ + 0.03 * fid, elbow=(0.3, -1.0, 0.0))
+    C.body(dx=DRIFT * sw, fwd=pfwd, dz=dz + 0.35 * br, pitch=pitch + 0.4 * br, lean=-0.5 * sw)
+    C.spine(x=SPINE - BREATH * br, y=0.5 * sw, z=-0.6 * sw)
+    C.neck(x=HEAD + 0.6 * BREATH * br, y=-0.3 * sw, z=LOOK * lk)
+    C.foot('L', x=FEET_X, fwd=foot_fwd, yaw=TOE_OUT)
+    C.foot('R', x=-FEET_X, fwd=foot_fwd, yaw=TOE_OUT)
+    for s in 'LR':
+        C.clav(s, up=CLAV_UP + 1.0 * br, back=CLAV_BACK)
+        C.hand(s, out=HAND_OUT, fwd=HAND_FWD + 0.6 * sw * C.SGN[s], up=-C.ARMLEN[s] * reach + 0.45 * br,
+               pron=PALM, curl=CURL, elbow=(0.15, -1.0, 0.0))
 
 
 if os.environ.get('STUDY'):
