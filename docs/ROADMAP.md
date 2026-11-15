@@ -178,6 +178,22 @@ anyone picks up a task:
 
 ## Open
 
+### The rescue is a run, the boss uses Splice, the clapperboard clacks (Sun Nov 15, 16:45 UTC, Justin's Mac mini)
+
+Asked for by Justin on Sunday morning. **Built, played by a script in PIE, not played by a person, not in a
+Windows build.** On branch `claude/project-thread-1f2owz`. See
+[the devlog entry](devlog/2026-11-15-they-run-the-boss-blinks-the-clapper-clacks.md).
+
+- **Rescue:** the player runs at 520 cm/s facing the way he goes and the coworker runs at his shoulder
+  (her `Walk` at 1.9x; she has no run clip). **No hand-hold:** no clip exists and her hands are fused mittens.
+- **Boss Splice:** a 0.4 s blink (pinch, move, open, cyan burst, `SFX_SpliceBlink`). Once in his intro, out of
+  his own close-up and 350 cm nearer; then every 6 s in the fight to the player's side. `BossSpliceOff` on
+  `BP_BossFreeze` turns the fight blink off if a playtest says it is unfair.
+- **Clapperboard:** our own drawing, open then snapped shut with a new `SFX_Clapper`, on a power being
+  granted and on every Freeze Frame the player triggers.
+- Changed: `BP_OpeningDirector`, `BP_Coworker`, `BP_BossFreeze`, `WBP_CineOverlay`. New: `SFX_Clapper`,
+  `T_UI_Clapper_Open`, `T_UI_Clapper_Shut`. `BP_Player` untouched.
+
 ### The boss speaks, the demo ends at the boss, the cafe wall falls every time (Sun Nov 15, 15:50 UTC, Justin's Mac mini)
 
 Asked for by the Team Owner on Sunday morning. **Built, played by a script in PIE, not played by a person.**
