@@ -28,7 +28,7 @@ BREATH, SWAY = E('BREATH', 1.1), E('SWAY', 0.35)
 FRAMES, FPS = 120, 30
 REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
 DIR = os.path.join(REPO, 'Art', 'Blender', 'export', 'Characters', 'CafeCoworkerV2')
-SRC = os.path.join(DIR, 'SK_CafeCoworkerV2_oldrig_skinfix.fbx')
+SRC = os.path.join(DIR, os.environ.get('BODY', 'SK_CafeCoworkerV2_oldrig_handfix.fbx'))
 OUT = os.path.join(DIR, 'SK_CafeCoworkerV2_Idle.fbx')
 CACHE = os.path.join(REPO, 'Art', 'Blender', 'cache'); os.makedirs(CACHE, exist_ok=True)
 
@@ -79,6 +79,34 @@ def hand_tip(w):
     return max(pts, key=lambda p: (p - head(w)).length)
 
 
+ROLL = E('ROLL', 1.0)                                        # 1 = thumbs fully forward, 0 = the sculpt's own roll
+ROLLS, LEFT = [], []
+
+
+def thumb_roll(fo, wr):
+    """Degrees to turn the hand about the forearm's line so the THUMB points forward (-Y; she faces -Y).
+    The thumb is the finger chain whose tip sits furthest off the hand's own line."""
+    palm = PB[wr]
+    while len(palm.children) < 3 and palm.children:             # the wrist can be a stub above the bone the fingers hang off
+        palm = palm.children[0]
+    w = RW @ palm.head
+    tips = []
+    for c in palm.children:
+        ch = c.children_recursive
+        tips.append(RW @ (ch[-1].tail if ch else c.tail))
+    if len(tips) < 3:
+        return 0.0
+    m = sum(((t - w).normalized() for t in tips), Vector((0, 0, 0))).normalized()
+    thumb = max(tips, key=lambda t: (t - w).normalized().angle(m))
+    ax = (w - head(fo)).normalized()
+    side = (thumb - w); side = (side - ax * side.dot(ax))
+    fwd = Vector((0, -1, 0)); fwd = fwd - ax * fwd.dot(ax)
+    if side.length < 1e-6 or fwd.length < 1e-6:
+        return 0.0
+    ang = math.degrees(side.angle(fwd))
+    return ang if side.cross(fwd).dot(ax) > 0 else -ang
+
+
 def pose(f):
     reset()
     u = f / FRAMES
@@ -97,6 +125,18 @@ def pose(f):
         tip = hand_tip(wr); cur = (tip - head(wr)).normalized()
         want = Vector((sg * 0.04, -0.12, -1)).normalized()
         aim(wr, tip, cur.lerp(want, HAND_IN).normalized())
+        # THE PALMS. Lowering an arm by the shortest turn keeps whatever roll the sculpt had, and hers has the palms
+        # facing BACK, so from behind the player saw the flat of each hand ("twisted up"). A hanging hand has its
+        # palm to the thigh and its thumb forward. The roll that puts the thumb forward is measured, then shared
+        # across the upper arm, the forearm and the hand - this rig has no twist bones, and one joint taking all
+        # of it wrings the sleeve thin.
+        r = thumb_roll(fo, wr) * ROLL
+        if f == 0: ROLLS.append(round(r, 1))
+        rot(up, (head(fo) - head(up)).normalized(), r / 3.0)
+        ax = (head(wr) - head(fo)).normalized()
+        rot(fo, ax, r / 3.0)
+        rot(wr, ax, thumb_roll(fo, wr) * ROLL)
+        if f == 0: LEFT.append(round(thumb_roll(fo, wr), 1))
 
 
 rig.animation_data_create()
@@ -108,6 +148,7 @@ for f in range(FRAMES + 1):
         pb.keyframe_insert('rotation_quaternion', frame=f); pb.keyframe_insert('location', frame=f)
 sc.frame_start, sc.frame_end = 0, FRAMES
 print('CWIDLE keyed %d frames on %d bones' % (FRAMES + 1, len(PB)))
+print('CWIDLE thumb roll applied (her left, her right) %s deg; left over afterwards %s deg' % (ROLLS[:2], LEFT[:2]))
 
 if 'norender' not in a:
     world = bpy.data.worlds.new('W'); sc.world = world; world.use_nodes = True
@@ -132,6 +173,21 @@ if 'norender' not in a:
     sheet = np.concatenate(rows[::-1], axis=0)
     out = bpy.data.images.new('sheet', w * 3, h * 2); out.pixels[:] = sheet.ravel().tolist()
     out.filepath_raw = os.path.join(CACHE, 'CafeCoworkerV2_Idle.png'); out.file_format = 'PNG'; out.save()
+    sc.frame_set(0)
+    cam.data.ortho_scale = 46; sc.render.resolution_x, sc.render.resolution_y = 420, 420
+    ht = []
+    for up in UP:
+        wpt = RW @ PB[kid(kid(up))].head
+        for tag, d in (('back', Vector((0, 1, 0))), ('front', Vector((0, -1, 0))), ('side', Vector((1 if wpt.x > 0 else -1, 0, 0)))):
+            ctr = wpt + Vector((0, 0, -8)); cam.location = ctr + d * 1000
+            cam.rotation_euler = (ctr - cam.location).to_track_quat('-Z', 'Y').to_euler()
+            fp = os.path.join(CACHE, '_cwh_%s_%s.png' % (up, tag)); sc.render.filepath = fp; bpy.ops.render.render(write_still=True); ht.append(fp)
+    hi = [bpy.data.images.load(t) for t in ht]
+    hw, hh = hi[0].size
+    hrow = np.concatenate([np.array(im.pixels[:]).reshape(hh, hw, 4) for im in hi], axis=1)
+    ho = bpy.data.images.new('hands', hw * len(hi), hh); ho.pixels[:] = hrow.ravel().tolist()
+    ho.filepath_raw = os.path.join(CACHE, 'CafeCoworkerV2_Idle_hands.png'); ho.file_format = 'PNG'; ho.save()
+    print('CWIDLE hands %s (her left: back, front, side; her right: back, front, side)' % ho.filepath_raw)
     for o in (sun, cam): bpy.data.objects.remove(o)
     print('CWIDLE sheet %s' % out.filepath_raw)
 
