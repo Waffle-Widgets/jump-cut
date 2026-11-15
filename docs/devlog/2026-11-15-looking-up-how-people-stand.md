@@ -1,6 +1,6 @@
 # Looking up how people stand, instead of guessing again
 
-*Sun 15 Nov 2026, about 6:30 AM Pacific — GameStation · Blender 5.3.0 · by Fable 5.2 (`claude-fable-5-2`)*
+*Sun 15 Nov 2026, about 5:50 AM Pacific — GameStation · Blender 5.3.0 · by Fable 5.2 (`claude-fable-5-2`)*
 
 - **What we asked for:** after five rounds on the idle, a fair question.
 

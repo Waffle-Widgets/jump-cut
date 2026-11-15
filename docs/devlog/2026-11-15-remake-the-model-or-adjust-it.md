@@ -1,6 +1,6 @@
 # Remake the model, or adjust it?
 
-*Sun 15 Nov 2026, about 7:10 AM Pacific — GameStation · Blender 5.3.0 · by Fable 5.2 (`claude-fable-5-2`)*
+*Sun 15 Nov 2026, about 6:00 AM Pacific — GameStation · Blender 5.3.0 · by Fable 5.2 (`claude-fable-5-2`)*
 
 - **What we asked for:** a straight answer after the A-pose idle went in.
 

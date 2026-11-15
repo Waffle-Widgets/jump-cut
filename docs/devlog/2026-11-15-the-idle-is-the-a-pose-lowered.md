@@ -1,6 +1,6 @@
 # The idle is the A-pose, lowered
 
-*Sun 15 Nov 2026, about 6:50 AM Pacific — GameStation · Blender 5.3.0 · by Fable 5.2 (`claude-fable-5-2`)*
+*Sun 15 Nov 2026, about 5:55 AM Pacific — GameStation · Blender 5.3.0 · by Fable 5.2 (`claude-fable-5-2`)*
 
 - **What we asked for:** a simpler way to get the idle, from the owner.
 

@@ -1,6 +1,6 @@
 # "This looks worse": the elbow pumped with every breath, and the shoulders I could not level
 
-*Sun 15 Nov 2026, about 5:40 AM Pacific — GameStation · Blender 5.3.0 · by Fable 5.2 (`claude-fable-5-2`)*
+*Sun 15 Nov 2026, about 5:38 AM Pacific — GameStation · Blender 5.3.0 · by Fable 5.2 (`claude-fable-5-2`)*
 
 - **What we asked for:** the previous pass (arms, and the cartoon look's brightness on the player) made it worse.
 
