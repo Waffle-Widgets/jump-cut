@@ -97,6 +97,22 @@ def tick(dt):
             f['boss_gone'] = True
         S['frames'].append(f)
         ph = S['phase']
+        if MODE == 'crash':
+            # the opening plays by itself; log the director clock on the frame each event fires
+            f['cine'] = round(gp(d, 'CineTime', -1.0), 3)
+            sa = gp(d, 'CineSeqActor', None)
+            try:
+                f['seq'] = round(sa.get_editor_property('sequence_player').get_current_time().time.frame_number.value / 30.0, 3)
+            except Exception:
+                f['seq'] = None
+            for key in ('CineCrashSounded', 'CineWallDone', 'CineFireDone', 'RagdollOn'):
+                v = bool(gp(d, key, False))
+                if S.get('p_' + key) is not None and S['p_' + key] != v:
+                    ev('%s -> %s at CineTime %s (sequence %s)' % (key, v, f['cine'], f['seq']))
+                S['p_' + key] = v
+            if f['cine'] > 8.0 or now > 60.0:
+                finish('opening sampled')
+            return
         if ph == 0 and obj == 1:
             pawn.call_method('PlayerGrantFreezeFrame')
             for g in actors(gw, 'BP_EnemyBase'):
