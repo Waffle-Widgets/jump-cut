@@ -189,18 +189,34 @@ def instance(name, parent, tex_name, tex):
     return mi
 
 
-def flat(name, rgb, unlit=False):
+def flat(name, rgb, unlit=False, shaded=False):
+    """A one-colour material. `shaded` = unlit with its own soft light from above the staff side: the cup sits in the
+    counter's shadow, where a lit material goes black through the cel look and a plain unlit one has no form."""
     path = '%s/%s' % (DIR, name)
     m = eal.load_asset(path)
     if m is None:
         m = at.create_asset(name, DIR, unreal.Material, unreal.MaterialFactoryNew())
     mel.delete_all_material_expressions(m)
-    c = mel.create_material_expression(m, unreal.MaterialExpressionConstant3Vector, -300, 0)
+    c = mel.create_material_expression(m, unreal.MaterialExpressionConstant3Vector, -500, 0)
     c.set_editor_property('constant', unreal.LinearColor(rgb[0], rgb[1], rgb[2], 1))
-    if unlit:
+    if shaded:
+        m.set_editor_property('shading_model', unreal.MaterialShadingModel.MSM_UNLIT)
+        n = mel.create_material_expression(m, unreal.MaterialExpressionVertexNormalWS, -500, 200)
+        k = mel.create_material_expression(m, unreal.MaterialExpressionCustom, -200, 0)
+        k.set_editor_property('code', 'float d = saturate(dot(normalize(N), normalize(float3(0.25, -0.45, 0.85))) * 0.5 + 0.5); return Color * lerp(0.42, 1.0, d * d);')
+        k.set_editor_property('output_type', unreal.CustomMaterialOutputType.CMOT_FLOAT3)
+        ins = []
+        for nm in ('Color', 'N'):
+            ci = unreal.CustomInput(); ci.set_editor_property('input_name', nm); ins.append(ci)
+        k.set_editor_property('inputs', ins)
+        mel.connect_material_expressions(c, '', k, 'Color')
+        mel.connect_material_expressions(n, '', k, 'N')
+        mel.connect_material_property(k, '', unreal.MaterialProperty.MP_EMISSIVE_COLOR)
+    elif unlit:
         m.set_editor_property('shading_model', unreal.MaterialShadingModel.MSM_UNLIT)
         mel.connect_material_property(c, '', unreal.MaterialProperty.MP_EMISSIVE_COLOR)
     else:
+        m.set_editor_property('shading_model', unreal.MaterialShadingModel.MSM_DEFAULT_LIT)
         mel.connect_material_property(c, '', unreal.MaterialProperty.MP_BASE_COLOR)
     mel.recompile_material(m)
     say('flat material %s' % path)
@@ -213,7 +229,7 @@ def assets():
     c = collection()
     sim = material('M_LatteSim', SIM, 'Prev', {'Pour': 0, 'Vel': 0, 'Misc': 0, 'Fx': 0}, {}, a)
     surf = material('M_LatteSurface', SURF, 'Sim', {'Fx': 0}, {'Bright': 0.42}, a)
-    made = [a, b, c, sim, surf, flat('M_LatteCup', (0.30, 0.29, 0.26), True), flat('M_LatteSteel', (0.15, 0.16, 0.18), True),
+    made = [a, b, c, sim, surf, flat('M_LatteCup', (0.27, 0.255, 0.22), shaded=True), flat('M_LatteSteel', (0.24, 0.26, 0.30), shaded=True),
             flat('M_LatteMilk', (0.42, 0.40, 0.34), True), flat('M_LatteBar', (0.40, 0.26, 0.10), True),
             instance('MI_LatteSim_FromA', sim, 'Prev', a), instance('MI_LatteSim_FromB', sim, 'Prev', b),
             instance('MI_LatteSurface_A', surf, 'Sim', a), instance('MI_LatteSurface_B', surf, 'Sim', b)]
@@ -230,6 +246,34 @@ def where():
             say('%-28s loc (%.0f %.0f %.0f) yaw %.0f  box centre (%.0f %.0f %.0f) half (%.0f %.0f %.0f)' % (
                 l, a.get_actor_location().x, a.get_actor_location().y, a.get_actor_location().z, a.get_actor_rotation().yaw,
                 o.x, o.y, o.z, e.x, e.y, e.z))
+
+
+def kit():
+    # Art/Blender/latte_kit.py's three models. Imported from Art/ (never from inside Content/), no dialog.
+    src = os.path.join(unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_dir()), '..', 'Art', 'Blender', 'export', 'Latte')
+    dest = '/Game/Game/Imported/Latte'
+    saved = []
+    for n in ('SM_LatteCup', 'SM_LatteSaucer', 'SM_LattePitcher'):
+        t = unreal.AssetImportTask()
+        t.set_editor_property('filename', os.path.normpath(os.path.join(src, n + '.fbx')).replace(os.sep, '/'))
+        t.set_editor_property('destination_path', dest)
+        t.set_editor_property('automated', True)
+        t.set_editor_property('replace_existing', True)
+        t.set_editor_property('save', False)
+        at.import_asset_tasks([t])
+        m = eal.load_asset('%s/%s' % (dest, n))
+        if m is None:
+            say('IMPORT FAILED %s (%s)' % (n, list(t.get_editor_property('imported_object_paths')))); continue
+        unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem).set_nanite_settings(m, unreal.MeshNaniteSettings(enabled=False), True)
+        b = m.get_bounding_box()
+        say('%s tris %d box x %.1f..%.1f y %.1f..%.1f z %.1f..%.1f slots %d' % (n, m.get_num_triangles(0), b.min.x, b.max.x, b.min.y, b.max.y,
+                                                                              b.min.z, b.max.z, len(m.get_editor_property('static_materials'))))
+        saved.append(m.get_outermost())
+    for a in eal.list_assets(dest, False):
+        o = eal.load_asset(a.split('.')[0])
+        if o is not None and o.get_outermost() not in saved:
+            saved.append(o.get_outermost())
+    say('SAVED %s (%d packages)' % (unreal.EditorLoadingAndSavingUtils.save_packages(saved, False), len(saved)))
 
 
 def place():
@@ -255,7 +299,7 @@ def place():
 
 try:
     mode = sys.argv[1] if len(sys.argv) > 1 else 'where'
-    {'assets': assets, 'where': where, 'place': place}[mode]()
+    {'assets': assets, 'where': where, 'place': place, 'kit': kit}[mode]()
 except Exception:
     import traceback
     say(traceback.format_exc())

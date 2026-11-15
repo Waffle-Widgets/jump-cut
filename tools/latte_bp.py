@@ -26,16 +26,16 @@ def say(s):
 
 
 def mesh(n):
-    return eal.load_asset('/Engine/BasicShapes/%s' % n)
+    return eal.load_asset(n if n.startswith('/') else '/Engine/BasicShapes/%s' % n)
 
 
 # name: (class, mesh, material, location, rotation(roll,pitch,yaw), scale)
 PARTS = [
     ('Cam', unreal.CameraComponent, None, None, V(-34, 0, 74), R(roll=0, pitch=-68, yaw=0), V(1, 1, 1)),
-    ('Cup', unreal.StaticMeshComponent, 'Cylinder', '/Game/Game/Materials/Latte/M_LatteCup', V(0, 0, -4.2), R(roll=0, pitch=0, yaw=0), V(0.13, 0.13, 0.082)),
-    ('Saucer', unreal.StaticMeshComponent, 'Cylinder', '/Game/Game/Materials/Latte/M_LatteCup', V(0, 0, -8.6), R(roll=0, pitch=0, yaw=0), V(0.2, 0.2, 0.008)),
+    ('Cup', unreal.StaticMeshComponent, '/Game/Game/Imported/Latte/SM_LatteCup', '/Game/Game/Materials/Latte/M_LatteCup', V(0, 0, 0), R(roll=0, pitch=0, yaw=0), V(1, 1, 1)),
+    ('Saucer', unreal.StaticMeshComponent, '/Game/Game/Imported/Latte/SM_LatteSaucer', '/Game/Game/Materials/Latte/M_LatteCup', V(0, 0, 0), R(roll=0, pitch=0, yaw=0), V(1, 1, 1)),
     ('Surface', unreal.StaticMeshComponent, 'Plane', '/Game/Game/Materials/Latte/MI_LatteSurface_A', V(0, 0, 0), R(roll=0, pitch=0, yaw=0), V(0.12, 0.12, 1)),
-    ('Pitcher', unreal.StaticMeshComponent, 'Cone', '/Game/Game/Materials/Latte/M_LatteSteel', V(0, 9, 14), R(roll=-115, pitch=0, yaw=0), V(0.05, 0.05, 0.085)),
+    ('Pitcher', unreal.StaticMeshComponent, '/Game/Game/Imported/Latte/SM_LattePitcher', '/Game/Game/Materials/Latte/M_LatteSteel', V(0, 0, 8), R(roll=0, pitch=0, yaw=0), V(1, 1, 1)),
     ('Stream', unreal.StaticMeshComponent, 'Cylinder', '/Game/Game/Materials/Latte/M_LatteMilk', V(0, 0, 6), R(roll=0, pitch=0, yaw=0), V(0.006, 0.006, 0.12)),
     ('FillBar', unreal.StaticMeshComponent, 'Cube', '/Game/Game/Materials/Latte/M_LatteBar', V(-4.2, -10, 0), R(roll=0, pitch=0, yaw=0), V(0.036, 0.008, 0.004)),
     ('FillMark', unreal.StaticMeshComponent, 'Cube', '/Game/Game/Materials/Latte/M_LatteMilk', V(2.0, -10.9, 0), R(roll=0, pitch=0, yaw=0), V(0.004, 0.03, 0.004)),

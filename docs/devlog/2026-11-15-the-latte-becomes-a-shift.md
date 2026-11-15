@@ -62,3 +62,15 @@
   - A hidden grey box is still a wall. Sweep the route before promising a path.
   - If a rule already exists ("the opening starts when input unlocks"), build on the rule instead of editing
     the thing that owns it.
+
+- **Later the same hour: a real cup and pitcher.** `Art/Blender/latte_kit.py` builds the cup (with a handle), the
+  saucer and a milk pitcher with a pulled spout from profiles, and exports the pitcher already tilted with its
+  origin at the spout tip, so the Blueprint only moves it. They came into the game **black**: the cup sits on
+  the staff side of the counter, in shadow, and the cel look turns a lit material in shadow to ink. A plain
+  unlit colour had no form at all. `M_LatteCup` and `M_LatteSteel` are now unlit with their own soft light
+  written into the material, so they read from either side of the counter.
+
+  ![A real pitcher pouring a heart](../media/2026-11-15-latte-real-pitcher.png)
+
+  One more trap: the tool that shows the agent a picture cached it by file name, so an hour-old screenshot came
+  back in place of a new one with the same name. Copy a capture to a fresh name before looking at it.
