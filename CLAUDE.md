@@ -148,6 +148,18 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   disk, and World Partition loads everything in that folder - which would have put a **second
   BP_OpeningDirector** in the level and run beat 1 twice. It found exactly two.
 
+### Blend spaces (learned 2026-11-15, the sprint)
+- **A script that adds, removes or moves a blend-space sample leaves the OLD lookup in place, and
+  everything reads back right.** A blend space plays from a triangulation that stores sample
+  INDICES. `UBlendSpace::ResampleData` rebuilds it and is only called from the blend-space editor
+  widget (`SAnimationBlendSpace.cpp:105-108`); `set_editor_property` on `sample_data` or
+  `blend_parameters` does not. After adding a sprint row the player leaned like the sprint at
+  439 cm/s and like the walk at 850, with all 36 samples reading back correct. Cure:
+  `AssetEditorSubsystem.open_editor_for_assets([bs])`, save, `close_all_editors_for_asset(bs)`
+  (`tools/unreal_player_authored_wire.py`). Swapping the CLIP on an existing sample is safe without
+  it, which is how this hides. Verify in PIE by a pose number (head ahead of hips), not by reading
+  the asset.
+
 ### Other traps from the same session
 - **The editor console box is `tb1`. `tb2` is the Outliner search.** Refs are assigned per
   session and the old note naming `tb2` is stale. A `py <path>` typed into `tb2` silently becomes
