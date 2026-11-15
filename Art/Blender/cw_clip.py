@@ -158,6 +158,9 @@ def orient(bone, f, u, f0, u0):
 
 
 REACH = {}                                                 # how far past full stretch an IK target was, per limb
+TWIST = {}                                                 # the most an upper arm or thigh was spun about its own length
+SPIN = {}                                                  # this frame's signed spin per limb, before sharing
+JOINT = {}                                                 # the most any one arm joint was left wringing, per arm
 
 def ik2(tag, up, lo, end, target, pole, rest_pole):
     """Two-bone IK. up/lo/end: thigh, shin, foot (or upper arm, forearm, wrist). The knee / elbow goes toward pole,
@@ -174,6 +177,22 @@ def ik2(tag, up, lo, end, target, pole, rest_pole):
     aim(up, lo, dn * al + p * hh)
     twist_to(up, lo, rest_pole, p)
     aim(lo, end, (h + dn * dist) - head(lo))
+    # SHARE THE SPIN. twist_to puts the whole of the upper bone's spin at its top joint (shoulder or hip), and this
+    # rig has no twist bones: skin wrung through one joint by an angle a keeps only cos(a/2) of its thickness there.
+    # Measure the spin against the plain swing from the bind pose, leave half at the top joint and hand half to the
+    # middle one (elbow or knee), turning the lower bone back so nothing below it moves. hand() then re-balances the
+    # arm three ways with the forearm roll.
+    cur = (head(lo) - head(up)).normalized()
+    M0 = (W[PARENT[up]] @ REL[up]).to_3x3()                         # the upper bone as its parent carries it, unposed
+    d0 = (W[PARENT[up]].to_3x3() @ REST[PARENT[up]].to_3x3().inverted() @ (RH[lo] - RH[up])).normalized()
+    nat = d0.rotation_difference(cur).to_matrix() @ M0 @ X; now = W[up].to_3x3() @ X
+    nat = nat - cur * nat.dot(cur); now = now - cur * now.dot(cur)
+    tw = math.degrees(math.atan2(cur.dot(nat.cross(now)), nat.dot(now))) if nat.length > 1e-6 and now.length > 1e-6 else 0.0
+    SPIN[tag] = tw
+    TWIST[tag] = max(TWIST.get(tag, 0.0), abs(tw))
+    if abs(tw) > 1e-3:
+        rot(up, cur, -0.5 * tw)
+        rot(lo, cur, 0.5 * tw)
 
 
 # which chain is on +X (his left), and the bones of each limb
@@ -246,11 +265,31 @@ NECK = (('Bone_018', 0.4), ('Bone_017', 0.6))
 _state = {}
 
 
+# THE STAND. Every action clip was authored from, and back to, a "neutral" stand that was simply the bind pose brought
+# down: C.body(dz=-1.2), feet and hands at their defaults. Measured against photographs of people standing
+# (posture_check.py, Nov 15) that stand has the pelvis 6.5 cm in front of the ankles, the shoulders behind the hips,
+# the head tipped 12 degrees down and the arms out in an A. clip_idle.py was rebuilt to the measured stance; the
+# other clips still began and ended on the old one and blended to it. Rather than re-key eight scripts, author()
+# takes `stance=(a, b)`: the difference between the old stand and the measured one is ADDED to whatever the script
+# poses, in full on the first frame, fading out by u = a (the action takes over), and fading back in from u = b to
+# the last frame. The feet are not touched: both stands plant them in the same place.
+STANCE = dict(fwd=-6.5, dz=1.6, pitch=5.0, spine=-5.0, neck=-12.0,
+              # Nov 15, later: the idle became the model's own A-pose lowered (clip_idle.py), so the stand every clip
+              # starts and ends in follows it: arms 10 cm out and open-handed, collarbones as sculpted, feet 20 cm apart.
+              hand_out=1.0, hand_fwd=-1.0, hand_up=-0.002, pron=-17.0, curl=-0.14,
+              clav_up=14.0, clav_back=0.0,
+              foot_x=-0.5)
+HEAD_FIX = (-4.0, 2.0)                                      # neck (tilt, turn) that stands the model's head upright
+_stance = [0.0]                                             # this frame's weight, set by author()
+
+
 def body(dx=0.0, fwd=0.0, dz=0.0, pitch=0.0, lean=0.0, twist=0.0):
     """Start a frame and place the pelvis. dx: toward his left. fwd: forward. dz: up (negative sinks him, which bends
     the knees). pitch: positive leans him FORWARD. lean: positive tips him toward his LEFT. twist: positive turns the
     hips toward his LEFT (anticlockwise seen from above)."""
     reset()
+    w_ = _stance[0]
+    fwd += STANCE['fwd'] * w_; dz += STANCE['dz'] * w_; pitch += STANCE['pitch'] * w_
     pos = P0 + Vector((dx, -fwd, dz))
     R = Matrix.Rotation(math.radians(twist), 4, Z) @ Matrix.Rotation(math.radians(pitch), 4, X) @ Matrix.Rotation(math.radians(-lean), 4, Y)
     set_world('Bone_000', Matrix.Translation(pos) @ R @ Matrix.Translation(-P0) @ REST['Bone_000'])
@@ -260,12 +299,18 @@ def body(dx=0.0, fwd=0.0, dz=0.0, pitch=0.0, lean=0.0, twist=0.0):
 def spine(x=0.0, y=0.0, z=0.0):
     """Bend the back, shared over three bones. x: positive curls him FORWARD. y: positive bends toward his LEFT.
     z: positive twists the chest toward his LEFT."""
+    x += STANCE['spine'] * _stance[0]
     for b in SPINE:
         rot(b, X, x / 3.0); rot(b, Y, -y / 3.0); rot(b, Z, z / 3.0)
 
 
 def neck(x=0.0, y=0.0, z=0.0):
     """Head and neck. x: positive nods DOWN. y: positive tilts toward his LEFT. z: positive looks to his LEFT."""
+    x += STANCE['neck'] * _stance[0]
+    # THE MODEL'S HEAD IS NOT UPRIGHT. Seen close from the front in any level pose it leans about 4 degrees toward
+    # his right shoulder and is turned a little that way too ("the head needs to be straight not slanted", owner,
+    # Nov 15; rendered at 0, -4 and -7: -4 is upright, -7 leans the other way). Corrected here so every clip has it.
+    y += HEAD_FIX[0]; z += HEAD_FIX[1]
     for b, k in NECK:
         rot(b, X, x * k); rot(b, Y, -y * k); rot(b, Z, z * k)
 
@@ -284,6 +329,7 @@ def foot(s, x=None, fwd=0.0, up=0.0, pitch=0.0, yaw=8.0, knee_out=0.22):
     up), negative lifts the toes. yaw: toe-out. A foot flat on the floor is up=0, pitch=0."""
     th, sh, ft = LEG[s]
     if x is None: x = SGN[s] * 10.5
+    x += SGN[s] * STANCE['foot_x'] * _stance[0]
     t = Vector((x, ANK_Y - fwd, ANK[s].z - DROP[s] + up))
     ik2('leg' + s, th, sh, ft, t, Vector((SGN[s] * knee_out, -1.0, 0.0)), -Y)
     yw = math.radians(yaw) * SGN[s]; p = math.radians(pitch)
@@ -300,6 +346,9 @@ def hand(s, out=9.0, fwd=3.0, up=None, pron=62.0, curl=0.34, elbow=(0.35, -1.0, 
     and a little out. Keep it well off the line from shoulder to wrist or the elbow flips between frames."""
     up_, fo, wr = ARM[s]
     if up is None: up = -ARMLEN[s] * 0.965
+    w_ = _stance[0]
+    out += STANCE['hand_out'] * w_; fwd += STANCE['hand_fwd'] * w_; up += STANCE['hand_up'] * ARMLEN[s] * w_; pron += STANCE['pron'] * w_
+    curl = max(0.0, min(1.0, curl + STANCE['curl'] * w_))
     if not _state.get('clav' + s):
         # Hold the shoulder where the idle holds it, in every pose. A hanging arm needs 28 degrees of collarbone lift
         # or the shoulder slopes (owner, Nov 15, twice). Round two then dropped the lift to nothing for a level or
@@ -309,12 +358,28 @@ def hand(s, out=9.0, fwd=3.0, up=None, pron=62.0, curl=0.34, elbow=(0.35, -1.0, 
         # overhead, the way a real shoulder does.
         v = Vector((SGN[s] * out, -fwd, up))
         d = v.z / max(v.length, 1e-6)                     # -1 hanging .. 0 level .. +1 overhead
-        clav(s, up=(24.0 + 4.0 * d * d) if d <= 0 else (24.0 + 10.0 * d))
+        cu_ = (24.0 + 4.0 * d * d) if d <= 0 else (24.0 + 10.0 * d)
+        clav(s, up=cu_ + (STANCE['clav_up'] - cu_) * w_, back=3.0 + (STANCE['clav_back'] - 3.0) * w_)
     sh0 = head(up_)
     t = Vector((sh0.x + SGN[s] * out, sh0.y - fwd, sh0.z + up))
     pole = Vector((SGN[s] * elbow[0], -elbow[1], elbow[2]))
     ik2('arm' + s, up_, fo, wr, t, pole, Y)
-    rot(fo, (head(wr) - head(fo)).normalized(), SGN[s] * pron)
+    # BALANCE THE ARM'S TWIST ACROSS THREE JOINTS. The upper arm's spin T (ik2 has left half at the shoulder and half
+    # at the elbow) and the forearm roll P both wring skin. Splitting each in two put T/2 + P/2 on the elbow alone -
+    # 70 degrees in a punch, and "his arms are having that same thin issue" in the attacks (owner, Nov 15). The
+    # split that minimises the squares puts the same angle on all three: shoulder, elbow and wrist each carry
+    # (T + P) / 3. A punch with T 49 and P 90 goes from 70 at the elbow (82 % of its thickness) to 46 everywhere
+    # (92 %); when T and P oppose, they cancel.
+    cur = (head(fo) - head(up_)).normalized()
+    T = SPIN.get('arm' + s, 0.0); P = SGN[s] * pron
+    d = (T + P) / 3.0 - 0.5 * T                                     # what the shoulder still has to take
+    rot(up_, cur, d)
+    rot(fo, cur, -d)
+    fax = (head(wr) - head(fo)).normalized()
+    b_ = (2.0 * P - T) / 3.0
+    rot(fo, fax, b_)
+    rot(wr, fax, P - b_)
+    JOINT['arm' + s] = max(JOINT.get('arm' + s, 0.0), abs(T + P) / 3.0)
     fingers(s, curl)
 
 
@@ -330,7 +395,93 @@ def wrist(s, bend=0.0, side=0.0):
         rot(wr, palm.normalized(), SGN[s] * side)
 
 
+APRON = {s: 'Apron_' + s for s in 'LR'} if 'Apron_L' in BONES else {}      # a body from apron_bones.py has these
+_apron = {}                                                 # this frame's swing per side, degrees
+
+
+LEGPTS = []                                                 # (bone, point in its own frame, rest angle from the top hinge, from the fold)
+APRON_LEN = 44.0                                            # hinge to hem
+APRON_L1 = 22.0                                             # hinge to fold (the upper panel); the rest is the lower panel
+COUPLE = 0.45                                               # how far one half of the skirt follows the other
+APRON2 = {s: 'Apron_' + s + '2' for s in 'LR'} if 'Apron_L2' in BONES else {}
+_apron = {}                                                 # this frame: 'L','R' upper swing; 'L2','R2' lower panel's own angle
+
+
+def _pelvis():
+    carry = W['Bone_001'].to_3x3() @ REST['Bone_001'].to_3x3().inverted()
+    mid = W['Bone_001'] @ (REST['Bone_001'].inverted() @ ((RH[APRON['L']] + RH[APRON['R']]) * 0.5))
+    return carry @ X, carry @ (-Y), carry @ Z, mid
+
+
+def _clear(hinge, radius, which):
+    """How far forward (degrees from the pelvis's own straight-down) a panel hinged at `hinge` (one point per side)
+    and `radius` long must swing so no point on the front of either leg comes closer to it than that point sits at
+    rest. which = 2 for the top hinge's rest angles, 3 for the fold's."""
+    px, pf, pu, mid = _pelvis()
+    out = {}
+    for s in APRON:
+        worst = 0.0
+        for e in LEGPTS:
+            p = W[e[0]] @ e[1]
+            lat = (p - mid).dot(px)
+            # Each bone owns its side AND the 15 cm either side of the centre line that the two share: watching only
+            # its own side let the far leg through the middle of the skirt ("clips ... during some attacks").
+            # How much of the sheet at this point belongs to this bone: the two share the middle 30 cm (apron_bones.py
+            # BLEND_X). A bone answers for the points that are mostly its own, and swings far enough that the sheet
+            # THERE clears them even though the other bone only follows COUPLE of the way. Making both bones answer
+            # for the whole shared strip swung them together and the skirt moved as one board.
+            t_ = min(1.0, max(0.0, (lat * SGN[s] + 15.0) / 30.0)); w_ = t_ * t_ * (3 - 2 * t_)
+            if w_ < 0.5 or lat * SGN[s] > 20.0: continue
+            v = p - hinge[s]
+            down, fw = -v.dot(pu), v.dot(pf)
+            # a thigh raised to level has its front surface ABOVE the hinge: that is the case that matters most
+            if not (down > 2.0 or fw > 0.0) or math.hypot(down, fw) > radius + 2.0: continue
+            need = math.degrees(math.atan2(fw + 1.5, down)) - e[which][s]
+            if need > 0.0: worst = max(worst, need / (w_ + (1.0 - w_) * COUPLE))
+        out[s] = worst
+    return out
+
+
+def _fold_point(s, a1):
+    px, pf, pu, mid = _pelvis()
+    r = math.radians(a1)
+    return mid + px * (SGN[s] * 8.0) + (pf * math.sin(r) - pu * math.cos(r)) * APRON_L1
+
+
+def _apron_solve():
+    """Both panels of both halves for this pose. Cloth is pushed out by a leg in front and never pulled back by one
+    behind; it is ONE sheet, so a knee on one side drags the other side part of the way; and it has weight, so when
+    he leans forward it hangs toward the ground instead of staying glued to his hips."""
+    px, pf, pu, mid = _pelvis()
+    grav = max(0.0, math.degrees(math.atan2(-pf.z, pu.z)))          # straight down in the world, seen from his hips
+    top = {s: mid + px * (SGN[s] * 8.0) for s in APRON}
+    c1 = _clear(top, APRON_L1 if APRON2 else APRON_LEN, 2)
+    a1 = {s: min(105.0, max(c1[s], 0.6 * grav)) for s in APRON}
+    a1 = {s: max(a1[s], COUPLE * a1['R' if s == 'L' else 'L']) for s in APRON}
+    out = dict(a1)
+    if APRON2:
+        c2 = _clear({s: _fold_point(s, a1[s]) for s in APRON}, APRON_LEN - APRON_L1, 3)
+        a2 = {s: min(a1[s] + 5.0, max(c2[s], 0.9 * grav)) for s in APRON}
+        a2 = {s: max(a2[s], COUPLE * a2['R' if s == 'L' else 'L']) for s in APRON}
+        for s in APRON: out[s + '2'] = a2[s]
+    return out
+
+
+def _apron_set(vals):
+    px = _pelvis()[0].normalized()
+    for s in APRON:
+        b = APRON[s]
+        set_world(b, W['Bone_001'] @ REL[b])                # back to hanging, then swing
+        rot(b, px, -vals[s])
+        if APRON2:
+            b2 = APRON2[s]
+            set_world(b2, W[b] @ REL[b2])
+            rot(b2, px, -(vals[s + '2'] - vals[s]))         # the lower panel's angle is its own, not added to the upper's
+    _apron.clear(); _apron.update(vals)
+
+
 def _finish():
+    if APRON: _apron_set(_apron_solve())
     hip = W['Bone_001'].copy()
     set_world('Bone_000', ROOT_FLOOR)
     set_world('Bone_001', hip)
@@ -363,6 +514,64 @@ def keys(u, pts):
 _vgn = {g.index: g.name for g in mesh.vertex_groups}
 _domb = [_vgn[max(v.groups, key=lambda g: g.weight).group] if v.groups else '' for v in mesh.data.vertices]
 SHOE = {s: np.array([i for i, d in enumerate(_domb) if d == LEG[s][2] or d in SUB[LEG[s][2]]]) for s in 'LR'}
+if APRON:                                                   # the front surface of both legs, as points the skirt must clear
+    reset()
+    # BOTH panels. Counting only the upper bones' vertices made the skirt's length equal the upper panel's, so the
+    # lower panel's reach was zero: it never looked for a leg and hung straight down through the thigh under it.
+    _sk = np.array([i for i, d in enumerate(_domb) if d in APRON.values() or d in APRON2.values()])
+    APRON_LEN = float(RH[APRON['L']].z - V0[_sk, 2].min())  # hinge to hem, from the skirt itself (the bone is shorter)
+    _pts = []
+    for _s in 'LR':
+        for _b in LEG[_s][:2]:
+            # Only the leg itself. The waistband above the hip joint is weighted to the thigh too, and it swings
+            # BACK when the knee comes up: sampling it made a raised knee read as needing no room at all.
+            _idx = np.array([i for i, d in enumerate(_domb) if d == _b and V0[i, 2] < RH[LEG[_s][0]].z - 4.0])
+            # ...and not the apron's own backing layer (apron_bones.py: a copy of the top of the skirt left on the body
+            # to fill the hole behind it). It sits 0.8 cm behind the skirt and would count as a leg pushing it out.
+            if len(_idx) and len(_sk):
+                from mathutils.kdtree import KDTree as _KD
+                if '_apron_kd' not in globals():
+                    _apron_kd = _KD(len(_sk))
+                    for _n, _i in enumerate(_sk): _apron_kd.insert(Vector(V0[_i]), _n)
+                    _apron_kd.balance()
+                _idx = np.array([i for i in _idx if _apron_kd.find(Vector(V0[i]))[2] > 1.5])
+            if not len(_idx): continue
+            # The front HALF. The front third missed the outer front of the thigh, and the skirt's side edge wraps
+            # round exactly there: a strip of trouser showed in front of the apron's edge while he stood.
+            _idx = _idx[np.argsort(V0[_idx, 1])][:max(40, len(_idx) // 2)]        # he faces -Y
+            for i in _idx[::max(1, len(_idx) // 260)]:
+                _pts.append((_b, REST[_b].inverted() @ Vector(V0[i])))
+    APRON_L1 = float(RH[APRON['L']].z - RH[APRON2['L']].z) if APRON2 else APRON_LEN
+    _px, _pf, _pu, _mid = _pelvis()
+    for _b, _pl in _pts:
+        _p = REST[_b] @ _pl
+        _r1, _r2 = {}, {}
+        for _s2 in APRON:
+            _v = _p - (_mid + _px * (SGN[_s2] * 8.0))
+            _r1[_s2] = math.degrees(math.atan2(_v.dot(_pf) + 1.5, -_v.dot(_pu)))
+            _v = _p - _fold_point(_s2, 0.0)
+            _r2[_s2] = math.degrees(math.atan2(_v.dot(_pf) + 1.5, -_v.dot(_pu)))
+        LEGPTS.append((_b, _pl, _r1, _r2))
+    # WHERE THE SKIRT ITSELF HANGS. "No closer than at rest" is only right for a point that was UNDER the skirt at
+    # rest. The model rests with its legs spread wider than the skirt, so the outer thighs sat beside it and further
+    # forward than its surface; brought together in a stand they were still allowed that far forward, and a thigh
+    # came through the bottom corner (it read as a ragged hem). So no point is ever allowed further forward than the
+    # back face of the panel it is under: the angle of that panel's own vertices, seen from its hinge, less a margin.
+    _back = {}
+    for _k, _names, _which in ((2, APRON, 0), (3, APRON2, 1)):
+        for _s2 in APRON:
+            if _s2 not in _names: continue
+            _vi = [i for i, d in enumerate(_domb) if d == _names[_s2]]
+            if not _vi: continue
+            _h = (_mid + _px * (SGN[_s2] * 8.0)) if _which == 0 else _fold_point(_s2, 0.0)
+            _ang = [math.degrees(math.atan2((Vector(V0[i]) - _h).dot(_pf), -(Vector(V0[i]) - _h).dot(_pu))) for i in _vi
+                    if -(Vector(V0[i]) - _h).dot(_pu) > 10.0]            # near the hinge an angle means nothing
+            if _ang: _back[(_k, _s2)] = float(np.percentile(_ang, 30)) - 1.0
+    for _e in LEGPTS:
+        for (_k, _s2), _lim in _back.items():
+            _e[_k][_s2] = min(_e[_k][_s2], _lim)
+    log['apron_back_face_deg'] = {'%s%s' % (s_, '' if k_ == 2 else '2'): round(v_, 1) for (k_, s_), v_ in _back.items()}
+    log['apron_leg_points'] = len(LEGPTS)
 body(); foot('L'); foot('R'); apply_pose(); _V = world_verts()
 for _s in 'LR': DROP[_s] = float(_V[SHOE[_s], 2].min()) - 0.05
 log['sole_drop_cm'] = {s: round(DROP[s], 2) for s in 'LR'}
@@ -376,10 +585,13 @@ def _torn(V):
     pairs = {}
     for e in bad:
         k = tuple(sorted((_domb[_E[e, 0]], _domb[_E[e, 1]]))); pairs[k] = pairs.get(k, 0) + 1
+    if len(bad):                                             # where on the body, in the rest pose: height, side, depth
+        mid = (V0[_E[bad, 0]] + V0[_E[bad, 1]]) / 2
+        _torn.where = {ax: [round(float(np.percentile(mid[:, i], q))) for q in (5, 50, 95)] for i, ax in enumerate('xyz')}
     return int(len(bad)), (float(r1[bad].max()) if len(bad) else 0.0), sorted(((n, list(k)) for k, n in pairs.items()), reverse=True)[:5]
 
 
-def author(clip, frames, build, loop=True, sheet_frames=8):
+def author(clip, frames, build, loop=True, sheet_frames=8, stance=None):
     """Solve, key, measure, render, export. frames = how many frames the motion takes (a loop gets one more, equal to
     the first). build(f, u) poses frame f (1-based) where u runs 0..1; for a loop u=1 is the same pose as u=0."""
     F0 = 1; F1 = frames + 1 if loop else frames
@@ -387,17 +599,45 @@ def author(clip, frames, build, loop=True, sheet_frames=8):
     OUT = os.path.join(DIR, 'SK_%s_%s.fbx' % (NAME, clip))
     log.update({'clip': clip, 'frames': [F0, F1], 'loop': loop, 'seconds': round(N / FPS, 3)})
     VERTS, POSES, TRACK, reach, fk_err = {}, {}, {}, {}, 0.0
+    NEED = {}
     for f in range(F0, F1 + 1):
         g = F0 if (loop and f == F1) else f
         REACH.clear()
-        build(g, (g - F0) / N); _finish(); apply_pose(); VERTS[f] = world_verts()
+        u_ = (g - F0) / N
+        _stance[0] = 0.0
+        if stance:                                            # see STANCE: the measured stand at the ends of an action
+            if stance[0]: _stance[0] = max(_stance[0], 1.0 - smooth(u_, 0.0, stance[0]))
+            if stance[1] is not None: _stance[0] = max(_stance[0], smooth(u_, stance[1], 1.0))
+        build(g, u_); _finish(); apply_pose(); VERTS[f] = world_verts()
         POSES[f] = {n: BASIS[n].copy() for n in BONES}
+        NEED[f] = dict(_apron)
         TRACK[f] = {'L': head(LEG['L'][2]).copy(), 'R': head(LEG['R'][2]).copy(), 'hip': head('Bone_001').copy(),
                     'wL': head(ARM['L'][2]).copy(), 'wR': head(ARM['R'][2]).copy()}
         for k, v in REACH.items():
             if v > 0.05: reach[k] = max(reach.get(k, 0.0), round(v, 1))
         fk_err = max(fk_err, max((RW @ pb.matrix - W[pb.name]).to_translation().length for pb in rig.pose.bones))
     log['fk_check_cm'] = round(fk_err, 5); assert fk_err < 1e-2, fk_err
+    if APRON:
+        # THE SKIRT HAS WEIGHT. A leg throws it forward at once; it does not come back at once. Each half falls
+        # toward where the leg lets it hang, about half of the way per frame, and never through the leg. Run twice
+        # round a loop so the last frame hands over to the first.
+        fr = list(range(F0, F1 + 1)); final = {f: {} for f in fr}
+        for k in NEED[fr[0]]:
+            cur = NEED[fr[0]][k]
+            for _ in range(2 if loop else 1):
+                for f in fr:
+                    cur = max(NEED[f][k], cur + (NEED[f][k] - cur) * 0.55)
+                    final[f][k] = cur
+            if loop: final[F1][k] = final[F0][k]
+        log['apron_swing_deg'] = {k: [round(min(final[f][k] for f in fr)), round(max(final[f][k] for f in fr))] for k in NEED[fr[0]]}
+        for f in fr:
+            if all(abs(final[f][k] - NEED[f][k]) < 0.05 for k in final[f]): continue
+            for n in BONES:
+                BASIS[n] = POSES[f][n]; p = PARENT[n]
+                W[n] = ((W[p] @ REL[n]) if p else REST[n]) @ BASIS[n]
+            _apron_set(final[f])
+            POSES[f] = {n: BASIS[n].copy() for n in BONES}
+            apply_pose(); VERTS[f] = world_verts()
     act = bpy.data.actions.new(clip)
     rig.animation_data_create(); rig.animation_data.action = act
     prev = {}
@@ -415,6 +655,8 @@ def author(clip, frames, build, loop=True, sheet_frames=8):
     log['lowest_by_frame'] = lows
     log['loop_seam_cm'] = round(float(np.abs(VERTS[F1] - VERTS[F0]).max()), 5) if loop else None
     log['over_reach_cm'] = reach                              # a limb asked to reach further than it is long
+    log['upper_arm_twist_deg'] = {k: round(v) for k, v in TWIST.items()}   # arms and legs, before sharing between joints
+    log['arm_joint_twist_deg'] = {k: round(v) for k, v in JOINT.items()}   # what each of shoulder / elbow / wrist is left with
     log['fastest_vertex_cm_per_frame'] = round(max(float(np.linalg.norm(VERTS[f + 1] - VERTS[f], axis=1).max()) for f in range(F0, F1)), 1)
     # ankles as (toward his left, forward, up) per frame: a planted foot holds x and up and moves back at one speed
     log['ankles'] = {f: {s: [round(TRACK[f][s].x, 1), round(ANK_Y - TRACK[f][s].y, 1), round(TRACK[f][s].z - (ANK[s].z - DROP[s]), 1)] for s in 'LR'} for f in range(F0, F1 + 1)}
@@ -427,6 +669,7 @@ def author(clip, frames, build, loop=True, sheet_frames=8):
         n, lg, pr = _torn(VERTS[f]); log['torn'][f] = [n, round(lg, 1)]
         if n > worst[0]: worst = (n, lg, pr)
     log['torn_worst'] = {'edges': worst[0], 'longest_cm': round(worst[1], 1), 'between': worst[2]}
+    log['torn_where_last_frame_cm'] = getattr(_torn, 'where', None)
 
     log['sheets'] = []
     if 'norender' not in a:

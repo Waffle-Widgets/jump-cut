@@ -89,4 +89,4 @@ def build(f, u):
     pose(at(u, TL))
 
 
-C.author('FreezeCast', frames=16, build=build, loop=False, sheet_frames=7)
+C.author('FreezeCast', frames=16, build=build, loop=False, sheet_frames=7, stance=(0.15, 0.6))
