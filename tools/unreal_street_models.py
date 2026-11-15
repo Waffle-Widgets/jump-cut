@@ -87,6 +87,12 @@ MODELS = {
     'CafeChalkboardM': ('CafeChalkboardM', 'SM_CafeChalkboard'),
     'CafePendantM': ('CafePendantM', 'SM_CafePendant'),
     'CafeSignM': ('CafeSignM', 'SM_CafeSign'),
+    # Fourth batch, 3:30 PM, made on GameStation with TRIPO (text to 3D, no reference picture) and baked with the
+    # same meshy_prop_bake.py. Sources are in Art/Meshy/<Name>/ like the others; the "M" is kept so one rule
+    # (name + 'M' = replaces the kit model) covers every entry.
+    'GasBottlesM': ('GasBottlesM', 'SM_GasBottles'),
+    'MeterBoxM': ('MeterBoxM', 'SM_MeterBox'),
+    'DuctRunM': ('DuctRunM', 'SM_DuctRun'),
 }
 # A mesh with complex-as-simple collision CANNOT simulate, and only the log says so (unreal_chaos_props.py,
 # KNOCK). The kit chair is a knockable prop, so its replacement gets what that tool gives the kit chair: one
