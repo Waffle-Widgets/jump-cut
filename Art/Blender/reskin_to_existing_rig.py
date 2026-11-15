@@ -142,6 +142,19 @@ bpy.ops.object.select_all(action='DESELECT'); new_mesh.select_set(True)
 bpy.context.view_layer.objects.active=new_mesh
 bpy.ops.object.vertex_group_normalize_all(lock_active=False)
 
+# --- nothing may ride the ROOT bone -------------------------------------------------------------------
+# On these rigs Bone_000 is at pelvis height in the rest pose and on the FLOOR in every retargeted clip, and the
+# "nearest bone" fallback above hands it the front of the waist. Those vertices were dragged to the floor in game
+# (the apron streaks, Nov 15). Bone_001 is its only child at the same place and stays at the pelvis: it takes it.
+_root, _hip = new_mesh.vertex_groups.get('Bone_000'), new_mesh.vertex_groups.get('Bone_001')
+if _root is not None and _hip is not None:
+    _moved = 0
+    for v in new_mesh.data.vertices:
+        w0 = next((g.weight for g in v.groups if g.group == _root.index), 0.0)
+        if w0 > 0.0:
+            _hip.add([v.index], w0, 'ADD'); _root.remove([v.index]); _moved += 1
+    print(f"moved root-bone weight to the hip on {_moved} vertices")
+
 unw=sum(1 for v in new_mesh.data.vertices if not any(g.weight>1e-5 for g in v.groups))
 nonempty=sum(1 for g in new_mesh.vertex_groups
              if any(gg.group==g.index and gg.weight>1e-5 for v in new_mesh.data.vertices for gg in v.groups))
