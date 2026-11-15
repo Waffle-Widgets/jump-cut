@@ -10,7 +10,8 @@ OUT = os.path.join(unreal.Paths.convert_relative_path_to_full(unreal.Paths.proje
 log = []
 def say(s): log.append(str(s)); print(str(s))
 
-WANT_ONE = ['B1_Cine_Director', 'B1_Cine_Seq', 'B1_Cine_WallPatch', 'B1_Objective_Beacon',
+# B1_Cine_WallPatch was the grey cube; it is B1_Cafe_WallPanel_GC, a breakable wall, since 2026-11-15.
+WANT_ONE = ['B1_Cine_Director', 'B1_Cine_Seq', 'B1_Cafe_WallPanel_GC', 'B1_Objective_Beacon',
             'B1_Cafe_Fire', 'B1_Cafe_FireLight', 'B1_Cafe_BlastRing',
             'Coworker_Cafe', 'C1_Cafe_CrashDriver', 'City_CafeCrashCar', 'Player_Main']
 eas = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)

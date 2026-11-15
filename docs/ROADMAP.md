@@ -178,6 +178,31 @@ anyone picks up a task:
 
 ## Open
 
+### Beat 1: the wall breaks, the fire waits for its shot, the driver ragdolls (Sun Nov 15, 06:20 UTC, Justin's Mac mini)
+
+Round 5 of the Team Owner's feedback on the opening. **Built, measured in PIE, not played by anybody.**
+See [the devlog entry](devlog/2026-11-15-the-wall-breaks-and-the-fire-stops-with-time.md).
+
+- **`B1_Cine_WallPatch` is deleted.** The grey cube that popped in and out (#120) is replaced by
+  `B1_Cafe_WallPanel_GC`, a Geometry Collection cut from `SM_CafeWallPanel` — 299 × 255 × 19 cm,
+  drawing the kit's `M_CityBrick` / `M_CafeWall` / `M_CityWood`. It stands KINEMATIC and the director
+  breaks it at `CineWallTime` **4.70 s**, the frame the car reaches the wall. Measured: bounds extent
+  (9.5, 149.6, 127.3) → (170.1, 240.9, 133.9).
+- **The car catches fire at `CineFireTime` 7.00 s**, inside cut C (6.20–8.80), the shot of the car on
+  its own. Before that the fire is hidden *and* its Niagara clock is stopped, so the burst is real
+  rather than a plume that has been burning off screen.
+- **Freeze Frame freezes the fire.** `CineFireTimeStep` sets the fire's Niagara `CustomTimeDilation`
+  to 0 while `FreezeFrameActive` is true. Measured 1.0 → 0.0 → 1.0 through the real power.
+- **The driver lands on the car's RIGHT side** (`ObjDriverLoc` (-380, +220) → (-395, -215); the car
+  heads +X so its right is −Y, which is also screen-right) and the real `BP_CrashDriver` takes over
+  as a ragdoll on the frame it lands, settling over `RagdollSettle` 1.8 s. Behind `DriverRagdoll`.
+- **The player no longer twitches on frame 1.** `PlayerRefreshMoveLock` released its lock with
+  `SetMovementMode(MOVE_Falling)`, so every game began with a fall-and-land — and on a Meshy rig with
+  `force_root_lock` that is also a 90 cm hover. Now `MOVE_Walking`.
+- **Still open from the same note:** the wide-legged stance and the odd arm angle are #73 (the retarget
+  base pose), GameStation's lane, not fixed here. And **nobody has watched the debris fall** — the
+  break is proven applied, not observed.
+
 ### Beat 1 opens on a cinematic (Sat Nov 14, 4:00 PM Pacific, Justin's Mac mini)
 
 The Team Owner asked for a beginning cinematic: a peaceful coffee shop, interrupted by the car coming
@@ -190,9 +215,11 @@ See [the devlog entry](devlog/2026-11-14-the-game-opens-on-a-crash.md).
   **spawnables**, so the sequence owns no level actor.
 - `BP_OpeningDirector` (`B1_Cine_Director`) plays it, holds input and movement locked while it runs,
   un-hides the real wreck at 4.70 s and the real body at 6.45 s, and at 11.0 s unlocks input facing 172°.
-- `B1_Cine_WallPatch` puts the wall back for the peaceful shot and goes on the frame the car arrives.
-  4 cm proud of the shell, never flush — a flush different-material face is #67's depth tie.
-- `B1_Objective_Beacon` is one bobbing blue sphere the director moves between objectives. Objective 1
+- ~~`B1_Cine_WallPatch` puts the wall back for the peaceful shot and goes on the frame the car
+  arrives.~~ **Superseded Sun Nov 15:** deleted and replaced by the breakable `B1_Cafe_WallPanel_GC`
+  (see the entry above).
+- `B1_Objective_Beacon` is one bobbing blue cone, point down, that the director moves between
+  objectives (a sphere until the Team Owner asked for a cone on Nov 15). Objective 1
   ("check on the driver") is live and verified; **2 and 3 are plumbed but nothing advances past 1 yet.**
 
 ### Beat 1's hazard is a fire and a blast radius (Sat Nov 14, 5:20 PM Pacific, Justin's Mac mini)

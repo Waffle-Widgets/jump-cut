@@ -108,6 +108,34 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
 
 ## Lessons from practice (Unreal + MCP)
 
+### Slowing down something that is NOT self (learned 2026-11-15, beat 1's fire)
+- **`Variables|Actor|SetCustomTimeDilation` has NO `self` pin.** It writes the dilation of the
+  actor the graph is running on and nothing else's; `write_graph_dsl` refuses `:self` with
+  *"Input pins: ['CustomTimeDilation']"*. To stop another actor's effect, hold its COMPONENT and
+  use **`Niagara|SetCustomTimeDilation`**, whose pins are **`self`** and **`Dilation`** - note it
+  is `Dilation`, not `CustomTimeDilation`, which is the spelling that fails. Freeze Frame stops
+  enemies through `BP_EnemyBase.EnemySetTimeStopped`, a custom function, which is why there was no
+  working example of the cross-actor form to copy.
+- **`write_graph_dsl`'s error message is the cheapest pin documentation there is.** It names every
+  valid input pin and rolls the whole graph back, so a wrong guess costs one call and teaches you
+  the right name. `get_node_type_pins` does NOT substitute: it returns each pin's *value*
+  (`"1.000000"`, `"Chaos_NONE"`), not its name.
+- **A `Package` has no `is_dirty()` in UE 5.8 Python.** It is the obvious name and it raises.
+- **You cannot WAIT for a cinematic from Python - drive its clock.** Python runs on the game
+  thread, so `time.sleep` stops the world it is waiting for, and an 11 s sequence is over before a
+  second MCP round trip (5-8 s) lands. `tools/b1z_pie.py open` calls `CineDirectorStep` with a
+  fixed delta itself; the director's own Tick cannot run while the script holds the thread, so the
+  loop is the only thing advancing it and every trigger runs through the real function. It cannot
+  show PHYSICS (no ticks = no falling debris, no settling ragdoll), so it proves each trigger fired
+  and each physics state was applied; sample again later for where things came to rest.
+- **`BP_Player.FreezeFrameActive` is not instance-editable.** Drive the real power instead of
+  writing the flag: `PlayerGrantFreezeFrame` -> `FreezeFrameStart` -> ... -> `PlayerFreezeFrameEnd`
+  through `call_method`. It goes through the gates, so it is better evidence anyway.
+- **`b1_opening_cine.py` reads the PLACED `BP_CrashDriver`'s location** to key the last two frames
+  of the thrown body, so the driver must be MOVED BEFORE the sequence is rebuilt. Rebuilding first
+  keyed the arc to the old left-hand spot - a mid-air tumble to y -118 and then a snap to y +220 -
+  and nothing errored. Order: `b1z_wallpanel.py place` -> `b1_opening_wire.py` -> `b1_opening_cine.py`.
+
 ### Blueprint graphs through `write_graph_dsl` (learned 2026-11-15, beat 1's explosion)
 - **A variable's CATEGORY is part of its DSL type id.** Move a variable out of `Default` and
   `Variables|Default|GetFoo` stops existing - `write_graph_dsl` fails with
