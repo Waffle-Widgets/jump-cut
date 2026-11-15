@@ -20,6 +20,16 @@ Just ask Claude on your computer: **"Get me the latest build."**
   to `main` and pulls. Open the project and press **Play**. **Never save** on a tester computer; if
   Unreal asks when you close it, choose **Don't Save**.
 
+## The game now opens on an 11-second cinematic (Sat Nov 14)
+
+After you press **R**, beat 1 plays an opening: the quiet cafe, the car through the west wall, the driver
+thrown out of it, then control. **Your input is locked for those 11 seconds on purpose** - that is not a
+freeze. When it ends you are facing the wreck and a blue sphere is bobbing over the driver's body: that is
+the objective marker telling you where to go. Press **F** on him for Freeze Frame as before.
+
+Nobody has played this yet. The things to judge: does the crash read, does the body landing read, does the
+hand-over to control feel abrupt, and is 11 seconds too long before a judge can touch anything.
+
 ## Starting the game: press R first, or it looks broken
 
 **The game opens on a title screen that switches every control off.** Until you press **R** (or gamepad

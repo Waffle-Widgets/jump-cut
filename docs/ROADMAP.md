@@ -178,6 +178,32 @@ anyone picks up a task:
 
 ## Open
 
+### Beat 1 opens on a cinematic (Sat Nov 14, 4:00 PM Pacific, Justin's Mac mini)
+
+The Team Owner asked for a beginning cinematic: a peaceful coffee shop, interrupted by the car coming
+through the wall and the driver thrown from it, with control handed to the player at that moment and a
+marker telling him to go and check on the driver. **Built and on a branch, not played by anybody.**
+See [the devlog entry](devlog/2026-11-14-the-game-opens-on-a-crash.md).
+
+- `/Game/Game/Cinematics/LS_Beat1_Opening` — 11 s, 30 fps, four shots (quiet cafe / the crash / the body
+  thrown / settle behind the player). Four cine cameras, the flying car and the flying body are all
+  **spawnables**, so the sequence owns no level actor.
+- `BP_OpeningDirector` (`B1_Cine_Director`) plays it, holds input and movement locked while it runs,
+  un-hides the real wreck at 4.70 s and the real body at 6.45 s, and at 11.0 s unlocks input facing 172°.
+- `B1_Cine_WallPatch` puts the wall back for the peaceful shot and goes on the frame the car arrives.
+  4 cm proud of the shell, never flush — a flush different-material face is #67's depth tie.
+- `B1_Objective_Beacon` is one bobbing blue sphere the director moves between objectives. Objective 1
+  ("check on the driver") is live and verified; **2 and 3 are plumbed but nothing advances past 1 yet.**
+
+**Still open from the same request, and NOT built:** the car catching fire after the power is taken, the
+explosion replacing the shrapnel as the hazard, Freeze Frame being for getting both the player and the
+coworker out of the blast radius, and the final indicator pointing out to the street. This is also the
+answer to issue #18 ("what sets off the explosion in beat 1?") once it is built.
+
+**Known blemish:** the crash rubble is modelled into `SM_CafeShell`, so broken blocks are on the floor
+during the peaceful shot, before anything has broken. Fixing it is a city-kit change (rubble as its own
+mesh), not a level edit.
+
 ### The cafe stops being a box, and the street grows a tree (Fri Nov 13, late Pacific, M Station)
 
 On the Team Owner's note that the assets were lacking, that the cafe should look like an anime cafe, and

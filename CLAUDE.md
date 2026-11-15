@@ -658,6 +658,43 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   and `CaptureAssetImage` on a clip (the asset's own preview, real mesh + real clip) is the cheaper and more honest
   way to LOOK at an animation. See the Nov 14 devlog for a render that could not be explained from either.
 
+- **Sequencer, learned building beat 1's opening (Sat Nov 14, `tools/b1_opening_cine.py`).** The whole
+  Python API is present in 5.8 and works: `add_spawnable_from_instance`, `MovieScene3DTransformTrack`
+  (9 channels, `Location.X/Y/Z`, `Rotation.X/Y/Z` = roll/pitch/yaw, then Scale),
+  `MovieSceneCameraCutTrack` with `set_camera_binding_id(seq.get_binding_id(binding))`. Four traps:
+  - **A throwaway actor that outlives a failed script is a REAL actor in the level.** The spawnable
+    recipe is spawn a temp -> `add_spawnable_from_instance` -> destroy the temp. A raise in between
+    leaves the temp standing in the map, untagged, and nothing else removes it: one run left a
+    `CineDriver` upright in mid-air through the whole peaceful shot, and a `LevelSequenceActor` with no
+    tag. Destroy throwaways in a `finally`, and keep a finder (`tools/b1_cine_strays.py`).
+  - **`ASkeletalMeshActor`'s SkeletalMeshComponent IS its root component**, so `set_relative_transform`
+    on it is the actor transform and a transform track overwrites it every frame. Bake any pose offset
+    into the keys. A rotator is applied Yaw*Pitch*Roll, so actor rot (roll 0, pitch -78, yaw 140) equals
+    actor yaw 140 plus a mesh relative pitch -78 - which is how a thrown body hands over to a placed one
+    with no jump.
+  - **You cannot measure a short cinematic from PIE.** An MCP round trip to this editor is ~5 s, so an
+    11 s sequence is over before the second sample (measured: t=14.09, 19.07, 39.69, all finished).
+    Open the asset and scrub it instead - `LevelSequenceEditorBlueprintLibrary.open_level_sequence` +
+    `set_current_time(frame)`, then read each binding back (`tools/b1_cine_scrub.py`). `GetBoundObjects`
+    wants `seq.get_binding_id(binding)`, not the binding proxy.
+  - **`ALevelSequenceActor` has no `auto_play` property of its own** - it is
+    `playback_settings.auto_play`, and that struct has no `restore_state`. Prefer the director Blueprint
+    hiding and showing real actors on its own clock over a Sequencer visibility track: the track keys
+    `bHidden` behind a label that reads "Visible", and backwards is invisible until you look at a frame.
+- **The city kit's materials are under `/Game/Game/Materials/City/`, not `/Game/Game/Materials/`.**
+  `M_CafeWall`, `M_CityBrick`, `M_CityTrim` and the rest live there. `load_asset` on the wrong path
+  returns `None`, `set_material(0, None)` does not complain, and the mesh renders as the grey checker
+  default. Read a neighbouring actor's slot list rather than guessing a path.
+- **The graph DSL treats a multi-exec-output node as TERMINAL.** `(Utilities|IsValid x (:"Is Valid" ...)
+  (:"Is Not Valid"))` cannot be followed by another statement - the writer refuses with
+  "Unreachable code after branch/return". Plain `(if ...)` is fine to sequence. Wrap the guarded work in
+  a tiny own function (`CineHideActor(Target, Hide)`) and call that instead of repeating the IsValid.
+  Setting a variable on ANOTHER actor needs the value named after the variable:
+  `(Class|BPPlayer|SetInputLocked :self ref :InputLocked true)` - positional is refused.
+- **A placed actor keeps the class layout it was spawned with.** An instance spawned before a variable
+  was made instance-editable refuses the write with *"cannot be edited on instances"*. That is a stale
+  instance, not a wrong property name: recompile, then destroy and re-place the actor.
+
 ## AI-generated 3D models (Hunyuan3D 2.1 and TRELLIS.2, both local)
 - **TRELLIS.2** (Microsoft, MIT licence, `D:\AI\TRELLIS2` on the main PC, `C:\AI\TRELLIS2` on GameStation) is the one to use: one photo with the background cut out ->
   `venv\Scripts\python.exe run_image_to_3d.py <cutout.png> out\<name> 1024_cascade` (about 5 minutes on the 3090) -> a GLB
