@@ -178,6 +178,16 @@ anyone picks up a task:
 
 ## Open
 
+### Nine cafe furniture models are made; none is in the game (Sun Nov 15, 3:25 PM Pacific, M Station)
+
+On branch `M_STATION/cafe-furniture`: chair, table, counter, shelf, banquette, window ledge, chalkboard, pendant,
+door sign. [Entry](devlog/2026-11-15-the-cafe-furniture-fitted-into-the-boxes-it-replaces.md). GameStation
+imports until 4:30 PM and then stops, whatever is left.
+
+- **Never run:** the import tool's collision path for a knockable prop (the chair).
+- **Needs a person:** the latte camera with the new counter under it; a chair knocked over; a table broken
+  (it will break into the OLD table's pieces - the breakable was cut from the kit mesh).
+
 ### Thirteen more Meshy props are made; none of them is in the game (Sun Nov 15, 2:25 PM Pacific, M Station)
 
 Source files merged to `main` at 2:28 PM (PR #135, `71c80de`) on the Team Owner's say; still not imported: vending machine, street lamp, planter, pot row,

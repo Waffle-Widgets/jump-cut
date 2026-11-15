@@ -86,3 +86,20 @@ download button stopped working - see the devlog entry. `GasBottles` was generat
 | CafePlantTallM | 1.31 height | 8000 | `PROP_TEXEL=0.002` |
 | CafePlantSmallM | 0.22 height | 3000 | `PROP_TEXEL=0.001` |
 | CafeStoolM | 0.75 height | 4000 | `PROP_TEXEL=0.001` |
+
+## Third batch (3:12 PM): nine cafe pieces
+
+Prompts: `prompts_batch3_cafe.json`. All nine reference pictures are the 1024-pixel page copy.
+`PROP_KITBOX` is the kit model's own box in metres (x0,x1,y0,y1,z0,z1) from `city_models.json`.
+
+| Name | size, mode | tris | env |
+|---|---|---|---|
+| CafeChairM | 0.92 height | 6000 | `PROP_TEXEL=0.001` |
+| CafeTableM | 0.76 height | 4000 | `PROP_TEXEL=0.001` |
+| CafePendantM | 0.95 height | 3000 | `PROP_TEXEL=0.001` |
+| CafeSignM | 1.00 height | 4000 | `PROP_TEXEL=0.002 PROP_SHIFT=0.558,-0.17,2.90` |
+| CafeCounterM | 5.08 width | 8000 | `PROP_TEXEL=0.003 PROP_YAW=180 PROP_KITBOX=-2.54,2.54,-0.44,0.45,0,1.10 PROP_FLAT_TOP=0.03` |
+| CafeShelfM | 2.335 height | 12000 | `PROP_TEXEL=0.002 PROP_KITBOX=-1,1,-0.17,0.17,0,2.335` |
+| CafeBanquetteM | 2.26 width | 8000 | `PROP_TEXEL=0.002 PROP_KITBOX=-1.13,1.13,-0.36,0.36,0,1.08` |
+| CafeBarCounterM | 2.40 width | 4000 | `PROP_TEXEL=0.002 PROP_KITBOX=-1.2,1.2,-0.16,0.16,0,1.05` |
+| CafeChalkboardM | 2.40 width | 3000 | `PROP_TEXEL=0.001 PROP_KITBOX=-1.2,1.2,0,0.17,-0.85,0.85` |

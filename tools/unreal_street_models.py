@@ -75,7 +75,23 @@ MODELS = {
     'CafePlantTallM': ('CafePlantTallM', 'SM_CafePlantTall'),
     'CafePlantSmallM': ('CafePlantSmallM', 'SM_CafePlantSmall'),
     'CafeStoolM': ('CafeStoolM', 'SM_CafeStool'),
+    # Third batch, 3:15 PM: the cafe furniture. The six big pieces were fitted EXACTLY into the kit model's own
+    # box (PROP_KITBOX), so the counter top is still at 110 cm and flat, and nothing standing on or beside them
+    # has to move. The chair, table and pendant are sized by height and centred, like the kit's.
+    'CafeChairM': ('CafeChairM', 'SM_CafeChair'),
+    'CafeTableM': ('CafeTableM', 'SM_CafeTable'),
+    'CafeCounterM': ('CafeCounterM', 'SM_CafeCounter'),
+    'CafeShelfM': ('CafeShelfM', 'SM_CafeShelf'),
+    'CafeBanquetteM': ('CafeBanquetteM', 'SM_CafeBanquette'),
+    'CafeBarCounterM': ('CafeBarCounterM', 'SM_CafeBarCounter'),
+    'CafeChalkboardM': ('CafeChalkboardM', 'SM_CafeChalkboard'),
+    'CafePendantM': ('CafePendantM', 'SM_CafePendant'),
+    'CafeSignM': ('CafeSignM', 'SM_CafeSign'),
 }
+# A mesh with complex-as-simple collision CANNOT simulate, and only the log says so (unreal_chaos_props.py,
+# KNOCK). The kit chair is a knockable prop, so its replacement gets what that tool gives the kit chair: one
+# simple box and CTF_USE_DEFAULT. Anything added to KNOCK there has to be added here if it is ever replaced.
+SIMULATED = {'CafeChairM'}
 # `import` leaves alone any model whose mesh and texture are already in the project. Re-touching the first
 # five would dirty packages that are committed and therefore READ-ONLY, and a failed save of a read-only
 # package is what froze the editor for ten minutes on Nov 14. `import all` forces every model (lock them first).
@@ -201,7 +217,13 @@ def do_import():
             st.enabled = False
             smes.set_nanite_settings(mesh, st, apply_changes=True)
         bs = mesh.get_editor_property('body_setup')
-        if bs is not None:
+        if bs is not None and name in SIMULATED:
+            if smes.get_simple_collision_count(mesh) == 0:
+                smes.add_simple_collisions(mesh, unreal.ScriptCollisionShapeType.BOX)
+            bs = mesh.get_editor_property('body_setup')
+            bs.set_editor_property('collision_trace_flag', unreal.CollisionTraceFlag.CTF_USE_DEFAULT)
+            info['collision'] = 'simple box x%d, CTF_USE_DEFAULT (simulated prop)' % smes.get_simple_collision_count(mesh)
+        elif bs is not None:
             bs.set_editor_property('collision_trace_flag', unreal.CollisionTraceFlag.CTF_USE_COMPLEX_AS_SIMPLE)
         b = mesh.get_bounds()
         info.update({

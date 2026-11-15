@@ -1,4 +1,4 @@
-"""Check renders for the Meshy street models: each baked FBX + PNG from two angles beside a 1.75 m figure.
+﻿"""Check renders for the Meshy street models: each baked FBX + PNG from two angles beside a 1.75 m figure.
     blender -b --factory-startup --python Art/Blender/street_models_sheet.py -- <out_dir> Name[:Folder] ...
 Reads Art/Meshy/<Folder>/SM_<Folder>.fbx and T_<Folder>.png - the files Unreal will import, not the raw
 download - so what this shows is what the game gets. Unlit texture colour (Workbench, flat), because a lit
@@ -42,11 +42,11 @@ for name in NAMES:
     hi = Vector((max(v.x for v in ws), max(v.y for v in ws), max(v.z for v in ws)))
     size = hi - lo
     # a 1.75 m figure standing just off the model's -Y side, for scale
-    bpy.ops.mesh.primitive_cube_add(size=1, location=(hi.x + 0.45, lo.y - 0.1, 0.875))
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(hi.x + 0.45, lo.y - 0.1, lo.z + 0.875))
     fig = bpy.context.active_object; fig.scale = (0.42, 0.25, 1.75)
     fm = bpy.data.materials.new('fig'); fm.diffuse_color = (0.15, 0.55, 0.6, 1); fig.data.materials.append(fm)
     span = max(size.x + 1.0, size.z, size.y)
-    ctr = Vector(((lo.x + hi.x) / 2 + 0.3, (lo.y + hi.y) / 2, size.z * 0.48))
+    ctr = Vector(((lo.x + hi.x) / 2 + 0.3, (lo.y + hi.y) / 2, lo.z + size.z * 0.48))
     info = {'size_m': [round(v, 2) for v in size], 'tris': sum(len(p.vertices) - 2 for p in obj.data.polygons)}
     if size.z > 3:
         # lowest geometry more than 0.9 m out from the trunk line, i.e. the underside of the canopy
