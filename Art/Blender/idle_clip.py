@@ -219,8 +219,8 @@ T = {                                                       # every number a per
     'foot_x': 10.5, 'foot_yL': -2.5, 'foot_yR': 2.5, 'toe_out': 11.0,     # cm from the centre line; cm fore/aft; degrees
     'pel_shift': -1.6, 'pel_drop': 1.2, 'hip_tilt': 1.6,                  # weight onto his right leg (his right is -X)
     'spine_back': -1.5, 'head_up': -2.0,                                  # degrees about +X (positive bends him forward)
-    'hand_out': 7.0, 'hand_fwd': -3.0, 'arm_bend': 0.965,                 # wrist beside the thigh; 1.0 = dead straight
-    'clav_up': 14.0, 'clav_back': 3.0,                                    # degrees: collarbones lifted / drawn back.
+    'hand_out': 9.0, 'hand_fwd': -3.0, 'arm_bend': 0.965,                 # wrist beside the thigh; 1.0 = dead straight
+    'clav_up': 28, 'clav_back': 3.0,                                    # degrees: collarbones lifted / drawn back.
     # Without them the arms coming down from the A-pose drag the shoulders into a slope ("droopy", the Team Owner).
     'pron': 62.0, 'curl': 0.34,                                           # palms toward the thighs; relaxed fingers
     'breath_deg': 0.9, 'breath_cm': 0.35, 'sway_cm': 0.7, 'sway_deg': 0.5,

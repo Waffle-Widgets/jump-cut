@@ -270,9 +270,10 @@ def neck(x=0.0, y=0.0, z=0.0):
         rot(b, X, x * k); rot(b, Y, -y * k); rot(b, Z, z * k)
 
 
-def clav(s, up=14.0, back=3.0):
+def clav(s, up=28.0, back=3.0):
     """Collarbone of side s ('L' or 'R'). hand() calls this with these defaults; call it yourself first to shrug or
-    drop a shoulder. Without lift, arms brought down from the A-pose drag the shoulder into a slope."""
+    drop a shoulder. Without lift, arms brought down from the A-pose drag the shoulder into a slope: 14 still read
+    as droopy in the game (owner, Nov 15), 28 squares them to match the modelled A-pose, 38 is a shrug."""
     rot(CLAV[s], Y, -SGN[s] * up); rot(CLAV[s], Z, -SGN[s] * back)
     _state['clav' + s] = True
 
@@ -291,16 +292,22 @@ def foot(s, x=None, fwd=0.0, up=0.0, pitch=0.0, yaw=8.0, knee_out=0.22):
     orient(ft, f, u - f * u.dot(f), FOOT_F0[s], Z)
 
 
-def hand(s, out=7.0, fwd=3.0, up=None, pron=62.0, curl=0.34, elbow=(0.35, -1.0, -0.1)):
+def hand(s, out=9.0, fwd=3.0, up=None, pron=62.0, curl=0.34, elbow=(0.35, -1.0, -0.1)):
     """Place the WRIST of side s from that side's shoulder joint. out: cm away from the body sideways. fwd: cm in
     front of the shoulder. up: cm above the shoulder (negative = below; default hangs the arm almost straight down).
     pron: forearm roll, 62 turns the palm to the thigh for a hanging arm, 0 leaves it as modelled (palm forward).
     curl: 0 open hand .. 1 fist. elbow: which way the elbow points, as (outward, forward, up); the default is back
     and a little out. Keep it well off the line from shoulder to wrist or the elbow flips between frames."""
     up_, fo, wr = ARM[s]
-    if not _state.get('clav' + s): clav(s)
-    sh0 = head(up_)
     if up is None: up = -ARMLEN[s] * 0.965
+    if not _state.get('clav' + s):
+        # The collarbone lift is for an arm that HANGS: brought down from the A-pose it drags the shoulder into a
+        # slope, and 28 degrees squares it. On an arm that is level, raised or swept back the same lift balloons the
+        # shoulder (the first anime sprint, seen from the front). So it follows how far down the arm points.
+        v = Vector((SGN[s] * out, -fwd, up))
+        d = max(0.0, -v.z / max(v.length, 1e-6))
+        clav(s, up=28.0 * d * d)
+    sh0 = head(up_)
     t = Vector((sh0.x + SGN[s] * out, sh0.y - fwd, sh0.z + up))
     pole = Vector((SGN[s] * elbow[0], -elbow[1], elbow[2]))
     ik2('arm' + s, up_, fo, wr, t, pole, Y)
