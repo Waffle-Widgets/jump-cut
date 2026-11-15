@@ -182,9 +182,9 @@ G['LatteReset'] = f'''
   (if (== ({V}GetPattern) 0)
     (Rendering|Components|TextRender|SetText :self ({V}GetPrompt) :Value (Utilities|Text|MakeLiteralText :Value "LATTE ART: HEART<br>{P1}<br>2. Hold RIGHT mouse inside the ring until the ring goes<br>3. Let go. Hold LEFT and follow the line down through the circle. Let go<br>R: start over"))
     (elif (== ({V}GetPattern) 1)
-      (Rendering|Components|TextRender|SetText :self ({V}GetPrompt) :Value (Utilities|Text|MakeLiteralText :Value "LATTE ART: ROSETTA<br>{P1}<br>2. Hold RIGHT mouse: follow the wavy line down, then rest in the small ring<br>3. Let go. Hold LEFT and follow the straight line back up. Let go<br>R: start over"))
+      (Rendering|Components|TextRender|SetText :self ({V}GetPrompt) :Value (Utilities|Text|MakeLiteralText :Value "LATTE ART: ROSETTA<br>{P1}<br>2. Hold RIGHT mouse: follow the wavy line up, then rest in the small ring<br>3. Let go. Hold LEFT and follow the straight line back down. Let go<br>R: start over"))
       (else
-        (Rendering|Components|TextRender|SetText :self ({V}GetPrompt) :Value (Utilities|Text|MakeLiteralText :Value "LATTE ART: TULIP<br>{P1}<br>2. Hold RIGHT mouse in each ring in turn and push up. Let go between rings<br>3. Hold LEFT and follow the line up through the stack. Let go<br>R: start over"))))))
+        (Rendering|Components|TextRender|SetText :self ({V}GetPrompt) :Value (Utilities|Text|MakeLiteralText :Value "LATTE ART: TULIP<br>{P1}<br>2. Hold RIGHT mouse in each ring, bottom to top. Let go between rings<br>3. Hold LEFT and follow the line down through the stack. Let go<br>R: start over"))))))
 '''
 
 G['LatteStep'] = f'''
@@ -287,14 +287,14 @@ G['LatteGuideStep'] = '''
     (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideA" :ParameterValue (Utilities|Struct|MakeLinearColor :R 0.04 :G 0.0 :B 0.2 :A (select done 0.0 m)))
     (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideB" :ParameterValue (Utilities|Struct|MakeLinearColor :R 0.375 :G -0.375 :B 0.0 :A (select done 1.0 0.0)))
     (elif (== (Variables|Default|GetPattern) 1)
-      (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideA" :ParameterValue (Utilities|Struct|MakeLinearColor :R -0.275 :G 0.0 :B 0.05 :A (select done 0.0 m)))
+      (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideA" :ParameterValue (Utilities|Struct|MakeLinearColor :R 0.275 :G 0.0 :B 0.05 :A (select done 0.0 m)))
       (if done
-        (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideB" :ParameterValue (Utilities|Struct|MakeLinearColor :R -0.38 :G 0.28 :B 0.0 :A 1.0))
+        (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideB" :ParameterValue (Utilities|Struct|MakeLinearColor :R 0.38 :G -0.28 :B 0.0 :A 1.0))
         (else
-          (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideB" :ParameterValue (Utilities|Struct|MakeLinearColor :R 0.217 :G -0.25 :B 0.167 :A m))))
+          (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideB" :ParameterValue (Utilities|Struct|MakeLinearColor :R -0.217 :G 0.25 :B 0.167 :A m))))
       (else
-        (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideA" :ParameterValue (Utilities|Struct|MakeLinearColor :R (select (<= idx 0) 0.125 (select (== idx 1) -0.04 -0.19)) :G 0.0 :B (select (<= idx 0) 0.15 (select (== idx 1) 0.1 0.065)) :A (select done 0.0 m)))
-        (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideB" :ParameterValue (Utilities|Struct|MakeLinearColor :R -0.38 :G 0.3 :B 0.0 :A (select done 1.0 0.0)))))))
+        (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideA" :ParameterValue (Utilities|Struct|MakeLinearColor :R (select (<= idx 0) -0.125 (select (== idx 1) 0.04 0.19)) :G 0.0 :B (select (<= idx 0) 0.15 (select (== idx 1) 0.1 0.065)) :A (select done 0.0 m)))
+        (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideB" :ParameterValue (Utilities|Struct|MakeLinearColor :R 0.38 :G -0.3 :B 0.0 :A (select done 1.0 0.0)))))))
 '''
 
 G['LatteJudge'] = f'''

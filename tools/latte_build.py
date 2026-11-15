@@ -265,7 +265,7 @@ def assets():
             instance('MI_LatteSim_FromA', sim, 'Prev', a), instance('MI_LatteSim_FromB', sim, 'Prev', b),
             instance('MI_LatteSurface_A', surf, 'Sim', a), instance('MI_LatteSurface_B', surf, 'Sim', b)]
     for i in range(3):
-        t = eal.load_asset('%s/T_LatteGuide_%d' % (DIR, i))
+        t = eal.load_asset('%s/T_LatteGoal_%d' % (DIR, i))          # drawn by tools/latte_goals.py
         made.append(instance('MI_LatteGuide_%d' % i, surf, 'Sim', t if t is not None else a))
     ok = unreal.EditorLoadingAndSavingUtils.save_packages([x.get_outermost() for x in made], False)
     say('SAVED ok=%s' % ok)
@@ -326,6 +326,32 @@ def guide():
         say('SAVED %s' % unreal.EditorLoadingAndSavingUtils.save_packages([t.get_outermost()], False))
 
 
+def goals():
+    # the drawn goal pictures (tools/latte_goals.py). Linear data, not colour: red = foam, green = layering.
+    src = os.path.join(unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_dir()), '..', 'Art', 'UI', 'Latte')
+    saved = []
+    for i in range(3):
+        n = 'T_LatteGoal_%d' % i
+        t = unreal.AssetImportTask()
+        t.set_editor_property('filename', os.path.normpath(os.path.join(src, n + '.png')).replace(os.sep, '/'))
+        t.set_editor_property('destination_path', DIR)
+        t.set_editor_property('automated', True)
+        t.set_editor_property('replace_existing', True)
+        t.set_editor_property('save', False)
+        at.import_asset_tasks([t])
+        tex = eal.load_asset('%s/%s' % (DIR, n))
+        if tex is None:
+            say('IMPORT FAILED %s' % n); continue
+        tex.set_editor_property('srgb', False)
+        tex.set_editor_property('compression_settings', unreal.TextureCompressionSettings.TC_VECTOR_DISPLACEMENTMAP)
+        tex.set_editor_property('mip_gen_settings', unreal.TextureMipGenSettings.TMGS_NO_MIPMAPS)
+        tex.set_editor_property('address_x', unreal.TextureAddress.TA_CLAMP)
+        tex.set_editor_property('address_y', unreal.TextureAddress.TA_CLAMP)
+        say('goal %s %sx%s srgb %s' % (n, tex.blueprint_get_size_x(), tex.blueprint_get_size_y(), tex.get_editor_property('srgb')))
+        saved.append(tex.get_outermost())
+    say('SAVED %s' % unreal.EditorLoadingAndSavingUtils.save_packages(saved, False))
+
+
 def place():
     # on the cafe counter (City_Cafe_00_CafeCounter, top at z 110), between the espresso machine and the pastry case.
     # Yaw -90 puts the camera on the customer side looking across the counter.
@@ -349,7 +375,7 @@ def place():
 
 try:
     mode = sys.argv[1] if len(sys.argv) > 1 else 'where'
-    {'assets': assets, 'where': where, 'place': place, 'kit': kit, 'guide': guide}[mode]()
+    {'assets': assets, 'where': where, 'place': place, 'kit': kit, 'guide': guide, 'goals': goals}[mode]()
 except Exception:
     import traceback
     say(traceback.format_exc())
