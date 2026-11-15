@@ -163,6 +163,33 @@ def main():
     except Exception as e:
         P('NO EXPECTED-GROWTH TABLE (%s): cannot prove the import took on bounds alone' % e)
 
+    # Per-model EXPECTED TRIANGLE COUNT after the import, keyed by model name.
+    # The sub-pixel pass (issue #67, second round) is the opposite case to the stand_proud pass this
+    # script was written for: it RETHINKS geometry - a groove instead of a rib, an inlay instead of a
+    # proud slab, three wide gully bars instead of seven thin ones - so triangle counts MUST move, while
+    # every bounding box stays identical to the millimetre so no placement shifts. That inverts both
+    # halves of the guard below. A tris change can no longer mean "something other than geometry moved",
+    # and bounds can no longer prove the import took, because bounds are unchanged BY DESIGN.
+    # So an expected-tris entry does both jobs at once, and does them more strictly than bounds ever did:
+    # the count must match the number Blender built EXACTLY, and it must DIFFER from what was in the
+    # level, which is positive proof the asset was replaced rather than silently left alone.
+    # A model with no entry keeps the original strict behaviour: any tris change is a failure.
+    # ABSENT means strict, as every earlier pass on this ticket wanted. PRESENT BUT UNREADABLE is fatal:
+    # falling back to strict there would fail all five models for the one reason that is expected, and the
+    # operator would read that as "the import broke" rather than "your table has a typo".
+    etris = {}
+    tf = os.environ.get('JC67_TRIS', '/tmp/jc67_tris.json')
+    if not os.path.exists(tf):
+        P('no expected-tris table at %s: any triangle-count change will be treated as a failure' % tf)
+    else:
+        try:
+            etris = {k: int(v) for k, v in json.load(open(tf, encoding='utf-8')).items()}
+            P('expected-tris table: %s (%d models)' % (tf, len(etris)))
+        except Exception as e:
+            P('*** %s EXISTS BUT COULD NOT BE READ: %s' % (tf, e))
+            P('*** Refusing to continue: strict fallback would fail every model for the expected reason.')
+            return
+
     at = unreal.AssetToolsHelpers.get_asset_tools()
     tasks = []
     for n in ready:
@@ -195,8 +222,18 @@ def main():
             d.append('COLLISION %s -> %s' % (b['collision'], a['collision']))
         if a['nanite'] != b['nanite']:
             d.append('NANITE %s -> %s' % (b['nanite'], a['nanite']))
-        if a['tris'] != b['tris']:
-            d.append('TRIS %d -> %d' % (b['tris'], a['tris']))
+        et = etris.get(n)
+        if et is None:
+            if a['tris'] != b['tris']:
+                d.append('TRIS %d -> %d' % (b['tris'], a['tris']))
+        elif a['tris'] != et:
+            d.append('TRIS %d -> %d but Blender built %d: the asset in the level is not the FBX on disk'
+                     % (b['tris'], a['tris'], et))
+        elif a['tris'] == b['tris']:
+            d.append('NO-OP: tris still %d, and this mesh was rebuilt to a DIFFERENT count - '
+                     'the import did not replace the asset' % a['tris'])
+        else:
+            P('%-26s tris %d -> %d, exactly what Blender built (import confirmed)' % (n, b['tris'], a['tris']))
         if a['lods'] != b['lods']:
             d.append('LODS %d -> %d' % (b['lods'], a['lods']))
         # POSITIVE proof the import actually replaced the asset.
