@@ -178,7 +178,23 @@ anyone picks up a task:
 
 ## Open
 
-### Sakura trees, a van, a car, a bike and a scooter are made; none of it is in the game (Sun Nov 15, 1:50 PM Pacific, M Station)
+### A latte shift before the opening, and M Station's street models are in the game (Sun Nov 15, 1:20 PM Pacific, GameStation)
+
+Merged to `main` as PR #134 (`14f46e3`). **The Team Owner played the latte shift and said it works** (1:05 PM); the
+street models and the packaged build have not been played by a person.
+
+- **Latte shift:** an order comes in, E at the cup, pour a heart, rosetta or tulip with the mouse (1/2/3 choose,
+  R starts over, E when happy), E at the cup to serve, noon, clock out at the register. Clocking out is what starts
+  the opening; `BP_OpeningDirector` is unchanged. Entries: the thirteen `devlog/2026-11-15-latte-*` files and
+  [the shift](devlog/2026-11-15-the-latte-becomes-a-shift.md).
+- **Crash rubble** waits for the crash (`SM_CafeImpactRubble`, split out of `SM_CafeShell`).
+- **Street models:** sakura tree, kei van, hatchback, bicycle and scooter swapped onto 26 placed actors with
+  `tools/unreal_street_models.py`. [Entry](devlog/2026-11-15-street-models-go-into-the-level.md).
+- **Still missing:** a customer character (the cup disappears when served); anything that reacts to how good the pour
+  was; gamepad during the shift; a person walking the street to look at the new models.
+
+
+### Sakura trees, a van, a car, a bike and a scooter are made (IN THE GAME since 1:15 PM Pacific, see the entry above) (Sun Nov 15, 1:50 PM Pacific, M Station)
 
 Asked for by the Team Owner at 12:41 PM on deadline day, after the agent said it was past the "submission work
 only" line; he chose the full set. Five Gemini pictures -> Meshy Image to 3D -> `meshy_prop_bake.py`:
