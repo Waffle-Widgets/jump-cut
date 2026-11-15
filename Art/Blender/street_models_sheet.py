@@ -54,7 +54,10 @@ for name in NAMES:
         info['canopy_underside_m'] = round(min(outer), 2) if outer else None
         base = [v for v in ws if v.z < 0.08]
         info['base_centre_m'] = [round(sum(v.x for v in base) / len(base), 2), round(sum(v.y for v in base) / len(base), 2)]
-    for tag, yaw, pitch in (('a', -35, 14), ('b', 105, 14)):
+    # STREET_VIEWS=front: the first view is from straight down -Y, which is the side the kit calls the FRONT
+    # of a prop (it is what faces the street). If the model's front is not what that view shows, it needs a PROP_YAW.
+    views = (('f', 0, 10), ('a', -40, 16)) if os.environ.get('STREET_VIEWS') == 'front' else (('a', -35, 14), ('b', 105, 14))
+    for tag, yaw, pitch in views:
         dist = span * 2.3
         y, p = math.radians(yaw), math.radians(pitch)
         cam.location = ctr + Vector((math.sin(y) * math.cos(p) * dist, -math.cos(y) * math.cos(p) * dist, math.sin(p) * dist))

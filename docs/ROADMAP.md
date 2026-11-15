@@ -178,6 +178,19 @@ anyone picks up a task:
 
 ## Open
 
+### Thirteen more Meshy props are made; none of them is in the game (Sun Nov 15, 2:25 PM Pacific, M Station)
+
+On branch `M_STATION/street-props-batch2`, not on `main`: vending machine, street lamp, planter, pot row,
+dumpster, A-frame sign, bench, and for the cafe the espresso machine, register, pastry case, two plants and the
+bar stool. [Entry](devlog/2026-11-15-thirteen-more-props-and-one-that-did-not-make-it.md).
+
+- **Needs the builder:** merge the branch, `py <repo>/tools/unreal_street_models.py import`, `plan`, lock, `swap`.
+  The script's new part (skip what is already imported, `swap <Name>` for one model) **has never been run**.
+- **Needs a person:** every one of the 13 from the game camera, the cafe ones especially - the latte shift
+  happens beside the espresso machine, the register and the pastry case.
+- **Cut line:** this is optional polish after a final build already exists. If it is not in and looked at
+  before the last package has to start, leave the branch unmerged.
+
 ### A latte shift before the opening, and M Station's street models are in the game (Sun Nov 15, 1:20 PM Pacific, GameStation)
 
 Merged to `main` as PR #134 (`14f46e3`). **The Team Owner played the latte shift and said it works** (1:05 PM); the

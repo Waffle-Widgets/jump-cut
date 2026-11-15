@@ -30,6 +30,9 @@ Run in the editor console box, Play mode stopped, Lvl_JumpCut open:
     py <repo>/tools/unreal_street_models.py swap       changes the mesh on those actors and saves their packages.
                                                         REFUSES if any of those files is read-only (= not locked).
     py <repo>/tools/unreal_street_models.py revert     puts the kit meshes and kit materials back on the same actors.
+A SECOND BATCH (13 more models, listed in MODELS) was added at 2:20 PM the same day. `import` only brings in
+models that are not in the project yet; `plan` and `swap` only ever list actors still wearing a KIT mesh, so
+running them again touches the new 13 and leaves the first 26 actors alone. `swap PlanterM BenchM` does just those.
 Result: Saved/jcpy/street_models.json (and the lock list in Saved/jcpy/street_models_lock.txt).
 
 THE NEXT RUN OF jumpcut_city_place.py IN 'place' MODE WILL UNDO `swap` - it clears every City_* actor
@@ -56,7 +59,29 @@ MODELS = {
     'Hatchback': ('Hatchback', None),
     'BicycleM': ('BicycleM', 'SM_Bicycle'),
     'ScooterM': ('ScooterM', 'SM_Scooter'),
+    # Second batch, Sun Nov 15 2:20 PM: the free-standing street props and six cafe pieces. Each was sized to
+    # the kit model it replaces and, where the kit one stands against a wall, baked with its BACK at the kit
+    # model's back (PROP_BACK), so the deeper Meshy model grows toward the street and not into the shopfront.
+    'VendingMachineM': ('VendingMachineM', 'SM_VendingMachine'),
+    'StreetLampM': ('StreetLampM', 'SM_StreetLamp'),
+    'PlanterM': ('PlanterM', 'SM_Planter'),
+    'PotRowM': ('PotRowM', 'SM_PotRow'),
+    'DumpsterM': ('DumpsterM', 'SM_Dumpster'),
+    'AFrameSignM': ('AFrameSignM', 'SM_AFrameSign'),
+    'BenchM': ('BenchM', 'SM_Bench'),
+    'CafeEspressoM': ('CafeEspressoM', 'SM_CafeEspresso'),
+    'CafeRegisterM': ('CafeRegisterM', 'SM_CafeRegister'),
+    'CafePastryCaseM': ('CafePastryCaseM', 'SM_CafePastryCase'),
+    'CafePlantTallM': ('CafePlantTallM', 'SM_CafePlantTall'),
+    'CafePlantSmallM': ('CafePlantSmallM', 'SM_CafePlantSmall'),
+    'CafeStoolM': ('CafeStoolM', 'SM_CafeStool'),
 }
+# `import` leaves alone any model whose mesh and texture are already in the project. Re-touching the first
+# five would dirty packages that are committed and therefore READ-ONLY, and a failed save of a read-only
+# package is what froze the editor for ten minutes on Nov 14. `import all` forces every model (lock them first).
+# `swap <Name> <Name>` / `plan <Name> ...` limits the swap to those models, so one bad model can be left out.
+FORCE = 'all' in sys.argv[2:]
+ONLY = {x for x in sys.argv[2:] if x in MODELS}
 # The kit tree is near enough round, so two street trees were placed at yaw 270. The sakura is 4.4 m one way
 # and 2.4 m the other; at yaw 270 its long side would run 1 m into the shopfronts. These two get turned so
 # the long side follows the pavement. `revert` does not turn them back (the kit tree does not care).
@@ -129,6 +154,10 @@ def do_import():
             continue
         dest = '%s/%s' % (DEST, name)
         mesh_path, tex_path = '%s/SM_%s' % (dest, name), '%s/T_%s' % (dest, name)
+        if not FORCE and unreal.load_asset(mesh_path) is not None and unreal.load_asset(tex_path) is not None:
+            info['skipped'] = 'already imported - left alone'
+            parent = parent or unreal.load_asset(PARENT)
+            continue
         if unreal.load_asset(tex_path) is None:
             import_one(png, dest, 'T_' + name)
         tex = unreal.load_asset(tex_path)
@@ -151,7 +180,10 @@ def do_import():
             continue
         tex.set_editor_property('srgb', True)
         if parent is None:
+            made_parent = unreal.load_asset(PARENT) is None
             parent = ensure_parent(tex)
+            if made_parent:
+                touched.append(parent)
         mi_path = '%s/MI_%s' % (MATS, name)
         mi = unreal.load_asset(mi_path)
         if mi is None:
@@ -184,8 +216,6 @@ def do_import():
         })
         say('%s: %s' % (name, json.dumps(info)))
         touched += [mesh, tex, mi]
-    if parent is not None:
-        touched.append(parent)
     pkgs = []
     for a in touched:
         p = a.get_outermost()
@@ -215,10 +245,12 @@ def targets(eas, revert):
             continue
         mn, label = mesh.get_name(), a.get_actor_label()
         if revert:
-            if mn in new_to_kit and mesh.get_path_name().startswith(DEST):
+            if mn in new_to_kit and mesh.get_path_name().startswith(DEST) and (not ONLY or mn[3:] in ONLY):
                 out.append((a, None, new_to_kit[mn]))
         elif mn in BY_KIT and mesh.get_path_name().startswith(KIT):
-            out.append((a, BY_LABEL.get(label, BY_KIT[mn]), mn))
+            name = BY_LABEL.get(label, BY_KIT[mn])
+            if not ONLY or name in ONLY:
+                out.append((a, name, mn))
     return sorted(out, key=lambda t: t[0].get_actor_label())
 
 
