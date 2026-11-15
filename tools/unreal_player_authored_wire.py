@@ -30,9 +30,14 @@ BS = '/Game/Game/Imported/CafeWalker/MeshyAnims/BS_Idle_Walk_Run_CWM'
 BP = '/Game/Game/Blueprints/BP_Player'
 SPEED = {300.0: 'Walk', 600.0: 'Run'}
 # clip -> (BP_Player variable, blend in s, blend out s)
-MONT = {'PunchA': ('PlayerAnimPunchA', 0.03, 0.10), 'PunchB': ('PlayerAnimPunchB', 0.03, 0.10),
-        'Finisher': ('PlayerAnimPunchFinisher', 0.04, 0.12), 'HitReact': ('PlayerAnimHitReact', 0.03, 0.12),
-        'FreezeCast': (None, 0.05, 0.15), 'SpliceBlink': (None, 0.03, 0.10)}
+# Blend times, after watching the combo in dumped gameplay frames (Nov 15). At 0.03 s in, a chained hit cut from the
+# last hit's recovery straight to the next clip's first frame, which is a rigid stand: every attack began with a
+# snap to attention. At 0.10 s out he was back in the idle and dead still a third of a second after the hit. A
+# longer blend IN carries the previous pose into the strike (the hit still lands by frame 3-4); a longer blend OUT
+# lets the settle melt into the idle instead of arriving at it.
+MONT = {'PunchA': ('PlayerAnimPunchA', 0.08, 0.22), 'PunchB': ('PlayerAnimPunchB', 0.08, 0.22),
+        'Finisher': ('PlayerAnimPunchFinisher', 0.08, 0.25), 'HitReact': ('PlayerAnimHitReact', 0.04, 0.20),
+        'FreezeCast': (None, 0.06, 0.20), 'SpliceBlink': (None, 0.04, 0.15)}
 eal = unreal.EditorAssetLibrary
 log = []
 
