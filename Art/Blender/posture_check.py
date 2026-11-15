@@ -86,6 +86,33 @@ for sd, sg in (('L', 1), ('R', -1)):
         sl = arm[(arm[:, 2] <= z1) & (arm[:, 2] > z2)]
         o.append('%.0f' % ((sg * (sl[:, 0] - cx)).max() if len(sl) else -1))
     print('POSTURE  %s arm outer edge, cm from the centre line, shoulder down to fingers: %s' % (sd, ' '.join(o)))
+# AGAINST A REAL PERSON (owner, Nov 15: "If you need to look up how normal people stand please do"). Published
+# numbers: preferred stance is 17 cm between heel centres with 14 degrees between the feet (McIlroy & Maki 1996, 262
+# adults); hanging relaxed, the fingertips reach mid-thigh and "stopping the hands at the hip looks stunted"; standing
+# knees are within a few degrees of straight. Body heights as a share of stature (Pheasant, Bodyspace): shoulder
+# 0.818, hip joint 0.52, wrist 0.485, knuckle 0.43, fingertip 0.375, knee 0.285.
+Hh = float(Vc[:, 2].max() - Vc[:, 2].min()); fl = float(Vc[:, 2].min())
+gn = {g.index: g.name for g in mesh.vertex_groups}
+kids_ = lambda n: [c.name for c in rig.data.bones[n].children]
+tips = {}
+for sd in 'LR':
+    hb = set(); st = kids_(B[sd]['wr'])
+    while st:
+        n = st.pop(); hb.add(n); st += kids_(n)
+    hb.add(B[sd]['wr'])
+    idx = [v.index for v in mesh.data.vertices if sum(g.weight for g in v.groups if gn[g.group] in hb) > 0.5]
+    tips[sd] = (float(Vc[idx, 2].min()) - fl, float(np.abs(Vc[idx, 0] - cx).min()))
+leg = Vc[(Vc[:, 2] - fl > 55) & (Vc[:, 2] - fl < 75) & (np.abs(Vc[:, 0] - cx) < 24)]
+thigh_out = {sd: float((sg * (leg[:, 0] - cx)).max()) for sd, sg in (('L', 1), ('R', -1))}
+anL, anR = P(B['L']['an']), P(B['R']['an'])
+print('HUMAN  stature %.0f cm.            ours        a person' % Hh)
+print('HUMAN  shoulder joint height   %5.1f       %5.1f' % ((shL.z + shR.z) / 2 - fl, 0.818 * Hh))
+print('HUMAN  wrist height            %5.1f       %5.1f' % ((P(B['L']['wr']).z + P(B['R']['wr']).z) / 2 - fl, 0.485 * Hh))
+print('HUMAN  fingertip height        %5.1f/%5.1f %5.1f   (mid-thigh; hip joint %.1f, knee %.1f)' % (tips['L'][0], tips['R'][0], 0.375 * Hh, P(B['L']['hip']).z - fl, P(B['L']['kn']).z - fl))
+print('HUMAN  shoulder-to-wrist       %5.1f       %5.1f   (arm bones: %.1f + %.1f)' % ((shL - P(B['L']['wr'])).length, 0.333 * Hh, (shL - P(B['L']['el'])).length, (P(B['L']['el']) - P(B['L']['wr'])).length))
+print('HUMAN  ankles apart            %5.1f       %5.1f' % (abs(anL.x - anR.x), 17.0))
+print('HUMAN  knee bend L/R           %2.0f/%2.0f       0-5' % (bend(P(B['L']['hip']), P(B['L']['kn']), anL), bend(P(B['R']['hip']), P(B['R']['kn']), anR)))
+print('HUMAN  hand to thigh, sideways: innermost hand point L %.1f R %.1f cm from centre; outside of thigh L %.1f R %.1f' % (tips['L'][1], tips['R'][1], thigh_out['L'], thigh_out['R']))
 world = bpy.data.worlds.new('W'); sc.world = world; world.use_nodes = True
 world.node_tree.nodes['Background'].inputs[0].default_value = (0.9, 0.9, 0.9, 1); world.node_tree.nodes['Background'].inputs[1].default_value = 1.2
 sun = bpy.data.objects.new('Sun', bpy.data.lights.new('Sun', 'SUN')); sun.data.energy = 3; sun.rotation_euler = (0.7, 0.2, -0.5); sc.collection.objects.link(sun)
