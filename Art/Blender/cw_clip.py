@@ -265,11 +265,26 @@ NECK = (('Bone_018', 0.4), ('Bone_017', 0.6))
 _state = {}
 
 
+# THE STAND. Every action clip was authored from, and back to, a "neutral" stand that was simply the bind pose brought
+# down: C.body(dz=-1.2), feet and hands at their defaults. Measured against photographs of people standing
+# (posture_check.py, Nov 15) that stand has the pelvis 6.5 cm in front of the ankles, the shoulders behind the hips,
+# the head tipped 12 degrees down and the arms out in an A. clip_idle.py was rebuilt to the measured stance; the
+# other clips still began and ended on the old one and blended to it. Rather than re-key eight scripts, author()
+# takes `stance=(a, b)`: the difference between the old stand and the measured one is ADDED to whatever the script
+# poses, in full on the first frame, fading out by u = a (the action takes over), and fading back in from u = b to
+# the last frame. The feet are not touched: both stands plant them in the same place.
+STANCE = dict(fwd=-6.5, dz=1.8, pitch=5.0, spine=-3.0, neck=-12.0, hand_out=-5.0, hand_fwd=2.0, hand_up=-0.02, pron=-7.0,
+              clav_up=24.0, clav_back=6.0)
+_stance = [0.0]                                             # this frame's weight, set by author()
+
+
 def body(dx=0.0, fwd=0.0, dz=0.0, pitch=0.0, lean=0.0, twist=0.0):
     """Start a frame and place the pelvis. dx: toward his left. fwd: forward. dz: up (negative sinks him, which bends
     the knees). pitch: positive leans him FORWARD. lean: positive tips him toward his LEFT. twist: positive turns the
     hips toward his LEFT (anticlockwise seen from above)."""
     reset()
+    w_ = _stance[0]
+    fwd += STANCE['fwd'] * w_; dz += STANCE['dz'] * w_; pitch += STANCE['pitch'] * w_
     pos = P0 + Vector((dx, -fwd, dz))
     R = Matrix.Rotation(math.radians(twist), 4, Z) @ Matrix.Rotation(math.radians(pitch), 4, X) @ Matrix.Rotation(math.radians(-lean), 4, Y)
     set_world('Bone_000', Matrix.Translation(pos) @ R @ Matrix.Translation(-P0) @ REST['Bone_000'])
@@ -279,12 +294,14 @@ def body(dx=0.0, fwd=0.0, dz=0.0, pitch=0.0, lean=0.0, twist=0.0):
 def spine(x=0.0, y=0.0, z=0.0):
     """Bend the back, shared over three bones. x: positive curls him FORWARD. y: positive bends toward his LEFT.
     z: positive twists the chest toward his LEFT."""
+    x += STANCE['spine'] * _stance[0]
     for b in SPINE:
         rot(b, X, x / 3.0); rot(b, Y, -y / 3.0); rot(b, Z, z / 3.0)
 
 
 def neck(x=0.0, y=0.0, z=0.0):
     """Head and neck. x: positive nods DOWN. y: positive tilts toward his LEFT. z: positive looks to his LEFT."""
+    x += STANCE['neck'] * _stance[0]
     for b, k in NECK:
         rot(b, X, x * k); rot(b, Y, -y * k); rot(b, Z, z * k)
 
@@ -319,6 +336,8 @@ def hand(s, out=9.0, fwd=3.0, up=None, pron=62.0, curl=0.34, elbow=(0.35, -1.0, 
     and a little out. Keep it well off the line from shoulder to wrist or the elbow flips between frames."""
     up_, fo, wr = ARM[s]
     if up is None: up = -ARMLEN[s] * 0.965
+    w_ = _stance[0]
+    out += STANCE['hand_out'] * w_; fwd += STANCE['hand_fwd'] * w_; up += STANCE['hand_up'] * ARMLEN[s] * w_; pron += STANCE['pron'] * w_
     if not _state.get('clav' + s):
         # Hold the shoulder where the idle holds it, in every pose. A hanging arm needs 28 degrees of collarbone lift
         # or the shoulder slopes (owner, Nov 15, twice). Round two then dropped the lift to nothing for a level or
@@ -328,7 +347,8 @@ def hand(s, out=9.0, fwd=3.0, up=None, pron=62.0, curl=0.34, elbow=(0.35, -1.0, 
         # overhead, the way a real shoulder does.
         v = Vector((SGN[s] * out, -fwd, up))
         d = v.z / max(v.length, 1e-6)                     # -1 hanging .. 0 level .. +1 overhead
-        clav(s, up=(24.0 + 4.0 * d * d) if d <= 0 else (24.0 + 10.0 * d))
+        cu_ = (24.0 + 4.0 * d * d) if d <= 0 else (24.0 + 10.0 * d)
+        clav(s, up=cu_ + (STANCE['clav_up'] - cu_) * w_, back=3.0 + (STANCE['clav_back'] - 3.0) * w_)
     sh0 = head(up_)
     t = Vector((sh0.x + SGN[s] * out, sh0.y - fwd, sh0.z + up))
     pole = Vector((SGN[s] * elbow[0], -elbow[1], elbow[2]))
@@ -540,7 +560,7 @@ def _torn(V):
     return int(len(bad)), (float(r1[bad].max()) if len(bad) else 0.0), sorted(((n, list(k)) for k, n in pairs.items()), reverse=True)[:5]
 
 
-def author(clip, frames, build, loop=True, sheet_frames=8):
+def author(clip, frames, build, loop=True, sheet_frames=8, stance=None):
     """Solve, key, measure, render, export. frames = how many frames the motion takes (a loop gets one more, equal to
     the first). build(f, u) poses frame f (1-based) where u runs 0..1; for a loop u=1 is the same pose as u=0."""
     F0 = 1; F1 = frames + 1 if loop else frames
@@ -552,7 +572,12 @@ def author(clip, frames, build, loop=True, sheet_frames=8):
     for f in range(F0, F1 + 1):
         g = F0 if (loop and f == F1) else f
         REACH.clear()
-        build(g, (g - F0) / N); _finish(); apply_pose(); VERTS[f] = world_verts()
+        u_ = (g - F0) / N
+        _stance[0] = 0.0
+        if stance:                                            # see STANCE: the measured stand at the ends of an action
+            if stance[0]: _stance[0] = max(_stance[0], 1.0 - smooth(u_, 0.0, stance[0]))
+            if stance[1] is not None: _stance[0] = max(_stance[0], smooth(u_, stance[1], 1.0))
+        build(g, u_); _finish(); apply_pose(); VERTS[f] = world_verts()
         POSES[f] = {n: BASIS[n].copy() for n in BONES}
         NEED[f] = dict(_apron)
         TRACK[f] = {'L': head(LEG['L'][2]).copy(), 'R': head(LEG['R'][2]).copy(), 'hip': head('Bone_001').copy(),

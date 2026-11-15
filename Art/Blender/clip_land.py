@@ -63,4 +63,4 @@ def build(f, u):
     pose(at(u, TL))
 
 
-C.author('Land', frames=12, build=build, loop=False, sheet_frames=12)
+C.author('Land', frames=12, build=build, loop=False, sheet_frames=12, stance=(0.0, 0.45))

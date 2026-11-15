@@ -62,4 +62,4 @@ def build(f, u):
     pose(at(u, TL))
 
 
-C.author('SpliceBlink', frames=10, build=build, loop=False, sheet_frames=10)
+C.author('SpliceBlink', frames=10, build=build, loop=False, sheet_frames=10, stance=(0.18, 0.55))

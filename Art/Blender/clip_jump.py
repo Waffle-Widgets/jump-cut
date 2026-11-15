@@ -69,4 +69,4 @@ def build(f, u):
     pose(at(u, TL))
 
 
-C.author('Jump', frames=10, build=build, loop=False, sheet_frames=10)
+C.author('Jump', frames=10, build=build, loop=False, sheet_frames=10, stance=(0.2, None))

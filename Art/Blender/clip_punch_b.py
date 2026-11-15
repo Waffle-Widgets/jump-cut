@@ -202,4 +202,4 @@ def build(f, u):
     if C.REACH and max(C.REACH.values()) > 0.05: print('REACH', f, {k: round(v, 1) for k, v in C.REACH.items() if v > 0.05})
 
 
-C.author('PunchB', frames=FRAMES, build=build, loop=False, sheet_frames=FRAMES)
+C.author('PunchB', frames=FRAMES, build=build, loop=False, sheet_frames=FRAMES, stance=(0.14, 0.55))
