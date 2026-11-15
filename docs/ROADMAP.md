@@ -252,6 +252,9 @@ On branch `claude/project-thread-y3rtrs`. See [the devlog entry](devlog/2026-11-
 - **Cafe wall:** the break is re-applied until the panel has spread. 1 run in 3 failed before, 0 in 7 after.
 - Running past the street goons no longer skips the boss beats.
 - Changed: `BP_OpeningDirector`, `WBP_CineOverlay`.
+- **Sun 2:25 PM Pacific:** the intro used to hand back above the player looking down (Justin). It now ends behind
+  him facing the boss, because the mouse could still turn the camera during the speech. Scripted check only;
+  [entry](devlog/2026-11-15-the-boss-intro-ends-behind-you.md).
 
 ### Beats 2 and 3: markers hide when you arrive, Splice gets its moment (Sun Nov 15, 15:20 UTC, Justin's Mac mini)
 
