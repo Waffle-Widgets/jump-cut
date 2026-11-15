@@ -178,6 +178,36 @@ anyone picks up a task:
 
 ## Open
 
+### Beat 1: the coworker swaps sides, one driver, and the camera stops snapping (Sun Nov 15, 08:30 UTC, Justin's Mac mini)
+
+Round 6 of the Team Owner's feedback on the opening. **Built, measured in PIE, not played by anybody.**
+See [the devlog entry](devlog/2026-11-15-the-player-turns-to-meet-his-own-camera.md).
+
+- **`Coworker_Cafe` moved to the car's +Y side**, (-540, -161) → **(-440, 200)**. A capsule sweep from
+  the player's start to her old spot was stopped by `C1_Cafe_CrashDriver` at (-241.2, -71.9): the body
+  really was the only route to her. The new spot came off a trace grid (floor z = 2.0, a 35 × 90 capsule
+  stands clear, clean sweep from the origin) and is 215 cm from the blast, so she still needs saving.
+- **Objective 2's beacon points at her now** (`ObjCoworkerLoc`, a stored vector). She used to be 260 cm
+  from the body against a 280 cm `InteractRange`, so the rescue fired the moment the player reached the
+  driver; at 295 cm it does not, and a beacon still aimed at `ObjSafeLoc` would have left the beat
+  unwinnable. Measured live: beacon 0.0 cm from her.
+- **`C1_Cafe_Car` and `C1_Cafe_CarCab` no longer collide.** Hidden grey-box placeholders that stuck out
+  past the real wreck and made everything deeper than x = -460 on that side unreachable.
+- **One driver and one car.** The sequence's spawn tracks had **no keys**, so the flying body stood
+  beside the real ragdoll — and the flying car sat inside the real wreck — for four and a half seconds.
+  Car despawns at frame 187, body at frame 195, `CineBodyTime` → 6.467. Measured in PIE: exactly one
+  body drawn, exactly one car drawn.
+- **The hand-off blends instead of snapping.** The player's own camera was measured in PIE at
+  **(396.107, -55.669, 102.642) rot (0, 0, 172) FOV 90**; the last cut ended 194 cm away *and* on a
+  26 mm lens (49.1°) against that 90°. Cut D now ends on that exact pose at **11.88 mm** = 90°, the
+  sequence runs to 11.2 s so the director stops it first, and `B1_Cine_HandCam` gives the blend
+  something to start from (0.40 s, ease in/out).
+- **The player turns, with the walk animation.** From 8.80 s the director feeds `AddMovementInput`
+  toward `CineEndYaw` so the velocity-driven blend space actually plays; there is no turn-in-place clip
+  in the project. Measured: pawn yaw **172.0** = control yaw, **31 cm** of drift, speed 0 at the end.
+- **Still open from the same note:** nobody has played it, and the wide-legged stance is still #73
+  (GameStation's lane).
+
 ### Beat 1: the wall breaks, the fire waits for its shot, the driver ragdolls (Sun Nov 15, 06:20 UTC, Justin's Mac mini)
 
 Round 5 of the Team Owner's feedback on the opening. **Built, measured in PIE, not played by anybody.**

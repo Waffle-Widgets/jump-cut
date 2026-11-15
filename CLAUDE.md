@@ -578,6 +578,58 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   objective jumped straight to 3 with the player still standing at `(0, 0, 94)`. Nothing errors
   and the capture looks fine. After moving any actor a beat triggers off, read the objective
   state back with the player where he really starts.
+- **A Sequencer SPAWNABLE WITH NO SPAWN KEYS IS SPAWNED FOR THE WHOLE SEQUENCE (Nov 15).**
+  `add_spawnable_from_instance` creates a `MovieSceneSpawnTrack` whose section has **zero keys**,
+  and that means on from the first frame to the last. Beat 1's flying car therefore sat inside
+  the real wreck from 6.2 s to 11.0 s (a whole-body depth tie, the #67 mechanism at car scale)
+  and the thrown body stood beside the real ragdoll for four and a half seconds ("seeing two
+  driver models"). **Check the spawn track before anything else when a cinematic shows two of
+  something**, and read the key COUNT - the track exists, which is what makes it look wired.
+  `b1_opening_cine.key_spawn` writes True@0 and False@<hand-off frame>; reveal the real actor one
+  frame BEFORE the despawn, never after, so you get one frame of identical overlap rather than one
+  frame of nothing.
+- **A camera hand-off is POSITION, ROTATION *and* FIELD OF VIEW, and the FOV is the one nobody
+  checks (Nov 15).** Beat 1's last cut ended 194 cm from where the player camera sits *and* on a
+  26 mm lens, which on this project's 23.76 mm sensor is **49.1 deg** against
+  `BP_Player.FollowCamera`'s **90**. Convert before comparing: `hfov = 2*atan(sensor_w/2/focal)`,
+  and the focal that matches 90 deg here is **11.88 mm**. A CineCameraActor also constrains its
+  view to 16:9 by default and a `CameraComponent` does not, so turn `constrain_aspect_ratio` off
+  on the cut that has to match - at a cut, where it cannot be seen.
+- **MEASURE the player camera's pose, do not compute it from the spring arm.** The arm does a
+  collision probe and can shorten itself, and the pawn's resting z is not floor + half height
+  (94.15, not 92). `tools/b1v_cam.py prep|set|read` does it in PIE: set the control rotation in
+  one MCP call and read `FollowCamera` + the camera manager in the NEXT one, so real ticks happen
+  in between.
+- **A Level Sequence with a camera cut track reverts the view the frame it stops, so there is
+  nothing to blend FROM.** Park a plain CameraActor at the cut's final pose with the matching FOV
+  (`B1_Cine_HandCam`), then: stop the player, `SetViewTargetWithBlend(handcam, 0.0)` - which
+  changes nothing on screen - then `SetViewTargetWithBlend(pawn, 0.4, EaseInOut)`. And make the
+  sequence LONGER than the director's own clock (11.2 vs `CineLength` 11.0) so the director always
+  gets to the hand-off first; a sequence finishing on its own schedule is itself a one-frame pop.
+- **To turn a character "with animation" when there is no turn-in-place clip, drive the MOVEMENT
+  COMPONENT, not `SetActorRotation` (Nov 15).** The anim blueprint is a blend space on
+  `GetVelocity`'s XY length, so a set-rotation turn is the idle pose sliding round on the spot.
+  Feed `Pawn|Input|AddMovementInput` toward the target yaw and let `orient_rotation_to_movement`
+  turn him at his own 500 deg/s. All 38 of the player's `_CWM` clips are idle/walk/jog/attack/hit
+  react/death/jump - there is no turn clip to montage.
+  **And you do NOT clear `MoveLocked` to do it.** `BP_Player.PlayerRefreshMoveLock` derives
+  `MoveLocked` from `InputLocked` every tick, so clearing it is undone next frame - but it only
+  acts on the TRANSITION (`if (and locked (not MoveLocked))`), so with `MoveLocked` already true
+  it never re-calls `DisableMovement`. Setting the movement mode to `MOVE_Walking` from outside is
+  stable, and `InputLocked` stays true so the player's own keys still do nothing. Measured: 31 cm
+  of drift over a 172 deg turn at scale 0.30, which the view-target blend absorbs.
+- **The hidden grey-box crash-car placeholders `C1_Cafe_Car` and `C1_Cafe_CarCab` used to wall off
+  the cafe (Nov 15).** Hidden in game, still colliding, and sticking out past the real wreck, they
+  made every spot deeper than x = -460 on the car's +Y side unreachable. Collision is off on both
+  now (`tools/b1v_greybox.py`). When a capsule sweep is stopped by something you cannot see, check
+  the grey-box layer before the art.
+- **You cannot step the director's clock by hand to test anything the MOVEMENT COMPONENT does.**
+  `tools/b1z_pie.py open` works precisely because no ticks happen, so `AddMovementInput` would be
+  recorded and never applied. Use `StartPIE`'s `warmupSeconds` to let the opening run in real time
+  and sample afterwards (`tools/b1v_pie.py sample`).
+- **`ALevelSequenceActor` has no `get_sequence_player()` in Python** - the obvious name raises
+  `AttributeError`. It is `get_editor_property('sequence_player')`, and that player's
+  `get_current_time().time` is an `FFrameTime`, which `round()` refuses.
 - **A settled ragdoll's MASS is about 55 cm from its actor origin**, because the body collapses
   out of the head-down pose the throw ends in. The beacon, the touch test and the arc all use the
   actor origin; the thing the player SEES is the bones. Measure bone extents

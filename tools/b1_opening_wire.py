@@ -28,6 +28,24 @@ BEACON_ROT = (180.0, 0.0, 0.0)              # (roll, pitch, yaw)
 BEACON_SCALE = (0.45, 0.45, 0.75)
 BEACON_MAT = '/Game/Game/Materials/M_PropBlue'
 
+# The player camera's hand-off pose, MEASURED in PIE (tools/b1v_cam.py read) with the controller
+# at CineEndYaw 172 and the pawn standing at the origin. b1_opening_cine.py ends the last camera
+# cut on exactly these numbers, and B1_Cine_HandCam sits here too.
+HANDCAM_LOC = (396.107, -55.669, 102.642)
+HANDCAM_ROT = (0.0, 0.0, 172.0)     # (roll, pitch, yaw)
+HANDCAM_FOV = 90.0                  # BP_Player.FollowCamera's own field of view
+
+# The coworker moves to the car's +Y side. Her old spot (-540, -161) is on the SAME side as the
+# driver's body, and a real capsule sweep from where the player starts is BLOCKED by
+# C1_Cafe_CrashDriver, stopping at (-241.2, -71.9) - "the coworker needs to be on the other side
+# of the car then because he's blocking the path right now" (2026-11-15), measured rather than
+# taken on trust. (-440, 200) was picked from a trace grid: floor z = 2.0, a 35x90 player capsule
+# stands there clear, and the sweep from the origin is clean WITHOUT having to touch the hidden
+# grey-box C1_Cafe_Car that walls off everything deeper than x = -460 on that side. It is 215 cm
+# from the blast origin, so she is still well inside the 700 cm radius and still needs saving.
+COWORKER_LOC = (-440.0, 200.0, 0.0)
+COWORKER_YAW = -112.0               # looking back at the car that nearly hit her
+
 DEFAULTS = {
     'CinePlayOpening': True,
     'CineLength': 11.0,
@@ -36,7 +54,14 @@ DEFAULTS = {
     # still in the air at x=-900, which is the 'two cars' defect. It was set to 6.20 live on
     # Nov 14 and this default put 4.70 straight back on the next run (reported again Nov 15).
     'CineImpactTime': 6.20,
-    'CineBodyTime': 6.45,
+    # 6.467 s = frame 194, the thrown body's LAST transform key, and the frame before the
+    # spawnable is despawned (b1_opening_cine.py keys its spawn track False at frame 195). The
+    # real BP_CrashDriver is revealed here, so the two bodies overlap for at most one frame in
+    # the same pose instead of standing side by side for four and a half seconds ("seeing two
+    # driver models", 2026-11-15). The flying body had no despawn key at all: b1_opening_cine.py
+    # has never written spawn tracks, so the power cut's rebuild left both the body AND the car
+    # spawned for the whole 11 s.
+    'CineBodyTime': 6.467,
     # 4.70 s = the frame the cinematic car reaches the wall (b1_opening_cine.CAR_KEYS). The wall
     # is a Geometry Collection now, so it comes apart here instead of a grey patch vanishing.
     'CineWallTime': 4.70,
@@ -53,6 +78,20 @@ DEFAULTS = {
     'RagdollSettle': 1.2,
     'RagdollT': 0.0, 'RagdollOn': False, 'RagdollDone': False,
     'CineEndYaw': 172.0,
+    # --- the player turns to face CineEndYaw during the last cut, so control is handed over with
+    # the model already looking where the camera is looking ("the players model needs to rotate,
+    # with animation, to meet the same destination for the player camera", 2026-11-15).
+    # 8.80 is the frame cut D begins. The turn is driven through AddMovementInput rather than a
+    # SetActorRotation so the anim blueprint's velocity-driven blend space actually plays the walk
+    # - there is no turn-in-place clip in the project. Scale 0.30 of a 600 cm/s walk is about
+    # 180 cm/s, and the character's own 500 deg/s yaw rate finishes a 172 deg turn in ~0.35 s, so
+    # he steps roughly 40-60 cm while turning. That drift is exactly what CineHandBlend absorbs.
+    'CineTurnStart': 8.80,
+    'CineTurnScale': 0.30,
+    'CineTurnOn': False, 'CineTurnDone': False, 'CineTurnFromYaw': 0.0,
+    # The sequence's last cut now ENDS on the player camera's measured pose and FOV, so this blend
+    # only has to cover however far the turn carried him off the origin. 0.40 s, ease in/out.
+    'CineHandBlend': 0.40,
     'ObjectiveHeight': 230.0,
     'ObjectiveState': 0,
     # The car drives in heading +X, so its RIGHT side is -Y - and that is also screen-right from
@@ -79,6 +118,13 @@ DEFAULTS = {
     # 430 is 950 cm from the car against a 700 cm blast - clear, with margin, and still inside
     # the room so the player is never told to walk through a wall.
     'ObjSafeLoc': unreal.Vector(430.0, -40.0, 0.0),
+    # Objective 2 points at the COWORKER now, not at the safe spot. She has moved to the car's
+    # +Y side (see COWORKER_LOC below) and is 295 cm from the driver's body, outside her 280 cm
+    # InteractRange - so unlike at her old spot the rescue no longer fires the moment the player
+    # reaches the driver, and the player has to walk to her. A beacon still pointing 950 cm the
+    # other way at ObjSafeLoc would have left the beat unwinnable. It also matches the caption
+    # already on screen at that moment: "The car is going to blow. Get her out."
+    'ObjCoworkerLoc': unreal.Vector(-440.0, 200.0, 0.0),
     'ObjStreetLoc': unreal.Vector(820.0, 0.0, 0.0),      # out of the door, onto the street
     'ObjStreetDoneX': 1200.0,                            # past this the beacon switches off
     # --- the explosion-and-pan cinematic (b1x_graphs.py). Four poses, three lerps: A holds on the
@@ -159,10 +205,11 @@ try:
             for k in list(DEFAULTS) + ['CineSeqActor', 'CineRealCar', 'CineRealDriver',
                                        'CineWallGC', 'CineFireActor', 'CineFireLight',
                                        'CineFireFX', 'CineDriverBP', 'ObjectiveBeacon',
-                                       'ExplCam', 'ExplCard', 'ExplCarGC']:
+                                       'ExplCam', 'ExplCard', 'ExplCarGC', 'CineHandCam']:
                 say('   %-18s %s' % (k, d.get_editor_property(k)))
         for lab in ('B1_Cafe_WallPanel_GC', 'B1_Cine_Seq', 'B1_Objective_Beacon',
-                    'B1_Cine_ExplCam', 'B1_Cafe_Explosion', 'B1_Cafe_CrashCar_GC'):
+                    'B1_Cine_ExplCam', 'B1_Cafe_Explosion', 'B1_Cafe_CrashCar_GC',
+                    'B1_Cine_HandCam', 'Coworker_Cafe', 'C1_Cafe_CrashDriver'):
             a = by_label.get(lab)
             say('%-22s %s' % (lab, (a.get_actor_location() if a else 'MISSING')))
         raise SystemExit
@@ -195,6 +242,36 @@ try:
                                       unreal.Rotator(*BEACON_ROT), False, True)
     say('B1_Objective_Beacon placed at %s rot %s scale %s' % (
         b.get_actor_location(), b.get_actor_rotation(), b.get_actor_scale3d()))
+
+    # ---------------- the camera the hand-off blends FROM
+    # A Level Sequence with a camera cut track reverts the player's view the instant it stops, so
+    # there is nothing left to blend out of - which is the snap. B1_Cine_HandCam is a plain
+    # CameraActor parked at the player camera's MEASURED hand-off pose with the same 90 deg FOV,
+    # so making it the view target with blend 0 changes nothing on screen, and the blend from IT
+    # to the pawn covers whatever the turn did to his position. Measured in PIE on 2026-11-15 with
+    # the controller at CineEndYaw and the pawn at the origin: FollowCamera and the camera manager
+    # both read (396.107, -55.669, 102.642) rot (0, 0, 172) FOV 90, and the 400 cm spring arm was
+    # NOT shortened by its collision probe. Do not compute this from the arm's numbers - measure
+    # it (tools/b1v_cam.py).
+    hc = by_label.get('B1_Cine_HandCam')
+    if hc is not None:
+        eas.destroy_actor(hc)
+        say('removed the old B1_Cine_HandCam')
+    hc = eas.spawn_actor_from_class(unreal.CameraActor, unreal.Vector(*HANDCAM_LOC),
+                                    unreal.Rotator(*HANDCAM_ROT))
+    hc.set_actor_label('B1_Cine_HandCam')
+    hc.set_editor_property('tags', [unreal.Name(TAG)])
+    cam = hc.camera_component
+    cam.set_editor_property('field_of_view', HANDCAM_FOV)
+    # Leave the aspect-ratio axis constraint alone: a plain CameraComponent's default is the same
+    # as BP_Player.FollowCamera's, and matching the follow camera is the entire point of this
+    # actor. (unreal.AspectRatioAxisConstraint has no ASPECT_RATIO_MAINTAIN_X_FOV member anyway.)
+    cam.set_editor_property('constrain_aspect_ratio', False)
+    hc.set_actor_enable_collision(False)
+    hc.set_actor_location_and_rotation(unreal.Vector(*HANDCAM_LOC),
+                                       unreal.Rotator(*HANDCAM_ROT), False, True)
+    say('B1_Cine_HandCam placed at %s rot %s fov %s' % (
+        hc.get_actor_location(), hc.get_actor_rotation(), cam.get_editor_property('field_of_view')))
 
     # ---------------- wire the placed director
     # Always re-place it. A placed actor keeps the class layout it was spawned with, so one
@@ -233,6 +310,7 @@ try:
         'CineFireLight': by_label.get('B1_Cafe_FireLight'),
         'CineDriverBP': by_label.get('C1_Cafe_CrashDriver'),
         'ObjectiveBeacon': b,
+        'CineHandCam': hc,
         'DriverRef': by_label.get('C1_Cafe_CrashDriver'),
         'CoworkerRef': by_label.get('Coworker_Cafe'),
     }
@@ -328,8 +406,9 @@ try:
                 say('   (existing) %-18s %s' % (k, cw.get_editor_property(k)))
             except Exception as e:
                 say('   (existing) %-18s <%s>' % (k, type(e).__name__))
-        xf = cw.get_actor_transform()
-        cw.set_actor_location_and_rotation(xf.translation, xf.rotation.rotator(), False, True)
+        cw.set_actor_location_and_rotation(unreal.Vector(*COWORKER_LOC),
+                                           unreal.Rotator(0.0, 0.0, COWORKER_YAW), False, True)
+        say('   Coworker_Cafe -> %s rot %s' % (cw.get_actor_location(), cw.get_actor_rotation()))
 
     say('')
     say('NOT SAVED. Save with jc_save_actors.py and AssetTools.save_assets.')

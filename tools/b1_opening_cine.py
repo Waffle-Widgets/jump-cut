@@ -8,7 +8,8 @@ The cinematic is 11 s, 30 fps, four shots:
   B 4.0-7.0  the car comes through the west wall
   C 6.2-8.8  the driver is thrown out of the cab, lands where BP_CrashDriver stands (the car's
              RIGHT side), and the car catches fire part-way through this shot
-  D 8.8-11.0 settle behind the player, then control is handed over
+  D 8.8-11.2 settle behind the player, ending on the player camera's own MEASURED pose and FOV,
+             while the player turns on the spot to face it; control is handed over at 11.0
 
 EVERYTHING the sequence animates is a SPAWNABLE, so the sequence owns no level actor and leaves
 nothing behind: four cine cameras, one flying car, one flying body. The REAL wreck, the REAL
@@ -24,7 +25,14 @@ Writes JumpCut/Saved/jcpy/b1_cine_build.txt. Never saves - save with the editor/
 import unreal, os, sys, math
 
 FPS = 30
-LEN = 11.0
+# 11.2, NOT 11.0. BP_OpeningDirector.CineLength is 11.0, so the director's own clock reaches the
+# end of the opening and calls CineFinishOpening -> CineHandOverCamera 0.2 s BEFORE the sequence
+# would finish by itself. That matters: a sequence with a camera cut track reverts the player's
+# view the frame it ends, on its own schedule, and whichever of the two gets there first decides
+# whether the hand-off is a blend or a pop. The last cut holds its final pose over 11.0 -> 11.2 so
+# the extra 0.2 s shows nothing new.
+LEN = 11.2
+CINE_LENGTH = 11.0
 SEQ_DIR = '/Game/Game/Cinematics'
 SEQ_NAME = 'LS_Beat1_Opening'
 SEQ_PATH = '%s/%s' % (SEQ_DIR, SEQ_NAME)
@@ -63,11 +71,24 @@ CAMS = [
     ('CineCam_C_Body', [
         (6.10, -70.0, 430.0, 165.0, 0.0, -7.0, 243.0),
         (8.90, -40.0, 400.0, 140.0, 0.0, -9.0, 238.0)], 28.0),
-    # Ends on CineEndYaw (172) so the hand-off to the player's own camera does not snap, and so
-    # the player is already looking at the body he is being told to go and check.
+    # THIS CUT ENDS ON THE PLAYER'S OWN CAMERA, to the millimetre and to the degree, because
+    # "the camera pans around at the end but then snaps to the player camera" (2026-11-15) was
+    # THREE mismatches, all measured rather than guessed:
+    #   position: this cut used to end at (250, 10, 216) pitch -7 while the player camera sits at
+    #             (396.107, -55.669, 102.642) pitch 0 - a 194 cm jump;
+    #   lens:     a 26 mm cine lens on this project's 23.76 mm sensor is 49.1 deg horizontal,
+    #             against BP_Player.FollowCamera's 90 deg. That is a 2x FOV pop and it is at
+    #             least as visible as the move. 11.88 mm is exactly 90 deg on this filmback
+    #             (23.76 / 2 / tan 45), so the whole cut is shot at the gameplay FOV;
+    #   view:     the sequence reverts the view when it stops - see CineHandOverCamera.
+    # The pose came from tools/b1v_cam.py read, in PIE, with the controller at CineEndYaw: the
+    # 400 cm spring arm was not shortened by its collision probe. Every key stays about 400 cm
+    # from the player so he does not change size as it settles.
     ('CineCam_D_Hand', [
-        (8.70, 345.0, 35.0, 238.0, 0.0, -9.0, 176.0),
-        (11.0, 250.0, 10.0, 216.0, 0.0, -7.0, 172.0)], 26.0),
+        (8.70, 420.0, 90.0, 210.0, 0.0, -11.0, 166.0),
+        (9.90, 405.0, 10.0, 160.0, 0.0, -5.0, 169.0),
+        (11.00, 396.107, -55.669, 102.642, 0.0, 0.0, 172.0),
+        (11.20, 396.107, -55.669, 102.642, 0.0, 0.0, 172.0)], 11.88),
 ]
 
 # camera cut ranges (binding label, start s, end s)
@@ -176,6 +197,33 @@ try:
     def fr(t):
         return unreal.FrameNumber(int(round(t * FPS)))
 
+    # THE SPAWN TRACKS ARE THE WHOLE OF "I CAN SEE TWO CARS" AND "SEEING TWO DRIVER MODELS".
+    # add_spawnable_from_instance gives each binding a MovieSceneSpawnTrack whose section has NO
+    # KEYS, which means spawned for the entire sequence - so the flying car sat on top of the real
+    # wreck from 6.2 to 11.0 (a perfect whole-body depth tie, and a likely second cause of the car
+    # flicker) and the thrown body stood in its head-down landing pose beside the real ragdoll for
+    # four and a half seconds. Measured on 2026-11-15: both spawn sections, 0 keys. CLAUDE.md has
+    # described these keys since Nov 14 - they were lost when the editor side was rebuilt after
+    # the power cut, because THIS SCRIPT has never written them. It does now.
+    def key_spawn(binding, off_frame, label):
+        """True at frame 0, False at off_frame - so the spawnable is gone when the real actor shows."""
+        tr = None
+        for t in binding.get_tracks():
+            if isinstance(t, unreal.MovieSceneSpawnTrack):
+                tr = t
+                break
+        if tr is None:
+            tr = binding.add_track(unreal.MovieSceneSpawnTrack)
+        secs = tr.get_sections()
+        sec = secs[0] if secs else tr.add_section()
+        ch = sec.get_all_channels()[0]
+        for k in list(ch.get_keys()):
+            ch.remove_key(k)
+        ch.add_key(unreal.FrameNumber(0), True)
+        ch.add_key(unreal.FrameNumber(int(off_frame)), False)
+        say('   %-18s spawn True@0  False@%d (%.3f s)' % (label, off_frame, off_frame / float(FPS)))
+        return sec
+
     def key_transform(binding, keys, label):
         """keys: [(t, x, y, z, roll, pitch, yaw)] -> a 3D transform section covering the sequence."""
         tr = binding.add_track(unreal.MovieScene3DTransformTrack)
@@ -206,6 +254,12 @@ try:
         fs = cc.get_editor_property('focus_settings')
         fs.set_editor_property('focus_method', unreal.CameraFocusMethod.DISABLE)
         cc.set_editor_property('focus_settings', fs)
+        if name == 'CineCam_D_Hand':
+            # A CineCamera constrains its view to the filmback's 16:9 and letterboxes anything
+            # else; BP_Player.FollowCamera does not. The last frame of this cut has to be the
+            # player camera's frame exactly, so the constraint comes off here - at a cut, where
+            # it cannot be seen, rather than at the hand-off, where it would read as a jump.
+            cc.set_editor_property('constrain_aspect_ratio', False)
         b = seq.add_spawnable_from_instance(tmp)
         b.set_name(name)
         key_transform(b, keys, 'first' if first else name)
@@ -229,6 +283,12 @@ try:
     car_b = seq.add_spawnable_from_instance(tmp)
     car_b.set_name('CineCar')
     key_transform(car_b, CAR_KEYS, 'CineCar')
+    # frame 187 = 6.233 s. The car's last transform key is frame 186 (6.20) at (-520, 0, 0) rot 0,
+    # which IS City_CafeCrashCar's placed transform, and BP_OpeningDirector reveals the static one
+    # at CineImpactTime 6.20. One frame of two coincident identical cars is invisible; a one-frame
+    # gap with no car at all would not be. Do not lower CineImpactTime: at 4.70 the spawnable is
+    # still in the air at x = -900 and you get the two cars for a second and a half.
+    key_spawn(car_b, 187, 'CineCar')
     eas.destroy_actor(tmp)
     say('   CineCar           %d keys, collision OFF, movable' % len(CAR_KEYS))
 
@@ -294,6 +354,11 @@ try:
     drv_b = seq.add_spawnable_from_instance(tmp)
     drv_b.set_name('CineDriver')
     key_transform(drv_b, DRV_KEYS, 'CineDriver')
+    # frame 195 = 6.500 s, one frame after the thrown body's last key (frame 194, 6.467) and one
+    # frame after CineBodyTime, which is 6.467 too. So the real BP_CrashDriver appears in the
+    # pose the flying one ends in, and the flying one is destroyed the next frame - in which the
+    # ragdoll has moved about 5 cm. One frame of near-identical overlap, never two bodies.
+    key_spawn(drv_b, 195, 'CineDriver')
     eas.destroy_actor(tmp)
     say('   CineDriver        %d keys, lands at %s rot(r%.1f p%.1f y%.1f)' % (
         len(DRV_KEYS), drv_loc, drv_rot.roll, drv_rot.pitch, drv_rot.yaw))
