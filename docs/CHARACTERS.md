@@ -218,6 +218,58 @@ Team Owner's call because it restyles the character.
 
 **Nobody has played it.** The pictures are the editor rendering its own level from a scripted camera.
 
+### Sun Nov 15, 03:10 UTC — the body is rebuilt from the high-poly, and NOTHING is baked (M Station)
+
+`Art/Blender/rebuild_walker_v2.py`. The Team Owner uploaded Meshy's own render and said, in as many
+words, that *that* is what the game should look like. Two faults stood between the two pictures and
+only one of them was ever the rig's.
+
+**1. The texture was damage we inflicted ourselves, and it was never necessary.** The colour map in
+the game was BAKED from the 365k high-poly onto the remeshed body's regenerated UVs (#112). The bake
+is lossy: a dark blotch smeared across the apron, a sawtooth hem, a mottled white-and-grey collar,
+speckled waist ties. But Meshy's high-poly carries its **own** clean UVs and its **own** clean
+texture, and a Blender DECIMATE keeps both. So decimate instead of baking — 365,038 → 55,679
+triangles, exactly the shipped count, 0 credits — and the damage simply never happens.
+`T_CafeWalkerV2_BaseColor.png` drops from **3.3 MB to 494 KB**, which is what clean art looks like
+next to baked noise.
+
+![rebuilt](media/2026-11-15-cafewalker-v2-rebuilt-no-bake.jpg)
+
+**2. The silhouette is unchanged, deliberately, and that is the interesting half.** The obvious fix
+for #117's distortion was to stop deforming the mesh and move the BONES into it instead. That was
+written, it measured beautifully — bone-to-mesh fit 1.71 cm against the conform's 2.39 — and it is
+**wrong**. Unreal's `UAnimSequence` tracks are ABSOLUTE LOCAL transforms: playback puts each bone
+where the clip says regardless of what the mesh was bound in, and the mesh is skinned
+`(clip pose) * (bind)^-1`. A bind pose that is not the rest pose the 48 clips were keyed against
+therefore shows up as extra twist on **every frame**. Measured with `Art/Blender/rest_delta.py`, the
+rig-fitted body's rest was **75.7° from the clip rig's on average, 171° at worst, 47 of 69 bones past
+20°** — and it renders beautifully standing still and shreds the head and one arm the moment `Idle`
+plays. **`rest_delta.py` must read 0.0° or the body is broken in motion.** It reads 0.0° now.
+
+**So the clean geometry is carried into the pose the rig needs, using the displacement #117 already
+measured.** The conformed body and Meshy's low-poly are the **same 27,976 vertices in the same
+order**, so `conformed[i] - natural[i]` is an exact per-vertex field; sampled at the nearest point on
+the low-poly surface it lands the decimated high-poly in the rig's rest pose with no *new* distortion.
+Applied field mean **7.34 cm**, max **23.83 cm** — the same 7.15 / 23.84 the conform itself produced.
+Weights come from the conformed body by nearest surface, mean source distance **0.25 cm**, all 68
+groups carrying weight.
+
+**What this does and does not fix.** Gone: the apron blotch, the sawtooth hem, the mottled collar, the
+fused paddle hand (the high-poly's fingers separate). Unchanged on purpose: the wide stance and the
+apron's front-to-back depth, because both come from the rig's own splayed rest pose — that is
+[#73](https://github.com/Waffle-Widgets/jump-cut/issues/73), and any mesh that skins correctly on this
+rig has to stand that way. Unchanged and still open: the blown-white face, which is
+[#72](https://github.com/Waffle-Widgets/jump-cut/issues/72).
+
+**Verified by rendering, not by counting.** `Idle` and `Walk` were taken off the committed
+`SK_CafeWalker.fbx` and played on both bodies with the pose copied bone-for-bone the way Unreal does
+it, old body beside new in the same frame. One trap worth keeping: `pose_bone.matrix` resolves against
+the parent's *current* evaluated matrix, so the depsgraph has to be refreshed **between bones** — leave
+it to the end of the loop and the arms and hair tear into streaks that look exactly like a broken bind
+and are nothing of the kind.
+
+**Nobody has played it.** Every picture above is Blender rendering the committed files.
+
 ## The coworker — `CafeCoworker` (beat 1; modelled and rigged Nov 13, **in Unreal since Sat Nov 14, 02:25 UTC**)
 
 The person the player saves in the demo's first beat. She exists because the beat's *lesson* needs a subject:

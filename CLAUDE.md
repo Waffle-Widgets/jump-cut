@@ -858,6 +858,35 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   before exporting. Worse, the failure is not fatal: the SkeletalMesh is still created and still reports the
   skeleton you asked for, so every scripted check passes and only the error line in the log says otherwise.
   **Read the `Warning/Error Summary` at the end of an import log, not just the script's own output.**
+- **Do NOT bake a Meshy character's colour map. Decimate the high-poly instead** (Sun Nov 15, supersedes the
+  bake advice above for CHARACTERS). Meshy's remesh regenerates UVs and discards the texture, so #112 baked
+  high-poly -> low-poly. The bake is lossy and it shows on screen: a dark blotch across the apron, a sawtooth
+  hem, a mottled collar. The high-poly keeps its **own** UVs and its **own** clean texture and a Blender
+  DECIMATE COLLAPSE to the same triangle count keeps both, so the damage never happens and it costs 0 credits.
+  `Art/Blender/rebuild_walker_v2.py` is the worked example. A clean atlas is also a quarter the file size of a
+  baked one - 494 KB vs 3.3 MB at 2048x2048 - which is a cheap way to tell them apart.
+- **Never fit the RIG to the mesh when the mesh must bind to a skeleton that already has clips.** Unreal's
+  `UAnimSequence` tracks are ABSOLUTE LOCAL transforms: playback puts each bone where the clip says whatever the
+  mesh was bound in, and the mesh is skinned `(clip pose) * (bind)^-1`. So a bind pose that is not the rest pose
+  the clips were keyed against is extra twist on EVERY frame. Fitting the 69-bone rig into `CafeWalkerV2`
+  measured better than the conform on every number (bone-to-mesh 1.71 cm vs 2.39) and still shredded the head
+  and one arm the moment `Idle` played - while rendering perfectly standing still, which is the trap. Deform the
+  MESH into the rig's rest pose, never the other way round, and check it with
+  `blender -b --python Art/Blender/rest_delta.py -- <rig_with_the_clips>.fbx <candidate>.fbx`: **it must print
+  0.0 deg**, mean and max, or the body is broken in motion.
+- **A re-import can hand the material slot back as `WorldGridMaterial`.** Interchange matches slots by the FBX's
+  own material name, and a rebuilt FBX need not use the same one. It does not error; the character just renders
+  as grey checkerboard. `tools/unreal_reimport_char_v2.py` now restores `MI_*` and says so. When you restore it,
+  build FRESH `unreal.SkeletalMaterial` structs - `get_editor_property('materials')` hands back COPIES, so
+  mutating them in place is discarded silently and the read-back still says `WorldGridMaterial`.
+- **`-script=` on `UnrealEditor-Cmd.exe` mangles backslash paths, and the shell still reports success.** A
+  Windows path through this flag turns `	hecl` and `	ools` into TAB characters; the log says
+  *"Could not load Python file"*, the commandlet returns -1, and the process still exits **0**. Use forward
+  slashes, and never trust the exit code - read the log or the script's own output file.
+- **`pose_bone.matrix` resolves against the parent's CURRENT evaluated matrix.** Setting it for a whole chain
+  without a `view_layer.update()` **between bones** compounds the error down each chain: the arms and hair tear
+  into long streaks that look exactly like a broken bind and are nothing of the kind. Bit a clip-playback check
+  on both the old and the new body at once, which is the only reason it was caught.
 - **Look at the colours before calling a character done: `python tools/color_audit.py`.** Image to 3D bakes one
   texture for the whole body and nothing in the pipeline knows a pixel is "hair" or "sleeve", so a model can come
   back with skin-coloured hair, or a shirt the same colour as the arm inside it, and every number still reads
