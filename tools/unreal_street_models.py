@@ -93,6 +93,20 @@ MODELS = {
     'GasBottlesM': ('GasBottlesM', 'SM_GasBottles'),
     'MeterBoxM': ('MeterBoxM', 'SM_MeterBox'),
     'DuctRunM': ('DuctRunM', 'SM_DuctRun'),
+    # Fifth batch, 3:45 PM, Tripo again: the things there are most of on the street.
+    'ACUnitM': ('ACUnitM', 'SM_ACUnit'),
+    'HedgeM': ('HedgeM', 'SM_Hedge'),
+    'UtilityPoleM': ('UtilityPoleM', 'SM_UtilityPole'),
+    'ShopDisplayM': ('ShopDisplayM', 'SM_ShopDisplay'),
+    'AFrameBoardM': ('AFrameBoardM', 'SM_AFrameSign'),
+    'RoofTankM': ('RoofTankM', 'SM_RoofTank'),
+    # M Station's six smaller cafe pieces (its names, added here at its request).
+    'CafeTableTopM': ('CafeTableTopM', 'SM_CafeTableTop'),
+    'CafeWallArtM': ('CafeWallArtM', 'SM_CafeWallArt'),
+    'CafeClockM': ('CafeClockM', 'SM_CafeClock'),
+    'CafeRugM': ('CafeRugM', 'SM_CafeRug'),
+    'CafeAwningM': ('CafeAwningM', 'SM_CafeAwning'),
+    'NorenM': ('NorenM', 'SM_Noren'),
 }
 # A mesh with complex-as-simple collision CANNOT simulate, and only the log says so (unreal_chaos_props.py,
 # KNOCK). The kit chair is a knockable prop, so its replacement gets what that tool gives the kit chair: one
