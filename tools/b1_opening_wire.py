@@ -48,14 +48,34 @@ DEFAULTS = {
     'WallBreakImpulse': 420.0,        # cm/s outward, bVelChange, from a point OUTSIDE the wall
     # the thrown body is a ragdoll from the frame it lands. Off = the old keyframed landing pose.
     'DriverRagdoll': True,
-    'RagdollSettle': 1.8,
+    # 1.8 s of free physics is what carried him off the intended spot. The arc now lands him
+    # where he belongs, so the ragdoll only has to do the slump.
+    'RagdollSettle': 1.2,
     'RagdollT': 0.0, 'RagdollOn': False, 'RagdollDone': False,
     'CineEndYaw': 172.0,
     'ObjectiveHeight': 230.0,
     'ObjectiveState': 0,
     # The car drives in heading +X, so its RIGHT side is -Y - and that is also screen-right from
     # where the player stands. He used to land at y +220, the car's left. Moved 2026-11-15.
-    'ObjDriverLoc': unreal.Vector(-395.0, -215.0, 0.0),  # the crash driver
+    #
+    # Moved AGAIN 2026-11-15 ("the ragdoll went to a place that was hard to get to"). The old
+    # (-395, -215) is inside City_Cafe_00_CafeCounter's footprint (x -584..-76, y -285..-196):
+    # measured with real traces by tools/b1w_spot.py, the floor there is at z = 150 - the COUNTER
+    # TOP - and a player capsule neither fits nor can reach it. The body was being thrown onto the
+    # service side of the bar, which is the whole complaint.
+    #
+    # (-300, -60) is open cafe floor at z = 2.0, on the player's side of the counter, in the
+    # corridor between the wreck's right flank and the bar. Two numbers chose it over the first
+    # candidate (-200, -60), and both were measured in PIE rather than reasoned about:
+    #   * a settled ragdoll's MASS ends about 55 cm +X / -Y of the actor's origin (the body
+    #     collapses out of a head-down pose), so the spot has to leave that much room towards
+    #     the counter or his legs end up inside it;
+    #   * BP_CrashDriver.TouchRange is a plain XY distance from the PLAYER, and the player starts
+    #     at the origin. At (-200, -60) that distance is 209 against a range of 220, so Freeze
+    #     Frame was granted on the first frame after the cinematic and "walk over and check on
+    #     him" stopped existing. Measured: objective jumped straight to 3 with the player still
+    #     standing at (0, 0, 94). TouchRange comes down to 120 below to keep the walk real.
+    'ObjDriverLoc': unreal.Vector(-300.0, -60.0, 0.0),  # the crash driver
     # 430 is 950 cm from the car against a 700 cm blast - clear, with margin, and still inside
     # the room so the player is never told to walk through a wall.
     'ObjSafeLoc': unreal.Vector(430.0, -40.0, 0.0),
@@ -190,9 +210,20 @@ try:
     say('placed a fresh B1_Cine_Director')
     wiring = {
         'CineSeqActor': by_label.get('B1_Cine_Seq'),
-        # the static City_CafeCrashCar is hidden for good by b1x_actors.py; the thing the
-        # opening reveals, and the thing the blast breaks, is the geometry collection
-        'CineRealCar': by_label.get('B1_Cafe_CrashCar_GC'),
+        # THE WRECK IS DRAWN TWICE OVER, BY TWO DIFFERENT ACTORS, AND ONLY ONE OF THEM IS ON
+        # SCREEN AT A TIME. City_CafeCrashCar is the plain static mesh - the same asset, drawn
+        # the same way as every other city prop, and tie-fixed by #67 (0f9b13c). It is what the
+        # opening reveals and what the player walks up to. B1_Cafe_CrashCar_GC is the geometry
+        # collection, and it is only shown at the instant the blast breaks it (CineExplFire).
+        #
+        # Why: "the car is flickering badly" (2026-11-15). Both actors stand at (-520, 0, 0) and
+        # their bounds agree to 0.1 cm, but the collection's are 0.05 cm LARGER in y and z - the
+        # fracture pieces are inflated slightly outward, so along every cut line across the whole
+        # body two pieces overlap by about a millimetre. That is a depth tie with real area,
+        # spread over the entire car, which is the #67 mechanism at car scale. The static mesh
+        # has no cut lines at all. The collection is still what explodes; it is just not what
+        # stands there for the thirty seconds before.
+        'CineRealCar': by_label.get('City_CafeCrashCar'),
         'ExplCarGC': by_label.get('B1_Cafe_CrashCar_GC'),
         'ExplCam': by_label.get('B1_Cine_ExplCam'),
         'ExplCard': by_label.get('B1_Cafe_Explosion'),
@@ -239,8 +270,16 @@ try:
     if drv is None:
         say('   !! C1_Cafe_CrashDriver is not in the level')
     else:
+        # -140 was the resting yaw for the old arc, which came in from the north-west. The body
+        # now travels almost straight down the room (cab (-560, 0) -> (-200, -60), a bearing of
+        # -9.5 deg), so it comes to rest lying across that line rather than along it.
         drv.set_actor_location_and_rotation(DEFAULTS['ObjDriverLoc'],
-                                            unreal.Rotator(0.0, 0.0, -140.0), False, True)
+                                            unreal.Rotator(0.0, 0.0, -60.0), False, True)
+        # 220 was tuned when the body lay 450 cm from the player's start. The body is closer
+        # now, so the range comes down with it or there is no walk left. Set on the CDO AND on
+        # the placed actor: a placed actor keeps its own serialized value.
+        drv.set_editor_property('TouchRange', 120.0)
+        say('   TouchRange (placed) -> %s' % drv.get_editor_property('TouchRange'))
         mesh = drv.get_component_by_class(unreal.SkeletalMeshComponent)
         if mesh is not None:
             # SetAllBodiesSimulatePhysics does nothing on a component with no collision.

@@ -23,13 +23,20 @@ G = {}
 # comes to rest in is physics, not a hand-set rotation - which is what "do some ragdolling to get
 # him into position" asks for. It is behind BP_OpeningDirector.DriverRagdoll so it can be switched
 # off in one checkbox if the auto-generated physics asset misbehaves.
+#
+# THE HAND-OFF VELOCITY WAS WHAT PUT HIM SOMEWHERE UNREACHABLE (2026-11-15). It used to be
+# (210, -260, -40): 260 cm/s straight at the cafe counter, for 1.8 s of free physics, which is why
+# "the ragdoll went to a place that was hard to get to" - measured, the old landing spot's floor
+# height is 150 cm, the counter top. The flight is now a computed curve that ends on open floor
+# (b1_opening_cine.py), so the ragdoll's only job is the slump: a small nudge along the direction
+# of travel and most of it downward.
 G[C + ':DriverRagdollStart'] = f'''
 (fn DriverRagdollStart ()
   (if (not ({V}GetRagdollLive))
     ({V}SetRagdollLive true)
     (Physics|SetAllBodiesSimulatePhysics :self ({V}GetDriverMesh) :bNewSimulate true)
     (Physics|SetAllPhysicsLinearVelocity :self ({V}GetDriverMesh)
-      :NewVel (Math|Vector|MakeVector :X 210.0 :Y -260.0 :Z -40.0) :bAddToCurrent false)))
+      :NewVel (Math|Vector|MakeVector :X 60.0 :Y 30.0 :Z -150.0) :bAddToCurrent false)))
 '''
 
 # Stopping is NOT SetAllBodiesSimulatePhysics(false): that hands the mesh back to its animation and
@@ -110,10 +117,17 @@ G[D + ':CineDriverRagdollStop'] = f'''
 # The wall patch is gone: B1_Cafe_WallPanel_GC is the wall now, and it is SHOWN here rather than
 # hidden. The fire starts hidden AND stopped, so its particle system has not advanced a frame when
 # the third cut lights it.
+#
+# CineRealCar is now the plain static City_CafeCrashCar and ExplCarGC is the geometry collection,
+# and exactly one of them is ever on screen (see b1_opening_wire.py for why: the collection's
+# fracture pieces overlap by about a millimetre along every cut line, a depth tie spread over the
+# whole car). Both start hidden; the opening reveals the static one at CineImpactTime and
+# CineExplFire swaps to the collection on the frame it breaks it.
 G[D + ':CineSceneBeforeCrash'] = f'''
 (fn CineSceneBeforeCrash ()
   (CallFunction|CineHideActor :Target ({V}GetCineWallGC) :Hide false)
   (CallFunction|CineHideActor :Target ({V}GetCineRealCar) :Hide true)
+  (CallFunction|CineHideActor :Target ({V}GetExplCarGC) :Hide true)
   (CallFunction|CineHideActor :Target ({V}GetCineRealDriver) :Hide true)
   (CallFunction|CineHideActor :Target ({V}GetObjectiveBeacon) :Hide true)
   (CallFunction|CineHideActor :Target ({V}GetCineFireActor) :Hide true)

@@ -546,6 +546,49 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   beat 1 opened with the character 90 cm in the air for 0.9 s. If you are hunting something that
   only happens "at the start", check what the first tick's state transition does before looking at
   the cinematic.
+- **An INTACT Geometry Collection is not the same surface as the static mesh it was cut from
+  (Nov 15, "the car is flickering badly").** Measured on the wreck: `B1_Cafe_CrashCar_GC` and
+  `City_CafeCrashCar` stand at the same transform with the same geometry, and the collection's
+  bounds come back **0.05-0.1 cm LARGER** in y and z. That is fracture pieces inflated slightly
+  outward, so along every cut line across the whole body two pieces overlap by about a
+  millimetre - a depth tie with real area, spread over the entire object, which is the #67
+  mechanism at prop scale. The static mesh has no cut lines at all and is drawn exactly like
+  every other city prop. **So draw the static mesh until the thing actually breaks**, and show
+  the collection on the frame you break it: beat 1 does this in `CineExplFire`, which hides
+  `CineRealCar` (the static) and shows `ExplCarGC` before applying the strain. The two bounds
+  agree to 0.1 cm, so the swap is invisible.
+- **A collection's ROOT PROXY is a red herring unless a custom renderer is set.** `GC_CrashCar`
+  carries `RootProxyData.ProxyMeshes = (SM_CrashCar)` with **empty** override materials, which
+  reads exactly like "the intact car draws the grey `MS_*` import placeholders". It does not:
+  `GeometryCollectionComponent.cpp:6540` only consults the root proxy inside
+  `RefreshCustomRenderer`, and every `GC_*` component in this level has
+  `custom_renderer_type = None`. Check that property before spending time on the proxy.
+- **In this map a BOUNDING-BOX test for "is this floor clear" returns nothing useful.**
+  `City_CafeShell`'s box covers the whole room, `B1_Cine_ExplCam`'s covers 20 m, `Player_Main`
+  and `Coworker_Cafe` cover most of the street and every `Marker_*` is a 5 m sphere - so a
+  clearance search over bounds found **zero** clear spots anywhere in the cafe. Use real traces:
+  a downward line trace for the floor height, a capsule at the point for "can someone stand
+  here", twelve horizontal spokes for clearance and a capsule sweep for "can someone walk here".
+  `tools/b1w_spot.py` is the worked example, and it is what found that beat 1's driver was being
+  thrown onto the **counter top** (floor height 150 cm at the old landing spot, not 0).
+- **Moving a range-gated actor closer to the player can delete a whole beat, silently.**
+  `BP_CrashDriver.DriverCanTouch` is a plain XY distance against `TouchRange`, and the player
+  starts at the origin. Landing the body at `(-200, -60)` put it 209 cm away against a range of
+  220, so Freeze Frame was granted on the first frame after the cinematic - measured in PIE, the
+  objective jumped straight to 3 with the player still standing at `(0, 0, 94)`. Nothing errors
+  and the capture looks fine. After moving any actor a beat triggers off, read the objective
+  state back with the player where he really starts.
+- **A settled ragdoll's MASS is about 55 cm from its actor origin**, because the body collapses
+  out of the head-down pose the throw ends in. The beacon, the touch test and the arc all use the
+  actor origin; the thing the player SEES is the bones. Measure bone extents
+  (`tools/b1w_land.py`), not the actor location, when deciding whether a body is clear of
+  furniture.
+- **The kit source FBXs inside `Content/Game/Imported/City/` are STALE and gitignored.** All 48
+  of them differ from `Art/Blender/export/City/`, because the #67 re-import (`0f9b13c`) was
+  driven by name from the export folder and nothing rewrote the copies under `Content/`. They are
+  older than the assets, so the auto-reimport watcher leaves them alone today - but anything that
+  touches their mtimes would re-import the pre-`stand_proud` flush geometry over the flicker fix,
+  on this machine only. Do not copy a kit FBX into `Content/` to "fix" an import.
 - **A Geometry Collection draws the materials its SOURCE FBX came in with, and nobody tells it
   otherwise (Nov 15).** Every `GC_*` in `/Game/Game/Destruction` was drawing `MS_City*` from
   `Imported/City/` - `MaterialInstanceConstant`s of `FBXLegacyPhongSurfaceMaterial` with

@@ -244,15 +244,37 @@ try:
     # -Y is also screen-right from where the player is standing. The arc is mirrored in y and the
     # tumble roll with it, and it ends exactly where the placed BP_CrashDriver stands - from which
     # frame the REAL one takes over as a ragdoll (BP_OpeningDirector.DriverRagdoll).
+    # THE FLIGHT IS A COMPUTED CURVE, NOT A SET OF HAND-PLACED WAYPOINTS (2026-11-15).
+    # It used to be six typed-in positions tuned to end at (-395, -215), so moving the landing
+    # spot one metre left the body teleporting 240 cm between the last two keys. Now the whole
+    # flight is derived from where BP_CrashDriver actually stands: a ballistic parabola from the
+    # windscreen to his feet, bowed out to the car's RIGHT (-Y) so he still leaves the cab on the
+    # side the Team Owner asked for, with one full tumble on the way down. Move ObjDriverLoc and
+    # the arc follows it - which is the whole point, because the landing spot is now chosen by
+    # tools/b1w_spot.py from real traces rather than by eye.
+    T_OUT, T_LAND = 5.10, 6.20
+    OX, OY, OZ = -505.0, -40.0, 150.0      # through the windscreen, already leaning right
+    APEX = 130.0                           # cm above the straight line, at mid-flight
+    BOW = 90.0                             # cm further out to -Y at mid-flight, then back in
+    ARC = []
+    STEPS = 8
+    for i in range(STEPS + 1):
+        s = i / float(STEPS)
+        bulge = 4.0 * s * (1.0 - s)        # 0 at both ends, 1 at the middle
+        ARC.append((
+            round(T_OUT + (T_LAND - T_OUT) * s, 3),
+            round(OX + (dx - OX) * s, 1),
+            round(OY + (dy - OY) * s - BOW * bulge, 1),
+            round(OZ + (26.0 - OZ) * s + APEX * bulge, 1),
+            round(60.0 + 300.0 * s, 1),                        # one tumble, flat at 360
+            round(-70.0 - 8.0 * s, 1),
+            round(-20.0 + (drv_rot.yaw + 20.0) * s, 1),
+        ))
     DRV_KEYS = [
         (0.0,   -2350.0,    0.0,  60.0,   0.0, -78.0,  10.0),   # slumped in the cab, off screen
         (4.55,  -1450.0,    0.0,  60.0,   0.0, -78.0,  10.0),   # riding in
         (4.95,   -560.0,    0.0,  70.0,   0.0, -78.0,  10.0),   # the cab, at the moment of impact
-        (5.10,   -505.0,  -40.0, 150.0,  60.0, -70.0, -20.0),   # out through the screen
-        (5.40,   -462.0, -118.0, 250.0, 170.0, -50.0, -70.0),   # apex, tumbling
-        (5.75,   -428.0, -172.0, 150.0, 280.0, -60.0, -112.0),
-        (6.00,   -406.0, -200.0,  45.0, 340.0, -72.0, -133.0),
-        (6.20,       dx,     dy,  26.0, 360.0, -78.0, drv_rot.yaw),
+    ] + ARC + [
         (6.45,       dx,     dy,  18.0, 360.0, -78.0, drv_rot.yaw),
     ]
     tmp = eas.spawn_actor_from_class(unreal.SkeletalMeshActor, unreal.Vector(-470, 10, 185), unreal.Rotator())
