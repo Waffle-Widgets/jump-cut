@@ -20,18 +20,21 @@ SS = 3
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'Art', 'UI', 'Latte')
 
 
+ROUND = 0.6          # 1.0 is the playing-card heart; poured foam is rounder, with a shallower cleft and a softer point
+
+
 def heart(x, y, cx, s):
     """<= 0 inside a heart: lobes up (+x), point down."""
     a, b = y / s, (x - cx) / s
-    return (a * a + b * b - 1.0) ** 3 - a * a * b * b * b
+    return (a * a + b * b - 1.0) ** 3 - ROUND * a * a * b * b * b
 
 
 def goal_heart(x, y):
-    return heart(x, y, 0.035, 0.25) <= 0
+    return heart(x, y, 0.02, 0.215) <= 0
 
 
 def goal_tulip(x, y):
-    layers = ((-0.12, 0.165), (0.035, 0.128), (0.175, 0.092))          # base first, the small heart last and on top
+    layers = ((-0.13, 0.18), (0.04, 0.14), (0.19, 0.1))          # base first, the small heart last and on top
     white = False
     for i, (cx, s) in enumerate(layers):
         if heart(x, y, cx, s) <= 0:
@@ -47,11 +50,11 @@ def goal_rosetta(x, y):
     t = (x + 0.33) / 0.53
     if not 0.0 < t < 1.0:
         return False
-    w = 0.27 * math.sin(math.pi * t) ** 0.6 * (1.0 - 0.3 * t)          # a leaf: widest low down, a point at the bottom
+    w = 0.31 * math.sin(math.pi * t) ** 0.6 * (1.0 - 0.3 * t)          # a leaf: widest low down, a point at the bottom
     ay = abs(y)
     if ay > w or ay < 0.011:                                          # outside the leaf, or the stem's hairline
         return False
-    return ((x - 0.75 * ay) * 11.0) % 1.0 < 0.56                      # leaves: bands dragged DOWN at the centre by the cut
+    return ((x - 0.75 * ay) * 8.5) % 1.0 < 0.6                      # leaves: bands dragged DOWN at the centre by the cut
 
 
 def render(fn, path):
@@ -78,8 +81,9 @@ def render(fn, path):
         f.write(b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', N, N, 8, 2, 0, 0, 0)) + chunk(b'IDAT', raw) + chunk(b'IEND', b''))
 
 
-os.makedirs(OUT, exist_ok=True)
-for i, fn in enumerate((goal_heart, goal_rosetta, goal_tulip)):
-    p = os.path.normpath(os.path.join(OUT, 'T_LatteGoal_%d.png' % i))
-    render(fn, p)
-    print('wrote', p)
+if __name__ == '__main__':
+    os.makedirs(OUT, exist_ok=True)
+    for i, fn in enumerate((goal_heart, goal_rosetta, goal_tulip)):
+        p = os.path.normpath(os.path.join(OUT, 'T_LatteGoal_%d.png' % i))
+        render(fn, p)
+        print('wrote', p)

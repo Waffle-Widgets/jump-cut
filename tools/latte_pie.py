@@ -46,25 +46,48 @@ def line(x0, y0, x1, y1):
 PLANS = {
     'blob': [(3.0, True, line(0, 0, 0, 0))],
     'right': [(2.0, True, line(2.5, 3.0, 2.5, 3.0))],          # up and to the right on screen: checks the picture is not mirrored
-    'heart': [(4.5, True, line(0.5, 0, 0.5, 0)), (0.9, False, line(4.5, 0, -4.5, 0))],
+    'heart': [(4.0, True, line(1.0, 0, 1.0, 0)), (0.3, None, line(0, 0, 0, 0)), (0.8, False, line(4.5, 0, -3.5, 0))],
     # rosetta: a wide base at the far side, leaves that narrow as you pull back, a small heart at the near end,
     # then the cut back up through all of it (the stem)
-    'rosetta': [(1.0, True, line(-2.6, 0, -2.6, 0)),
-                (5.2, True, lambda u: (-2.6 + 5.6 * u, (2.0 - 1.3 * u) * math.sin(u * 2 * math.pi * 9))),
-                (0.7, True, line(3.3, 0, 3.3, 0)),
+    'rosetta': [(0.8, True, line(-2.6, 0, -2.6, 0)),
+                (5.2, True, lambda u: (-2.6 + 5.4 * u, (1.2 - 0.7 * u) * math.sin(u * 2 * math.pi * 9))),
+                (0.45, True, line(3.0, 0, 3.0, 0)),
                 (0.25, None, line(0, 0, 0, 0)),
-                (0.8, False, line(4.6, 0, -3.4, 0))],
+                (0.8, False, line(4.4, 0, -3.4, 0))],
     'topup': [(14.0, False, lambda u: (3.5 * math.cos(u * 40), 3.5 * math.sin(u * 40)))],       # high pour round the edge until the cup is full
     # tulip: each layer is poured BEHIND the last and pushed up into it, and each is smaller, so a layer dents the
     # one before it instead of swallowing it
-    'tulip': [(2.3, True, line(-1.2, 0, -1.8, 0)), (0.45, None, line(0, 0, 0, 0)),
-              (1.3, True, line(1.0, 0, -0.1, 0)), (0.45, None, line(0, 0, 0, 0)),
-              (0.8, True, line(2.7, 0, 1.9, 0)), (0.35, None, line(0, 0, 0, 0)),
+    'tulip': [(2.6, True, line(-1.2, 0, -1.8, 0)), (0.45, None, line(0, 0, 0, 0)),
+              (1.5, True, line(1.0, 0, -0.1, 0)), (0.45, None, line(0, 0, 0, 0)),
+              (0.9, True, line(2.7, 0, 1.9, 0)), (0.35, None, line(0, 0, 0, 0)),
               (0.8, False, line(4.6, 0, -3.6, 0))],
 }
 
 
-def pour(a, name):
+def dump(w, a, name):
+    """Read the cup's surface back out of the game as a 64 x 64 grid of foam values -> Saved/jcpy/latte_cup_<name>.txt,
+    one row of digits 0-9 per line, row = v (right on screen), column = u (up the screen)."""
+    try:
+        latest = 'RT_LatteA' if a.get_editor_property('FlipA') else 'RT_LatteB'
+        rt = unreal.load_asset('/Game/Game/Materials/Latte/' + latest)
+        px = unreal.RenderingLibrary.read_render_target_raw_uv_area(w, rt, unreal.Box2D(unreal.Vector2D(0, 0), unreal.Vector2D(1, 1)), True)
+        n = int(round(len(px) ** 0.5))
+        rows = []
+        for gv in range(64):
+            row = ''
+            for gu in range(64):
+                c = px[int((gv + 0.5) * n / 64) * n + int((gu + 0.5) * n / 64)]
+                row += str(max(0, min(9, int(c.r * 9.999))))
+            rows.append(row)
+        NL = chr(10)
+        open(os.path.join(SAVED, 'jcpy', 'latte_cup_%s.txt' % name), 'w').write(NL.join(rows) + NL)
+        open(OUT, 'a').write('DUMP %s from %s (%d px)' % (name, latest, len(px)) + NL)
+    except Exception:
+        import traceback
+        open(OUT, 'a').write('DUMP FAILED %s' % traceback.format_exc() + chr(10))
+
+
+def pour(a, name, queue=None):
     plan = PLANS[name]
     st = {'i': 0, 't': 0.0, 'shots': 0, 'after': 0.0, 'py': 0.0}
 
@@ -82,6 +105,10 @@ def pour(a, name):
             if st['after'] > 1.0:
                 unreal.unregister_slate_post_tick_callback(builtins._latte_pour)
                 open(OUT, 'a').write('POURED %s: %s\n' % (name, state(b)))
+                dump(w, b, name)
+                if queue:                         # the next pattern, on a fresh cup
+                    b.call_method('LatteReset')
+                    pour(b, queue[0], queue[1:])
             return
         secs, low, f = plan[st['i']]
         st['t'] += dt
@@ -91,6 +118,9 @@ def pour(a, name):
             unreal.SystemLibrary.execute_console_command(w, 'HighResShot 1280x720 filename="%slatte_%s_mid.png"' % (SAVED, name))
         if low is not None:
             x, y = f(u)
+            if st.get('seg') != st['i']:
+                st['seg'] = st['i']                # a new stroke: arrive first, or the jump itself counts as a drag
+                b.call_method('LatteDebugMove', (x, y))
             b.call_method('LatteDebugMove', (x, y))
             b.call_method('LattePour', (dt, bool(low), (y - st['py']) / 0.012))
             st['py'] = y
@@ -140,6 +170,11 @@ try:
                 a.call_method('LatteReset')
             say('PATTERN %s: %s' % (want, state(a)))
             unreal.SystemLibrary.execute_console_command(W, 'HighResShot 1280x720 filename="%slatte_pattern_%d.png"' % (SAVED, want))
+        elif mode == 'all':                       # leave the title and pour heart, rosetta and tulip, reading each cup back
+            GS.get_game_mode(W).call_method('JumpCutStartPlay')
+            a.call_method('LatteStartPour')
+            pour(a, 'heart', ['rosetta', 'tulip'])
+            say('ALL started')
         elif mode == 'pour':
             say('POUR %s start: %s' % (sys.argv[2], state(a)))
             pour(a, sys.argv[2])
