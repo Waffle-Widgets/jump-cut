@@ -136,6 +136,22 @@ print('SEAT scale=%.5f residual mean=%.2f mm p95=%.2f mm'
       % (s, R['seat_residual_mean_cm'] * 10, R['seat_residual_p95_cm'] * 10))
 
 # ------------------------------------------------------------------ 2. decimate, keeping the high-poly's UVs
+# WELD FIRST. Meshy's GLB splits a vertex per UV island, so the surface is topologically full of seams and
+# DECIMATE cannot collapse across them - it bridges instead, leaving long thin triangles. Measured on the
+# first run: 486 triangles with an edge over 8 cm, up to 20 cm, all round the waist and apron, which render
+# in Unreal as a dark smear hanging off the apron to the floor. The shipped mesh has zero. UVs live on
+# LOOPS, not vertices, so welding coincident vertices keeps every island intact.
+bmw = bmesh.new()
+bmw.from_mesh(hi.data)
+v_before = len(bmw.verts)
+bmesh.ops.remove_doubles(bmw, verts=bmw.verts[:], dist=1e-5)
+R['weld_verts'] = [v_before, len(bmw.verts)]
+bmw.to_mesh(hi.data)
+bmw.free()
+hi.data.update()
+hi.data.calc_loop_triangles()
+print('WELD %d -> %d verts' % tuple(R['weld_verts']))
+
 tris_in = len(hi.data.loop_triangles) or sum(len(p.vertices) - 2 for p in hi.data.polygons)
 R['tris_source'] = tris_in
 mod = hi.modifiers.new('dec', 'DECIMATE')
@@ -161,19 +177,40 @@ fl = sorted(v.length for v in field)
 R['field_mean_cm'] = sum(fl) / len(fl) * 100
 R['field_max_cm'] = fl[-1] * 100
 
+# SAMPLE WITH THE NORMAL, not just the distance. The apron hangs a few millimetres in front of the
+# trousers and the field is completely different on the two surfaces - up to 24 cm apart. Plain nearest
+# surface lets one vertex of a triangle snap to the apron and its neighbour to the leg behind it, and the
+# triangle is then stretched across the gap: 486 triangles with edges up to 20 cm on the first run, which
+# read in Unreal as a dark smear hanging off the apron. Restricting the search to faces that face the same
+# way as the vertex keeps each surface sampling itself.
+inv = hi.matrix_world.inverted()
+nrm = {v.index: v.normal.copy() for v in hi.data.vertices}
 moved = []
+fallback = 0
 for v in hi.data.vertices:
     p = hi.matrix_world @ v.co
-    loc, nor, idx, dist = lbvh.find_nearest(p)
+    vn = (hi.matrix_world.to_3x3() @ nrm[v.index]).normalized()
+    best = None
+    for loc, nor, idx, dist in lbvh.find_nearest_range(p, 0.05):
+        if idx is None or nor is None:
+            continue
+        if nor.normalized().dot(vn) < 0.3:
+            continue
+        if best is None or dist < best[3]:
+            best = (loc, nor, idx, dist)
+    if best is None:
+        fallback += 1
+        best = lbvh.find_nearest(p)
+    loc, nor, idx, dist = best
     if idx is None:
         moved.append(0.0)
         continue
-    a, b, c = (lp[i] for i in ltris[idx])
-    wa, wb, wc = bary(loc, a, b, c)
     ia, ib, ic = ltris[idx]
+    wa, wb, wc = bary(loc, lp[ia], lp[ib], lp[ic])
     d = field[ia] * wa + field[ib] * wb + field[ic] * wc
-    v.co = hi.matrix_world.inverted() @ (p + d)
+    v.co = inv @ (p + d)
     moved.append(d.length)
+R['field_fallback_verts'] = fallback
 hi.data.update()
 moved.sort()
 R['applied_mean_cm'] = sum(moved) / len(moved) * 100
@@ -255,6 +292,32 @@ R['height_cm'] = (max(p.z for p in pts) - min(p.z for p in pts)) * 100
 R['feet_z_cm'] = min(p.z for p in pts) * 100
 R['bbox_x_cm'] = [min(p.x for p in pts) * 100, max(p.x for p in pts) * 100]
 R['bbox_y_cm'] = [min(p.y for p in pts) * 100, max(p.y for p in pts) * 100]
+
+# A decimate is adaptive, so a LONG triangle is normal - it means a flat region, and the apron panel
+# legitimately carries edges around 19 cm where Meshy's uniform remesh has none over 8. What is never
+# normal is a long THIN one: that is a collapse that bridged a gap, and it renders as a smear. So judge
+# by aspect ratio (longest edge / the height of the triangle on it), not by length.
+hi.data.calc_loop_triangles()
+longest = 0.0
+slivers = 0
+for t in hi.data.loop_triangles:
+    a, b, c = (hi.matrix_world @ hi.data.vertices[i].co for i in t.vertices)
+    e = max((a - b).length, (b - c).length, (c - a).length)
+    longest = max(longest, e)
+    area = (b - a).cross(c - a).length * 0.5
+    if area > 1e-12 and e / (2.0 * area / e) > 25.0:
+        slivers += 1
+R['slivers_aspect_over_25'] = slivers
+R['sliver_pct'] = 100.0 * slivers / max(1, len(hi.data.loop_triangles))
+R['longest_edge_cm'] = longest * 100
+print('SLIVERS aspect>25: %d (%.2f%%)   longest edge %.1f cm'
+      % (slivers, R['sliver_pct'], longest * 100))
+# Measured baselines at 55,679 triangles: Meshy's uniform remesh 0.06%, the V1 body 0.28%, this decimate
+# 1.31% welded (2.21% unwelded). A decimate is adaptive so it is always worse here; it is reported rather
+# than refused because the asset thumbnail - the mesh and its material with no level and no editor sprites
+# in the frame - renders clean. Watch the number: a jump means the collapse started bridging gaps.
+if R['sliver_pct'] > 4.0:
+    raise SystemExit('REFUSING: %.2f%% needle triangles - the decimate is bridging gaps' % R['sliver_pct'])
 
 bpy.ops.object.select_all(action='DESELECT')
 hi.select_set(True)
