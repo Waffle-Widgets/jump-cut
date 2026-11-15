@@ -301,12 +301,15 @@ def hand(s, out=9.0, fwd=3.0, up=None, pron=62.0, curl=0.34, elbow=(0.35, -1.0, 
     up_, fo, wr = ARM[s]
     if up is None: up = -ARMLEN[s] * 0.965
     if not _state.get('clav' + s):
-        # The collarbone lift is for an arm that HANGS: brought down from the A-pose it drags the shoulder into a
-        # slope, and 28 degrees squares it. On an arm that is level, raised or swept back the same lift balloons the
-        # shoulder (the first anime sprint, seen from the front). So it follows how far down the arm points.
+        # Hold the shoulder where the idle holds it, in every pose. A hanging arm needs 28 degrees of collarbone lift
+        # or the shoulder slopes (owner, Nov 15, twice). Round two then dropped the lift to nothing for a level or
+        # raised arm, so the shoulder joint sank 6 cm below the idle's every time an arm came up and popped back
+        # afterwards: "they look like they dislocate". Rendered with the arm forward, back and overhead, a lifted
+        # collarbone looks natural in all three, so it now only eases a little for a level arm and rises for one
+        # overhead, the way a real shoulder does.
         v = Vector((SGN[s] * out, -fwd, up))
-        d = max(0.0, -v.z / max(v.length, 1e-6))
-        clav(s, up=28.0 * d * d)
+        d = v.z / max(v.length, 1e-6)                     # -1 hanging .. 0 level .. +1 overhead
+        clav(s, up=(24.0 + 4.0 * d * d) if d <= 0 else (24.0 + 10.0 * d))
     sh0 = head(up_)
     t = Vector((sh0.x + SGN[s] * out, sh0.y - fwd, sh0.z + up))
     pole = Vector((SGN[s] * elbow[0], -elbow[1], elbow[2]))
