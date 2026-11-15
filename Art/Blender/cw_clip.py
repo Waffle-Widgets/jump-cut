@@ -368,53 +368,82 @@ APRON = {s: 'Apron_' + s for s in 'LR'} if 'Apron_L' in BONES else {}      # a b
 _apron = {}                                                 # this frame's swing per side, degrees
 
 
-LEGPTS = []                                                 # (bone, point in that bone's own frame, angle at rest per side)
-APRON_LEN = 44.0
+LEGPTS = []                                                 # (bone, point in its own frame, rest angle from the top hinge, from the fold)
+APRON_LEN = 44.0                                            # hinge to hem
+APRON_L1 = 22.0                                             # hinge to fold (the upper panel); the rest is the lower panel
+APRON2 = {s: 'Apron_' + s + '2' for s in 'LR'} if 'Apron_L2' in BONES else {}
+_apron = {}                                                 # this frame: 'L','R' upper swing; 'L2','R2' lower panel's own angle
 
 
-def _apron_angles(pts):
-    """For each leg point, how far forward of straight-down it sits as seen from the skirt's hinge line, in the
-    pelvis's own frame; None where that half of the skirt cannot touch it (beside it, above the hinge, below the hem)."""
+def _pelvis():
     carry = W['Bone_001'].to_3x3() @ REST['Bone_001'].to_3x3().inverted()
-    px, pf, pu = carry @ X, carry @ (-Y), carry @ Z
     mid = W['Bone_001'] @ (REST['Bone_001'].inverted() @ ((RH[APRON['L']] + RH[APRON['R']]) * 0.5))
-    out = {s: [] for s in APRON}
-    for b, pl in pts:
-        v = (W[b] @ pl) - mid
-        lat, down, fw = v.dot(px), -v.dot(pu), v.dot(pf)
-        for s in APRON:
+    return carry @ X, carry @ (-Y), carry @ Z, mid
+
+
+def _clear(hinge, radius, which):
+    """How far forward (degrees from the pelvis's own straight-down) a panel hinged at `hinge` (one point per side)
+    and `radius` long must swing so no point on the front of either leg comes closer to it than that point sits at
+    rest. which = 2 for the top hinge's rest angles, 3 for the fold's."""
+    px, pf, pu, mid = _pelvis()
+    out = {}
+    for s in APRON:
+        worst = 0.0
+        for e in LEGPTS:
+            p = W[e[0]] @ e[1]
+            lat = (p - mid).dot(px)
+            # Each bone owns its side AND the 15 cm either side of the centre line that the two share: watching only
+            # its own side let the far leg through the middle of the skirt ("clips ... during some attacks").
+            if not (-15.0 <= lat * SGN[s] <= 20.0): continue
+            v = p - hinge[s]
+            down, fw = -v.dot(pu), v.dot(pf)
             # a thigh raised to level has its front surface ABOVE the hinge: that is the case that matters most
-            inside = (-4.0 <= lat * SGN[s] <= 20.0) and (down > 2.0 or fw > 0.0) and math.hypot(down, fw) < APRON_LEN + 2.0
-            out[s].append(math.degrees(math.atan2(fw + 1.5, down)) if inside else None)
+            if not (down > 2.0 or fw > 0.0) or math.hypot(down, fw) > radius + 2.0: continue
+            worst = max(worst, math.degrees(math.atan2(fw + 1.5, down)) - e[which][s])
+        out[s] = worst
     return out
 
 
-def _apron_need(s):
-    """How far (degrees) the skirt half on side s has to swing forward so that NO point on the front of either leg
-    comes closer to it than that point sits at rest. The first version watched two guessed points per leg, pushed
-    out by a guessed radius: it let a knee through at full drive and threw the skirt straight out in front while
-    the kicking leg went out to the SIDE ("make sure the apron does not clip into the character", owner, Nov 15)."""
-    ang = _apron_angles([(b, pl) for b, pl, _ in LEGPTS])[s]
-    worst = 0.0
-    for a_, (_, _, rest) in zip(ang, LEGPTS):
-        if a_ is not None: worst = max(worst, a_ - rest[s])
-    return worst
+def _fold_point(s, a1):
+    px, pf, pu, mid = _pelvis()
+    r = math.radians(a1)
+    return mid + px * (SGN[s] * 8.0) + (pf * math.sin(r) - pu * math.cos(r)) * APRON_L1
 
 
-def _apron_set(s, deg):
-    carry = W['Bone_001'].to_3x3() @ REST['Bone_001'].to_3x3().inverted()
-    b = APRON[s]
-    set_world(b, W['Bone_001'] @ REL[b])                    # back to hanging, then swing
-    rot(b, (carry @ X).normalized(), -deg)
-    _apron[s] = deg
+def _apron_solve():
+    """Both panels of both halves for this pose. Cloth is pushed out by a leg in front and never pulled back by one
+    behind; it is ONE sheet, so a knee on one side drags the other side part of the way; and it has weight, so when
+    he leans forward it hangs toward the ground instead of staying glued to his hips."""
+    px, pf, pu, mid = _pelvis()
+    grav = max(0.0, math.degrees(math.atan2(-pf.z, pu.z)))          # straight down in the world, seen from his hips
+    top = {s: mid + px * (SGN[s] * 8.0) for s in APRON}
+    c1 = _clear(top, APRON_L1 if APRON2 else APRON_LEN, 2)
+    a1 = {s: min(105.0, max(c1[s], 0.6 * grav)) for s in APRON}
+    a1 = {s: max(a1[s], 0.45 * a1['R' if s == 'L' else 'L']) for s in APRON}
+    out = dict(a1)
+    if APRON2:
+        c2 = _clear({s: _fold_point(s, a1[s]) for s in APRON}, APRON_LEN - APRON_L1, 3)
+        a2 = {s: min(a1[s] + 5.0, max(c2[s], 0.9 * grav)) for s in APRON}
+        a2 = {s: max(a2[s], 0.45 * a2['R' if s == 'L' else 'L']) for s in APRON}
+        for s in APRON: out[s + '2'] = a2[s]
+    return out
+
+
+def _apron_set(vals):
+    px = _pelvis()[0].normalized()
+    for s in APRON:
+        b = APRON[s]
+        set_world(b, W['Bone_001'] @ REL[b])                # back to hanging, then swing
+        rot(b, px, -vals[s])
+        if APRON2:
+            b2 = APRON2[s]
+            set_world(b2, W[b] @ REL[b2])
+            rot(b2, px, -(vals[s + '2'] - vals[s]))         # the lower panel's angle is its own, not added to the upper's
+    _apron.clear(); _apron.update(vals)
 
 
 def _finish():
-    if APRON:                                               # cloth is pushed out by a leg in front, never pulled back
-        need = {s: min(105.0, max(0.0, _apron_need(s))) for s in APRON}
-        for s in APRON:                                     # it is ONE sheet: a knee on one side drags the other side
-            o = 'R' if s == 'L' else 'L'                    # part of the way with it
-            _apron_set(s, max(need[s], 0.45 * need[o]))
+    if APRON: _apron_set(_apron_solve())
     hip = W['Bone_001'].copy()
     set_world('Bone_000', ROOT_FLOOR)
     set_world('Bone_001', hip)
@@ -461,9 +490,17 @@ if APRON:                                                   # the front surface 
             _idx = _idx[np.argsort(V0[_idx, 1])][:max(40, len(_idx) // 3)]        # he faces -Y: the most forward third
             for i in _idx[::max(1, len(_idx) // 160)]:
                 _pts.append((_b, REST[_b].inverted() @ Vector(V0[i])))
-    _r = _apron_angles(_pts)
-    for k, (_b, _pl) in enumerate(_pts):
-        LEGPTS.append((_b, _pl, {s: (_r[s][k] if _r[s][k] is not None else 90.0) for s in APRON}))
+    APRON_L1 = float(RH[APRON['L']].z - RH[APRON2['L']].z) if APRON2 else APRON_LEN
+    _px, _pf, _pu, _mid = _pelvis()
+    for _b, _pl in _pts:
+        _p = REST[_b] @ _pl
+        _r1, _r2 = {}, {}
+        for _s2 in APRON:
+            _v = _p - (_mid + _px * (SGN[_s2] * 8.0))
+            _r1[_s2] = math.degrees(math.atan2(_v.dot(_pf) + 1.5, -_v.dot(_pu)))
+            _v = _p - _fold_point(_s2, 0.0)
+            _r2[_s2] = math.degrees(math.atan2(_v.dot(_pf) + 1.5, -_v.dot(_pu)))
+        LEGPTS.append((_b, _pl, _r1, _r2))
     log['apron_leg_points'] = len(LEGPTS)
 body(); foot('L'); foot('R'); apply_pose(); _V = world_verts()
 for _s in 'LR': DROP[_s] = float(_V[SHOE[_s], 2].min()) - 0.05
@@ -509,21 +546,21 @@ def author(clip, frames, build, loop=True, sheet_frames=8):
         # THE SKIRT HAS WEIGHT. A leg throws it forward at once; it does not come back at once. Each half falls
         # toward where the leg lets it hang, about half of the way per frame, and never through the leg. Run twice
         # round a loop so the last frame hands over to the first.
-        fr = list(range(F0, F1 + 1)); final = {}
-        for s in APRON:
-            cur = NEED[fr[0]][s]
+        fr = list(range(F0, F1 + 1)); final = {f: {} for f in fr}
+        for k in NEED[fr[0]]:
+            cur = NEED[fr[0]][k]
             for _ in range(2 if loop else 1):
                 for f in fr:
-                    cur = max(NEED[f][s], cur + (NEED[f][s] - cur) * 0.55)
-                    final[(f, s)] = cur
-            if loop: final[(F1, s)] = final[(F0, s)]
-        log['apron_swing_deg'] = {s: [round(min(final[(f, s)] for f in fr)), round(max(final[(f, s)] for f in fr))] for s in APRON}
+                    cur = max(NEED[f][k], cur + (NEED[f][k] - cur) * 0.55)
+                    final[f][k] = cur
+            if loop: final[F1][k] = final[F0][k]
+        log['apron_swing_deg'] = {k: [round(min(final[f][k] for f in fr)), round(max(final[f][k] for f in fr))] for k in NEED[fr[0]]}
         for f in fr:
-            if all(abs(final[(f, s)] - NEED[f][s]) < 0.05 for s in APRON): continue
+            if all(abs(final[f][k] - NEED[f][k]) < 0.05 for k in final[f]): continue
             for n in BONES:
                 BASIS[n] = POSES[f][n]; p = PARENT[n]
                 W[n] = ((W[p] @ REL[n]) if p else REST[n]) @ BASIS[n]
-            for s in APRON: _apron_set(s, final[(f, s)])
+            _apron_set(final[f])
             POSES[f] = {n: BASIS[n].copy() for n in BONES}
             apply_pose(); VERTS[f] = world_verts()
     act = bpy.data.actions.new(clip)

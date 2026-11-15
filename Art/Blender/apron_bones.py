@@ -31,6 +31,7 @@ IN, TEX, OUT = argv[0], argv[1], argv[2]
 RENDER = argv[3] if len(argv) > 3 else None
 TIE_HI, TIE_LO = 100.0, 98.0       # cm above the floor: the body's own weights above, all apron below. The skirt is cut
                                    # free below TIE_LO; a 9 cm ramp left 500 stretched edges at the waist in a plain walk
+FOLD = 22.0                        # cm below the hinge where the skirt can fold: Apron_L2 / Apron_R2 start here
 BLEND_X = 15.0                     # cm either side of the centre line over which the two bones share the skirt:
                                    # nearly its whole width, so one raised knee TWISTS the sheet instead of tearing it in two
 
@@ -97,8 +98,16 @@ for side, sx in (('L', 1.0), ('R', -1.0)):
     eb.parent = arm.data.edit_bones[hip]
     eb.use_connect = False
     eb.head = AI @ Vector((sx * 8.0 * s, hinge_y * s, (TIE_HI - 2.0) * s))
-    eb.tail = AI @ Vector((sx * 8.0 * s, hinge_y * s, bot * s))
+    eb.tail = AI @ Vector((sx * 8.0 * s, hinge_y * s, (TIE_HI - 2.0 - FOLD) * s))
     eb.roll = 0.0
+    # One stiff panel per side stuck straight out like a plank whenever a thigh came up level (the sprint, Nov 15).
+    # A second bone half way down lets the lower half hang from the knee the way cloth does.
+    e2 = arm.data.edit_bones.new('Apron_' + side + '2')
+    e2.parent = eb
+    e2.use_connect = False
+    e2.head = AI @ Vector((sx * 8.0 * s, hinge_y * s, (TIE_HI - 2.0 - FOLD) * s))
+    e2.tail = AI @ Vector((sx * 8.0 * s, hinge_y * s, bot * s))
+    e2.roll = 0.0
 bpy.ops.object.mode_set(mode='OBJECT')
 print('APRON bones Apron_L / Apron_R under %s, hinge at y %.1f z %.1f, %.1f cm long' % (hip, hinge_y, TIE_HI - 2.0, TIE_HI - 2.0 - bot))
 
@@ -153,6 +162,9 @@ _gn = {g.index: g.name for g in mesh.vertex_groups}
 def gname_all(i): return _gn[i]
 gL = mesh.vertex_groups.new(name='Apron_L')
 gR = mesh.vertex_groups.new(name='Apron_R')
+gL2 = mesh.vertex_groups.new(name='Apron_L2')
+gR2 = mesh.vertex_groups.new(name='Apron_R2')
+low = smooth(-(V[:, 2]), -(TIE_HI - 2.0 - FOLD + 5.0), -(TIE_HI - 2.0 - FOLD - 5.0))   # 0 above the fold, 1 below it
 before = {}
 gname = {g.index: g.name for g in mesh.vertex_groups}
 # The waistband and the top of the skirt were weighted to the THIGHS by the generator, like the rest of it. Whatever
@@ -182,10 +194,9 @@ for i in np.where(share > 1e-4)[0]:
     for g in v.groups:
         before[gname[g.group]] = before.get(gname[g.group], 0.0) + g.weight * a
         g.weight *= (1.0 - a)
-    if a * left[i] > 1e-5:
-        gL.add([int(i)], a * float(left[i]), 'REPLACE')
-    if a * (1.0 - left[i]) > 1e-5:
-        gR.add([int(i)], a * float(1.0 - left[i]), 'REPLACE')
+    for grp, w_ in ((gL, left[i] * (1 - low[i])), (gR, (1 - left[i]) * (1 - low[i])), (gL2, left[i] * low[i]), (gR2, (1 - left[i]) * low[i])):
+        if a * w_ > 1e-5:
+            grp.add([int(i)], a * float(w_), 'REPLACE')
 bad = 0
 for v in me.vertices:
     t = sum(g.weight for g in v.groups)
