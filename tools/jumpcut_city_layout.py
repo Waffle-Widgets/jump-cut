@@ -202,7 +202,7 @@ CAFE_DRESS_CM = [
     # so the car barely misses whoever is standing at it (Team Owner, Fri Nov 13). Staff side is +Y,
     # facing the car: counter north face y = -200, car south flank y = -100, so the gap is 100 cm and a
     # person at the register stands about 60 cm from the wreck.
-    ('SM_CafeCounter', -330.0, -240.0, 0.0, 180), ('SM_CafeRegister', -540.0, -240.0, 110.0, 180),
+    ('SM_CafeCounter', -330.0, -240.0, 0.0, 180), ('SM_CafeRegister', -540.0, -240.0, 110.0, 0),
     ('SM_CafeEspresso', -430.0, -240.0, 104.0, 180),
     ('SM_CafePastryCase', -160.0, -238.0, 104.0, 180), ('SM_CafeShelf', -220.0, -490.0, 2.0, 0),
     ('SM_CafeShelf', 460.0, -490.0, 2.0, 0),

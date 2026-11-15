@@ -23,6 +23,7 @@ G['EventGraph'] = f'''
   (Rendering|Material|SetMaterial :self ({V}GetFillBar) :ElementIndex 0 :Material "/Game/Game/Materials/Latte/M_LatteBar.M_LatteBar")
   (Rendering|Material|SetMaterial :self ({V}GetFillMark) :ElementIndex 0 :Material "/Game/Game/Materials/Latte/M_LatteMilk.M_LatteMilk")
   (CallFunction|LatteShow :Show false)
+  (Rendering|SetVisibility :self ({V}GetWorldText) :bNewVisibility false)
   (bind startPlayer (Utilities|Casting|CastToBP_Player :Object (Game|GetPlayerCharacter 0))
     (:then
       (Class|BPPlayer|PlayerSetInputLocked :self startPlayer :Locked true))
@@ -30,7 +31,9 @@ G['EventGraph'] = f'''
 
 (event EventTick (DeltaSeconds)
   (if ({V}GetLatteActive)
-    (CallFunction|LatteStep :Dt DeltaSeconds)))
+    (CallFunction|LatteStep :Dt DeltaSeconds)
+    (elif (and (>= ({V}GetShift) 1) (<= ({V}GetShift) 4))
+      (CallFunction|LatteShiftStep :Dt DeltaSeconds))))
 '''
 
 G['LatteShow'] = f'''
@@ -43,6 +46,18 @@ G['LatteShow'] = f'''
   (Rendering|SetVisibility :self ({V}GetStream) :bNewVisibility false))
 '''
 
+REG = '(Math|Vector|MakeVector :X -540.0 :Y -240.0 :Z 185.0)'          # above City_Cafe_01_CafeRegister
+WALK = f'(Pawn|Components|CharacterMovement|SetMovementMode :self (Class|Character|GetCharacterMovement :self ({V}GetLattePlayer)) :NewMovementMode "MOVE_Walking")'
+
+
+def say(text):
+    return f'(Rendering|Components|TextRender|SetText :self ({V}GetWorldText) :Value (Utilities|Text|MakeLiteralText :Value "{text}"))'
+
+
+# THE SHIFT.  Shift: 0 title, 1 an order is in (walk to the cup), 2 pouring, 3 served (the customer takes it),
+# 4 noon (walk to the register), 5 clocked out - which is the moment the player's input unlocks, and
+# BP_OpeningDirector starts the opening on exactly that.  Through 1-4 the player's own input stays LOCKED (so no
+# attacks, and the director waits) and LatteWalkStep walks him and turns the camera itself.
 G['LatteTryBegin'] = f'''
 (fn LatteTryBegin (Player)
   ({V}SetLattePlayer Player)
@@ -50,10 +65,77 @@ G['LatteTryBegin'] = f'''
     (Class|BPPlayer|PlayerSetInputLocked :self Player :Locked false)
     (else
       (Class|BPPlayer|PlayerSetInputLocked :self Player :Locked true)
-      ({V}SetLatteActive true)
-      (Game|Player|SetViewTargetwithBlend :self (Game|GetPlayerController 0) :NewViewTarget self :BlendTime 0.6)
-      (CallFunction|LatteShow :Show true)
-      (CallFunction|LatteReset))))
+      ({V}SetShift 1)
+      ({V}SetTextLoc (+ (Transformation|GetActorLocation :self self) (Math|Vector|MakeVector :X 0.0 :Y 0.0 :Z 48.0)))
+      (Rendering|SetVisibility :self ({V}GetWorldText) :bNewVisibility true)
+      {say("ORDER IN: ONE LATTE<br>Go behind the counter<br>Press E at the cup")}
+      {WALK})))
+'''
+
+G['LatteStartPour'] = f'''
+(fn LatteStartPour ()
+  ({V}SetShift 2)
+  ({V}SetLatteActive true)
+  (Rendering|SetVisibility :self ({V}GetWorldText) :bNewVisibility false)
+  (Game|Player|SetViewTargetwithBlend :self (Game|GetPlayerController 0) :NewViewTarget self :BlendTime 0.6)
+  (CallFunction|LatteShow :Show true)
+  (CallFunction|LatteReset))
+'''
+
+G['LatteClockOut'] = f'''
+(fn LatteClockOut ()
+  ({V}SetShift 5)
+  ({V}SetLatteDone true)
+  (Rendering|SetVisibility :self ({V}GetWorldText) :bNewVisibility false)
+  (Class|BPPlayer|PlayerSetInputLocked :self ({V}GetLattePlayer) :Locked false))
+'''
+
+G['LatteWalkStep'] = f'''
+(fn LatteWalkStep ()
+  (bind pawn ({V}GetLattePlayer))
+  (bind pc (Game|GetPlayerController 0))
+  (bind (dx dy) (Game|Player|GetInputMouseDelta :self pc))
+  (Pawn|Input|AddControllerYawInput :self pawn :Val dx)
+  (Pawn|Input|AddControllerPitchInput :self pawn :Val (* dy -1.0))
+  (bind rot (Math|Rotator|MakeRotator :Roll 0.0 :Pitch 0.0 :Yaw (.yaw (Pawn|GetControlRotation :self pc))))
+  (bind fwd (- (select (Game|Player|IsInputKeyDown :self pc :Key "W") 1.0 0.0) (select (Game|Player|IsInputKeyDown :self pc :Key "S") 1.0 0.0)))
+  (bind side (- (select (Game|Player|IsInputKeyDown :self pc :Key "D") 1.0 0.0) (select (Game|Player|IsInputKeyDown :self pc :Key "A") 1.0 0.0)))
+  (Pawn|Input|AddMovementInput :self pawn :WorldDirection (Math|Vector|GetForwardVector :InRot rot) :ScaleValue fwd)
+  (Pawn|Input|AddMovementInput :self pawn :WorldDirection (Math|Vector|GetRightVector :InRot rot) :ScaleValue side)
+  (bind cm (Game|GetPlayerCameraManager 0))
+  (bind cam (Camera|GetCameraLocation :self cm))
+  (bind crot (Camera|GetCameraRotation :self cm))
+  (bind tl (+ cam (+ (* (Math|Vector|GetForwardVector :InRot crot) 230.0) (* (Math|Vector|GetUpVector :InRot crot) -62.0))))
+  (Transformation|SetWorldLocation :self ({V}GetWorldText) :NewLocation tl)
+  (Transformation|SetWorldRotation :self ({V}GetWorldText) :NewRotation (Math|Rotator|FindLookatRotation :Start tl :Target cam)))
+'''
+
+G['LatteShiftStep'] = f'''
+(fn LatteShiftStep (Dt)
+  (CallFunction|LatteWalkStep)
+  (bind pc (Game|GetPlayerController 0))
+  (bind pl (Transformation|GetActorLocation :self ({V}GetLattePlayer)))
+  (bind me (Transformation|GetActorLocation :self self))
+  (bind dcup (+ (* (- (.x pl) (.x me)) (- (.x pl) (.x me))) (* (- (.y pl) (.y me)) (- (.y pl) (.y me)))))
+  (bind dreg (+ (* (- (.x pl) -540.0) (- (.x pl) -540.0)) (* (- (.y pl) -240.0) (- (.y pl) -240.0))))
+  (bind edown (Game|Player|IsInputKeyDown :self pc :Key "E"))
+  (if (== ({V}GetShift) 1)
+    (if (and edown (and (not ({V}GetEWas)) (< dcup 32400.0)))
+      (CallFunction|LatteStartPour))
+    (elif (== ({V}GetShift) 3)
+      ({V}SetShiftT (+ ({V}GetShiftT) Dt))
+      (if (> ({V}GetShiftT) 2.2)
+        (Rendering|SetVisibility :self ({V}GetCup) :bNewVisibility false)
+        (Rendering|SetVisibility :self ({V}GetSaucer) :bNewVisibility false)
+        (Rendering|SetVisibility :self ({V}GetSurface) :bNewVisibility false))
+      (if (> ({V}GetShiftT) 3.8)
+        ({V}SetShift 4)
+        ({V}SetTextLoc {REG})
+        {say("12:00  YOUR SHIFT IS OVER<br>Press E at the register to clock out")})
+      (elif (== ({V}GetShift) 4)
+        (if (and edown (and (not ({V}GetEWas)) (< dreg 32400.0)))
+          (CallFunction|LatteClockOut)))))
+  ({V}SetEWas edown))
 '''
 
 P1 = '1. Hold LEFT mouse: pour from high until the bar reaches the mark'
@@ -101,8 +183,11 @@ G['LatteStep'] = f'''
     (else
       (bind (dx dy) (Game|Player|GetInputMouseDelta :self pc))
       ({V}SetLowGap (+ ({V}GetLowGap) Dt))
-      (bind nx (+ ({V}GetPitX) (* dy 0.012)))
-      (bind ny (+ ({V}GetPitY) (* dx 0.012)))
+      ({V}SetSimT (+ ({V}GetSimT) Dt))
+      ({V}SetPourAmt (Math|Interpolation|FInterpTo :Current ({V}GetPourAmt) :Target (select (or (Game|Player|IsInputKeyDown :self pc :Key "RightMouseButton") (Game|Player|IsInputKeyDown :self pc :Key "LeftMouseButton")) 1.0 0.0) :DeltaTime Dt :InterpSpeed 6.0))
+      (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "Fx" :ParameterValue (Utilities|Struct|MakeLinearColor :R (/ ({V}GetPitX) 12.0) :G (/ ({V}GetPitY) 12.0) :B ({V}GetPourAmt) :A ({V}GetSimT)))
+      (bind nx (+ ({V}GetPitX) (* dy 0.08)))
+      (bind ny (+ ({V}GetPitY) (* dx 0.08)))
       ({V}SetPrevX ({V}GetPitX))
       ({V}SetPrevY ({V}GetPitY))
       ({V}SetPitX (select (< nx -5.2) -5.2 (select (> nx 5.2) 5.2 nx)))
@@ -179,10 +264,13 @@ G['LatteJudge'] = f'''
 G['LatteFinish'] = f'''
 (fn LatteFinish ()
   ({V}SetLatteActive false)
-  ({V}SetLatteDone true)
   (CallFunction|LatteShow :Show false)
-  (Game|Player|SetViewTargetwithBlend :self (Game|GetPlayerController 0) :NewViewTarget ({V}GetLattePlayer) :BlendTime 0.0)
-  (Class|BPPlayer|PlayerSetInputLocked :self ({V}GetLattePlayer) :Locked false))
+  (Game|Player|SetViewTargetwithBlend :self (Game|GetPlayerController 0) :NewViewTarget ({V}GetLattePlayer) :BlendTime 0.5)
+  ({V}SetShift 3)
+  ({V}SetShiftT 0.0)
+  (Rendering|SetVisibility :self ({V}GetWorldText) :bNewVisibility true)
+  {say("ORDER UP!<br>The customer takes the latte")}
+  {WALK})
 '''
 
 out = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'JumpCut', 'Saved', 'latte_graphs.json')

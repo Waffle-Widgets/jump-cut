@@ -40,6 +40,7 @@ PARTS = [
     ('FillBar', unreal.StaticMeshComponent, 'Cube', '/Game/Game/Materials/Latte/M_LatteBar', V(-4.2, -10, 0), R(roll=0, pitch=0, yaw=0), V(0.036, 0.008, 0.004)),
     ('FillMark', unreal.StaticMeshComponent, 'Cube', '/Game/Game/Materials/Latte/M_LatteMilk', V(2.0, -10.9, 0), R(roll=0, pitch=0, yaw=0), V(0.004, 0.03, 0.004)),
     ('Prompt', unreal.TextRenderComponent, None, None, V(-15.0, 0, 2), R(roll=0, pitch=68, yaw=180), V(1, 1, 1)),
+    ('WorldText', unreal.TextRenderComponent, None, None, V(0, 0, 48), R(roll=0, pitch=0, yaw=0), V(1, 1, 1)),
     ('Status', unreal.TextRenderComponent, None, None, V(10.5, 0, 2), R(roll=0, pitch=68, yaw=180), V(1, 1, 1)),
 ]
 
@@ -66,8 +67,11 @@ def apply(bp):
             if cls is unreal.TextRenderComponent:
                 o.set_editor_property('horizontal_alignment', unreal.HorizTextAligment.EHTA_CENTER)
                 o.set_editor_property('vertical_alignment', unreal.VerticalTextAligment.EVRTA_TEXT_CENTER)
-                o.set_editor_property('world_size', 1.05 if name == 'Prompt' else 1.9)
-                o.set_editor_property('text_render_color', unreal.Color(b=12, g=22, r=48, a=255))
+                o.set_editor_property('world_size', {'Prompt': 1.05, 'WorldText': 11.0}.get(name, 1.9))
+                if name == 'WorldText':
+                    o.set_editor_property('text_render_color', unreal.Color(b=10, g=16, r=30, a=255))
+                if name != 'WorldText':
+                    o.set_editor_property('text_render_color', unreal.Color(b=12, g=22, r=48, a=255))
                 o.set_editor_property('text', unreal.Text(' '))
             if cls is unreal.CameraComponent:
                 o.set_editor_property('field_of_view', 42.0)

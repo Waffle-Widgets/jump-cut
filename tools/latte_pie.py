@@ -34,7 +34,7 @@ def latte(w):
 
 
 def state(a):
-    keys = ('LatteActive', 'LatteDone', 'Fill', 'Pattern', 'LowTime', 'Wiggles', 'Blobs', 'CutDist', 'Ending', 'EndWin', 'PitX', 'PitY', 'PitH')
+    keys = ('Shift', 'LatteActive', 'LatteDone', 'Fill', 'Pattern', 'LowTime', 'Wiggles', 'Blobs', 'CutDist', 'Ending', 'EndWin', 'PitX', 'PitY', 'PitH')
     return ' '.join('%s=%s' % (k, a.get_editor_property(k)) for k in keys)
 
 
@@ -107,6 +107,17 @@ try:
                 gm.get_editor_property('FlowState'), p.get_editor_property('InputLocked'),
                 GS.get_player_controller(W, 0).get_view_target().get_name()))
             say(state(a))
+        elif mode == 'call':                      # call <function>: LatteStartPour, LatteClockOut (a script cannot press E)
+            a.call_method(sys.argv[2]); say('CALL %s: %s' % (sys.argv[2], state(a)))
+        elif mode == 'tp':                        # tp <x> <y> [yaw]: stand the player there
+            p = GS.get_player_character(W, 0)
+            p.set_actor_location(unreal.Vector(float(sys.argv[2]), float(sys.argv[3]), p.get_actor_location().z), False, True)
+            if len(sys.argv) > 4:
+                GS.get_player_controller(W, 0).set_control_rotation(unreal.Rotator(roll=0, pitch=-5, yaw=float(sys.argv[4])))
+            say('TP %s' % p.get_actor_location())
+        elif mode == 'shot':                      # shot <name>: the game view to Saved/latte_<name>.png
+            unreal.SystemLibrary.execute_console_command(W, 'HighResShot 1280x720 filename="%slatte_%s.png"' % (SAVED, sys.argv[2]))
+            say('SHOT %s' % sys.argv[2])
         elif mode == 'pour':
             say('POUR %s start: %s' % (sys.argv[2], state(a)))
             pour(a, sys.argv[2])
