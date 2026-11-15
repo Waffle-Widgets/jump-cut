@@ -3,6 +3,7 @@ Changes no assets.
 
     py <repo>/tools/b1u_pie.py flags on|off   editor: ShowTitleOnStart off (on) / back (off)
     py <repo>/tools/b1u_pie.py rec            PIE: play the beat and record it
+    py <repo>/tools/b1u_pie.py all            PIE: beat 1, then the goons and the boss (markers, Splice)
 
 WHY A TICK CALLBACK. An MCP round trip to this editor is 5-8 s; the power pickup is 2.2 s and the
 hand-off after the explosion is one frame. `rec` registers a Slate post-tick callback, so the
@@ -28,6 +29,7 @@ ARG = sys.argv[2] if len(sys.argv) > 2 else 'on'
 GM = '/Game/Game/Blueprints/BP_JumpCutGameMode.BP_JumpCutGameMode_C'
 DIR = '/Game/Game/Blueprints/BP_OpeningDirector.BP_OpeningDirector_C'
 PLY = '/Game/Game/Blueprints/BP_Player.BP_Player_C'
+ENEMY = '/Game/Game/Blueprints/BP_EnemyBase.BP_EnemyBase_C'
 
 ues = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
 
@@ -179,8 +181,63 @@ else:
                 if now - S['mark'] > 0.03: shot(gw, 'handoff_0')
                 if now - S['mark'] > 0.6: shot(gw, 'handoff_1')
                 if now - S['mark'] > 2.5:
-                    finish('ran to the end')
-            if now > 110.0:
+                    if MODE == 'rec':
+                        finish('ran to the end')
+                    else:
+                        # ---- beats 2 and 3 (mode 'all'): the markers must HIDE when he is close
+                        pawn.call_method('PlayerDebugTeleport', (unreal.Vector(2600.0, 0.0, 94.15), 0.0))
+                        pc.set_control_rotation(unreal.Rotator(roll=0.0, pitch=-8.0, yaw=0.0))
+                        S['phase'] = 7; S['mark'] = now; ev('teleported 2000 cm short of the goons')
+            elif ph == 7:
+                if now - S['mark'] > 1.0: shot(gw, 'goon_marker_far')
+                if now - S['mark'] > 1.5:
+                    ev('far from goons: obj=%s beacon hidden=%s' % (obj, f.get('bkh')))
+                    pawn.call_method('PlayerDebugTeleport', (unreal.Vector(3700.0, 0.0, 94.15), 0.0))
+                    S['phase'] = 8; S['mark'] = now
+            elif ph == 8:
+                if now - S['mark'] > 1.0:
+                    shot(gw, 'goon_marker_near')
+                    ev('900 cm from goons: obj=%s beacon hidden=%s' % (obj, f.get('bkh')))
+                    n = 0
+                    for g in unreal.GameplayStatics.get_all_actors_of_class(gw, unreal.load_object(None, ENEMY)):
+                        if g.get_actor_location().x < 6500.0:
+                            g.call_method('EnemyTakeHit', (9999.0, pawn.get_actor_location(), 300.0, 100.0, 0.5)); n += 1
+                    S['phase'] = 9; S['mark'] = now; ev('hit %d street goons for 9999' % n)
+            elif ph == 9:
+                if obj == 5:
+                    S['phase'] = 10; S['mark'] = now; ev('goons down, objective 5')
+            elif ph == 10:
+                if now - S['mark'] > 0.8:
+                    shot(gw, 'boss_marker_far')
+                    ev('far from boss: beacon hidden=%s at %s' % (f.get('bkh'), f.get('bk')))
+                    pawn.call_method('PlayerDebugTeleport', (unreal.Vector(7300.0, 0.0, 94.15), 0.0))
+                    S['phase'] = 11; S['mark'] = now
+            elif ph == 11:
+                if now - S['mark'] > 1.2:
+                    shot(gw, 'boss_marker_near')
+                    ev('820 cm from boss: obj=%s beacon hidden=%s' % (obj, f.get('bkh')))
+                    for g in unreal.GameplayStatics.get_all_actors_of_class(gw, unreal.load_object(None, ENEMY)):
+                        x = g.get_actor_location().x
+                        if 6600.0 < x < 9600.0:
+                            g.call_method('EnemyTakeHit', (9999.0, pawn.get_actor_location(), 300.0, 100.0, 0.5))
+                    S['phase'] = 12; S['mark'] = now; ev('hit the boss for 9999')
+            elif ph == 12:
+                if f['power']:
+                    if f['powerT'] > 0.10: shot(gw, 'splice_flash')
+                    if f['powerT'] > 1.20: shot(gw, 'splice_hold')
+                elif obj == 6:
+                    S['phase'] = 13; S['mark'] = now; ev('splice moment over, objective 6')
+            elif ph == 13:
+                if now - S['mark'] > 1.0:
+                    shot(gw, 'end_marker_far')
+                    ev('after boss: beacon hidden=%s at %s dil=%s locked=%s' % (f.get('bkh'), f.get('bk'), f['dil'], f['locked']))
+                    pawn.call_method('PlayerDebugTeleport', (unreal.Vector(13500.0, 0.0, 94.15), 0.0))
+                    S['phase'] = 14; S['mark'] = now
+            elif ph == 14:
+                if now - S['mark'] > 1.0:
+                    ev('900 cm from the end: obj=%s beacon hidden=%s hp=%s' % (obj, f.get('bkh'), f['hp']))
+                    finish('ran beats 1 to 3')
+            if now > 170.0:
                 finish('timeout in phase %d' % S['phase'])
         except Exception:
             ev('EXC ' + traceback.format_exc()[-600:])

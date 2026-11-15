@@ -306,6 +306,106 @@ G['EventGraph']=f'''
       (CallFunction|CineFindPlayer))))
 '''
 
+# ---------------------------------------------------------------- round 8: beats 2 and 3
+# These REPLACE the entries of the same name above (later assignment wins).
+# "The quest markers moving to the goons and boss don't go away when the player approaches"
+# (2026-11-15): from objective 3 on, the marker hides itself within 1200 cm. Objective 5 no longer
+# switches itself off 520 cm short of the boss; it lasts until he hands over Splice, which gets the
+# same held-time moment as Freeze Frame (PowerKind 1), and objective 6 then points at Marker_Win
+# (14400, 0, 0) so the walk after the boss has somewhere to go. New state variable: PowerKind (int).
+VARS.append(('PowerKind', 'int'))
+G['CineBeaconStep']=f'''
+(fn CineBeaconStep (DeltaSeconds)
+  ({V}SetObjectiveBob (+ ({V}GetObjectiveBob) DeltaSeconds))
+  (if (not ({V}GetBeaconLit))
+    (CallFunction|CineBeaconDress))
+  (if (> ({V}GetObjectiveState) 0)
+    (bind spot (CallFunction|CineObjectiveSpot))
+    (bind bob ({V}GetObjectiveBob))
+    (bind bk ({V}GetObjectiveBeacon))
+    (bind k (+ 1.0 (* 0.14 (Math|Trig|Sin(Radians) (* bob 5.0)))))
+    (bind near (and (>= ({V}GetObjectiveState) 3)
+      (< (Math|Vector|VectorLengthXY (- spot (Transformation|GetActorLocation :self ({V}GetPlayerRef)))) 1200.0)))
+    (Transformation|SetActorLocation :self bk
+      :NewLocation (Math|Vector|MakeVector :X (.x spot) :Y (.y spot)
+        :Z (+ (+ (.z spot) ({V}GetObjectiveHeight)) (* 16.0 (Math|Trig|Sin(Radians) (* bob 2.4)))))
+      :bSweep false :bTeleport true)
+    (Transformation|SetActorScale3D :self bk
+      :NewScale3D (Math|Vector|MakeVector :X (* 0.5 k) :Y (* 0.5 k) :Z (* 0.85 k)))
+    (CallFunction|CineHideActor :Target bk :Hide near)
+    (else
+      (CallFunction|CineHideActor :Target ({V}GetObjectiveBeacon) :Hide true))))
+'''
+G['CinePowerBegin']=f'''
+(fn CinePowerBegin ()
+  (bind pl ({V}GetPlayerRef))
+  ({V}SetPowerCine true)
+  ({V}SetPowerT 0.0)
+  ({V}SetFlashAlpha 0.9)
+  ({V}SetObjectiveState 0)
+  ({V}SetBarTarget 1.0)
+  (Class|BPPlayer|SetInputLocked :self pl :InputLocked true)
+  (Class|BPPlayer|SetMoveLocked :self pl :MoveLocked true)
+  (Utilities|Time|SetGlobalTimeDilation :TimeDilation 0.06)
+  (if (== ({V}GetPowerKind) 1)
+    (Audio|PlaySound2D :Sound "/Game/Game/Audio/SFX_PowerSplice.SFX_PowerSplice")
+    (CallFunction|CineSay :Msg "SPLICE" :Secs 3.0)
+    (else
+      (Audio|PlaySound2D :Sound "/Game/Game/Audio/SFX_PowerFreezeFrame.SFX_PowerFreezeFrame")
+      (CallFunction|CineSay :Msg "FREEZE FRAME" :Secs 3.0)))
+  (CallFunction|CineFlashPush))
+'''
+G['CinePowerEnd']=f'''
+(fn CinePowerEnd ()
+  (bind pl ({V}GetPlayerRef))
+  ({V}SetPowerCine false)
+  ({V}SetFlashAlpha 0.0)
+  (Utilities|Time|SetGlobalTimeDilation :TimeDilation 1.0)
+  (CallFunction|CinePlayerFov :Fov 90.0)
+  (CallFunction|CineFlashPush)
+  ({V}SetBarTarget 0.0)
+  (Class|BPPlayer|SetInputLocked :self pl :InputLocked false)
+  (Class|BPPlayer|SetMoveLocked :self pl :MoveLocked false)
+  ({V}SetObjectiveState (select (== ({V}GetPowerKind) 1) 6 2)))
+'''
+G['CineObjGoons']=f'''
+(fn CineObjGoons ()
+  (bind n (CallFunction|CineGoonsLeft))
+  (if (> n 0)
+    ({V}SetGoonsSeen true)
+    (else
+      (if ({V}GetGoonsSeen)
+        ({V}SetObjectiveState 5)
+        (CallFunction|CineSay :Msg "One more. The man with the cleaver." :Secs 4.0)))))
+'''
+# State 5 used to switch itself off at x > 7600, 520 cm short of the boss, and nothing replaced it.
+# It now lasts until the boss hands over Splice, which gets the same held-time moment as Freeze
+# Frame; the marker hides itself by distance (CineBeaconStep), and state 6 points at Marker_Win.
+G['CineObjBoss']=f'''
+(fn CineObjBoss ()
+  (if (Class|BPPlayer|GetHasSplice :self ({V}GetPlayerRef))
+    ({V}SetPowerKind 1)
+    (CallFunction|CinePowerBegin)))
+'''
+G['CineObjectiveSpot']=f'''
+(fn CineObjectiveSpot ()
+  (bind s ({V}GetObjectiveState))
+  (if (== s 1)
+    (return ({V}GetObjDriverLoc))
+    (elif (== s 2)
+      (return ({V}GetObjCoworkerLoc))
+      (elif (== s 3)
+        (return ({V}GetObjStreetLoc))
+        (elif (== s 4)
+          (return ({V}GetObjGoonLoc))
+          (elif (== s 5)
+            (return ({V}GetObjBossLoc))
+            (elif (== s 6)
+              (return (Math|Vector|MakeVector :X 14400.0 :Y 0.0 :Z 0.0))
+              (else
+                (return (Math|Vector|MakeVector :X 0.0 :Y 0.0 :Z 0.0))))))))))
+'''
+
 GW = {}   # overlay widget graphs
 GW['CineFlashSet']=f'''
 (fn CineFlashSet (Alpha)

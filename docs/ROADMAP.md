@@ -178,6 +178,16 @@ anyone picks up a task:
 
 ## Open
 
+### Beats 2 and 3: markers hide when you arrive, Splice gets its moment (Sun Nov 15, 15:20 UTC, Justin's Mac mini)
+
+**Built, played by a script in PIE, not played by a person.** On branch `claude/project-thread-y3rtrs`, built
+on a base 31 commits behind `main`. See [the devlog entry](devlog/2026-11-15-the-markers-get-out-of-the-way.md).
+
+- From objective 3 on the marker hides within 1200 cm (goons, boss, exit: each read back shown far, hidden near).
+- Beating the boss holds time for 2.2 s with the Freeze Frame treatment and the caption SPLICE.
+- A new objective 6 points at `Marker_Win`; before, nothing pointed anywhere after the boss.
+- Only `BP_OpeningDirector` changed.
+
 ### Beat 1: the pan ends on the player's camera, and getting the power is a moment (Sun Nov 15, 09:35 UTC, Justin's Mac mini)
 
 Round 7 of the Team Owner's feedback on the opening. **Built, played start to finish by a script in PIE and

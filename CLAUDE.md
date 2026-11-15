@@ -160,6 +160,11 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
 - **`unreal.register_slate_post_tick_callback` samples and drives PIE once per frame from inside the
   editor**, which is the way to measure anything shorter than an MCP round trip (`tools/b1u_pie.py`).
   `Screenshot showui` from that callback photographs UMG, bars and captions included.
+- **Two branch names that differ only by case break on a Mac when git packs its refs.** HEAD pointed at
+  `refs/heads/Justin/...`, the packed ref was `refs/heads/justin/...`, and after an automatic `pack-refs`
+  (a plain `git fetch` can trigger it) `git log` said *"your current branch does not have any commits yet"*
+  and every `origin/main...HEAD` was "ambiguous". Nothing is lost: `grep refs/heads .git/packed-refs`, then
+  `git symbolic-ref HEAD refs/heads/<the packed spelling>`.
 - **The console box ref changes per session** (`tb1` one launch, `tb2` the next). Find the textbox on the
   line after `text "Cmd"` in a `Snapshot` rather than trusting either number.
 
