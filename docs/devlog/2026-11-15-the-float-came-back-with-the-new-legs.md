@@ -1,6 +1,6 @@
 # The float came back with the new legs
 
-*Sun 15 Nov 2026, about 12:10 AM Pacific — GameStation · found and fixed by Fable 5.2 (`claude-fable-5-2`)*
+*Sun 15 Nov 2026, just after midnight Pacific — GameStation · found and fixed by Fable 5.2 (`claude-fable-5-2`)*
 
 - **What we asked for:** the models looking right and moving like normal people, before any new animation.
 

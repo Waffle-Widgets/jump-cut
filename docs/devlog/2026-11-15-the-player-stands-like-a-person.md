@@ -1,6 +1,6 @@
 # The player stands like a person
 
-*Sun 15 Nov 2026, about 2:15 AM Pacific — GameStation · Blender 5.3.0 · authored and fixed by Fable 5.2 (`claude-fable-5-2`)*
+*Sun 15 Nov 2026, about 12:15 AM Pacific — GameStation · Blender 5.3.0 · authored and fixed by Fable 5.2 (`claude-fable-5-2`)*
 
 - **What we asked for:** the models looking right, then animation. "The models should look and move like normal
   people."
