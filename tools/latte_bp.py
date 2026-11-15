@@ -38,6 +38,9 @@ PARTS = [
     ('Pitcher', unreal.StaticMeshComponent, '/Game/Game/Imported/Latte/SM_LattePitcher', '/Game/Game/Materials/Latte/M_LatteSteel', V(0, 0, 8), R(roll=0, pitch=0, yaw=0), V(1, 1, 1)),
     ('Stream', unreal.StaticMeshComponent, '/Game/Game/Imported/Latte/SM_LatteStream', '/Game/Game/Materials/Latte/M_LatteMilk', V(0, 0, 0), R(roll=0, pitch=0, yaw=0), V(0.6, 0.6, 8)),
     ('Guide', unreal.StaticMeshComponent, 'Plane', '/Game/Game/Materials/Latte/MI_LatteSurface_A', V(1.5, -17.5, 0.2), R(roll=0, pitch=0, yaw=0), V(0.075, 0.075, 1)),
+    ('MatchBack', unreal.StaticMeshComponent, 'Cube', '/Game/Game/Materials/Latte/M_LatteSteel', V(-6.8, -17.5, 0.1), R(roll=0, pitch=0, yaw=0), V(0.008, 0.075, 0.003)),
+    ('MatchBar', unreal.StaticMeshComponent, 'Cube', '/Game/Game/Materials/Latte/M_LatteMatchBar', V(-6.8, -17.5, 0.3), R(roll=0, pitch=0, yaw=0), V(0.006, 0.001, 0.004)),
+    ('MatchLabel', unreal.TextRenderComponent, None, None, V(-8.6, -17.5, 0.4), R(roll=0, pitch=68, yaw=180), V(1, 1, 1)),
     ('GuideLabel', unreal.TextRenderComponent, None, None, V(-4.2, -17.5, 0.4), R(roll=0, pitch=68, yaw=180), V(1, 1, 1)),
     ('FillBar', unreal.StaticMeshComponent, 'Cube', '/Game/Game/Materials/Latte/M_LatteBar', V(-4.2, -10, 0), R(roll=0, pitch=0, yaw=0), V(0.036, 0.008, 0.004)),
     ('FillMark', unreal.StaticMeshComponent, 'Cube', '/Game/Game/Materials/Latte/M_LatteMilk', V(0.0, -10.9, 0), R(roll=0, pitch=0, yaw=0), V(0.004, 0.03, 0.004)),
@@ -69,12 +72,12 @@ def apply(bp):
             if cls is unreal.TextRenderComponent:
                 o.set_editor_property('horizontal_alignment', unreal.HorizTextAligment.EHTA_CENTER)
                 o.set_editor_property('vertical_alignment', unreal.VerticalTextAligment.EVRTA_TEXT_CENTER)
-                o.set_editor_property('world_size', {'Prompt': 1.05, 'WorldText': 11.0, 'GuideLabel': 1.3}.get(name, 1.9))
+                o.set_editor_property('world_size', {'Prompt': 1.05, 'WorldText': 11.0, 'GuideLabel': 1.3, 'MatchLabel': 1.1}.get(name, 1.9))
                 if name == 'WorldText':
                     o.set_editor_property('text_render_color', unreal.Color(b=10, g=16, r=30, a=255))
                 if name != 'WorldText':
                     o.set_editor_property('text_render_color', unreal.Color(b=12, g=22, r=48, a=255))
-                o.set_editor_property('text', unreal.Text('GOAL' if name == 'GuideLabel' else ' '))
+                o.set_editor_property('text', unreal.Text({'GuideLabel': 'GOAL', 'MatchLabel': 'MATCH'}.get(name, ' ')))
             if cls is unreal.CameraComponent:
                 o.set_editor_property('field_of_view', 42.0)
             o.set_editor_property('relative_location', loc)

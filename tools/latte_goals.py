@@ -81,8 +81,34 @@ def render(fn, path):
         f.write(b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', N, N, 8, 2, 0, 0, 0)) + chunk(b'IDAT', raw) + chunk(b'IEND', b''))
 
 
+def render_all(path):
+    """All three goals in one picture for the MATCH meter: red = heart, green = rosetta, blue = tulip."""
+    fns = (goal_heart, goal_rosetta, goal_tulip)
+    rows = []
+    for v in range(N):
+        row = bytearray([0])
+        for u in range(N):
+            hit = [0, 0, 0]
+            for i in range(SS):
+                for j in range(SS):
+                    x = (u + (i + 0.5) / SS) / N - 0.5
+                    y = (v + (j + 0.5) / SS) / N - 0.5
+                    if x * x + y * y < 0.2116:
+                        for k in range(3):
+                            hit[k] += bool(fns[k](x, y))
+            row += bytes(round(255 * h / (SS * SS)) for h in hit)
+        rows.append(bytes(row))
+    raw = zlib.compress(b''.join(rows), 9)
+
+    def chunk(tag, data):
+        return struct.pack('>I', len(data)) + tag + data + struct.pack('>I', zlib.crc32(tag + data) & 0xffffffff)
+    with open(path, 'wb') as f:
+        f.write(bytes((137, 80, 78, 71, 13, 10, 26, 10)) + chunk(b'IHDR', struct.pack('>IIBBBBB', N, N, 8, 2, 0, 0, 0)) + chunk(b'IDAT', raw) + chunk(b'IEND', b''))
+
+
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)
+    render_all(os.path.normpath(os.path.join(OUT, 'T_LatteGoals.png')))
     for i, fn in enumerate((goal_heart, goal_rosetta, goal_tulip)):
         p = os.path.normpath(os.path.join(OUT, 'T_LatteGoal_%d.png' % i))
         render(fn, p)

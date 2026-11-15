@@ -34,7 +34,7 @@ def latte(w):
 
 
 def state(a):
-    keys = ('Shift', 'LatteActive', 'LatteDone', 'Fill', 'Pattern', 'LowTime', 'Wiggles', 'Blobs', 'CutDist', 'Ending', 'EndWin', 'PitX', 'PitY', 'PitH')
+    keys = ('Match', 'Shift', 'LatteActive', 'LatteDone', 'Fill', 'Pattern', 'LowTime', 'Wiggles', 'Blobs', 'CutDist', 'Ending', 'EndWin', 'PitX', 'PitY', 'PitH')
     return ' '.join('%s=%s' % (k, a.get_editor_property(k)) for k in keys)
 
 
@@ -89,6 +89,8 @@ def dump(w, a, name):
 
 def pour(a, name, queue=None):
     plan = PLANS[name]
+    if name in ('heart', 'rosetta', 'tulip'):          # a fresh cup OF THAT PATTERN, so the guide and the meter are its own
+        a.call_method('LattePick', (('heart', 'rosetta', 'tulip').index(name),))
     st = {'i': 0, 't': 0.0, 'shots': 0, 'after': 0.0, 'py': 0.0}
 
     def tick(dt):
@@ -107,7 +109,6 @@ def pour(a, name, queue=None):
                 open(OUT, 'a').write('POURED %s: %s\n' % (name, state(b)))
                 dump(w, b, name)
                 if queue:                         # the next pattern, on a fresh cup
-                    b.call_method('LatteReset')
                     pour(b, queue[0], queue[1:])
             return
         secs, low, f = plan[st['i']]
@@ -175,6 +176,83 @@ try:
             a.call_method('LatteStartPour')
             pour(a, 'heart', ['rosetta', 'tulip'])
             say('ALL started')
+        elif mode == 'near':                      # near <x> <y> <radius>: what is VISIBLE in the running game round that spot
+            cx, cy, rad = float(sys.argv[2]), float(sys.argv[3]), float(sys.argv[4])
+            rows = []
+            for o in GS.get_all_actors_of_class(W, unreal.Actor):
+                l = o.get_actor_location()
+                if (l.x - cx) ** 2 + (l.y - cy) ** 2 > rad * rad or o.get_editor_property('hidden'):
+                    continue
+                prims = [c for c in o.get_components_by_class(unreal.PrimitiveComponent) if c.is_visible()]
+                if not prims:
+                    continue
+                try: lab = o.get_actor_label()
+                except Exception: lab = o.get_name()
+                rows.append('%-34s %-30s (%.0f %.0f %.0f) tags %s' % (lab[:34], o.get_class().get_name()[:30], l.x, l.y, l.z, [str(t) for t in o.tags]))
+            say('NEAR (%s, %s) r %s: %d visible' % (cx, cy, rad, len(rows)))
+            for r_ in sorted(rows): say('  ' + r_)
+        elif mode == 'wall':                      # the breakable wall and car: where their pieces are right now
+            for o in GS.get_all_actors_of_class(W, unreal.Actor):
+                if o.get_class().get_name() == 'GeometryCollectionActor' and (len(sys.argv) > 2 or 'B1_Cine' in [str(t) for t in o.tags]):
+                    c = o.get_components_by_class(unreal.PrimitiveComponent)[0]
+                    org, ext = o.get_actor_bounds(False)
+                    try: ot = c.get_editor_property('object_type')
+                    except Exception: ot = '?'
+                    say('WALL %-26s tags %s hidden %s type %s box x %.0f..%.0f y %.0f..%.0f z %.0f..%.0f' % (o.get_actor_label(), [str(t) for t in o.tags], o.get_editor_property('hidden'), ot,
+                        org.x - ext.x, org.x + ext.x, org.y - ext.y, org.y + ext.y, org.z - ext.z, org.z + ext.z))
+        elif mode == 'small':                     # small <x0> <x1> <y0> <y1>: small visible things on the floor in that box, by BOUNDS
+            x0, x1, y0, y1 = [float(v) for v in sys.argv[2:6]]
+            n = 0
+            for o in GS.get_all_actors_of_class(W, unreal.Actor):
+                if o.get_editor_property('hidden'):
+                    continue
+                for c in o.get_components_by_class(unreal.PrimitiveComponent):
+                    if not c.is_visible():
+                        continue
+                    b = c.get_editor_property('bounds') if False else None
+                    org, ext, rad = unreal.SystemLibrary.get_component_bounds(c)
+                    if x0 <= org.x <= x1 and y0 <= org.y <= y1 and org.z < 45 and ext.z < 30 and max(ext.x, ext.y) < 90:
+                        try: lab = o.get_actor_label()
+                        except Exception: lab = o.get_name()
+                        say('SMALL %-30s %-26s %-22s at (%.0f %.0f %.0f) half (%.0f %.0f %.0f) tags %s' % (lab[:30], o.get_class().get_name()[:26], c.get_name()[:22],
+                            org.x, org.y, org.z, ext.x, ext.y, ext.z, [str(t) for t in o.tags]))
+                        n += 1
+            say('SMALL total %d' % n)
+        elif mode == 'who':                       # who <x> <y> <z>: every component whose bounds reach that point, hidden or not
+            px, py, pz = [float(v) for v in sys.argv[2:5]]
+            for o in GS.get_all_actors_of_class(W, unreal.Actor):
+                for c in o.get_components_by_class(unreal.PrimitiveComponent):
+                    org, ext, rad = unreal.SystemLibrary.get_component_bounds(c)
+                    if max(ext.x, ext.y) > 600:
+                        continue
+                    if abs(org.x - px) <= ext.x + 60 and abs(org.y - py) <= ext.y + 60 and abs(org.z - pz) <= ext.z + 60:
+                        try: lab = o.get_actor_label()
+                        except Exception: lab = o.get_name()
+                        say('WHO %-28s %-24s %-26s half (%.0f %.0f %.0f) actorHidden %s compVisible %s' % (lab[:28], o.get_class().get_name()[:24], c.get_class().get_name()[:26],
+                            ext.x, ext.y, ext.z, o.get_editor_property('hidden'), c.is_visible()))
+            say('WHO end')
+        elif mode == 'hide':                      # hide <label>: hide that actor in the running game (to see what a thing is made of)
+            for o in GS.get_all_actors_of_class(W, unreal.Actor):
+                try: lab = o.get_actor_label()
+                except Exception: lab = ''
+                if lab == sys.argv[2]:
+                    o.set_actor_hidden_in_game(True); say('HID %s' % lab)
+        elif mode == 'fx':                        # fx: every Niagara component, and anything named like debris
+            for o in GS.get_all_actors_of_class(W, unreal.Actor):
+                try: lab = o.get_actor_label()
+                except Exception: lab = o.get_name()
+                l = o.get_actor_location()
+                for c in o.get_components_by_class(unreal.ActorComponent):
+                    cn = c.get_class().get_name()
+                    if 'Niagara' in cn or 'Particle' in cn or 'Instanced' in cn:
+                        extra = ''
+                        try: extra = 'active %s asset %s' % (c.is_active(), c.get_editor_property('asset').get_name() if cn.startswith('Niagara') and c.get_editor_property('asset') else '')
+                        except Exception as e: extra = str(e)[:40]
+                        say('FX %-28s %-22s %-24s at (%.0f %.0f %.0f) hidden %s %s' % (lab[:28], o.get_class().get_name()[:22], cn[:24], l.x, l.y, l.z, o.get_editor_property('hidden'), extra))
+                if any(w in (lab + o.get_class().get_name()).lower() for w in ('shrap', 'debris', 'rubble', 'brick', 'chunk')):
+                    say('FX-NAME %-28s %-22s at (%.0f %.0f %.0f) hidden %s comps %s' % (lab[:28], o.get_class().get_name()[:22], l.x, l.y, l.z, o.get_editor_property('hidden'),
+                        [c.get_class().get_name() for c in o.get_components_by_class(unreal.PrimitiveComponent)][:4]))
+            say('FX end')
         elif mode == 'pour':
             say('POUR %s start: %s' % (sys.argv[2], state(a)))
             pour(a, sys.argv[2])

@@ -96,14 +96,14 @@ return c * Bright;
 """
 
 
-def rt(name):
+def rt(name, size=512):
     path = '%s/%s' % (DIR, name)
     t = eal.load_asset(path)
     if t is None:
         t = at.create_asset(name, DIR, unreal.TextureRenderTarget2D, unreal.TextureRenderTargetFactoryNew())
     t.set_editor_property('render_target_format', unreal.TextureRenderTargetFormat.RTF_RGBA16F)
-    t.set_editor_property('size_x', 512)
-    t.set_editor_property('size_y', 512)
+    t.set_editor_property('size_x', size)
+    t.set_editor_property('size_y', size)
     t.set_editor_property('clear_color', unreal.LinearColor(0, 0, 0, 1))
     t.set_editor_property('address_x', unreal.TextureAddress.TA_CLAMP)
     t.set_editor_property('address_y', unreal.TextureAddress.TA_CLAMP)
@@ -173,9 +173,9 @@ def collection():
     c = eal.load_asset(path)
     if c is None:
         c = at.create_asset('MPC_Latte', DIR, unreal.MaterialParameterCollection, unreal.MaterialParameterCollectionFactoryNew())
-    if len(c.get_editor_property('vector_parameters')) != 6:
+    if len(c.get_editor_property('vector_parameters')) != 7:
         ps = []
-        for n, dv in (('Pour', (0, 0, 0, 0)), ('Vel', (0, 0, 0, 0)), ('Misc', (0.035, 0, 0.25, 0)), ('Fx', (0, 0, 0, 0)), ('GuideA', (0, 0, 0.06, 0)), ('GuideB', (0, 0, 0, 0))):
+        for n, dv in (('Pour', (0, 0, 0, 0)), ('Vel', (0, 0, 0, 0)), ('Misc', (0.035, 0, 0.25, 0)), ('Fx', (0, 0, 0, 0)), ('GuideA', (0, 0, 0.06, 0)), ('GuideB', (0, 0, 0, 0)), ('Pick', (1, 0, 0, 0))):
             v = unreal.CollectionVectorParameter()
             v.set_editor_property('parameter_name', n)
             v.set_editor_property('default_value', unreal.LinearColor(*dv))
@@ -257,13 +257,53 @@ def flat(name, rgb, unlit=False, shaded=False, wobble=False):
     return m
 
 
+MATCH = "float a = 0.0; float g = 0.0; for (int i = 0; i < 4; i++) { for (int j = 0; j < 4; j++) { float2 uv = UV + (float2(i, j) - 1.5) / 64.0; a += smoothstep(0.3, 0.5, Texture2DSample(Sim, SimSampler, uv).r); g += smoothstep(0.4, 0.6, dot(Texture2DSample(Goals, GoalsSampler, uv).rgb, Pick.rgb)); } } a /= 16.0; g /= 16.0; return float3(min(a, g), max(a, g), 0.0);"
+
+
+def match_material(a, goals):
+    """The MATCH meter's eye. Drawn into a 16 x 16 target: each pixel looks at a patch of the cup and of the goal
+    (16 taps each, so both are blurred - a striped rosetta is compared by its shape, not leaf for leaf) and writes
+    red = foam they share, green = foam in either. The Blueprint adds the pixels up: red / green is the match."""
+    path = '%s/M_LatteMatch' % DIR
+    m = eal.load_asset(path)
+    if m is None:
+        m = at.create_asset('M_LatteMatch', DIR, unreal.Material, unreal.MaterialFactoryNew())
+    mel.delete_all_material_expressions(m)
+    m.set_editor_property('shading_model', unreal.MaterialShadingModel.MSM_UNLIT)
+    c = mel.create_material_expression(m, unreal.MaterialExpressionCustom, -200, 0)
+    c.set_editor_property('code', MATCH)
+    c.set_editor_property('output_type', unreal.CustomMaterialOutputType.CMOT_FLOAT3)
+    ins = []
+    for n in ('UV', 'Sim', 'Goals', 'Pick'):
+        ci = unreal.CustomInput(); ci.set_editor_property('input_name', n); ins.append(ci)
+    c.set_editor_property('inputs', ins)
+    uv = mel.create_material_expression(m, unreal.MaterialExpressionTextureCoordinate, -700, -200)
+    mel.connect_material_expressions(uv, '', c, 'UV')
+    for n, tex, y in (('Sim', a, 0), ('Goals', goals, 200)):
+        t = mel.create_material_expression(m, unreal.MaterialExpressionTextureObjectParameter, -700, y)
+        t.set_editor_property('parameter_name', n)
+        t.set_editor_property('texture', tex)
+        t.set_editor_property('sampler_type', unreal.MaterialSamplerType.SAMPLERTYPE_LINEAR_COLOR)
+        say('match tex %s %s' % (n, mel.connect_material_expressions(t, '', c, n)))
+    e = mel.create_material_expression(m, unreal.MaterialExpressionCollectionParameter, -700, 420)
+    e.set_editor_property('collection', MPC[0])
+    e.set_editor_property('parameter_name', 'Pick')
+    say('match pick %s' % mel.connect_material_expressions(e, '', c, 'Pick'))
+    mel.connect_material_property(c, '', unreal.MaterialProperty.MP_EMISSIVE_COLOR)
+    mel.recompile_material(m)
+    return m
+
+
 def assets():
     a = rt('RT_LatteA')
     b = rt('RT_LatteB')
     c = collection()
     sim = material('M_LatteSim', SIM, 'Prev', {'Pour': 0, 'Vel': 0, 'Misc': 0, 'Fx': 0}, {}, a)
     surf = material('M_LatteSurface', SURF, 'Sim', {'Fx': 0, 'GuideA': 0, 'GuideB': 0}, {'Bright': 0.42, 'ShowGuide': 0.0}, a)
-    made = [a, b, c, sim, surf, flat('M_LatteCup', (0.17, 0.16, 0.14), shaded=True), flat('M_LatteSteel', (0.10, 0.11, 0.13), shaded=True),
+    goals_tex = eal.load_asset('%s/T_LatteGoals' % DIR)
+    mm = match_material(a, goals_tex if goals_tex is not None else a)
+    made = [a, b, c, sim, surf, rt('RT_LatteMatch', 16), mm, flat('M_LatteMatchBar', (0.04, 0.26, 0.20), True),
+            instance('MI_LatteMatch_FromA', mm, 'Sim', a), instance('MI_LatteMatch_FromB', mm, 'Sim', b), flat('M_LatteCup', (0.17, 0.16, 0.14), shaded=True), flat('M_LatteSteel', (0.10, 0.11, 0.13), shaded=True),
             flat('M_LatteMilk', (0.30, 0.285, 0.25), shaded=True, wobble=True), flat('M_LatteBar', (0.40, 0.26, 0.10), True),
             instance('MI_LatteSim_FromA', sim, 'Prev', a), instance('MI_LatteSim_FromB', sim, 'Prev', b),
             instance('MI_LatteSurface_A', surf, 'Sim', a), instance('MI_LatteSurface_B', surf, 'Sim', b)]
@@ -333,8 +373,7 @@ def goals():
     # the drawn goal pictures (tools/latte_goals.py). Linear data, not colour: red = foam, green = layering.
     src = os.path.join(unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_dir()), '..', 'Art', 'UI', 'Latte')
     saved = []
-    for i in range(3):
-        n = 'T_LatteGoal_%d' % i
+    for n in ('T_LatteGoal_0', 'T_LatteGoal_1', 'T_LatteGoal_2', 'T_LatteGoals'):
         t = unreal.AssetImportTask()
         t.set_editor_property('filename', os.path.normpath(os.path.join(src, n + '.png')).replace(os.sep, '/'))
         t.set_editor_property('destination_path', DIR)
@@ -355,6 +394,57 @@ def goals():
     say('SAVED %s' % unreal.EditorLoadingAndSavingUtils.save_packages(saved, False))
 
 
+def rubble():
+    """The crash rubble as its own actor (it used to be modelled into the cafe room, so it lay under an unbroken wall
+    for the whole latte shift). Imported from the kit export, placed at the room's own transform, wearing the room's
+    brick material, hidden, tagged JC_ImpactRubble. BP_LatteGame shows it when the director's wall breaks."""
+    src = os.path.join(unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_dir()), '..', 'Art', 'Blender', 'export', 'City', 'SM_CafeImpactRubble.fbx')
+    dest = '/Game/Game/Imported/City'
+    t = unreal.AssetImportTask()
+    t.set_editor_property('filename', os.path.normpath(src).replace(os.sep, '/'))
+    t.set_editor_property('destination_path', dest)
+    t.set_editor_property('automated', True)
+    t.set_editor_property('replace_existing', True)
+    t.set_editor_property('save', False)
+    at.import_asset_tasks([t])
+    m = eal.load_asset(dest + '/SM_CafeImpactRubble')
+    if m is None:
+        say('IMPORT FAILED'); return
+    unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem).set_nanite_settings(m, unreal.MeshNaniteSettings(enabled=False), True)
+    bb = m.get_bounding_box()
+    say('mesh tris %d box x %.0f..%.0f y %.0f..%.0f z %.0f..%.0f slots %s' % (m.get_num_triangles(0), bb.min.x, bb.max.x, bb.min.y, bb.max.y, bb.min.z, bb.max.z,
+                                                                        [str(x.get_editor_property('material_slot_name')) for x in m.get_editor_property('static_materials')]))
+    sub = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+    by = {a.get_actor_label(): a for a in sub.get_all_level_actors()}
+    shell = by['City_CafeShell']
+    sc = shell.static_mesh_component
+    names = [str(x.get_editor_property('material_slot_name')) for x in sc.static_mesh.get_editor_property('static_materials')]
+    brick = sc.get_material(names.index('MS_CityBrick')) if 'MS_CityBrick' in names else None
+    if brick is None:
+        brick = eal.load_asset('/Game/Game/Materials/City/M_CityBrick')
+    say('room brick material: %s' % (brick.get_path_name() if brick else None))
+    a = by.get('City_CafeImpactRubble')
+    if a is None:
+        a = sub.spawn_actor_from_class(unreal.StaticMeshActor, shell.get_actor_location(), shell.get_actor_rotation())
+        a.set_actor_label('City_CafeImpactRubble')
+    c = a.static_mesh_component
+    c.set_static_mesh(m)
+    c.set_material(0, brick)
+    a.set_editor_property('tags', [unreal.Name('JC_City'), unreal.Name('JC_ImpactRubble')])
+    a.set_actor_enable_collision(False)
+    a.set_actor_hidden_in_game(True)
+    a.set_editor_property('is_spatially_loaded', False)
+    a.set_actor_transform(shell.get_actor_transform(), False, False)
+    say('actor %s package %s hidden %s' % (a.get_actor_label(), a.get_outermost().get_name(), a.get_editor_property('hidden')))
+    pk = [m.get_outermost(), a.get_outermost()]
+    for x in eal.list_assets(dest, False):
+        if 'MS_CafeImpactRubble' in x or 'SM_CafeImpactRubble' in x:
+            o = eal.load_asset(x.split('.')[0])
+            if o is not None and o.get_outermost() not in pk:
+                pk.append(o.get_outermost())
+    say('SAVED %s (%d packages)' % (unreal.EditorLoadingAndSavingUtils.save_packages(pk, False), len(pk)))
+
+
 def place():
     # on the cafe counter (City_Cafe_00_CafeCounter, top at z 110), between the espresso machine and the pastry case.
     # Yaw -90 puts the camera on the customer side looking across the counter.
@@ -368,7 +458,7 @@ def place():
         cls = unreal.load_object(None, '/Game/Game/Blueprints/BP_LatteGame.BP_LatteGame_C')
         a = sub.spawn_actor_from_class(cls, loc, rot)
         a.set_actor_label('Latte_Game')
-    a.set_is_spatially_loaded(False)          # it must exist on the first frame: it holds the opening back
+    a.set_editor_property('is_spatially_loaded', False)          # it must exist on the first frame: it holds the opening back
     a.set_actor_transform(unreal.Transform(loc, rot, unreal.Vector(1, 1, 1)), False, False)
     say('placed %s package %s' % (a.get_path_name(), a.get_outermost().get_name()))
     gm = eal.load_asset('/Game/Game/Blueprints/BP_JumpCutGameMode')        # its JumpCutStartPlay calls LatteTryBegin
@@ -378,7 +468,7 @@ def place():
 
 try:
     mode = sys.argv[1] if len(sys.argv) > 1 else 'where'
-    {'assets': assets, 'where': where, 'place': place, 'kit': kit, 'guide': guide, 'goals': goals}[mode]()
+    {'assets': assets, 'where': where, 'place': place, 'kit': kit, 'guide': guide, 'goals': goals, 'rubble': rubble}[mode]()
 except Exception:
     import traceback
     say(traceback.format_exc())

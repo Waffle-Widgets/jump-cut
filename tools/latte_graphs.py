@@ -24,12 +24,17 @@ G['EventGraph'] = f'''
   (Rendering|Material|SetMaterial :self ({V}GetFillMark) :ElementIndex 0 :Material "/Game/Game/Materials/Latte/M_LatteMilk.M_LatteMilk")
   (CallFunction|LatteShow :Show false)
   (Rendering|SetVisibility :self ({V}GetWorldText) :bNewVisibility false)
+  (CallFunction|LatteHoldWall)
   (bind startPlayer (Utilities|Casting|CastToBP_Player :Object (Game|GetPlayerCharacter 0))
     (:then
       (Class|BPPlayer|PlayerSetInputLocked :self startPlayer :Locked true))
     (:CastFailed)))
 
 (event EventTick (DeltaSeconds)
+  (if (not ({V}GetRubbleShown))
+    (CallFunction|LatteRubbleStep))
+  (if (< ({V}GetShift) 5)
+    (CallFunction|LatteHoldWall))
   (if ({V}GetLatteActive)
     (CallFunction|LatteStep :Dt DeltaSeconds)
     (elif (and (>= ({V}GetShift) 1) (!= ({V}GetShift) 5))
@@ -44,6 +49,9 @@ G['LatteShow'] = f'''
   (Rendering|SetVisibility :self ({V}GetFillBar) :bNewVisibility Show)
   (Rendering|SetVisibility :self ({V}GetFillMark) :bNewVisibility Show)
   (Rendering|SetVisibility :self ({V}GetGuide) :bNewVisibility Show)
+  (Rendering|SetVisibility :self ({V}GetMatchBar) :bNewVisibility Show)
+  (Rendering|SetVisibility :self ({V}GetMatchBack) :bNewVisibility Show)
+  (Rendering|SetVisibility :self ({V}GetMatchLabel) :bNewVisibility Show)
   (Rendering|SetVisibility :self ({V}GetGuideLabel) :bNewVisibility Show)
   (Rendering|SetVisibility :self ({V}GetStream) :bNewVisibility false))
 '''
@@ -195,9 +203,7 @@ G['LatteStep'] = f'''
     (CallFunction|LatteReset))
   (bind pick (or (Game|Player|IsInputKeyDown :self pc :Key "One") (or (Game|Player|IsInputKeyDown :self pc :Key "Two") (Game|Player|IsInputKeyDown :self pc :Key "Three"))))
   (if (and pick (not ({V}GetPickWas)))
-    ({V}SetPattern (select (Game|Player|IsInputKeyDown :self pc :Key "One") 0 (select (Game|Player|IsInputKeyDown :self pc :Key "Two") 1 2)))
-    ({V}SetKeepPattern true)
-    (CallFunction|LatteReset))
+    (CallFunction|LattePick :Index (select (Game|Player|IsInputKeyDown :self pc :Key "One") 0 (select (Game|Player|IsInputKeyDown :self pc :Key "Two") 1 2))))
   (if (and (Game|Player|IsInputKeyDown :self pc :Key "E") (not ({V}GetEWas)))
     (CallFunction|LatteFinish)
     (else
@@ -227,6 +233,10 @@ G['LatteStep'] = f'''
       (Transformation|SetRelativeLocation :self ({V}GetFillBar) :NewLocation (Math|Vector|MakeVector :X (+ -6.0 (* ({V}GetFill) 6.0)) :Y -10.0 :Z 0.0))
       (Transformation|SetRelativeScale3D :self ({V}GetFillBar) :NewScale3D (Math|Vector|MakeVector :X (* ({V}GetFill) 0.12) :Y 0.008 :Z 0.004))
       (CallFunction|LatteGuideStep)
+      ({V}SetMatchT (+ ({V}GetMatchT) Dt))
+      (if (> ({V}GetMatchT) 0.2)
+        ({V}SetMatchT 0.0)
+        (CallFunction|LatteMatchStep))
       (if (and (>= ({V}GetFill) 1.0) (not ({V}GetEnding)))
         ({V}SetEnding true)
         (Rendering|Components|TextRender|SetText :self ({V}GetStatus) :Value (Utilities|Text|MakeLiteralText :Value "The cup is full<br>E: done     R: start over     1 Heart   2 Rosetta   3 Tulip")))))
@@ -297,6 +307,63 @@ G['LatteGuideStep'] = '''
       (else
         (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideA" :ParameterValue (Utilities|Struct|MakeLinearColor :R (select (<= idx 0) -0.125 (select (== idx 1) 0.04 0.23)) :G 0.0 :B (select (<= idx 0) 0.15 (select (== idx 1) 0.1 0.065)) :A (select done 0.0 m)))
         (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "GuideB" :ParameterValue (Utilities|Struct|MakeLinearColor :R 0.38 :G -0.3 :B 0.0 :A (select (and done (< (Variables|Default|GetCutDist) 0.4)) 1.0 0.0)))))))
+'''
+
+
+# THE MATCH METER.  Five times a second the cup and the goal are compared by M_LatteMatch into a 16 x 16 target
+# (red = foam they share, green = foam in either) and the pixels are added up here.  The bar is full at 0.83,
+# which is about what the test script scores when it follows the guide exactly.
+G['LatteMatchStep'] = '''
+(fn LatteMatchStep ()
+  (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "Pick" :ParameterValue (Utilities|Struct|MakeLinearColor :R (select (== (Variables|Default|GetPattern) 0) 1.0 0.0) :G (select (== (Variables|Default|GetPattern) 1) 1.0 0.0) :B (select (== (Variables|Default|GetPattern) 2) 1.0 0.0) :A 0.0))
+  (if (Variables|Default|GetFlipA)
+    (Rendering|DrawMaterialtoRenderTarget :TextureRenderTarget "/Game/Game/Materials/Latte/RT_LatteMatch.RT_LatteMatch" :Material "/Game/Game/Materials/Latte/MI_LatteMatch_FromA.MI_LatteMatch_FromA")
+    (else
+      (Rendering|DrawMaterialtoRenderTarget :TextureRenderTarget "/Game/Game/Materials/Latte/RT_LatteMatch.RT_LatteMatch" :Material "/Game/Game/Materials/Latte/MI_LatteMatch_FromB.MI_LatteMatch_FromB")))
+  (Variables|Default|SetSumA 0.0)
+  (Variables|Default|SetSumB 0.0)
+  (bind (px ok) (Rendering|ReadRenderTargetRaw :TextureRenderTarget "/Game/Game/Materials/Latte/RT_LatteMatch.RT_LatteMatch" :bNormalize false))
+  (for c px
+    (bind (cr cg cb ca) (Utilities|Struct|BreakLinearColor c))
+    (Variables|Default|SetSumA (+ (Variables|Default|GetSumA) cr))
+    (Variables|Default|SetSumB (+ (Variables|Default|GetSumB) cg)))
+  (Variables|Default|SetMatch (/ (Variables|Default|GetSumA) (select (> (Variables|Default|GetSumB) 0.5) (Variables|Default|GetSumB) 0.5)))
+  (bind raw (* (Variables|Default|GetMatch) (select (== (Variables|Default|GetPattern) 0) 1.2 (select (== (Variables|Default|GetPattern) 1) 1.9 1.45))))
+  (bind full (select (> raw 1.0) 1.0 raw))
+  (Transformation|SetRelativeScale3D :self (Variables|Default|GetMatchBar) :NewScale3D (Math|Vector|MakeVector :X 0.006 :Y (+ 0.0005 (* full 0.075)) :Z 0.004))
+  (Transformation|SetRelativeLocation :self (Variables|Default|GetMatchBar) :NewLocation (Math|Vector|MakeVector :X -6.8 :Y (+ -21.25 (* full 3.75)) :Z 0.3)))
+'''
+
+# The wall panel the car comes through is a live Geometry Collection: loose pieces drop off it from the first frame,
+# which nobody saw while the opening started at once. Hold every B1_Cine collection rigid; the director's own
+# CineBreakWall / CineExplFire switch them to Dynamic when the car arrives.
+G['LatteHoldWall'] = '''
+(fn LatteHoldWall ()
+  (for a (Actor|GetAllActorsOfClasswithTag :ActorClass "/Script/GeometryCollectionEngine.GeometryCollectionActor" :Tag "B1_Cine")
+    (bind gc (Utilities|Casting|CastToGeometryCollectionActor :Object a)
+      (:then
+        (Class|GeometryCollectionComponent|SetObjectType :self (Class|GeometryCollectionActor|GetGeometryCollectionComponent :self gc) :ObjectType "Chaos_Object_Kinematic"))
+      (:CastFailed))))
+'''
+
+G['LattePick'] = f'''
+(fn LattePick (Index)
+  ({V}SetPattern Index)
+  ({V}SetKeepPattern true)
+  (CallFunction|LatteReset))
+'''
+
+# The crash rubble (City_CafeImpactRubble, tagged JC_ImpactRubble) is hidden in the level. It appears when the
+# director says the wall has been hit, or that the opening is over (which also covers the opening being skipped).
+G['LatteRubbleStep'] = f'''
+(fn LatteRubbleStep ()
+  (bind d (Utilities|Casting|CastToBP_OpeningDirector :Object (Actor|GetActorOfClass :ActorClass "/Game/Game/Blueprints/BP_OpeningDirector.BP_OpeningDirector_C"))
+    (:then
+      (if (or (Class|BPOpeningDirector|GetCineWallDone :self d) (Class|BPOpeningDirector|GetCineDone :self d))
+        ({V}SetRubbleShown true)
+        (for a (Actor|GetAllActorswithTag :Tag "JC_ImpactRubble")
+          (Rendering|SetActorHiddenInGame :self a :bNewHidden false))))
+    (:CastFailed)))
 '''
 
 G['LatteJudge'] = f'''
