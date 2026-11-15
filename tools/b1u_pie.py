@@ -83,6 +83,18 @@ else:
             json.dump({'events': S['events'], 'shots': S['shots'], 'frames': S['frames']}, fh)
         print('b1u_pie: wrote %d frames, %s' % (len(S['frames']), why))
 
+    def wall_state(d):
+        # Where the broken cafe wall's pieces are. The intact panel stands in the hole the car
+        # comes through; "still there" means pieces whose centre is still inside that hole.
+        try:
+            w = gp(d, 'CineWallGC')
+            org, ext = w.get_actor_bounds(False)
+            comp = w.get_component_by_class(unreal.GeometryCollectionComponent)
+            return 'hidden=%s origin=%s extent=%s type=%s' % (gp(w, 'hidden'), v3(org), v3(ext),
+                                                              str(gp(comp, 'object_type')))
+        except Exception as e:
+            return 'ERR %s' % e
+
     def tick(dt):
         try:
             now = time.time() - S['t0']
@@ -107,6 +119,9 @@ else:
                  'power': bool(gp(d, 'PowerCine', False)), 'powerT': round(gp(d, 'PowerT', 0.0), 3),
                  'flash': round(gp(d, 'FlashAlpha', 0.0), 3),
                  'resc': bool(gp(d, 'RescueCine', False)),
+                 'boss': bool(gp(d, 'BossCine', False)), 'bossT': round(gp(d, 'BossT', 0.0), 3),
+                 'outro': bool(gp(d, 'OutroCine', False)), 'outroT': round(gp(d, 'OutroT', 0.0), 3),
+                 'won': bool(gp(pawn, 'HasWon', False)),
                  'expl': bool(gp(d, 'ExplCine', False)), 'explT': round(gp(d, 'ExplT', 0.0), 3),
                  'explDone': bool(gp(d, 'ExplDone', False)),
                  'bars': round(gp(d, 'BarAlpha', 0.0), 3),
@@ -138,16 +153,25 @@ else:
                     f['capscale'] = round(cb.get_editor_property('render_transform').scale.x, 4)
                     f['cap'] = str(ov.get_editor_property('CapText').get_text())[:60]
                     f['flashw'] = round(ov.get_editor_property('FlashBox').get_render_opacity(), 3)
+                    f['fadew'] = round(ov.get_editor_property('FadeBox').get_render_opacity(), 3)
                 except Exception as e:
                     f['overr'] = str(e)[:80]
             S['frames'].append(f)
 
             ph = S['phase']
+            if ph == 0 and 't00' not in S:
+                S['t00'] = 1; ev('wall at start: ' + wall_state(d))
             if ph == 0 and obj == 1:
                 S['phase'] = 1; S['mark'] = now; ev('opening over, objective 1')
+                ev('wall at hand-off: ' + wall_state(d))
             elif ph == 1:
                 if now - S['mark'] > 1.0:
                     shot(gw, 'obj1_marker')
+                if now - S['mark'] > 1.6 and MODE == 'wall':
+                    ev('wall 1.6 s later: ' + wall_state(d))
+                    shot(gw, 'wall')
+                    finish('wall measured')
+                    return
                 if now - S['mark'] > 1.6:
                     pawn.call_method('PlayerDebugTeleport', (unreal.Vector(-215.0, -40.0, 94.15), 190.0))
                     pc.set_control_rotation(unreal.Rotator(roll=0.0, pitch=-12.0, yaw=190.0))
@@ -210,33 +234,49 @@ else:
                 if now - S['mark'] > 0.8:
                     shot(gw, 'boss_marker_far')
                     ev('far from boss: beacon hidden=%s at %s' % (f.get('bkh'), f.get('bk')))
-                    pawn.call_method('PlayerDebugTeleport', (unreal.Vector(7300.0, 0.0, 94.15), 0.0))
+                    # into the plaza, facing NORTH on purpose: the intro has to turn him to the boss
+                    pawn.call_method('PlayerDebugTeleport', (unreal.Vector(7050.0, 0.0, 94.15), 90.0))
+                    pc.set_control_rotation(unreal.Rotator(roll=0.0, pitch=-8.0, yaw=90.0))
                     S['phase'] = 11; S['mark'] = now
             elif ph == 11:
-                if now - S['mark'] > 1.2:
-                    shot(gw, 'boss_marker_near')
-                    ev('820 cm from boss: obj=%s beacon hidden=%s' % (obj, f.get('bkh')))
+                if f['boss']:
+                    S['sawboss'] = True
+                    if f['bossT'] > 1.2: shot(gw, 'boss_line1')
+                    if f['bossT'] > 3.6: shot(gw, 'boss_line2')
+                    if f['bossT'] > 6.2: shot(gw, 'boss_line3')
+                    if f['bossT'] > 7.2: shot(gw, 'boss_last')
+                elif S.get('sawboss') and obj == 5:
+                    shot(gw, 'boss_handoff')
+                    bosses = [g for g in unreal.GameplayStatics.get_all_actors_of_class(gw, unreal.load_object(None, ENEMY)) if 6600.0 < g.get_actor_location().x < 9600.0]
+                    ev('boss intro over: obj=%s beacon hidden=%s locked=%s boss at %s hp=%s' % (
+                        obj, f.get('bkh'), f['locked'], [v3(g.get_actor_location()) for g in bosses], f['hp']))
+                    S['phase'] = 115; S['mark'] = now
+                elif now - S['mark'] > 6.0:
+                    finish('boss intro never started')
+            elif ph == 115:
+                if now - S['mark'] > 1.5:
                     for g in unreal.GameplayStatics.get_all_actors_of_class(gw, unreal.load_object(None, ENEMY)):
-                        x = g.get_actor_location().x
-                        if 6600.0 < x < 9600.0:
+                        if 6600.0 < g.get_actor_location().x < 9600.0:
                             g.call_method('EnemyTakeHit', (9999.0, pawn.get_actor_location(), 300.0, 100.0, 0.5))
-                    S['phase'] = 12; S['mark'] = now; ev('hit the boss for 9999')
+                    S['phase'] = 12; S['mark'] = now; ev('hit the boss for 9999; hp=%s' % f['hp'])
             elif ph == 12:
                 if f['power']:
                     if f['powerT'] > 0.10: shot(gw, 'splice_flash')
                     if f['powerT'] > 1.20: shot(gw, 'splice_hold')
-                elif obj == 6:
-                    S['phase'] = 13; S['mark'] = now; ev('splice moment over, objective 6')
+                elif f['outro']:
+                    S['phase'] = 13; S['mark'] = now; ev('splice moment over, outro began')
             elif ph == 13:
-                if now - S['mark'] > 1.0:
-                    shot(gw, 'end_marker_far')
-                    ev('after boss: beacon hidden=%s at %s dil=%s locked=%s' % (f.get('bkh'), f.get('bk'), f['dil'], f['locked']))
-                    pawn.call_method('PlayerDebugTeleport', (unreal.Vector(13500.0, 0.0, 94.15), 0.0))
-                    S['phase'] = 14; S['mark'] = now
-            elif ph == 14:
-                if now - S['mark'] > 1.0:
-                    ev('900 cm from the end: obj=%s beacon hidden=%s hp=%s' % (obj, f.get('bkh'), f['hp']))
-                    finish('ran beats 1 to 3')
+                if f['outro']:
+                    if f['outroT'] > 2.0: shot(gw, 'outro_line')
+                    if f['outroT'] > 5.5: shot(gw, 'outro_black')
+                    if f['outroT'] > 9.0:
+                        shot(gw, 'outro_card')
+                        if 'cardev' not in S:
+                            S['cardev'] = 1; ev('card: won=%s fade=%s bars=%s' % (f.get('won'), f.get('fadew'), f['bars']))
+                    if f['outroT'] > 13.9: shot(gw, 'outro_black2')
+                else:
+                    ev('level reloaded: obj=%s outroT=%s' % (obj, f['outroT']))
+                    finish('ran to the end of the demo')
             if now > 170.0:
                 finish('timeout in phase %d' % S['phase'])
         except Exception:

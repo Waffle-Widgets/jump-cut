@@ -406,6 +406,267 @@ G['CineObjectiveSpot']=f'''
                 (return (Math|Vector|MakeVector :X 0.0 :Y 0.0 :Z 0.0))))))))))
 '''
 
+# ---------------------------------------------------------------- round 9: the boss speaks, the demo ends
+# Later assignments replace the entries of the same name above.
+#  * CineWallEnsure / CineWallRetry: the cafe wall's break is applied on one frame and sometimes does
+#    not take (measured: 1 run in 3 left the panel standing, bounds x-extent 35 cm five seconds
+#    later). Every 0.35 s, up to 6 times, the break is applied again while the x-extent is under 60.
+#  * CineBoss*: entering the plaza (x > 6950) cuts to a low camera pushing in on the boss for three
+#    lines, holds him with a rolling 0.4 s stun, turns the player to face him, and returns on the
+#    player's live camera exactly as the explosion pan does.
+#  * CineOutro*: after the Splice moment, one line, fade to black, the ending card, fade, OpenLevel.
+# New director state: BossRef (BP_EnemyBase object), BossCine, BossT, BossIntroDone, BossSaid,
+# OutroCine, OutroT, OutroStage, FadeAlpha, WallTries, WallNextT. Overlay: a black full-screen
+# Border "FadeBox" at ZOrder 1 (under the caption, over the bars) and CineFadeSet(Alpha).
+VARS += [('BossCine', 'bool'), ('BossT', 'float'), ('BossIntroDone', 'bool'), ('BossSaid', 'int'),
+         ('OutroCine', 'bool'), ('OutroT', 'float'), ('OutroStage', 'int'), ('FadeAlpha', 'float'),
+         ('WallTries', 'int'), ('WallNextT', 'float')]
+G['CineWallRetry']=f'''
+(fn CineWallRetry ()
+  (bind gc ({V}GetCineWallGC))
+  (Utilities|IsValid gc
+    (:"Is Valid"
+      (bind (org ext) (Collision|GetActorBounds :self gc :bOnlyCollidingComponents false))
+      (if (< (.x ext) 60.0)
+        ({V}SetWallTries (+ ({V}GetWallTries) 1))
+        (CallFunction|CineBreakWall)
+        (else
+          ({V}SetWallTries 99))))))
+'''
+G['CineWallEnsure']=f'''
+(fn CineWallEnsure (DeltaSeconds)
+  (if (and ({V}GetCineWallDone) (< ({V}GetWallTries) 6))
+    ({V}SetWallNextT (+ ({V}GetWallNextT) DeltaSeconds))
+    (if (> ({V}GetWallNextT) 0.35)
+      ({V}SetWallNextT 0.0)
+      (CallFunction|CineWallRetry))))
+'''
+G['CineBossFind']=f'''
+(fn CineBossFind ()
+  (bind all (Actor|GetAllActorsOfClass :ActorClass "/Game/Game/Blueprints/BP_BossFreeze.BP_BossFreeze_C"))
+  (for b all
+    ({V}SetBossRef b)))
+'''
+G['CineBossHold']=f'''
+(fn CineBossHold ()
+  (bind b ({V}GetBossRef))
+  (Utilities|IsValid b
+    (:"Is Valid"
+      (Class|BPEnemyBase|SetEnemyStunLeft :self b :EnemyStunLeft 0.4))))
+'''
+G['CineBossFacePlayer']=f'''
+(fn CineBossFacePlayer ()
+  (bind pl ({V}GetPlayerRef))
+  (bind to (- ({V}GetObjBossLoc) (Transformation|GetActorLocation :self pl)))
+  (bind yaw (Math|Trig|Atan2(Degrees) (.y to) (.x to)))
+  (Components|Movement|StopMovementImmediately :self (Actor|GetComponentbyClass :self pl :ComponentClass "/Script/Engine.CharacterMovementComponent"))
+  (Transformation|SetActorRotation :self pl
+    :NewRotation (Math|Rotator|MakeRotator :Roll 0.0 :Pitch 0.0 :Yaw yaw) :bTeleportPhysics true)
+  (Pawn|SetControlRotation :self (Pawn|GetController :self pl)
+    :NewRotation (Math|Rotator|MakeRotator :Roll 0.0 :Pitch 0.0 :Yaw yaw)))
+'''
+# 0 - 7.7 s: a low camera pushes in on him while he speaks. 7.7 - 8.7 s: it travels to the player's
+# own camera (live pose, lens 55 -> 90), so control comes back with nothing moving on screen.
+G['CineBossCamStep']=f'''
+(fn CineBossCamStep ()
+  (bind t ({V}GetBossT))
+  (bind cam ({V}GetExplCam))
+  (bind look (+ ({V}GetObjBossLoc) (Math|Vector|MakeVector :X 0.0 :Y 0.0 :Z 185.0)))
+  (bind a0 (select (> (/ t 7.7) 1.0) 1.0 (/ t 7.7)))
+  (bind a (* (* a0 a0) (- 3.0 (* 2.0 a0))))
+  (bind pos (Math|Vector|Lerp(Vector)
+    :A (+ ({V}GetObjBossLoc) (Math|Vector|MakeVector :X -360.0 :Y -170.0 :Z 105.0))
+    :B (+ ({V}GetObjBossLoc) (Math|Vector|MakeVector :X -210.0 :Y -70.0 :Z 150.0)) :Alpha a))
+  (bind rot (Math|Rotator|FindLookatRotation :Start pos :Target look))
+  (Utilities|IsValid cam
+    (:"Is Valid"
+      (if (< t 7.7)
+        (Transformation|SetActorLocationAndRotation :self cam :NewLocation pos :NewRotation rot
+          :bSweep false :bTeleport true)
+        (else
+          (bind c0 (select (> (- t 7.7) 1.0) 1.0 (- t 7.7)))
+          (bind c (* (* c0 c0) (- 3.0 (* 2.0 c0))))
+          (bind pcam (Actor|GetComponentbyClass :self ({V}GetPlayerRef) :ComponentClass {CAMC}))
+          (Transformation|SetActorLocationAndRotation :self cam
+            :NewLocation (Math|Vector|Lerp(Vector) :A pos :B (Transformation|GetWorldLocation :self pcam) :Alpha c)
+            :NewRotation (Math|Rotator|Lerp(Rotator) :A rot :B (Transformation|GetWorldRotation :self pcam) :Alpha c :bShortestPath true)
+            :bSweep false :bTeleport true)
+          (CallFunction|CineExplCamFov :Fov (+ 55.0 (* 35.0 c))))))))
+'''
+G['CineBossBegin']=f'''
+(fn CineBossBegin ()
+  (bind pl ({V}GetPlayerRef))
+  ({V}SetBossCine true)
+  ({V}SetBossIntroDone true)
+  ({V}SetBossT 0.0)
+  ({V}SetBossSaid 0)
+  ({V}SetObjectiveState 0)
+  ({V}SetBarTarget 1.0)
+  (Class|BPPlayer|SetInputLocked :self pl :InputLocked true)
+  (Class|BPPlayer|SetMoveLocked :self pl :MoveLocked true)
+  (CallFunction|CineBossFind)
+  (CallFunction|CineBossHold)
+  (CallFunction|CineBossFacePlayer)
+  (CallFunction|CineExplCamFov :Fov 55.0)
+  (CallFunction|CineBossCamStep)
+  (bind cam ({V}GetExplCam))
+  (Utilities|IsValid cam
+    (:"Is Valid"
+      (Game|Player|SetViewTargetwithBlend :self (Game|GetPlayerController :PlayerIndex 0)
+        :NewViewTarget cam :BlendTime 0.5 :BlendFunc "VTBlend_EaseInOut" :BlendExp 2.0
+        :bLockOutgoing false))))
+'''
+G['CineBossStep']=f'''
+(fn CineBossStep (DeltaSeconds)
+  ({V}SetBossT (+ ({V}GetBossT) DeltaSeconds))
+  (bind t ({V}GetBossT))
+  (CallFunction|CineBossHold)
+  (CallFunction|CineBossCamStep)
+  (if (and (> t 0.5) (< ({V}GetBossSaid) 1))
+    ({V}SetBossSaid 1)
+    (CallFunction|CineSay :Msg "So you are the one who stopped the clock." :Secs 2.3))
+  (if (and (> t 2.9) (< ({V}GetBossSaid) 2))
+    ({V}SetBossSaid 2)
+    (CallFunction|CineSay :Msg "That power was never meant for you." :Secs 2.3))
+  (if (and (> t 5.3) (< ({V}GetBossSaid) 3))
+    ({V}SetBossSaid 3)
+    (CallFunction|CineSay :Msg "Let me show you how a scene gets cut." :Secs 2.3))
+  (if (>= t 8.7)
+    (CallFunction|CineBossEnd)))
+'''
+G['CineBossEnd']=f'''
+(fn CineBossEnd ()
+  (bind pl ({V}GetPlayerRef))
+  ({V}SetBossCine false)
+  ({V}SetBarTarget 0.0)
+  (Class|BPPlayer|SetInputLocked :self pl :InputLocked false)
+  (Class|BPPlayer|SetMoveLocked :self pl :MoveLocked false)
+  (Game|Player|SetViewTargetwithBlend :self (Game|GetPlayerController :PlayerIndex 0)
+    :NewViewTarget pl :BlendTime 0.2 :BlendFunc "VTBlend_EaseInOut" :BlendExp 2.0 :bLockOutgoing false)
+  ({V}SetObjectiveState 5))
+'''
+# Objective 4 also moves on if the player simply walks into the plaza without clearing the street,
+# so the boss intro, the Splice moment and the ending cannot be skipped by running past the goons.
+G['CineObjGoons']=f'''
+(fn CineObjGoons ()
+  (bind n (CallFunction|CineGoonsLeft))
+  (if (> (.x (Transformation|GetActorLocation :self ({V}GetPlayerRef))) 6950.0)
+    ({V}SetObjectiveState 5)
+    (elif (> n 0)
+      ({V}SetGoonsSeen true)
+      (else
+        (if ({V}GetGoonsSeen)
+          ({V}SetObjectiveState 5)
+          (CallFunction|CineSay :Msg "One more. The man with the cleaver." :Secs 4.0))))))
+'''
+G['CineObjBoss']=f'''
+(fn CineObjBoss ()
+  (if (Class|BPPlayer|GetHasSplice :self ({V}GetPlayerRef))
+    ({V}SetPowerKind 1)
+    (CallFunction|CinePowerBegin)
+    (elif (and (not ({V}GetBossIntroDone))
+               (> (.x (Transformation|GetActorLocation :self ({V}GetPlayerRef))) 6950.0))
+      (CallFunction|CineBossBegin))))
+'''
+G['CinePowerEnd']=f'''
+(fn CinePowerEnd ()
+  (bind pl ({V}GetPlayerRef))
+  ({V}SetPowerCine false)
+  ({V}SetFlashAlpha 0.0)
+  (Utilities|Time|SetGlobalTimeDilation :TimeDilation 1.0)
+  (CallFunction|CinePlayerFov :Fov 90.0)
+  (CallFunction|CineFlashPush)
+  (if (== ({V}GetPowerKind) 1)
+    (CallFunction|CineOutroBegin)
+    (else
+      ({V}SetBarTarget 0.0)
+      (Class|BPPlayer|SetInputLocked :self pl :InputLocked false)
+      (Class|BPPlayer|SetMoveLocked :self pl :MoveLocked false)
+      ({V}SetObjectiveState 2))))
+'''
+# The demo ends here: one line about where the story goes next, a fade to black, the team's own
+# ending card, and back to the title screen without anyone having to press anything.
+G['CineOutroBegin']=f'''
+(fn CineOutroBegin ()
+  ({V}SetOutroCine true)
+  ({V}SetOutroT 0.0)
+  ({V}SetOutroStage 0)
+  ({V}SetObjectiveState 0)
+  ({V}SetBarTarget 1.0)
+  (CallFunction|CineSay :Msg "Whoever sent them is waiting in the ruins to the east." :Secs 4.6))
+'''
+G['CineFadePush']=f'''
+(fn CineFadePush ()
+  (Utilities|IsValid ({V}GetOverlayRef)
+    (:"Is Valid"
+      (Class|WBPCineOverlay|CineFadeSet :self ({V}GetOverlayRef) :Alpha ({V}GetFadeAlpha)))))
+'''
+G['CineOutroWin']=f'''
+(fn CineOutroWin ()
+  ({V}SetBarAlpha 0.0)
+  ({V}SetBarTarget 0.0)
+  (Class|BPPlayer|PlayerReachWin :self ({V}GetPlayerRef)))
+'''
+G['CineOutroStep']=f'''
+(fn CineOutroStep (DeltaSeconds)
+  ({V}SetOutroT (+ ({V}GetOutroT) DeltaSeconds))
+  (bind t ({V}GetOutroT))
+  (bind fin (select (< t 4.0) 0.0 (select (> t 5.4) 1.0 (/ (- t 4.0) 1.4))))
+  (bind fout (select (< t 6.0) 1.0 (select (> t 7.0) 0.0 (- 7.0 t))))
+  (bind fend (select (< t 13.0) 0.0 (select (> t 14.0) 1.0 (- t 13.0))))
+  ({V}SetFadeAlpha (select (< t 5.7) fin (select (< t 13.0) fout fend)))
+  (CallFunction|CineFadePush)
+  (if (and (> t 5.7) (< ({V}GetOutroStage) 1))
+    ({V}SetOutroStage 1)
+    (CallFunction|CineOutroWin))
+  (if (and (> t 14.3) (< ({V}GetOutroStage) 2))
+    ({V}SetOutroStage 2)
+    (Game|OpenLevel(byName) (Utilities|String|StringToName (Game|GetCurrentLevelName true)))))
+'''
+G['CineDirectorStep']=f'''
+(fn CineDirectorStep (DeltaSeconds)
+  (bind nt (+ ({V}GetCineTime) DeltaSeconds))
+  (if ({V}GetPowerCine)
+    (CallFunction|CinePowerStep :RealDelta (/ DeltaSeconds (Utilities|Time|GetGlobalTimeDilation)))
+    (elif ({V}GetOutroCine)
+      (CallFunction|CineOutroStep :DeltaSeconds DeltaSeconds)
+      (elif ({V}GetBossCine)
+        (CallFunction|CineBossStep :DeltaSeconds DeltaSeconds)
+        (elif ({V}GetExplCine)
+          (CallFunction|CineExplStep :DeltaSeconds DeltaSeconds)
+          (elif ({V}GetRescueCine)
+            (CallFunction|CineRescueStep :DeltaSeconds DeltaSeconds)
+            (elif ({V}GetCineRunning)
+              ({V}SetCineTime nt)
+              (if (and (>= nt ({V}GetCineWallTime)) (not ({V}GetCineWallDone)))
+                ({V}SetCineWallDone true)
+                (CallFunction|CineBreakWall))
+              (if (and (>= nt ({V}GetCineFireTime)) (not ({V}GetCineFireDone)))
+                ({V}SetCineFireDone true)
+                (CallFunction|CineLightFire))
+              (if (>= nt ({V}GetCineImpactTime))
+                (CallFunction|CineShowWreck))
+              (if (>= nt ({V}GetCineBodyTime))
+                (CallFunction|CineShowBody))
+              (if (and (>= nt ({V}GetCineTurnStart)) (not ({V}GetCineTurnOn)))
+                (CallFunction|CineTurnBegin))
+              (if (>= nt ({V}GetCineLength))
+                (CallFunction|CineFinishOpening))
+              (elif ({V}GetCineDone)
+                (CallFunction|CineObjectiveAdvance)
+                (elif (not (Class|BPPlayer|GetInputLocked :self ({V}GetPlayerRef)))
+                  (CallFunction|CineBeginOpening)))))))))
+  (if (and ({V}GetRagdollOn) (not ({V}GetRagdollDone)))
+    ({V}SetRagdollT (+ ({V}GetRagdollT) DeltaSeconds))
+    (if (> ({V}GetRagdollT) ({V}GetRagdollSettle))
+      ({V}SetRagdollDone true)
+      (CallFunction|CineDriverRagdollStop)))
+  (CallFunction|CinePlayerTurnStep)
+  (CallFunction|CineFireTimeStep)
+  (CallFunction|CineWallEnsure :DeltaSeconds DeltaSeconds)
+  (CallFunction|CineBeaconStep :DeltaSeconds DeltaSeconds))
+'''
+
 GW = {}   # overlay widget graphs
 GW['CineFlashSet']=f'''
 (fn CineFlashSet (Alpha)
@@ -442,6 +703,11 @@ GW['EventGraph']='''
 
 (event UserInterface|EventTick (MyGeometry InDeltaTime)
   (CallFunction|CineCaptionPulseStep :DeltaSeconds InDeltaTime))
+'''
+
+GW['CineFadeSet'] = f'''
+(fn CineFadeSet (Alpha)
+  (Widget|SetRenderOpacity ({WV}GetFadeBox) Alpha))
 '''
 
 if __name__ == '__main__':

@@ -178,6 +178,18 @@ anyone picks up a task:
 
 ## Open
 
+### The boss speaks, the demo ends at the boss, the cafe wall falls every time (Sun Nov 15, 15:50 UTC, Justin's Mac mini)
+
+Asked for by the Team Owner on Sunday morning. **Built, played by a script in PIE, not played by a person.**
+On branch `claude/project-thread-y3rtrs`. See [the devlog entry](devlog/2026-11-15-the-boss-speaks-and-the-demo-ends.md).
+
+- **Boss intro:** 8.5 s, three lines, camera returns on the player's own camera (0.18 cm at the hand-off).
+- **Ending:** after SPLICE one line, fade to black, the ending card, and back to the title by itself.
+  **The demo now ends at the boss**; the ruins walk and `Spawner_Beat4` are no longer reached.
+- **Cafe wall:** the break is re-applied until the panel has spread. 1 run in 3 failed before, 0 in 7 after.
+- Running past the street goons no longer skips the boss beats.
+- Changed: `BP_OpeningDirector`, `WBP_CineOverlay`.
+
 ### Beats 2 and 3: markers hide when you arrive, Splice gets its moment (Sun Nov 15, 15:20 UTC, Justin's Mac mini)
 
 **Built, played by a script in PIE, not played by a person.** On branch `claude/project-thread-y3rtrs`, built
