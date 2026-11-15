@@ -37,10 +37,25 @@ DEFAULTS = {
     # Nov 14 and this default put 4.70 straight back on the next run (reported again Nov 15).
     'CineImpactTime': 6.20,
     'CineBodyTime': 6.45,
+    # 4.70 s = the frame the cinematic car reaches the wall (b1_opening_cine.CAR_KEYS). The wall
+    # is a Geometry Collection now, so it comes apart here instead of a grey patch vanishing.
+    'CineWallTime': 4.70,
+    # the third cut is a shot of the car on its own, so that is where it catches fire (Team Owner,
+    # 2026-11-15). Cut C runs 6.2 -> 8.8.
+    'CineFireTime': 7.00,
+    'CineWallDone': False, 'CineFireDone': False, 'CineFireLit': False,
+    'WallBreakStrain': 5000000.0,     # the strain a punch uses on a crate stack
+    'WallBreakImpulse': 420.0,        # cm/s outward, bVelChange, from a point OUTSIDE the wall
+    # the thrown body is a ragdoll from the frame it lands. Off = the old keyframed landing pose.
+    'DriverRagdoll': True,
+    'RagdollSettle': 1.8,
+    'RagdollT': 0.0, 'RagdollOn': False, 'RagdollDone': False,
     'CineEndYaw': 172.0,
     'ObjectiveHeight': 230.0,
     'ObjectiveState': 0,
-    'ObjDriverLoc': unreal.Vector(-380.0, 220.0, 0.0),   # the crash driver
+    # The car drives in heading +X, so its RIGHT side is -Y - and that is also screen-right from
+    # where the player stands. He used to land at y +220, the car's left. Moved 2026-11-15.
+    'ObjDriverLoc': unreal.Vector(-395.0, -215.0, 0.0),  # the crash driver
     # 430 is 950 cm from the car against a 700 cm blast - clear, with margin, and still inside
     # the room so the player is never told to walk through a wall.
     'ObjSafeLoc': unreal.Vector(430.0, -40.0, 0.0),
@@ -122,10 +137,11 @@ try:
         if d:
             say('--- placed B1_Cine_Director')
             for k in list(DEFAULTS) + ['CineSeqActor', 'CineRealCar', 'CineRealDriver',
-                                       'CineWallPatch', 'ObjectiveBeacon',
+                                       'CineWallGC', 'CineFireActor', 'CineFireLight',
+                                       'CineFireFX', 'CineDriverBP', 'ObjectiveBeacon',
                                        'ExplCam', 'ExplCard', 'ExplCarGC']:
                 say('   %-18s %s' % (k, d.get_editor_property(k)))
-        for lab in ('B1_Cine_WallPatch', 'B1_Cine_Seq', 'B1_Objective_Beacon',
+        for lab in ('B1_Cafe_WallPanel_GC', 'B1_Cine_Seq', 'B1_Objective_Beacon',
                     'B1_Cine_ExplCam', 'B1_Cafe_Explosion', 'B1_Cafe_CrashCar_GC'):
             a = by_label.get(lab)
             say('%-22s %s' % (lab, (a.get_actor_location() if a else 'MISSING')))
@@ -181,7 +197,10 @@ try:
         'ExplCam': by_label.get('B1_Cine_ExplCam'),
         'ExplCard': by_label.get('B1_Cafe_Explosion'),
         'CineRealDriver': by_label.get('C1_Cafe_CrashDriver'),
-        'CineWallPatch': by_label.get('B1_Cine_WallPatch'),
+        'CineWallGC': by_label.get('B1_Cafe_WallPanel_GC'),
+        'CineFireActor': by_label.get('B1_Cafe_Fire'),
+        'CineFireLight': by_label.get('B1_Cafe_FireLight'),
+        'CineDriverBP': by_label.get('C1_Cafe_CrashDriver'),
         'ObjectiveBeacon': b,
         'DriverRef': by_label.get('C1_Cafe_CrashDriver'),
         'CoworkerRef': by_label.get('Coworker_Cafe'),
@@ -194,6 +213,41 @@ try:
         back = d.get_editor_property(k)
         say('   %-16s -> %-24s  read back: %s' % (
             k, v.get_actor_label(), (back.get_actor_label() if back else 'NONE')))
+    # ---------------- the fire's particle system, by COMPONENT
+    # The graph DSL cannot reach a component on another actor, so the director holds the
+    # NiagaraComponent itself. Niagara|SetPaused on it does both halves of the Team Owner's
+    # 2026-11-15 note: paused until the third cut, so lighting it is a real burst from nothing,
+    # and paused again whenever Freeze Frame is running, so the fire stops with everything else.
+    fire = by_label.get('B1_Cafe_Fire')
+    fx = None
+    if fire is not None:
+        for c in fire.get_components_by_class(unreal.NiagaraComponent):
+            fx = c
+            break
+    if fx is None:
+        say('   !! no NiagaraComponent on B1_Cafe_Fire - run b1y_firefx.py first')
+    else:
+        # It must not run before the director says so: auto-activate off AND paused.
+        fx.set_editor_property('auto_activate', True)
+        d.set_editor_property('CineFireFX', fx)
+        back = d.get_editor_property('CineFireFX')
+        say('   %-16s -> %-24s  read back: %s' % ('CineFireFX', fx.get_name(),
+                                                  (back.get_name() if back else 'NONE')))
+
+    # ---------------- the crash driver: the car's RIGHT side, and a mesh that can ragdoll
+    drv = by_label.get('C1_Cafe_CrashDriver')
+    if drv is None:
+        say('   !! C1_Cafe_CrashDriver is not in the level')
+    else:
+        drv.set_actor_location_and_rotation(DEFAULTS['ObjDriverLoc'],
+                                            unreal.Rotator(0.0, 0.0, -140.0), False, True)
+        mesh = drv.get_component_by_class(unreal.SkeletalMeshComponent)
+        if mesh is not None:
+            # SetAllBodiesSimulatePhysics does nothing on a component with no collision.
+            mesh.set_collision_enabled(unreal.CollisionEnabled.QUERY_AND_PHYSICS)
+            say('   DriverMesh collision -> %s' % mesh.get_collision_enabled())
+        say('   C1_Cafe_CrashDriver -> %s rot %s' % (drv.get_actor_location(), drv.get_actor_rotation()))
+
     # a set_editor_property on a placed actor does not dirty its package: re-set the transform
     d.set_actor_location_and_rotation(unreal.Vector(0.0, 0.0, 300.0), unreal.Rotator(), False, True)
 

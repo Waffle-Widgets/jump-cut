@@ -6,7 +6,8 @@
 The cinematic is 11 s, 30 fps, four shots:
   A 0.0-4.0  the peaceful cafe, a slow push west down the room
   B 4.0-7.0  the car comes through the west wall
-  C 6.2-8.8  the driver is thrown out of the cab and lands where BP_CrashDriver stands
+  C 6.2-8.8  the driver is thrown out of the cab, lands where BP_CrashDriver stands (the car's
+             RIGHT side), and the car catches fire part-way through this shot
   D 8.8-11.0 settle behind the player, then control is handed over
 
 EVERYTHING the sequence animates is a SPAWNABLE, so the sequence owns no level actor and leaves
@@ -239,16 +240,20 @@ try:
     # actor yaw 140 with the mesh at relative pitch -78 and +18 z; a rotator is applied
     # Yaw*Pitch*Roll, so actor rot (roll 0, pitch -78, yaw 140) at z = +18 is the SAME world pose.
     # The last key is therefore exactly where the real body appears, and the hand-off is seamless.
+    # He is thrown out of the car's RIGHT side (-Y), not its left: asked for on 2026-11-15, and
+    # -Y is also screen-right from where the player is standing. The arc is mirrored in y and the
+    # tumble roll with it, and it ends exactly where the placed BP_CrashDriver stands - from which
+    # frame the REAL one takes over as a ragdoll (BP_OpeningDirector.DriverRagdoll).
     DRV_KEYS = [
-        (0.0,   -2350.0,   0.0,  60.0,    0.0, -78.0, -10.0),   # slumped in the cab, off screen
-        (4.55,  -1450.0,   0.0,  60.0,    0.0, -78.0, -10.0),   # riding in
-        (4.95,   -560.0,   0.0,  70.0,    0.0, -78.0, -10.0),   # the cab, at the moment of impact
-        (5.10,   -500.0,  40.0, 150.0,  -60.0, -70.0,  20.0),   # out through the screen
-        (5.40,   -450.0, 125.0, 250.0, -170.0, -50.0,  70.0),   # apex, tumbling
-        (5.75,   -410.0, 190.0, 150.0, -280.0, -60.0, 112.0),
-        (6.00,   -388.0, 214.0,  45.0, -340.0, -72.0, 133.0),
-        (6.20,       dx,    dy,  26.0, -360.0, -78.0, drv_rot.yaw),
-        (6.45,       dx,    dy,  18.0, -360.0, -78.0, drv_rot.yaw),
+        (0.0,   -2350.0,    0.0,  60.0,   0.0, -78.0,  10.0),   # slumped in the cab, off screen
+        (4.55,  -1450.0,    0.0,  60.0,   0.0, -78.0,  10.0),   # riding in
+        (4.95,   -560.0,    0.0,  70.0,   0.0, -78.0,  10.0),   # the cab, at the moment of impact
+        (5.10,   -505.0,  -40.0, 150.0,  60.0, -70.0, -20.0),   # out through the screen
+        (5.40,   -462.0, -118.0, 250.0, 170.0, -50.0, -70.0),   # apex, tumbling
+        (5.75,   -428.0, -172.0, 150.0, 280.0, -60.0, -112.0),
+        (6.00,   -406.0, -200.0,  45.0, 340.0, -72.0, -133.0),
+        (6.20,       dx,     dy,  26.0, 360.0, -78.0, drv_rot.yaw),
+        (6.45,       dx,     dy,  18.0, 360.0, -78.0, drv_rot.yaw),
     ]
     tmp = eas.spawn_actor_from_class(unreal.SkeletalMeshActor, unreal.Vector(-470, 10, 185), unreal.Rotator())
     TEMPS.append(tmp)
