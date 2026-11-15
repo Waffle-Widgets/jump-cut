@@ -456,6 +456,34 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   still matched. Its "NO-OP: bounds unchanged but Blender says this mesh grew" rule fires on a mesh you
   already re-imported in a previous run - withhold `/tmp/jc67_expect.json` for that pass rather than
   weakening any of the other guards.
+- **That same tool's guard INVERTS for a pass that rethinks geometry rather than nudging it, and it will
+  refuse to save all of your work if you do not tell it so.** The sub-pixel pass (grooves instead of ribs,
+  an inlay instead of a proud slab, three wide gully bars instead of seven thin ones) **changes triangle
+  counts on purpose** while leaving every bounding box identical to the millimetre so nothing moves. So the
+  `TRIS a -> b` rule fires on exactly the thing you intended, and bounds can no longer prove the import
+  took. Write an **expected-tris table** to `/tmp/jc67_tris.json` (or point `$JC67_TRIS` at one) mapping
+  model name to the count Blender built: the tool then requires the count to equal that number *and* to
+  differ from what was in the level, which is stricter proof than bounds ever were. A model with no entry
+  keeps the strict behaviour. An unreadable table is fatal rather than a silent fallback, because strict
+  fallback would fail every model for the one reason you expect and read as "the import broke".
+- **A 2 px floor, and ground detail is foreshortened to about a third.** PIE renders 1709 px wide at 90 deg;
+  a feature narrower than ~2 screen pixels at the distance the player sees it will boil no matter what the
+  renderer does, and a repeating one narrower than the sampling limit will crawl as a moire. Measure a new
+  detail in PIXELS AT ITS VIEWING DISTANCE before adding it - `Art/Blender/subpixel_measure.py` does this
+  against the built geometry, and `Art/Blender/subpixel_coverage.py` checks an inlay tiles exactly. Four playtest complaints and one nobody had named all measured 0.60-1.62 px.
+- **`stand_proud()` trades a z-fight for a shimmer, so prefer an INLAY where the detail is flat.** Lifting
+  coplanar detail 0.4 cm along its normal (PR #111) genuinely cured the depth tie, but 0.4-0.8 cm is itself
+  sub-pixel at normal viewing distances. Where the detail is flat colour on a flat parent, punch the
+  parent's face out and tile it around the detail so both share one plane: no relief to alias, no overlap
+  to z-fight, nothing for the outline pass to find. `build_cafe_chalkboard` is the worked example. **Verify
+  a tiling by rasterising the plane** and requiring coverage of exactly one everywhere - a missing strip is
+  a hole straight through the prop, and a doubled one is a brand new coplanar tie.
+- **TSR is already at maximum anti-flicker in this project, so there is no cvar left to try.** The log shows
+  `AntiAliasingQuality@3` applying `r.TSR.History.ScreenPercentage:200` - documented in
+  `TemporalSuperResolution.cpp:53-61` as the Nyquist-sufficient rate and the highest supported value - plus
+  `ShadingRejection.Flickering:1` and `Resurrection:1`. And **every city mesh is LOD count 1 with Nanite
+  off**, so "LOD popping" is impossible; turning either on would delete the thin parts that are aliasing,
+  which is why `jumpcut_city_place.py:309-316` disables Nanite deliberately.
 - **A character that floats only while it moves: check Root Motion Root Lock before the retarget.** Meshy's Smart
   Rig keeps its root bone at pelvis height in the *reference pose*; retargeted clips animate it on the floor. A
   clip with root motion on locks its root to `RefPose` by default, so the mob boss rose 87.26 x 1.2921 = 113 cm
