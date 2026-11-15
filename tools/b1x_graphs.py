@@ -60,8 +60,18 @@ G = {}
 # all three being one function with three guards in the middle of it.
 
 # The bang: the wreck comes apart.
+#
+# The first two lines are the swap. Until this frame the wreck on screen is the plain static
+# City_CafeCrashCar (CineRealCar); the geometry collection has been hidden since
+# CineSceneBeforeCrash, because an intact collection's fracture pieces overlap by about a
+# millimetre along every cut line and that ties the depth test over the whole car body - "the car
+# is flickering badly", 2026-11-15. They stand at the same transform with bounds agreeing to
+# 0.1 cm, so the swap is invisible; from here on the collection is the only one drawn, and it is
+# in pieces within the second.
 G['CineExplFire'] = f'''
 (fn CineExplFire ()
+  (CallFunction|CineHideActor :Target ({V}GetCineRealCar) :Hide true)
+  (CallFunction|CineHideActor :Target ({V}GetExplCarGC) :Hide false)
   (bind gc ({V}GetExplCarGC))
   (Utilities|IsValid gc
     (:"Is Valid"

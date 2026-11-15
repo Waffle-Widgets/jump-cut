@@ -108,6 +108,61 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
 
 ## Lessons from practice (Unreal + MCP)
 
+### Slowing down something that is NOT self (learned 2026-11-15, beat 1's fire)
+- **`Variables|Actor|SetCustomTimeDilation` has NO `self` pin.** It writes the dilation of the
+  actor the graph is running on and nothing else's; `write_graph_dsl` refuses `:self` with
+  *"Input pins: ['CustomTimeDilation']"*. To stop another actor's effect, hold its COMPONENT and
+  use **`Niagara|SetCustomTimeDilation`**, whose pins are **`self`** and **`Dilation`** - note it
+  is `Dilation`, not `CustomTimeDilation`, which is the spelling that fails. Freeze Frame stops
+  enemies through `BP_EnemyBase.EnemySetTimeStopped`, a custom function, which is why there was no
+  working example of the cross-actor form to copy.
+- **`write_graph_dsl`'s error message is the cheapest pin documentation there is.** It names every
+  valid input pin and rolls the whole graph back, so a wrong guess costs one call and teaches you
+  the right name. `get_node_type_pins` does NOT substitute: it returns each pin's *value*
+  (`"1.000000"`, `"Chaos_NONE"`), not its name.
+- **A `Package` has no `is_dirty()` in UE 5.8 Python.** It is the obvious name and it raises.
+- **You cannot WAIT for a cinematic from Python - drive its clock.** Python runs on the game
+  thread, so `time.sleep` stops the world it is waiting for, and an 11 s sequence is over before a
+  second MCP round trip (5-8 s) lands. `tools/b1z_pie.py open` calls `CineDirectorStep` with a
+  fixed delta itself; the director's own Tick cannot run while the script holds the thread, so the
+  loop is the only thing advancing it and every trigger runs through the real function. It cannot
+  show PHYSICS (no ticks = no falling debris, no settling ragdoll), so it proves each trigger fired
+  and each physics state was applied; sample again later for where things came to rest.
+- **`BP_Player.FreezeFrameActive` is not instance-editable.** Drive the real power instead of
+  writing the flag: `PlayerGrantFreezeFrame` -> `FreezeFrameStart` -> ... -> `PlayerFreezeFrameEnd`
+  through `call_method`. It goes through the gates, so it is better evidence anyway.
+- **`b1_opening_cine.py` reads the PLACED `BP_CrashDriver`'s location** to key the last two frames
+  of the thrown body, so the driver must be MOVED BEFORE the sequence is rebuilt. Rebuilding first
+  keyed the arc to the old left-hand spot - a mid-air tumble to y -118 and then a snap to y +220 -
+  and nothing errored. Order: `b1z_wallpanel.py place` -> `b1_opening_wire.py` -> `b1_opening_cine.py`.
+
+### This Mac's editor hangs, and handing a camera back (learned 2026-11-15, beat 1 round 7)
+- **On Justin's Mac mini, launch the editor with `-noraytracing`.** `r.RayTracing=True` makes every PIE
+  start compile ray tracing PSOs, and Apple's `MTLCompilerService` dies on them
+  (`llvm::report_bad_alloc_error`, 17 crash reports in `~/Library/Logs/DiagnosticReports` in one night).
+  The editor then hangs with the game thread waiting on the render thread: `sample <pid>` shows
+  `MTLCompilerConnectionQueue` threads in `xpc_connection_send_message_with_reply_sync`. It looks exactly
+  like a modal dialog from the MCP side. The viewport's red "Ray Tracing PSO is not ready yet" is the tell.
+  `open -a .../UnrealEditor.app --args <uproject> -noraytracing` - a launch flag, not an ini change.
+- **A dead editor's `CrashReportClient` keeps port 8000.** The next editor logs *"HttpListener unable to
+  bind to 127.0.0.1:8000"* and runs with no MCP. `pkill -9 -f CrashReportClient` before relaunching.
+- **After a forced close, the next start blocks on a Restore Packages modal** before the MCP exists. Move
+  `Saved/Autosaves/PackageRestoreData.json` aside first. Reading graphs with the MCP dirties Blueprints you
+  never changed (four were listed), so restoring is not what you want anyway.
+- **End a cinematic on the LIVE pose of the camera you hand to.** Lerp the last leg to
+  `GetComponentByClass(pawn, CameraComponent)`'s world location and rotation, and lerp the lens to its FOV.
+  A measured constant is right only while the player stands where you measured.
+- **Under global time dilation, divide `DeltaSeconds` by `GetGlobalTimeDilation`** for anything that should
+  run at wall-clock speed (letterbox bars, caption timers, a cinematic's own clock).
+- **`AutoWrapText` on a TextBlock in an auto-sized canvas slot only ever gets narrower.** The wrap width is
+  the box's width from the previous frame, so one short caption makes every later caption a column. Turn it
+  off and use `WrapTextAt`.
+- **`unreal.register_slate_post_tick_callback` samples and drives PIE once per frame from inside the
+  editor**, which is the way to measure anything shorter than an MCP round trip (`tools/b1u_pie.py`).
+  `Screenshot showui` from that callback photographs UMG, bars and captions included.
+- **The console box ref changes per session** (`tb1` one launch, `tb2` the next). Find the textbox on the
+  line after `text "Cmd"` in a `Snapshot` rather than trusting either number.
+
 ### Blueprint graphs through `write_graph_dsl` (learned 2026-11-15, beat 1's explosion)
 - **A variable's CATEGORY is part of its DSL type id.** Move a variable out of `Default` and
   `Variables|Default|GetFoo` stops existing - `write_graph_dsl` fails with
@@ -530,6 +585,111 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   beat 1 opened with the character 90 cm in the air for 0.9 s. If you are hunting something that
   only happens "at the start", check what the first tick's state transition does before looking at
   the cinematic.
+- **An INTACT Geometry Collection is not the same surface as the static mesh it was cut from
+  (Nov 15, "the car is flickering badly").** Measured on the wreck: `B1_Cafe_CrashCar_GC` and
+  `City_CafeCrashCar` stand at the same transform with the same geometry, and the collection's
+  bounds come back **0.05-0.1 cm LARGER** in y and z. That is fracture pieces inflated slightly
+  outward, so along every cut line across the whole body two pieces overlap by about a
+  millimetre - a depth tie with real area, spread over the entire object, which is the #67
+  mechanism at prop scale. The static mesh has no cut lines at all and is drawn exactly like
+  every other city prop. **So draw the static mesh until the thing actually breaks**, and show
+  the collection on the frame you break it: beat 1 does this in `CineExplFire`, which hides
+  `CineRealCar` (the static) and shows `ExplCarGC` before applying the strain. The two bounds
+  agree to 0.1 cm, so the swap is invisible.
+- **A collection's ROOT PROXY is a red herring unless a custom renderer is set.** `GC_CrashCar`
+  carries `RootProxyData.ProxyMeshes = (SM_CrashCar)` with **empty** override materials, which
+  reads exactly like "the intact car draws the grey `MS_*` import placeholders". It does not:
+  `GeometryCollectionComponent.cpp:6540` only consults the root proxy inside
+  `RefreshCustomRenderer`, and every `GC_*` component in this level has
+  `custom_renderer_type = None`. Check that property before spending time on the proxy.
+- **In this map a BOUNDING-BOX test for "is this floor clear" returns nothing useful.**
+  `City_CafeShell`'s box covers the whole room, `B1_Cine_ExplCam`'s covers 20 m, `Player_Main`
+  and `Coworker_Cafe` cover most of the street and every `Marker_*` is a 5 m sphere - so a
+  clearance search over bounds found **zero** clear spots anywhere in the cafe. Use real traces:
+  a downward line trace for the floor height, a capsule at the point for "can someone stand
+  here", twelve horizontal spokes for clearance and a capsule sweep for "can someone walk here".
+  `tools/b1w_spot.py` is the worked example, and it is what found that beat 1's driver was being
+  thrown onto the **counter top** (floor height 150 cm at the old landing spot, not 0).
+- **Moving a range-gated actor closer to the player can delete a whole beat, silently.**
+  `BP_CrashDriver.DriverCanTouch` is a plain XY distance against `TouchRange`, and the player
+  starts at the origin. Landing the body at `(-200, -60)` put it 209 cm away against a range of
+  220, so Freeze Frame was granted on the first frame after the cinematic - measured in PIE, the
+  objective jumped straight to 3 with the player still standing at `(0, 0, 94)`. Nothing errors
+  and the capture looks fine. After moving any actor a beat triggers off, read the objective
+  state back with the player where he really starts.
+- **A destroyed actor's package stays DIRTY IN MEMORY after you `git rm` the file, and saving it
+  later writes the orphan back (Nov 15).** `b1_opening_wire.py` destroys and re-places the
+  director and the beacon every run, so the old packages become orphans on disk AND dirty
+  packages in memory. Removing the files is only half of it: `tools/b1v_orphanflush.py` saves
+  those two packages, which for a one-file-per-actor package whose actor is gone DELETES the file
+  and clears the dirty flag - verified, nothing came back in `git status`. Only do this for a
+  package that (a) has no live actor and (b) HAS a file on disk. A dirty package with **no** file
+  is a throwaway from this session (every `add_spawnable_from_instance` temp leaves one); saving
+  THAT would create a brand new orphan, so leave those alone and let the next editor restart drop
+  them with Don't Save.
+- **A Sequencer SPAWNABLE WITH NO SPAWN KEYS IS SPAWNED FOR THE WHOLE SEQUENCE (Nov 15).**
+  `add_spawnable_from_instance` creates a `MovieSceneSpawnTrack` whose section has **zero keys**,
+  and that means on from the first frame to the last. Beat 1's flying car therefore sat inside
+  the real wreck from 6.2 s to 11.0 s (a whole-body depth tie, the #67 mechanism at car scale)
+  and the thrown body stood beside the real ragdoll for four and a half seconds ("seeing two
+  driver models"). **Check the spawn track before anything else when a cinematic shows two of
+  something**, and read the key COUNT - the track exists, which is what makes it look wired.
+  `b1_opening_cine.key_spawn` writes True@0 and False@<hand-off frame>; reveal the real actor one
+  frame BEFORE the despawn, never after, so you get one frame of identical overlap rather than one
+  frame of nothing.
+- **A camera hand-off is POSITION, ROTATION *and* FIELD OF VIEW, and the FOV is the one nobody
+  checks (Nov 15).** Beat 1's last cut ended 194 cm from where the player camera sits *and* on a
+  26 mm lens, which on this project's 23.76 mm sensor is **49.1 deg** against
+  `BP_Player.FollowCamera`'s **90**. Convert before comparing: `hfov = 2*atan(sensor_w/2/focal)`,
+  and the focal that matches 90 deg here is **11.88 mm**. A CineCameraActor also constrains its
+  view to 16:9 by default and a `CameraComponent` does not, so turn `constrain_aspect_ratio` off
+  on the cut that has to match - at a cut, where it cannot be seen.
+- **MEASURE the player camera's pose, do not compute it from the spring arm.** The arm does a
+  collision probe and can shorten itself, and the pawn's resting z is not floor + half height
+  (94.15, not 92). `tools/b1v_cam.py prep|set|read` does it in PIE: set the control rotation in
+  one MCP call and read `FollowCamera` + the camera manager in the NEXT one, so real ticks happen
+  in between.
+- **A Level Sequence with a camera cut track reverts the view the frame it stops, so there is
+  nothing to blend FROM.** Park a plain CameraActor at the cut's final pose with the matching FOV
+  (`B1_Cine_HandCam`), then: stop the player, `SetViewTargetWithBlend(handcam, 0.0)` - which
+  changes nothing on screen - then `SetViewTargetWithBlend(pawn, 0.4, EaseInOut)`. And make the
+  sequence LONGER than the director's own clock (11.2 vs `CineLength` 11.0) so the director always
+  gets to the hand-off first; a sequence finishing on its own schedule is itself a one-frame pop.
+- **To turn a character "with animation" when there is no turn-in-place clip, drive the MOVEMENT
+  COMPONENT, not `SetActorRotation` (Nov 15).** The anim blueprint is a blend space on
+  `GetVelocity`'s XY length, so a set-rotation turn is the idle pose sliding round on the spot.
+  Feed `Pawn|Input|AddMovementInput` toward the target yaw and let `orient_rotation_to_movement`
+  turn him at his own 500 deg/s. All 38 of the player's `_CWM` clips are idle/walk/jog/attack/hit
+  react/death/jump - there is no turn clip to montage.
+  **And you do NOT clear `MoveLocked` to do it.** `BP_Player.PlayerRefreshMoveLock` derives
+  `MoveLocked` from `InputLocked` every tick, so clearing it is undone next frame - but it only
+  acts on the TRANSITION (`if (and locked (not MoveLocked))`), so with `MoveLocked` already true
+  it never re-calls `DisableMovement`. Setting the movement mode to `MOVE_Walking` from outside is
+  stable, and `InputLocked` stays true so the player's own keys still do nothing. Measured: 31 cm
+  of drift over a 172 deg turn at scale 0.30, which the view-target blend absorbs.
+- **The hidden grey-box crash-car placeholders `C1_Cafe_Car` and `C1_Cafe_CarCab` used to wall off
+  the cafe (Nov 15).** Hidden in game, still colliding, and sticking out past the real wreck, they
+  made every spot deeper than x = -460 on the car's +Y side unreachable. Collision is off on both
+  now (`tools/b1v_greybox.py`). When a capsule sweep is stopped by something you cannot see, check
+  the grey-box layer before the art.
+- **You cannot step the director's clock by hand to test anything the MOVEMENT COMPONENT does.**
+  `tools/b1z_pie.py open` works precisely because no ticks happen, so `AddMovementInput` would be
+  recorded and never applied. Use `StartPIE`'s `warmupSeconds` to let the opening run in real time
+  and sample afterwards (`tools/b1v_pie.py sample`).
+- **`ALevelSequenceActor` has no `get_sequence_player()` in Python** - the obvious name raises
+  `AttributeError`. It is `get_editor_property('sequence_player')`, and that player's
+  `get_current_time().time` is an `FFrameTime`, which `round()` refuses.
+- **A settled ragdoll's MASS is about 55 cm from its actor origin**, because the body collapses
+  out of the head-down pose the throw ends in. The beacon, the touch test and the arc all use the
+  actor origin; the thing the player SEES is the bones. Measure bone extents
+  (`tools/b1w_land.py`), not the actor location, when deciding whether a body is clear of
+  furniture.
+- **The kit source FBXs inside `Content/Game/Imported/City/` are STALE and gitignored.** All 48
+  of them differ from `Art/Blender/export/City/`, because the #67 re-import (`0f9b13c`) was
+  driven by name from the export folder and nothing rewrote the copies under `Content/`. They are
+  older than the assets, so the auto-reimport watcher leaves them alone today - but anything that
+  touches their mtimes would re-import the pre-`stand_proud` flush geometry over the flicker fix,
+  on this machine only. Do not copy a kit FBX into `Content/` to "fix" an import.
 - **A Geometry Collection draws the materials its SOURCE FBX came in with, and nobody tells it
   otherwise (Nov 15).** Every `GC_*` in `/Game/Game/Destruction` was drawing `MS_City*` from
   `Imported/City/` - `MaterialInstanceConstant`s of `FBXLegacyPhongSurfaceMaterial` with
