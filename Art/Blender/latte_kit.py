@@ -102,7 +102,12 @@ tilt = Matrix.Rotation(math.radians(-42), 4, 'X')               # spout tip swin
 pit.data.transform(Matrix.Translation(-(tilt @ tip)) @ tilt)
 pit.data.update()
 
-for ob in (cup, saucer, pit):
+# the milk stream: 1 cm tall, 1 cm across, origin at the BOTTOM, 14 rings so the material can sway it.
+# Thicker where it leaves the spout, a little waist, a foot where it lands. The game scales it.
+bm, _ = lathe('stream', [(0, 0)] + [(0.5 * (0.62 + 0.38 * (i / 13.0) ** 1.5 + (0.22 if i == 0 else 0.0)), i / 13.0) for i in range(14)] + [(0, 1)], 12)
+stream = finish(bm, 'SM_LatteStream', 'MS_LatteStream')
+
+for ob in (cup, saucer, pit, stream):
     bpy.ops.object.select_all(action='DESELECT')
     ob.select_set(True)
     bpy.context.view_layer.objects.active = ob

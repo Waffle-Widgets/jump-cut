@@ -43,7 +43,8 @@ float2 vel = d / max(r2, 0.0009) + di / max(dot(di, di), 0.0009);
 float2 src = p - Pour.w * vel;
 src += (Pour.w * 0.45 + Vel.z * 0.00003) * float2(sin(p.y * 46.0 + Fx.w * 3.1), cos(p.x * 41.0 - Fx.w * 2.7));
 src -= Vel.xy * Vel.z * exp(-r2 / 0.004);
-float prev = Texture2DSample(Prev, PrevSampler, src + 0.5).r;
+float2 pv = Texture2DSample(Prev, PrevSampler, src + 0.5).rg;
+float prev = pv.x;
 float r = sqrt(r2);
 float inj = Pour.z * (1.0 - smoothstep(Misc.x * 0.6, Misc.x, r));
 float v = max(prev, inj);
@@ -52,7 +53,8 @@ v = lerp(v, 0.0, saturate(rim));
 v = lerp(v, 0.16, saturate(Vel.w * exp(-r2 / 0.00022)));
 v = lerp(v, smoothstep(0.0, 1.0, v), Misc.z);
 v *= (dot(p, p) < 0.2304) ? 1.0 : 0.0;
-return float3(v, v, v);
+float g = lerp(pv.y, 0.5 + 0.5 * sin(Fx.w * 11.0), saturate(inj));
+return float3(v, g, 0.0);
 """
 
 SURF = r"""
@@ -61,14 +63,15 @@ float2 fd = p - Fx.xy;
 float fr = length(fd);
 float rip = Fx.z * sin(fr * 130.0 - Fx.w * 16.0) * exp(-fr * 9.0);
 float2 uv2 = UV + normalize(fd + 0.00001) * rip * 0.006;
-float v = Texture2DSample(Sim, SimSampler, uv2).r;
+float2 sm = Texture2DSample(Sim, SimSampler, uv2).rg;
+float v = sm.x;
 float em = Texture2DSample(Sim, SimSampler, uv2 + float2(0.006, 0.006)).r - Texture2DSample(Sim, SimSampler, uv2 - float2(0.006, 0.006)).r;
 float n = sin(p.x * 37.0 + sin(p.y * 23.0) * 2.0) * sin(p.y * 31.0 + sin(p.x * 19.0) * 2.0);
 float3 crema = lerp(float3(0.105, 0.040, 0.012), float3(0.165, 0.068, 0.022), 0.5 + 0.5 * n);
 float3 halo = float3(0.36, 0.20, 0.09);
-float3 milk = float3(0.80, 0.74, 0.62);
+float3 milk = float3(0.66, 0.61, 0.50);
 float3 c = lerp(crema, halo, smoothstep(0.04, 0.30, v));
-c = lerp(c, milk, smoothstep(0.30, 0.55, v));
+c = lerp(c, milk * (0.76 + 0.24 * sm.y), smoothstep(0.24, 0.62, v));
 c += em * 0.20;
 c *= 1.0 + rip * 0.35;
 c += 0.05 * smoothstep(0.25, 0.0, length(p - float2(0.18, -0.16)));
@@ -189,7 +192,7 @@ def instance(name, parent, tex_name, tex):
     return mi
 
 
-def flat(name, rgb, unlit=False, shaded=False):
+def flat(name, rgb, unlit=False, shaded=False, wobble=False):
     """A one-colour material. `shaded` = unlit with its own soft light from above the staff side: the cup sits in the
     counter's shadow, where a lit material goes black through the cel look and a plain unlit one has no form."""
     path = '%s/%s' % (DIR, name)
@@ -212,6 +215,20 @@ def flat(name, rgb, unlit=False, shaded=False):
         mel.connect_material_expressions(c, '', k, 'Color')
         mel.connect_material_expressions(n, '', k, 'N')
         mel.connect_material_property(k, '', unreal.MaterialProperty.MP_EMISSIVE_COLOR)
+        if wobble:
+            # the milk stream: it sways and thickens as it falls, in world space so the mesh's scale does not matter
+            wp = mel.create_material_expression(m, unreal.MaterialExpressionWorldPosition, -500, 400)
+            tm = mel.create_material_expression(m, unreal.MaterialExpressionTime, -500, 550)
+            w = mel.create_material_expression(m, unreal.MaterialExpressionCustom, -200, 400)
+            w.set_editor_property('code', 'float a = sin(P.z * 1.7 + T * 21.0) * 0.10 + sin(P.z * 3.9 - T * 33.0) * 0.05; float b = cos(P.z * 2.3 + T * 17.0) * 0.08; return float3(a, b, 0.0);')
+            w.set_editor_property('output_type', unreal.CustomMaterialOutputType.CMOT_FLOAT3)
+            ins = []
+            for nm in ('P', 'T'):
+                ci = unreal.CustomInput(); ci.set_editor_property('input_name', nm); ins.append(ci)
+            w.set_editor_property('inputs', ins)
+            mel.connect_material_expressions(wp, '', w, 'P')
+            mel.connect_material_expressions(tm, '', w, 'T')
+            mel.connect_material_property(w, '', unreal.MaterialProperty.MP_WORLD_POSITION_OFFSET)
     elif unlit:
         m.set_editor_property('shading_model', unreal.MaterialShadingModel.MSM_UNLIT)
         mel.connect_material_property(c, '', unreal.MaterialProperty.MP_EMISSIVE_COLOR)
@@ -229,10 +246,13 @@ def assets():
     c = collection()
     sim = material('M_LatteSim', SIM, 'Prev', {'Pour': 0, 'Vel': 0, 'Misc': 0, 'Fx': 0}, {}, a)
     surf = material('M_LatteSurface', SURF, 'Sim', {'Fx': 0}, {'Bright': 0.42}, a)
-    made = [a, b, c, sim, surf, flat('M_LatteCup', (0.27, 0.255, 0.22), shaded=True), flat('M_LatteSteel', (0.24, 0.26, 0.30), shaded=True),
-            flat('M_LatteMilk', (0.42, 0.40, 0.34), True), flat('M_LatteBar', (0.40, 0.26, 0.10), True),
+    made = [a, b, c, sim, surf, flat('M_LatteCup', (0.17, 0.16, 0.14), shaded=True), flat('M_LatteSteel', (0.10, 0.11, 0.13), shaded=True),
+            flat('M_LatteMilk', (0.30, 0.285, 0.25), shaded=True, wobble=True), flat('M_LatteBar', (0.40, 0.26, 0.10), True),
             instance('MI_LatteSim_FromA', sim, 'Prev', a), instance('MI_LatteSim_FromB', sim, 'Prev', b),
             instance('MI_LatteSurface_A', surf, 'Sim', a), instance('MI_LatteSurface_B', surf, 'Sim', b)]
+    for i in range(3):
+        t = eal.load_asset('%s/T_LatteGuide_%d' % (DIR, i))
+        made.append(instance('MI_LatteGuide_%d' % i, surf, 'Sim', t if t is not None else a))
     ok = unreal.EditorLoadingAndSavingUtils.save_packages([x.get_outermost() for x in made], False)
     say('SAVED ok=%s' % ok)
 
@@ -253,7 +273,7 @@ def kit():
     src = os.path.join(unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_dir()), '..', 'Art', 'Blender', 'export', 'Latte')
     dest = '/Game/Game/Imported/Latte'
     saved = []
-    for n in ('SM_LatteCup', 'SM_LatteSaucer', 'SM_LattePitcher'):
+    for n in ('SM_LatteCup', 'SM_LatteSaucer', 'SM_LattePitcher', 'SM_LatteStream'):
         t = unreal.AssetImportTask()
         t.set_editor_property('filename', os.path.normpath(os.path.join(src, n + '.fbx')).replace(os.sep, '/'))
         t.set_editor_property('destination_path', dest)
@@ -274,6 +294,22 @@ def kit():
         if o is not None and o.get_outermost() not in saved:
             saved.append(o.get_outermost())
     say('SAVED %s (%d packages)' % (unreal.EditorLoadingAndSavingUtils.save_packages(saved, False), len(saved)))
+
+
+def guide():
+    # guide <0|1|2>: freeze what is on the cup right now (RT_LatteA, left by the last Play session) as that pattern's
+    # sample picture. Pour it first with latte_pie.py, STOP Play, then run this, then `assets` to point the guide at it.
+    i = int(sys.argv[2])
+    rt_a = eal.load_asset('%s/RT_LatteA' % DIR)
+    name = '%s/T_LatteGuide_%d' % (DIR, i)
+    if eal.does_asset_exist(name):
+        eal.delete_asset(name)
+        unreal.SystemLibrary.collect_garbage()
+    t = unreal.RenderingLibrary.render_target_create_static_texture2d_editor_only(rt_a, name, unreal.TextureCompressionSettings.TC_HDR,
+                                                                               unreal.TextureMipGenSettings.TMGS_NO_MIPMAPS)
+    say('guide %d -> %s' % (i, t.get_path_name() if t else None))
+    if t:
+        say('SAVED %s' % unreal.EditorLoadingAndSavingUtils.save_packages([t.get_outermost()], False))
 
 
 def place():
@@ -299,7 +335,7 @@ def place():
 
 try:
     mode = sys.argv[1] if len(sys.argv) > 1 else 'where'
-    {'assets': assets, 'where': where, 'place': place, 'kit': kit}[mode]()
+    {'assets': assets, 'where': where, 'place': place, 'kit': kit, 'guide': guide}[mode]()
 except Exception:
     import traceback
     say(traceback.format_exc())

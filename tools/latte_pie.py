@@ -80,6 +80,9 @@ def pour(a, name):
         secs, low, f = plan[st['i']]
         st['t'] += dt
         u = min(1.0, st['t'] / secs)
+        if st['i'] == 0 and st['t'] > 1.2 and not st.get('mid'):
+            st['mid'] = True                      # one frame mid-pour, so the stream and the pitcher are in the picture
+            unreal.SystemLibrary.execute_console_command(w, 'HighResShot 1280x720 filename="%slatte_%s_mid.png"' % (SAVED, name))
         if low is not None:
             x, y = f(u)
             b.call_method('LatteDebugMove', (x, y))
@@ -118,6 +121,11 @@ try:
         elif mode == 'shot':                      # shot <name>: the game view to Saved/latte_<name>.png
             unreal.SystemLibrary.execute_console_command(W, 'HighResShot 1280x720 filename="%slatte_%s.png"' % (SAVED, sys.argv[2]))
             say('SHOT %s' % sys.argv[2])
+        elif mode == 'auto':                      # auto <pattern>: leave the title, start the pour and pour it, in one go
+            GS.get_game_mode(W).call_method('JumpCutStartPlay')
+            a.call_method('LatteStartPour')
+            say('AUTO %s start: %s' % (sys.argv[2], state(a)))
+            pour(a, sys.argv[2])
         elif mode == 'pour':
             say('POUR %s start: %s' % (sys.argv[2], state(a)))
             pour(a, sys.argv[2])

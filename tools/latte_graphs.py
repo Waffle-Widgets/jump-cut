@@ -32,7 +32,7 @@ G['EventGraph'] = f'''
 (event EventTick (DeltaSeconds)
   (if ({V}GetLatteActive)
     (CallFunction|LatteStep :Dt DeltaSeconds)
-    (elif (and (>= ({V}GetShift) 1) (<= ({V}GetShift) 4))
+    (elif (and (>= ({V}GetShift) 1) (!= ({V}GetShift) 5))
       (CallFunction|LatteShiftStep :Dt DeltaSeconds))))
 '''
 
@@ -43,6 +43,8 @@ G['LatteShow'] = f'''
   (Rendering|SetVisibility :self ({V}GetStatus) :bNewVisibility Show)
   (Rendering|SetVisibility :self ({V}GetFillBar) :bNewVisibility Show)
   (Rendering|SetVisibility :self ({V}GetFillMark) :bNewVisibility Show)
+  (Rendering|SetVisibility :self ({V}GetGuide) :bNewVisibility Show)
+  (Rendering|SetVisibility :self ({V}GetGuideLabel) :bNewVisibility Show)
   (Rendering|SetVisibility :self ({V}GetStream) :bNewVisibility false))
 '''
 
@@ -78,6 +80,8 @@ G['LatteStartPour'] = f'''
   ({V}SetLatteActive true)
   (Rendering|SetVisibility :self ({V}GetWorldText) :bNewVisibility false)
   (Game|Player|SetViewTargetwithBlend :self (Game|GetPlayerController 0) :NewViewTarget self :BlendTime 0.6)
+  (Input|SetInputModeGameAndUI :PlayerController (Game|GetPlayerController 0) :bHideCursorDuringCapture false)
+  (Class|PlayerController|SetShowMouseCursor :self (Game|GetPlayerController 0) :bShowMouseCursor true)
   (CallFunction|LatteShow :Show true)
   (CallFunction|LatteReset))
 '''
@@ -123,18 +127,23 @@ G['LatteShiftStep'] = f'''
     (if (and edown (and (not ({V}GetEWas)) (< dcup 32400.0)))
       (CallFunction|LatteStartPour))
     (elif (== ({V}GetShift) 3)
+      (if (and edown (and (not ({V}GetEWas)) (< dcup 32400.0)))
+        ({V}SetShift 6)
+        ({V}SetShiftT 0.0)
+        {say("ORDER UP!<br>The customer takes the latte")})
+      (elif (== ({V}GetShift) 6)
       ({V}SetShiftT (+ ({V}GetShiftT) Dt))
-      (if (> ({V}GetShiftT) 2.2)
+      (if (> ({V}GetShiftT) 1.8)
         (Rendering|SetVisibility :self ({V}GetCup) :bNewVisibility false)
         (Rendering|SetVisibility :self ({V}GetSaucer) :bNewVisibility false)
         (Rendering|SetVisibility :self ({V}GetSurface) :bNewVisibility false))
-      (if (> ({V}GetShiftT) 3.8)
+      (if (> ({V}GetShiftT) 3.4)
         ({V}SetShift 4)
         ({V}SetTextLoc {REG})
         {say("12:00  YOUR SHIFT IS OVER<br>Press E at the register to clock out")})
       (elif (== ({V}GetShift) 4)
         (if (and edown (and (not ({V}GetEWas)) (< dreg 32400.0)))
-          (CallFunction|LatteClockOut)))))
+          (CallFunction|LatteClockOut))))))
   ({V}SetEWas edown))
 '''
 
@@ -163,6 +172,12 @@ G['LatteReset'] = f'''
   (Rendering|Components|TextRender|SetText :self ({V}GetStatus) :Value (Utilities|Text|MakeLiteralText :Value " "))
   ({V}SetPattern (Math|Random|RandomIntegerinRange 0 2))
   (if (== ({V}GetPattern) 0)
+    (Rendering|Material|SetMaterial :self ({V}GetGuide) :ElementIndex 0 :Material "/Game/Game/Materials/Latte/MI_LatteGuide_0.MI_LatteGuide_0")
+    (elif (== ({V}GetPattern) 1)
+      (Rendering|Material|SetMaterial :self ({V}GetGuide) :ElementIndex 0 :Material "/Game/Game/Materials/Latte/MI_LatteGuide_1.MI_LatteGuide_1")
+      (else
+        (Rendering|Material|SetMaterial :self ({V}GetGuide) :ElementIndex 0 :Material "/Game/Game/Materials/Latte/MI_LatteGuide_2.MI_LatteGuide_2"))))
+  (if (== ({V}GetPattern) 0)
     (Rendering|Components|TextRender|SetText :self ({V}GetPrompt) :Value (Utilities|Text|MakeLiteralText :Value "LATTE ART: HEART<br>{P1}<br>2. Hold RIGHT mouse in the middle: pour close and let the white circle grow<br>3. Let go. Hold LEFT and drag straight through the circle"))
     (elif (== ({V}GetPattern) 1)
       (Rendering|Components|TextRender|SetText :self ({V}GetPrompt) :Value (Utilities|Text|MakeLiteralText :Value "LATTE ART: ROSETTA<br>{P1}<br>2. Hold RIGHT mouse and wiggle left and right while you pull slowly back<br>3. Let go. Hold LEFT and drag straight through the middle"))
@@ -175,36 +190,40 @@ G['LatteStep'] = f'''
   (bind pc (Game|GetPlayerController 0))
   (if ({V}GetEnding)
     ({V}SetEndTimer (- ({V}GetEndTimer) Dt))
-    (if (<= ({V}GetEndTimer) 0.0)
-      (if ({V}GetEndWin)
-        (CallFunction|LatteFinish)
-        (else
-          (CallFunction|LatteReset))))
+    (if ({V}GetEndWin)
+      (if (and (Game|Player|IsInputKeyDown :self pc :Key "E") (not ({V}GetEWas)))
+        (CallFunction|LatteFinish))
+      (elif (<= ({V}GetEndTimer) 0.0)
+        (CallFunction|LatteReset)))
     (else
-      (bind (dx dy) (Game|Player|GetInputMouseDelta :self pc))
       ({V}SetLowGap (+ ({V}GetLowGap) Dt))
       ({V}SetSimT (+ ({V}GetSimT) Dt))
       ({V}SetPourAmt (Math|Interpolation|FInterpTo :Current ({V}GetPourAmt) :Target (select (or (Game|Player|IsInputKeyDown :self pc :Key "RightMouseButton") (Game|Player|IsInputKeyDown :self pc :Key "LeftMouseButton")) 1.0 0.0) :DeltaTime Dt :InterpSpeed 6.0))
       (Rendering|Material|SetVectorParameterValue :Collection "/Game/Game/Materials/Latte/MPC_Latte.MPC_Latte" :ParameterName "Fx" :ParameterValue (Utilities|Struct|MakeLinearColor :R (/ ({V}GetPitX) 12.0) :G (/ ({V}GetPitY) 12.0) :B ({V}GetPourAmt) :A ({V}GetSimT)))
-      (bind nx (+ ({V}GetPitX) (* dy 0.08)))
-      (bind ny (+ ({V}GetPitY) (* dx 0.08)))
+      (bind (ml md mok) (Game|Player|ConvertMouseLocationToWorldSpace :self pc))
+      (bind me (Transformation|GetActorLocation :self self))
+      (bind rel (- (+ ml (* md (/ (- (.z me) (.z ml)) (select (< (.z md) -0.05) (.z md) -0.05)))) me))
+      (bind tx (Math|Vector|DotProduct rel (Transformation|GetActorForwardVector :self self)))
+      (bind ty (Math|Vector|DotProduct rel (Transformation|GetActorRightVector :self self)))
       ({V}SetPrevX ({V}GetPitX))
       ({V}SetPrevY ({V}GetPitY))
-      ({V}SetPitX (select (< nx -5.2) -5.2 (select (> nx 5.2) 5.2 nx)))
-      ({V}SetPitY (select (< ny -5.2) -5.2 (select (> ny 5.2) 5.2 ny)))
+      (if mok
+        ({V}SetPitX (Math|Interpolation|FInterpTo :Current ({V}GetPitX) :Target (select (< tx -5.2) -5.2 (select (> tx 5.2) 5.2 tx)) :DeltaTime Dt :InterpSpeed 20.0))
+        ({V}SetPitY (Math|Interpolation|FInterpTo :Current ({V}GetPitY) :Target (select (< ty -5.2) -5.2 (select (> ty 5.2) 5.2 ty)) :DeltaTime Dt :InterpSpeed 20.0)))
       (bind low (Game|Player|IsInputKeyDown :self pc :Key "RightMouseButton"))
       (bind high (and (Game|Player|IsInputKeyDown :self pc :Key "LeftMouseButton") (not low)))
       ({V}SetPitH (Math|Interpolation|FInterpTo :Current ({V}GetPitH) :Target (select low 2.6 8.0) :DeltaTime Dt :InterpSpeed 10.0))
       (if (or low high)
-        (CallFunction|LattePour :Dt Dt :Low low :Dx dx))
+        (CallFunction|LattePour :Dt Dt :Low low :Dx (* (- ({V}GetPitY) ({V}GetPrevY)) 12.0)))
       (Transformation|SetRelativeLocation :self ({V}GetPitcher) :NewLocation (Math|Vector|MakeVector :X ({V}GetPitX) :Y ({V}GetPitY) :Z (+ ({V}GetPitH) 0.2)))
-      (Transformation|SetRelativeLocation :self ({V}GetStream) :NewLocation (Math|Vector|MakeVector :X ({V}GetPitX) :Y ({V}GetPitY) :Z (/ ({V}GetPitH) 2.0)))
-      (Transformation|SetRelativeScale3D :self ({V}GetStream) :NewScale3D (Math|Vector|MakeVector :X (select low 0.012 0.005) :Y (select low 0.012 0.005) :Z (/ ({V}GetPitH) 100.0)))
+      (Transformation|SetRelativeLocation :self ({V}GetStream) :NewLocation (Math|Vector|MakeVector :X ({V}GetPitX) :Y ({V}GetPitY) :Z 0.0))
+      (Transformation|SetRelativeScale3D :self ({V}GetStream) :NewScale3D (Math|Vector|MakeVector :X (select low 1.25 0.6) :Y (select low 1.25 0.6) :Z ({V}GetPitH)))
       (Rendering|SetVisibility :self ({V}GetStream) :bNewVisibility (or low high))
       (Transformation|SetRelativeLocation :self ({V}GetFillBar) :NewLocation (Math|Vector|MakeVector :X (+ -6.0 (* ({V}GetFill) 6.0)) :Y -10.0 :Z 0.0))
       (Transformation|SetRelativeScale3D :self ({V}GetFillBar) :NewScale3D (Math|Vector|MakeVector :X (* ({V}GetFill) 0.12) :Y 0.008 :Z 0.004))
       (if (>= ({V}GetFill) 1.0)
-        (CallFunction|LatteJudge)))))
+        (CallFunction|LatteJudge))))
+  ({V}SetEWas (Game|Player|IsInputKeyDown :self pc :Key "E")))
 '''
 
 G['LattePour'] = f'''
@@ -256,7 +275,7 @@ G['LatteJudge'] = f'''
   ({V}SetEndTimer 2.4)
   (Rendering|SetVisibility :self ({V}GetStream) :bNewVisibility false)
   (if ({V}GetEndWin)
-    (Rendering|Components|TextRender|SetText :self ({V}GetStatus) :Value (Utilities|Text|MakeLiteralText :Value "Beautiful. Order up!"))
+    (Rendering|Components|TextRender|SetText :self ({V}GetStatus) :Value (Utilities|Text|MakeLiteralText :Value "Beautiful!  Press E when you are done"))
     (else
       (Rendering|Components|TextRender|SetText :self ({V}GetStatus) :Value (Utilities|Text|MakeLiteralText :Value "Not quite. Fresh cup, try again.")))))
 '''
@@ -269,7 +288,9 @@ G['LatteFinish'] = f'''
   ({V}SetShift 3)
   ({V}SetShiftT 0.0)
   (Rendering|SetVisibility :self ({V}GetWorldText) :bNewVisibility true)
-  {say("ORDER UP!<br>The customer takes the latte")}
+  {say("The latte is ready<br>Press E at the cup when you want to serve it")}
+  (Class|PlayerController|SetShowMouseCursor :self (Game|GetPlayerController 0) :bShowMouseCursor false)
+  (Input|SetInputModeGameOnly :PlayerController (Game|GetPlayerController 0) :bFlushInput false)
   {WALK})
 '''
 
