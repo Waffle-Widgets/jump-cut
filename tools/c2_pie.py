@@ -194,7 +194,8 @@ def tick(dt):
              'ff': bool(gp(pawn, 'FreezeFrameActive', False)),
              'ffLeft': round(gp(pawn, 'FreezeFrameTimeLeft', -1.0), 3),
              'won': bool(gp(pawn, 'HasWon', False)), 'splice': bool(gp(pawn, 'HasSplice', False)),
-             'mlevel': gp(d, 'MusicLevel', None)}
+             'mlevel': gp(d, 'MusicLevel', None),
+             'msound': (lambda c: c.get_editor_property('sound').get_name() if c and c.get_editor_property('sound') else None)(gp(d, 'MusicComp', None))}
         bs = actors(gw, 'BP_BossFreeze')
         if bs:
             b = bs[0]
@@ -233,6 +234,8 @@ def tick(dt):
             tp(pawn, pc, 7050.0, 0.0, 0.0)
             S['phase'] = 1; S['mark'] = now; ev('teleported into the plaza')
         elif ph == 1:
+            if f['boss'] and not S.get('saw'):
+                ev('boss intro started; music %s level %s' % (f['msound'], f['mlevel']))
             if f['boss']:
                 S['saw'] = True
             elif S.get('saw') and not f['power']:
@@ -248,7 +251,7 @@ def tick(dt):
             b.call_method('EnemyTakeHit', (9999.0, pawn.get_actor_location(), 300.0, 100.0, 0.5))
             S['phase'] = 4; S['mark'] = now; ev('boss killed inside Freeze Frame')
         elif ph == 4:
-            for key in ('power', 'outro', 'won', 'ff', 'bstop', 'mlevel'):
+            for key in ('power', 'outro', 'won', 'ff', 'bstop', 'mlevel', 'msound'):
                 prev = S.get('prev_' + key)
                 if prev is not None and prev != f.get(key):
                     ev('%s -> %s (powerT %s outroT %s dil %s bctd %s)' % (key, f.get(key), f['powerT'], f['outroT'], f['dil'], f.get('bctd')))
