@@ -695,6 +695,44 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   was made instance-editable refuses the write with *"cannot be edited on instances"*. That is a stale
   instance, not a wrong property name: recompile, then destroy and re-place the actor.
 
+- **A positional argument to `CallFunction|<OurFunction>` lands in the SELF pin, not in the
+  parameter (Nov 14).** `(CallFunction|CineRescueStep DeltaSeconds)` fails outright with
+  *"Could not connect pin DeltaSeconds to self"*, and `write_graph_dsl` **rolls the whole graph
+  back** when it does - so a half-written function is not the failure mode, a silently unchanged
+  one is. The trap is that `read_graph_dsl` PRINTS every call in exactly that positional form
+  (`(CallFunction|CoworkerExplosionStep DeltaSeconds)`), so reading a graph and writing it back
+  is not safe. Name every pin: `(CallFunction|CineRescueStep :DeltaSeconds DeltaSeconds)`.
+  Same family as the bool-parameter trap below.
+- **A swept `SetActorLocation` that begins already TOUCHING something returns to the START
+  point - it does not slide (Nov 14).** Beat 1's rescue moved the player **zero centimetres in
+  4.4 seconds** while the fuse burnt down and the blast killed the coworker, because he was
+  standing against a cafe table and every frame's sweep was refused. Nothing logs it and the
+  function returns normally. For a scripted camera-held move down a path the player has already
+  walked, pass `bSweep false`.
+- **`CaptureEditorImage` does NOT composite UMG - it cannot photograph a widget (Nov 14).**
+  Three captures of a running PIE session came back with no letterbox bars and no caption box
+  while the live widget reported `renderScale = (1,1)`, `visibility = HitTestInvisible` and
+  `IsInViewport = True`. Same family as the `stat unit` overlay note below. To prove a widget is
+  really on screen use the Slate side instead: `SlateInspector.WaitFor` on a string the widget
+  displays returns true only if that text is in the live Slate tree, and
+  `widget.get_desired_size()` is non-zero only once it has laid out and measured its content.
+- **A UMG `Border`'s default brush DRAWS NOTHING, and `BrushColor` tints the nothing (Nov 14).**
+  A fresh `UBorder` has `Background.DrawAs = Image`, `ImageType = NoImage`,
+  `ResourceObject = None`. Setting `brushColor` to opaque black gives an invisible panel that
+  reads as perfectly healthy in every property dump. Set
+  `background.resourceObject = /Engine/EngineResources/WhiteSquareTexture.WhiteSquareTexture`
+  and tint that. `ObjectTools.set_properties` takes its payload in a **`values`** parameter as a
+  JSON **string**, not a `properties` object.
+- **Beat 1's cinematic car settles at frame 186 (6.20 s) at `(-520, 0, 0)` rot 0, which is the
+  real wreck's placed transform (Nov 14).** Reveal the real wreck anywhere earlier and both are
+  on screen at once - `CineImpactTime` was 4.70 s, so they overlapped for 1.5 s ("I can see two
+  cars"). The `CineCar` spawn track now keys `False` at 186 so the two never coexist; the thrown
+  body does the same at 194. Two identical coincident meshes would also be a perfect depth tie
+  (#67).
+- **`DriverTryTouch` and `CoworkerCanRescueNow` were ALWAYS range-gated** - the F key only chose
+  *when* to ask. So "walk up to it and the story moves on" is the director calling them every
+  tick while the objective is live, not new interaction code. `BP_OpeningDirector.AutoBeats`
+  (instance-editable) puts the key presses back.
 - **`Object.call_method` reaches our own Blueprint functions on a live PIE actor** - this is the
   way to drive a mechanic a script cannot press a key for, and it beats writing state. Most
   Blueprint variables are NOT instance-editable, and `set_editor_property` on one is refused
