@@ -67,6 +67,25 @@ print('POSTURE  shoulders: left is %+.1f cm higher than right (%.1f deg)   head:
          math.degrees(math.atan2(ht.x - headb.x, ht.z - headb.z)),
          math.degrees(math.atan2(-((rig.matrix_world @ rig.pose.bones['Bone_016'].matrix).to_3x3() @ Vector((1, 0, 0))).y,
                                  ((rig.matrix_world @ rig.pose.bones['Bone_016'].matrix).to_3x3() @ Vector((1, 0, 0))).x))))
+# The joints can be level to a millimetre while the SURFACE is not: the model is not symmetric. So measure the cloth
+# too: the top of the shoulder at set distances from the centre line, and the outline of each arm seen from the front.
+Vc = V / s
+cx = (shL.x + shR.x) / 2
+body = Vc[Vc[:, 2] < neck.z + 3.0]
+row = []
+for d in (10, 13, 16, 19):
+    l = body[(body[:, 0] - cx > d - 1) & (body[:, 0] - cx < d + 1)]; r = body[(cx - body[:, 0] > d - 1) & (cx - body[:, 0] < d + 1)]
+    row.append('%d cm out: L %.1f R %.1f (%+.1f)' % (d, l[:, 2].max(), r[:, 2].max(), l[:, 2].max() - r[:, 2].max()))
+print('POSTURE  shoulder SURFACE height, his left vs right:  ' + '   '.join(row))
+for sd, sg in (('L', 1), ('R', -1)):
+    b = B[sd]; zt, zb = P(b['sh']).z - 6, P(b['wr']).z - 14
+    arm = Vc[(sg * (Vc[:, 0] - cx) > abs(P(b['hip']).x - cx) + 4) & (Vc[:, 2] < zt) & (Vc[:, 2] > zb)]
+    o = []
+    for k in range(6):
+        z1 = zt + (zb - zt) * k / 6.0; z2 = zt + (zb - zt) * (k + 1) / 6.0
+        sl = arm[(arm[:, 2] <= z1) & (arm[:, 2] > z2)]
+        o.append('%.0f' % ((sg * (sl[:, 0] - cx)).max() if len(sl) else -1))
+    print('POSTURE  %s arm outer edge, cm from the centre line, shoulder down to fingers: %s' % (sd, ' '.join(o)))
 world = bpy.data.worlds.new('W'); sc.world = world; world.use_nodes = True
 world.node_tree.nodes['Background'].inputs[0].default_value = (0.9, 0.9, 0.9, 1); world.node_tree.nodes['Background'].inputs[1].default_value = 1.2
 sun = bpy.data.objects.new('Sun', bpy.data.lights.new('Sun', 'SUN')); sun.data.energy = 3; sun.rotation_euler = (0.7, 0.2, -0.5); sc.collection.objects.link(sun)

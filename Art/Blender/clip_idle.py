@@ -48,16 +48,19 @@ LOOK = T('LOOK', 2.0)              # degrees the head turns, slowly
 FEET_X = T('FEET_X', 14.0)         # cm either side of the centre line: wider than the shoulders
 ARM_OUT = T('ARM_OUT', 4.5)        # cm the wrist hangs outside the shoulder joint: daylight between arm and ribs
 ARM_FWD = T('ARM_FWD', 3.5)
-ARM_BEND = T('ARM_BEND', 0.99)     # of the arm's length: 16 degrees at the elbow. 27 with a fist looked held, not hanging
+ARM_BEND = T('ARM_BEND', 0.997)     # of the arm's length: 9 degrees at the elbow. 16 still read as bent from the front (owner, Nov 15)
 ELBOW_OUT = T('ELBOW_OUT', 0.0)    # the elbow points STRAIGHT back, so its bend is fore-and-aft. Pointed outward at all, the
                                    # arm bows in the front view: out to the elbow, back in to the wrist ("oddly bent", owner)
 PALM = T('PALM', 82.0)             # forearm roll: the back of the fist faces out and a little forward
-FIST = T('FIST', 0.36)             # loose fists
+FIST = T('FIST', 0.25)             # loose fists
 SH_UP = T('SH_UP', 36.0)           # collarbone lift: 24 drooped; with the arms held out, 36 is level, not a shrug
 SH_BACK = T('SH_BACK', 2.0)        # shoulders wide rather than pulled back
 CHEST = T('CHEST', -5.0)           # chest up
 
 
+SH_EVEN = T('SH_EVEN', 0.0)        # degrees: + lifts his LEFT collarbone. LEFT AT 0: tried 2.5-13, it tilts the joints (4 cm at 9) and the cloth barely moves
+WRIST_IN = T('WRIST_IN', -15.0)      # degrees the hand tips toward the thumb
+WRIST_BEND = T('WRIST_BEND', 0.0)
 HEAD_LEVEL = T('HEAD_LEVEL', 0.0)  # degrees of neck tilt that stand the head upright (measured with posture_check.py)
 HEAD_TURN = T('HEAD_TURN', 0.0)
 
@@ -76,11 +79,17 @@ def pose(u, foot_fwd=FOOT_FWD, dz=PEL_DZ, reach=ARM_REACH, pfwd=PEL_FWD, pitch=P
     C.foot('L', x=FEET_X, fwd=foot_fwd, yaw=TOE_OUT + 4.0 * life)
     C.foot('R', x=-FEET_X, fwd=foot_fwd, yaw=TOE_OUT + 4.0 * life)
     for s in 'LR':
-        C.clav(s, up=SH_UP + 1.2 * br, back=SH_BACK)
-        o_ = ARM_OUT + 0.4 * br; f_ = ARM_FWD + 0.5 * sw * C.SGN[s]
+        # The JOINTS were level to a millimetre and he still stood with one shoulder up: the model's cloth is not
+        # symmetric, his right shoulder's surface is 1.2 cm higher than his left (posture_check.py, "shoulder
+        # SURFACE"). SH_EVEN tips the two collarbones opposite ways until the surface is level, which is what is seen.
+        C.clav(s, up=SH_UP + SH_EVEN * C.SGN[s] + 1.2 * br, back=SH_BACK)
+        o_ = ARM_OUT; f_ = ARM_FWD + 0.5 * sw * C.SGN[s]
         r_ = C.ARMLEN[s] * ARM_BEND                 # the wrist sits this far from the shoulder, whichever way it hangs:
-        C.hand(s, out=o_, fwd=f_, up=-math.sqrt(max(1.0, r_ * r_ - o_ * o_ - f_ * f_)) + 0.6 * br,   # out AND down would lock the elbow
+        # No breath on the wrist's distance from the shoulder. An arm this close to straight turns 0.6 cm of reach into
+        # 20 degrees of elbow: it pumped between 3 and 24 degrees every breath. The hand rides the shoulder instead.
+        C.hand(s, out=o_, fwd=f_, up=-math.sqrt(max(1.0, r_ * r_ - o_ * o_ - f_ * f_)),   # out AND down would lock the elbow
                pron=PALM, curl=FIST, elbow=(ELBOW_OUT, -1.0, 0.0))
+        if WRIST_IN or WRIST_BEND: C.wrist(s, bend=WRIST_BEND, side=WRIST_IN)
 
 
 if os.environ.get('STUDY'):
