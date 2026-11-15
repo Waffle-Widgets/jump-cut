@@ -149,6 +149,39 @@ bone names before every run and refuses to retarget if it disagrees.
 
 **Still not played by anyone.**
 
+### Stance and the retarget pose — why the walk was a waddle (#73)
+
+`ALIGN=arms` aligns the **arm and finger** bones and nothing else. Whatever is left out keeps the target
+rig's raw reference pose, and a retarget applies rotations relative to that pose — so anything the align
+call skips is added to every frame of every clip. The Meshy rest pose stands **0.880** leg-lengths wide
+against the mannequin's **0.330**, and that +0.550 arrived in the walk as **+0.556**. The arms, which the
+call *did* align, matched the mannequin to **0.9°** in the same clip. One argument, one defect.
+
+`tools/stance_check.py` is the measurement (read-only, no PIE): it evaluates the mannequin's source clip
+and the retargeted clip at twelve times across the cycle in each rig's own body frame, scale-free, and
+measures the reference poses too. It found the ticket's other claims to be wrong — the player is *more*
+upright than the mannequin, his arms match it, and the "staggered" rest pose has both ankles level.
+
+Choosing the leg alignment method mattered more than adding one. Measured, one clip per variant:
+
+| legs aligned by | stance width | stagger | toe-out | knee bend |
+|---|---|---|---|---|
+| *nothing* (the old `arms`) | +0.556 | −0.032 | +16.2° | −23.6° |
+| `CHAIN_TO_CHAIN` | +0.034 | +0.005 | **+35.8°** | −7.5° |
+| **`MESH_TO_MESH`** (shipped) | **−0.007** | +0.027 | +16.7° | −26.6° |
+| `GLOBAL_ROTATION_AXES` | +0.047 | **+1.015** | −82.9° | −5.4° |
+| `LOCAL_ROTATION_AXES` | −0.096 | **−0.589** | +20.0° | +3.7° |
+
+Chain-to-chain aligns a bone to its **chain's** direction, and a leg chain points down the leg, so the
+whole leg rotates and the foot yaws out with it — toe-out doubles. Excluding the foot and toe changes
+nothing, because the foot is a child of the thigh. Run it with `ALIGN=limbs:mesh:0`;
+`limbs:<method>:<drop>` and `hybrid` exist for re-testing.
+
+Walk stance width is now **0.188** against the mannequin's 0.195, idle **0.512** against 0.471. Still
+out: toe-out ~21.8° against 5.1°, elbow bend 11.4° short, knee bend 26.6° short.
+**`SK_StreetGoon` and the boss were built with `ALIGN=arms` and have not been touched.**
+`docs/devlog/2026-11-15-the-walk-was-wide-because-only-the-arms-were-corrected.md`.
+
 ### Sat Nov 14, 22:20 UTC — `CafeWalkerV2` is in Unreal, textured (M Station)
 
 The remade body — the one whose apron is a front panel instead of a skirt — is now a real asset:
@@ -260,6 +293,15 @@ apron's front-to-back depth, because both come from the rig's own splayed rest p
 [#73](https://github.com/Waffle-Widgets/jump-cut/issues/73), and any mesh that skins correctly on this
 rig has to stand that way. Unchanged and still open: the blown-white face, which is
 [#72](https://github.com/Waffle-Widgets/jump-cut/issues/72).
+
+> **The stance half of that is now fixed, and not in the mesh.** A mesh skinned to this rig does still
+> have to stand in its rest pose — but a *clip* does not, because a retarget applies rotations relative
+> to the target's **retarget pose**, which is editable. The `_CWM` set was built with `ALIGN=arms`,
+> which aligned the arm and finger bones and left the legs holding the raw Meshy rest pose, so its
+> +0.550 leg-lengths of extra stance width was added to every frame of every clip. Re-exported with
+> `ALIGN=limbs:mesh:0`, walk stance width went **0.751 → 0.188** against the mannequin's 0.195 and idle
+> **1.075 → 0.512** against 0.471. See "Stance and the retarget pose" below; the apron depth and
+> [#72](https://github.com/Waffle-Widgets/jump-cut/issues/72) are untouched.
 
 **Verified by rendering, not by counting.** `Idle` and `Walk` were taken off the committed
 `SK_CafeWalker.fbx` and played on both bodies with the pose copied bone-for-bone the way Unreal does

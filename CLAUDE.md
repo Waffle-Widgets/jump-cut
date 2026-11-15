@@ -645,6 +645,47 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   dropped and the hands hold their reference pose in every clip - a splayed claw on a body built from an
   A-pose sheet. `finger_chains()` names the five branches off each hand (thumb = the branch that leaves
   the palm sideways soonest) the way Epic's auto definition names the mannequin's.
+- **`ALIGN=arms` silently leaves the LEGS on the target rig's raw reference pose**, and a retarget adds
+  that pose to every frame of every clip. The Meshy rest stance is 0.880 leg-lengths wide against the
+  mannequin's 0.330, which arrived in the player's walk as +0.556 - the whole of the "waddle" in #73 -
+  while the arms, which the call *did* align, matched the mannequin to 0.9 degrees in the same clip.
+  **Nothing warns you**: all 19 chains map, the batch runs, every asset reads back as intended. Use
+  `ALIGN=limbs:mesh:0`, and measure with `tools/stance_check.py` rather than judging off thumbnails.
+- **Do not align legs with `CHAIN_TO_CHAIN`.** It aligns a bone to its *chain's* overall direction, and
+  a leg chain points down the leg, so the whole leg rotates and the foot yaws out with it: toe-out went
+  from 21.3 to 40.9 degrees against the mannequin walk's 5.1 while fixing the width. Dropping the foot
+  and toe from the align list changes **nothing** (identical to three decimals) because the foot is a
+  child of the thigh and inherits its rotation. `MESH_TO_MESH` fixes the width without the yaw.
+  `GLOBAL_ROTATION_AXES` and `LOCAL_ROTATION_AXES` are not near-misses - one doubles the stride
+  (+1.015) and the other collapses it (-0.589), and the global one poses a leg above the spine.
+- **LFS keeps `.uasset` files read-only, and that is what breaks an in-place `duplicate_and_retarget`.**
+  The engine's overwrite is *create `_CWM1` -> delete the original -> rename*, so every delete hits a
+  read-only file and raises a **"This file is read-only on disk ... Delete it anyway?"** modal that
+  blocks the game thread and every MCP call with it. It is invisible from the MCP side: calls simply
+  time out. **Clear the read-only flag on the destination folder before the run** (PowerShell
+  `$_.IsReadOnly = $false`, or `attrib -r`) and 40 clips finish in about two minutes with no dialog.
+  The `_CWM1` names are the engine's intermediate step, not corruption - what makes them dangerous is a
+  run interrupted half way, which is exactly what a read-only file causes. While the dialog is up the
+  answer is **No**: Yes deletes the original and leaves only the `_CWM1` copy.
+  **Overwriting in place is otherwise the right move** - the asset paths survive, so the anim blueprint,
+  the blend space, `BP_Player` and the hand-authored `AM_*` montages all keep resolving untouched. Do
+  not retarget into a new folder and repoint them.
+- **`get_all_socket_names()` returns SOCKETS as well as bones, and it will wreck a topology walk.** A
+  socket is always a leaf, so one attached to a hand makes it a six-branch node and the five-finger test
+  stops finding the hand; and a socket whose parent lookup comes back empty looks like a second skeleton
+  root - `weapon_r_muzzle` was picked as the mannequin's root. Take the bone list from a clip's own
+  `AnimPoseExtensions` pose (bones only), and pick the root as the parentless node with the **biggest
+  subtree**, never `roots[0]`.
+- **`straight()` stops at the first branch, so it cannot walk a mannequin limb**: the thigh and upperarm
+  both carry twist bones, and it reports the thigh itself as the ankle. Follow the child with the
+  **deepest subtree** instead (`Rig.deep()` in `tools/stance_check.py`). `_arm_check.py` still has this.
+- **A toe angle is meaningless on a foot that is not flat.** Mid-stride the swinging foot is
+  plantar-flexed, its shadow on the ground plane is almost nothing and the *direction* of that shadow is
+  noise - one sample read 126.9 degrees and the mannequin's own walk averaged 22.3. Gate on the fraction
+  of the foot that survives the projection (`foot_flat >= 0.6`); the mannequin's real toe-out is 5.1.
+- **A Meshy character's mesh faces +Y**, so a camera on the X axis photographs it in PROFILE - which
+  hides stance width, the one thing a stance comparison is for. Yaw the actor -90. And settle which
+  actor is on which side of the frame with `WorldPosToScreenCoords`, not by reasoning about handedness.
 - **A mismatched anim class is SILENT, and it looks exactly like a finished job.** `BP_Goon` wore
   `SK_StreetGoon` (76-bone Meshy Smart Rig) with Epic's `ABP_Unarmed` assigned - an anim blueprint whose
   target skeleton is the *mannequin's*. No warning, no error, no log line: the mesh reads as correctly
