@@ -25,8 +25,11 @@ TAG = 'B1_Cine'
 BP_PATH = '/Game/Game/Blueprints/BP_OpeningDirector'
 CONE = '/Engine/BasicShapes/Cone.Cone'      # +Z is the apex, so roll 180 points it down
 BEACON_ROT = (180.0, 0.0, 0.0)              # (roll, pitch, yaw)
-BEACON_SCALE = (0.45, 0.45, 0.75)
-BEACON_MAT = '/Game/Game/Materials/M_PropBlue'
+# The director re-dresses the beacon at runtime (CineBeaconDress / CineBeaconStep in
+# tools/b1u_graphs.py): unlit pulsing M_ObjectiveGlow, and a scale that breathes around
+# (0.5, 0.5, 0.85). These two constants match so a re-run of this script does not undo it.
+BEACON_SCALE = (0.5, 0.5, 0.85)
+BEACON_MAT = '/Game/Game/Materials/M_ObjectiveGlow'
 
 # The player camera's hand-off pose, MEASURED in PIE (tools/b1v_cam.py read) with the controller
 # at CineEndYaw 172 and the pawn standing at the origin. b1_opening_cine.py ends the last camera

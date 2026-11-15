@@ -178,6 +178,25 @@ anyone picks up a task:
 
 ## Open
 
+### Beat 1: the pan ends on the player's camera, and getting the power is a moment (Sun Nov 15, 09:35 UTC, Justin's Mac mini)
+
+Round 7 of the Team Owner's feedback on the opening. **Built, played start to finish by a script in PIE and
+sampled every frame, not played by a person.** On branch `claude/project-thread-y3rtrs`, not on `main`.
+See [the devlog entry](devlog/2026-11-15-the-pan-ends-on-the-players-own-camera.md).
+
+- **No snap after the explosion.** The model and the controller turn toward the street while the camera is on
+  the wreck, and the pan's last leg lerps to the follow camera's live pose, lens 75 → 90. Measured with the
+  player facing west beforehand: 0.01 cm, 0.00 deg, 0.00 deg FOV across the hand-off frame.
+- **Getting Freeze Frame stops the world for 2.2 s**: time dilation 0.06, a shutter flash, letterbox, lens
+  90 → 64 → 90, `SFX_PowerFreezeFrame`, caption FREEZE FRAME.
+- **The marker glows and pulses** (`M_ObjectiveGlow`, unlit) and **the caption box pops and breathes**.
+- **Caption box no longer collapses into a narrow column** (`AutoWrapText` off), which also uncovers the
+  HUD's PRESS E. One long caption shortened.
+- **Still open:** the rescue does not require pressing E, so the tutorial names the key without making the
+  player use it. A decision for the team, listed under "Still to decide" if anyone wants it.
+- `BP_Player` untouched (locked elsewhere). Changed: `BP_OpeningDirector`, `WBP_CineOverlay`, new
+  `M_ObjectiveGlow`. Rebuildable from `tools/b1u_graphs.py`; the check is `tools/b1u_pie.py`.
+
 ### Beat 1: the coworker swaps sides, one driver, and the camera stops snapping (Sun Nov 15, 08:30 UTC, Justin's Mac mini)
 
 Round 6 of the Team Owner's feedback on the opening. **Built, measured in PIE, not played by anybody.**

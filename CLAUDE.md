@@ -136,6 +136,33 @@ learn something, and copy it into the jam repo (the bootstrap does). Allowed bef
   keyed the arc to the old left-hand spot - a mid-air tumble to y -118 and then a snap to y +220 -
   and nothing errored. Order: `b1z_wallpanel.py place` -> `b1_opening_wire.py` -> `b1_opening_cine.py`.
 
+### This Mac's editor hangs, and handing a camera back (learned 2026-11-15, beat 1 round 7)
+- **On Justin's Mac mini, launch the editor with `-noraytracing`.** `r.RayTracing=True` makes every PIE
+  start compile ray tracing PSOs, and Apple's `MTLCompilerService` dies on them
+  (`llvm::report_bad_alloc_error`, 17 crash reports in `~/Library/Logs/DiagnosticReports` in one night).
+  The editor then hangs with the game thread waiting on the render thread: `sample <pid>` shows
+  `MTLCompilerConnectionQueue` threads in `xpc_connection_send_message_with_reply_sync`. It looks exactly
+  like a modal dialog from the MCP side. The viewport's red "Ray Tracing PSO is not ready yet" is the tell.
+  `open -a .../UnrealEditor.app --args <uproject> -noraytracing` - a launch flag, not an ini change.
+- **A dead editor's `CrashReportClient` keeps port 8000.** The next editor logs *"HttpListener unable to
+  bind to 127.0.0.1:8000"* and runs with no MCP. `pkill -9 -f CrashReportClient` before relaunching.
+- **After a forced close, the next start blocks on a Restore Packages modal** before the MCP exists. Move
+  `Saved/Autosaves/PackageRestoreData.json` aside first. Reading graphs with the MCP dirties Blueprints you
+  never changed (four were listed), so restoring is not what you want anyway.
+- **End a cinematic on the LIVE pose of the camera you hand to.** Lerp the last leg to
+  `GetComponentByClass(pawn, CameraComponent)`'s world location and rotation, and lerp the lens to its FOV.
+  A measured constant is right only while the player stands where you measured.
+- **Under global time dilation, divide `DeltaSeconds` by `GetGlobalTimeDilation`** for anything that should
+  run at wall-clock speed (letterbox bars, caption timers, a cinematic's own clock).
+- **`AutoWrapText` on a TextBlock in an auto-sized canvas slot only ever gets narrower.** The wrap width is
+  the box's width from the previous frame, so one short caption makes every later caption a column. Turn it
+  off and use `WrapTextAt`.
+- **`unreal.register_slate_post_tick_callback` samples and drives PIE once per frame from inside the
+  editor**, which is the way to measure anything shorter than an MCP round trip (`tools/b1u_pie.py`).
+  `Screenshot showui` from that callback photographs UMG, bars and captions included.
+- **The console box ref changes per session** (`tb1` one launch, `tb2` the next). Find the textbox on the
+  line after `text "Cmd"` in a `Snapshot` rather than trusting either number.
+
 ### Blueprint graphs through `write_graph_dsl` (learned 2026-11-15, beat 1's explosion)
 - **A variable's CATEGORY is part of its DSL type id.** Move a variable out of `Default` and
   `Variables|Default|GetFoo` stops existing - `write_graph_dsl` fails with
