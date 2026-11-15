@@ -100,7 +100,9 @@ def save_folder(folder):
             # reference-pose root is at PELVIS height, so every root-motion clip then lifts the whole body about
             # 90 cm: the float bug. It was fixed by hand on Nov 13 and Nov 14 and came straight back on Nov 15 when
             # the player's clips were re-retargeted, because nothing here set it. Set it on the way out, every time.
-            if isinstance(a, unreal.AnimSequence) and a.get_editor_property('enable_root_motion') \
+            # Jump, fall and land have root motion OFF but Force Root Lock ON, and float the same way (b1y_rootlock.py).
+            if isinstance(a, unreal.AnimSequence) \
+                    and (a.get_editor_property('enable_root_motion') or a.get_editor_property('force_root_lock')) \
                     and a.get_editor_property('root_motion_root_lock') != unreal.RootMotionRootLock.ANIM_FIRST_FRAME:
                 a.modify()
                 a.set_editor_property('root_motion_root_lock', unreal.RootMotionRootLock.ANIM_FIRST_FRAME)
