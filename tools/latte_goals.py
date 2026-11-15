@@ -54,7 +54,7 @@ def goal_rosetta(x, y):
     ay = abs(y)
     if ay > w or ay < 0.011:                                          # outside the leaf, or the stem's hairline
         return False
-    return ((x - 0.75 * ay) * 8.5) % 1.0 < 0.6                      # leaves: bands dragged DOWN at the centre by the cut
+    return ((x - 0.75 * ay) * 11.0) % 1.0 < 0.66                      # leaves: bands dragged DOWN at the centre by the cut
 
 
 def render(fn, path):

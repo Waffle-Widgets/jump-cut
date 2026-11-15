@@ -49,17 +49,17 @@ PLANS = {
     'heart': [(4.0, True, line(1.0, 0, 1.0, 0)), (0.3, None, line(0, 0, 0, 0)), (0.8, False, line(4.5, 0, -3.5, 0))],
     # rosetta: a wide base at the far side, leaves that narrow as you pull back, a small heart at the near end,
     # then the cut back up through all of it (the stem)
-    'rosetta': [(0.8, True, line(-2.6, 0, -2.6, 0)),
-                (5.2, True, lambda u: (-2.6 + 5.4 * u, (1.2 - 0.7 * u) * math.sin(u * 2 * math.pi * 9))),
-                (0.45, True, line(3.0, 0, 3.0, 0)),
+    'rosetta': [(0.6, True, line(-2.6, 0, -2.6, 0)),
+                (5.0, True, lambda u: (-2.6 + 5.4 * u, (1.3 - 0.7 * u) * math.sin(u * 2 * math.pi * 6))),
+                (0.75, True, line(3.1, 0, 3.1, 0)),
                 (0.25, None, line(0, 0, 0, 0)),
                 (0.8, False, line(4.4, 0, -3.4, 0))],
     'topup': [(14.0, False, lambda u: (3.5 * math.cos(u * 40), 3.5 * math.sin(u * 40)))],       # high pour round the edge until the cup is full
     # tulip: each layer is poured BEHIND the last and pushed up into it, and each is smaller, so a layer dents the
     # one before it instead of swallowing it
-    'tulip': [(2.6, True, line(-1.2, 0, -1.8, 0)), (0.45, None, line(0, 0, 0, 0)),
+    'tulip': [(2.2, True, line(-1.2, 0, -1.8, 0)), (0.45, None, line(0, 0, 0, 0)),
               (1.5, True, line(1.0, 0, -0.1, 0)), (0.45, None, line(0, 0, 0, 0)),
-              (0.9, True, line(2.7, 0, 1.9, 0)), (0.35, None, line(0, 0, 0, 0)),
+              (1.0, True, line(3.2, 0, 2.4, 0)), (0.35, None, line(0, 0, 0, 0)),
               (0.8, False, line(4.6, 0, -3.6, 0))],
 }
 
@@ -98,6 +98,8 @@ def pour(a, name, queue=None):
         b = latte(w)
         dt = min(dt, 0.05)
         if st['i'] >= len(plan):
+            if st['after'] == 0.0:
+                b.call_method('LatteJudge')        # ends the pour, which also takes the guide off the cup for the picture
             st['after'] += dt
             if st['shots'] == 0 and st['after'] > 0.3:
                 st['shots'] = 1
