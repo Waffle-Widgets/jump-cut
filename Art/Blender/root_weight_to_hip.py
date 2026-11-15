@@ -1,6 +1,6 @@
 """Move every vertex weight on a Meshy Smart Rig's ROOT bone onto its hip bone. Nothing else changes.
 
-    blender -b --factory-startup --python Art/Blender/root_weight_to_hip.py -- fix    IN.fbx OUT.fbx
+    blender -b --factory-startup --python Art/Blender/root_weight_to_hip.py -- fix    IN.fbx OUT.fbx [MAX_GAP_M=0.05]
     blender -b --factory-startup --python Art/Blender/root_weight_to_hip.py -- verify BEFORE.fbx AFTER.fbx
 
 WHY (Sat Nov 14, GameStation, Blender 5.3.0). The player's new body (SK_CafeWalkerV2) showed long streaks of apron
@@ -15,6 +15,10 @@ at the front of the waist the nearest bone IS the root. Result: 296 vertices abo
 Bone_001 is Bone_000's only child and starts at the same place, and it is the bone that stays at the pelvis in
 every clip, so handing it the root's weight keeps the rest shape exactly and removes the pull.
 
+MAX_GAP_M (Sun Nov 15): 'fix' refuses when the hip starts more than this far from the root, 5 cm unless you say
+otherwise. The player's is 4.6 cm. The mob boss's is 5.6 and the crash driver's 7.3, so they need it passed (0.08).
+The rest shape is kept exactly at any gap; the gap only says how sure we are that the child really is the hip.
+
 'verify' proves the fix changed weights and nothing else: same vertices in the same places, same UVs, same bones in
 the same rest pose, same material and texture, zero weight left on the root, every vertex still summing to 1.
 """
@@ -22,6 +26,7 @@ import bpy, sys, os, json
 
 argv = sys.argv[sys.argv.index('--') + 1:]
 MODE, A, B = argv[0], argv[1], argv[2]
+MAX_GAP = float(argv[3]) if len(argv) > 3 else 0.05
 ROOT, HIP = 'Bone_000', 'Bone_001'
 
 
@@ -67,7 +72,7 @@ if MODE == 'fix':
     if root_g is None or hip_g is None:
         raise SystemExit('REFUSING: %s or %s is not a vertex group on this mesh' % (ROOT, HIP))
     b0, b1 = arm.data.bones[ROOT], arm.data.bones[HIP]
-    if b1.parent != b0 or len(b0.children) != 1 or (b1.head_local - b0.head_local).length > 0.05 / arm.scale.x:
+    if b1.parent != b0 or len(b0.children) != 1 or (b1.head_local - b0.head_local).length > MAX_GAP / arm.scale.x:
         raise SystemExit('REFUSING: %s is not the single child of %s starting near it' % (HIP, ROOT))
     moved, total = 0, 0.0
     for v in mesh.data.vertices:

@@ -41,6 +41,7 @@ TEX_SRC = os.path.join(ART, 'CafeWalkerV2', 'T_CafeWalkerV2_BaseColor.png')
 # Blender +Y to Unreal -Y, so the y pair is negated AND swapped here: Blender y[-22.31 17.88] is Unreal
 # y[-17.88 22.31]. x and z carry straight across. Getting that backwards makes a good import read as a
 # failure, which is how the table stays honest.
+# Nov 15: model_tuneup.py lengthened the arms for one round (x -59.94..60.86) and then put the length back.
 WANT = {'x': (-55.58, 56.46), 'y': (-17.88, 22.31), 'z': (0.0, 174.39)}
 TOL = 2.0
 
